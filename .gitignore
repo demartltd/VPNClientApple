@@ -1,0 +1,14 @@
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Xray geo/binary assets (python scripts/xray-download-auto.py)
+**/xray/
+
+# gomobile xcframework (~230 MB; GitHub limit 100 MB per file)
+ios/Frameworks/DemarXray.xcframework/
+
+# Local tooling scripts
+scripts/
