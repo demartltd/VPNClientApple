@@ -12,8 +12,6 @@
 - **iOS:** SwiftUI + Network Extension (`DemarPacketTunnel`) + `DemarXray.xcframework` + App Group
 - **macOS:** SwiftUI UI, VPN через моки (`MockVpnControlling`) — без Network Extension
 - См. [`readme-core.md`](readme-core.md)
-- **DemarXray (iOS, не в git):** `python ../demar_vpn/scripts/build_xray_ios_xcframework.py` → `ios/Frameworks/DemarXray.xcframework`
-- **Xray assets (фаза 2, на Mac):** `pip install scrapling` → `python scripts/xray-download-auto.py` (geo в `ios/Shared/xray/`, бинарник arm64 + geo в `macos/xray/`)
 
 ```bash
 # macOS

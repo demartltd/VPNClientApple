@@ -1,11 +1,11 @@
 # DemarXray.xcframework
 
-Не хранится в git (слишком большой для GitHub). Соберите локально из соседнего репозитория:
+В git — только оболочка (Headers, Info.plist, modulemap). Бинарники `DemarXray.framework/DemarXray` в `.gitignore` (сотни MB).
+
+Сборка после клона:
 
 ```bash
 python ../demar_vpn/scripts/build_xray_ios_xcframework.py
 ```
 
-Результат: `ios/Frameworks/DemarXray.xcframework` (нужен для `DemarPacketTunnel` и линковки в Xcode).
-
-Geo-ассеты для Xray: `python scripts/xray-download-auto.py` → `ios/Shared/xray/`.
+Geo и macOS xray: `python scripts/xray-download-auto.py` → `ios/Shared/xray/`, `macos/xray/`.

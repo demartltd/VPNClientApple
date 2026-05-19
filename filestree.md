@@ -72,9 +72,7 @@ ios/                                   # фаза 2: VPN (из demar_vpn)
 │   └── xray/                          # geoip.dat, geosite.dat, bundled_version.txt
 ├── DemarPacketTunnel/
 │   └── PacketTunnelProvider.swift
-└── Frameworks/
-    ├── README.md                      # как собрать xcframework (не в git)
-    └── DemarXray.xcframework/         # локально: build_xray_ios_xcframework.py
+└── Frameworks/DemarXray.xcframework/  # Headers/plist в git; DemarXray binary — build script
 
 macos/
 └── xray/                              # xray (arm64), geo, bundled_version.txt (xray-download-auto.py)

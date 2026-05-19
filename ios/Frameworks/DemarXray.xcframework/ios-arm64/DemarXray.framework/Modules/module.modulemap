@@ -1,0 +1,8 @@
+framework module "DemarXray" {
+	header "ref.h"
+    header "Demarxray.objc.h"
+    header "Universe.objc.h"
+    header "DemarXray.h"
+
+    export *
+}
