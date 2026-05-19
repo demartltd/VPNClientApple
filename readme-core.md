@@ -47,7 +47,7 @@ Xray-core — proxy-core. **Device-wide VPN** через **TUN inbound**: ОС �
 **Bundle tunnel:** `com.demar.vpn.packet-tunnel`
 
 Сборка xcframework: `python ../demar_vpn/scripts/build_xray_ios_xcframework.py`  
-Geo assets (iOS): `python scripts/xray-download-auto.py` → `ios/Shared/xray/`  
+Geo assets (iOS): Python 3.12+ — `scripts/setup-python-venv.sh`, затем `.venv/bin/python scripts/xray-download-auto.py` → `ios/Shared/xray/`  
 macOS arm64 binary + geo: тот же скрипт → `macos/xray/` (будущий subprocess VPN на Apple Silicon)
 
 Порядок connect (как во Flutter bridge):
