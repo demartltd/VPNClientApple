@@ -18,10 +18,8 @@ struct ToggleVpnIntent: SetValueIntent {
     let action = value ? "enable" : "disable"
     VpnSharedStore.appendPendingUiDiagLine("[ui] ios control_center: \(action) requested")
     try await VpnControlExecutor.setVpnEnabled(value)
-    if #available(iOS 18.0, *) {
-      await MainActor.run {
-        ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
-      }
+    await MainActor.run {
+      ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
     }
     return .result()
   }

@@ -516,10 +516,8 @@ final class VpnTunnelController {
 
   private static func reloadControls() {
 #if canImport(WidgetKit)
-    if #available(iOS 18.0, *) {
-      DispatchQueue.main.async {
-        ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
-      }
+    DispatchQueue.main.async {
+      ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
     }
 #endif
   }

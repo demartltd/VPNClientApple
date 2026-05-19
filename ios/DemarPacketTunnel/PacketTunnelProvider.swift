@@ -220,10 +220,8 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
   private static func reloadControls() {
 #if canImport(WidgetKit)
-    if #available(iOS 18.0, *) {
-      DispatchQueue.main.async {
-        ControlCenter.shared.reloadControls(ofKind: Self.controlKind)
-      }
+    DispatchQueue.main.async {
+      ControlCenter.shared.reloadControls(ofKind: Self.controlKind)
     }
 #endif
   }

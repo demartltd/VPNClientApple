@@ -1,13 +1,13 @@
 **Demar VPN (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **Xray-core** (VLESS / REALITY), как в кроссплатформенной Flutter-версии [`demar_vpn`](../demar_vpn).
 
-Поддерживаются **iOS 17+** и **macOS 14+** (нативное приложение, один target). Web, Android, Windows и Linux в этом репозитории не поддерживаются.
+Поддерживаются **iOS 18+** и **macOS 14+** (нативное приложение, один target). Web, Android, Windows и Linux не поддерживаются.
 
 Все доступные сервера и их конфиги планируется получать удалённо; в MVP — один или несколько тестовых VLESS URI (см. `DemarVPN/Core/Models/TestServers.swift`).
 
 ## Сборка
 
 - **Xcode 15+**
-- Deployment: **iOS 17+**, **macOS 14+**
+- Deployment: **iOS 18+**, **macOS 14+**
 - Bundle ID: `com.demar.vpn`
 - **iOS:** SwiftUI + Network Extension (`DemarPacketTunnel`) + `DemarXray.xcframework` + App Group
 - **macOS:** SwiftUI UI, VPN через моки (`MockVpnControlling`) — без Network Extension

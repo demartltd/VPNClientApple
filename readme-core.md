@@ -1,6 +1,6 @@
 # Ядро VPN: Xray-core (VLESS) — Demar VPN (Apple)
 
-Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 17+ / macOS 14+** (`demar_vpn_apple`).
+Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
 
 Документация Xray (Project X):
 - [VLESS outbound](https://xtls.github.io/en/config/outbounds/vless.html)
