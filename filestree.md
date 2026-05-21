@@ -8,79 +8,75 @@ DemarVPN/                              # SwiftUI app target
 ├── ContentView.swift                  # TabView; iOS: ATT при scenePhase == .active
 ├── Info.plist                         # iOS (+ NSUserTrackingUsageDescription для ATT)
 ├── Info-macOS.plist                   # macOS
-├── DemarVPN.entitlements              # App Group (фаза VPN)
+├── DemarVPN.entitlements              # App Group (iOS)
 ├── Assets.xcassets/
 │
 ├── Core/
 │   ├── Theme/
-│   │   ├── DemarTheme.swift           # iOS-семантика цветов (accent, card, label, …)
-│   │   └── AppTheme.swift             # UIKit chrome (tab bar, nav bar)
+│   │   ├── DemarTheme.swift
+│   │   └── AppTheme.swift
 │   ├── Icons/
-│   │   └── FontAwesomeBrands.swift    # соцсети (FA6 Brands, incl. Bluesky)
+│   │   └── FontAwesomeBrands.swift
 │   ├── Models/
-│   │   ├── VpnConnectionState.swift   # disconnected / connecting / …
-│   │   ├── ServerProfile.swift        # displayName + uri
-│   │   └── TestServers.swift          # kTestServerUris (MVP)
+│   │   ├── VpnConnectionState.swift
+│   │   ├── ServerProfile.swift
+│   │   └── TestServers.swift
+│   ├── Network/
+│   │   └── PublicEgressDiagnostics.swift   # служебное меню: IP/страна, TCP+HTTPS зонды (независимо)
 │   ├── Vpn/
 │   │   ├── VlessRealityProfile.swift
-│   │   ├── VlessUriParser.swift       # vless:// → профиль
-│   │   └── XrayConfigBuilder.swift    # TUN + VLESS REALITY config.json
+│   │   ├── VlessUriParser.swift
+│   │   └── XrayConfigBuilder.swift    # TUN + preflight SOCKS test JSON
 │   ├── Services/
-│   │   ├── AppState.swift             # @Observable: серверы, vpnState, throughput
-│   │   ├── VpnControlling.swift       # протокол connect/disconnect
-│   │   ├── IosVpnService.swift        # iOS: NETunnelProvider + Xray
-│   │   ├── VpnStatusMonitor.swift     # iOS: NEVPNStatus → UI
-│   │   ├── MockVpnControlling.swift   # macOS: мок VPN
-│   │   ├── MockVpnService.swift       # задержки/throughput мока (macOS)
-│   │   ├── AppLog.swift               # журнал для UI настроек
-│   │   ├── DeviceIdentity.swift       # IDFV/IDFA (iOS), mac_* + fingerprint (macOS)
-│   │   └── IDFATracking.swift        # iOS: ATT при старте; «Включить IDFA» → Настройки при отказе
+│   │   ├── AppState.swift
+│   │   ├── VpnControlling.swift
+│   │   ├── NativeVpnService.swift     # iOS + macOS: NETunnelProvider
+│   │   ├── VpnStatusMonitor.swift     # iOS + macOS: NEVPNStatus
+│   │   ├── AppLog.swift               # журнал UI; фильтр Xray access + маскировка IP (`***.***.o3.o4`)
+│   │   ├── DeviceIdentity.swift
+│   │   └── IDFATracking.swift
 │   └── Utilities/
-│       ├── ThroughputFormatter.swift  # KB/s как во Flutter
-│       ├── PlatformServices.swift     # pasteboard, haptics (iOS)
-│       ├── AppPlatform.swift          # метка платформы iOS / macOS
-│       └── DemarNavigation.swift      # navigationBarTitleDisplayMode (iOS)
+│       ├── ThroughputFormatter.swift
+│       ├── PlatformServices.swift
+│       ├── MacVpnDiag.swift             # macOS: pluginkit, codesign, NE preflight
+│       ├── AppPlatform.swift
+│       ├── BundledXrayVersion.swift
+│       └── DemarNavigation.swift
 │
 ├── Components/
-│   ├── DemarCardRow.swift             # карточка списка (Сервера / Настройки)
-│   ├── VpnMainToggle.swift
-│   ├── SectionCard.swift
-│   ├── DemarKvRow.swift               # key/value для служебного меню
-│   ├── SettingsLinksStrip.swift
-│   └── DemarSnackBar.swift            # toast: material, swipe, tap → copy
+│   └── …
 ├── Resources/Fonts/
 │   └── fa-brands-400.ttf
 │
 └── Features/
-    ├── Home/
-    │   └── HomeView.swift
-    ├── Servers/
-    │   └── ServersView.swift
-    └── Settings/
-        ├── SettingsView.swift
-        ├── AppSettingsView.swift
-        └── ServiceMenuView.swift       # секретное меню (тройной тап по версии)
+    ├── Home/HomeView.swift
+    ├── Servers/ServersView.swift
+    └── Settings/…
 
-DemarVPN.xcodeproj/                    # Xcode project
+DemarVPN.xcodeproj/
 
-ios/                                   # фаза 2: VPN (из demar_vpn)
-├── Shared/
-│   ├── VpnAppGroup.swift
-│   ├── VpnSharedStore.swift
-│   ├── VpnTunnelController.swift
-│   ├── VpnControlConstants.swift
-│   └── xray/                          # geoip.dat, geosite.dat, bundled_version.txt
+scripts/
+├── xray-download-auto.py              # ios/Shared/xray geo + macos/xray binary
+├── build-macos.ps1                    # macOS Release: build, sign, install, notarize
+├── increment_version_auto.ps1         # patch + build во всех местах версии
+└── increment_version.ps1              # интерактивно задать X.Y.Z (+ build +1)
+
+ios/
+├── Shared/ … + xray/
 ├── DemarPacketTunnel/
-│   └── PacketTunnelProvider.swift
-└── Frameworks/DemarXray.xcframework/  # Headers/plist в git; DemarXray binary — build script
+│   ├── PacketTunnelProvider.swift
+│   ├── TunnelLifecycle.swift          # iOS: NWPathMonitor + wake recovery
+│   └── MacXrayProcess.swift           # macOS: xray subprocess + XRAY_TUN_FD
+└── Frameworks/DemarXray.xcframework/
 
 macos/
-└── xray/                              # xray (arm64), geo, bundled_version.txt (xray-download-auto.py)
+└── xray_macos/                        # xray arm64, geo (gitignored binaries)
+    └── README.md
 ```
 
 ## Связь с demar_vpn
 
 Визуальный эталон: `demar_vpn/lib/presentation/`.  
-Нативное VPN-ядро для фазы 2: `demar_vpn/ios/Shared/`, `DemarPacketTunnel/`.  
-Assets Xray в этом репо: `python scripts/xray-download-auto.py` → `ios/Shared/xray/`, `macos/xray/`.  
+Нативное VPN-ядро iOS: `demar_vpn/ios/`.  
+Assets: `python3 scripts/xray-download-auto.py` → `ios/Shared/xray/`, `macos/xray_macos/`.  
 XCFramework: `python ../demar_vpn/scripts/build_xray_ios_xcframework.py`.

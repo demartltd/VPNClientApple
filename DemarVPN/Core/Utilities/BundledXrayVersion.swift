@@ -2,7 +2,7 @@ import Foundation
 
 enum BundledXrayVersion {
     static var label: String {
-        for subdirectory in ["Shared/xray", "xray"] {
+        for subdirectory in ["Shared/xray", "xray", "xray_macos"] {
             if let url = Bundle.main.url(forResource: "bundled_version", withExtension: "txt", subdirectory: subdirectory),
                let raw = try? String(contentsOf: url, encoding: .utf8)
             {
@@ -10,10 +10,6 @@ enum BundledXrayVersion {
                 if !trimmed.isEmpty { return trimmed }
             }
         }
-        #if os(iOS)
         return "—"
-        #else
-        return "mock"
-        #endif
     }
 }

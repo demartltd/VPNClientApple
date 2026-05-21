@@ -29,6 +29,8 @@ struct ServiceMenuView: View {
                     }
                 }
 
+                ServiceEgressDiagnosticsCard(appState: appState)
+
                 SectionCard(
                     title: "Device",
                     leading: { icon("folder") }
@@ -92,6 +94,123 @@ struct ServiceMenuView: View {
         if ok { snackBar.showSuccess("IDFA разрешён") }
     }
     #endif
+}
+
+/// Длительность одного оборота иконки «Обновить», сек (как `kSettingsServiceMenuTiming` во Flutter).
+private let kServiceMenuRefreshSpinDuration: TimeInterval = 2.5
+
+private struct ServiceEgressDiagnosticsCard: View {
+    @Bindable var appState: AppState
+
+    @State private var geoBusy = true
+    @State private var inFlight = false
+    @State private var refreshSpinAngle: Double = 0
+    @State private var geo: PublicEgressInfo?
+    @State private var probes = PublicEgressDiagnostics.probeHosts.map { _ in
+        EgressHostProbe(tcpMs: 0, httpsMs: 0)
+    }
+    @State private var probesReady = Set<Int>()
+    #if os(iOS)
+    @Environment(\.scenePhase) private var scenePhase
+    #endif
+
+    var body: some View {
+        SectionCard(
+            title: "Интернет",
+            leading: { icon("cloud") },
+            trailing: { refreshButton }
+        ) {
+            VStack(alignment: .leading, spacing: 8) {
+                DemarKvRow(key: "IP", value: ipCell)
+                DemarKvRow(key: "Страна", value: countryCell)
+                ForEach(Array(PublicEgressDiagnostics.probeHosts.enumerated()), id: \.offset) { index, host in
+                    DemarKvRow(
+                        key: host,
+                        value: probesReady.contains(index)
+                            ? PublicEgressDiagnostics.egressHostProbeLabel(probes[index])
+                            : "…"
+                    )
+                }
+            }
+        }
+        .task { await load() }
+        .onChange(of: appState.vpnState) { _, _ in Task { await load() } }
+        #if os(iOS)
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await load() } }
+        }
+        #endif
+    }
+
+    private var refreshButton: some View {
+        Button { Task { await load() } } label: {
+            Image(systemName: "arrow.trianglehead.2.clockwise")
+                .foregroundStyle(Color.demarPrimary)
+                .rotationEffect(.degrees(refreshSpinAngle))
+        }
+        .buttonStyle(.plain)
+        .disabled(inFlight)
+        .accessibilityLabel("Обновить")
+    }
+
+    private var ipCell: String {
+        if geoBusy { return "…" }
+        let ip = geo?.ip ?? PublicEgressDiagnostics.fallback.ip
+        return PublicEgressDiagnostics.censorPublicIPv4ForDisplay(ip)
+    }
+
+    private var countryCell: String {
+        if geoBusy { return "…" }
+        return geo?.country ?? PublicEgressDiagnostics.fallback.country
+    }
+
+    private func icon(_ name: String) -> some View {
+        Image(systemName: name)
+            .foregroundStyle(Color.demarPrimary)
+    }
+
+    private func load() async {
+        guard !inFlight else { return }
+        inFlight = true
+        geoBusy = true
+        geo = nil
+        probesReady = []
+        probes = PublicEgressDiagnostics.probeHosts.map { _ in EgressHostProbe(tcpMs: 0, httpsMs: 0) }
+        async let spin: Void = runRefreshSpin()
+        async let geoLoad: Void = fetchGeo()
+        async let probesLoad: Void = fetchHostProbes()
+        _ = await (spin, geoLoad, probesLoad)
+        inFlight = false
+    }
+
+    private func runRefreshSpin() async {
+        let duration = kServiceMenuRefreshSpinDuration
+        await MainActor.run {
+            refreshSpinAngle = 0
+            withAnimation(.linear(duration: duration)) { refreshSpinAngle = 360 }
+        }
+        try? await Task.sleep(for: .seconds(duration))
+    }
+
+    private func fetchGeo() async {
+        let result = await PublicEgressDiagnostics.fetchPublicEgressGeo()
+        await MainActor.run {
+            geo = result
+            geoBusy = false
+        }
+    }
+
+    private func fetchHostProbes() async {
+        let hostProbes = await PublicEgressDiagnostics.probeAllHosts { index, probe in
+            Task { @MainActor in
+                probes[index] = probe
+                probesReady.insert(index)
+            }
+        }
+        await MainActor.run {
+            probes = hostProbes
+        }
+    }
 }
 
 #if os(iOS)

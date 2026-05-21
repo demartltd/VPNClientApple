@@ -8,4 +8,4 @@
 python ../demar_vpn/scripts/build_xray_ios_xcframework.py
 ```
 
-Geo и macOS xray: `python scripts/xray-download-auto.py` → `ios/Shared/xray/`, `macos/xray/`.
+Geo и macOS xray: `python3 scripts/xray-download-auto.py` → `ios/Shared/xray/`, `macos/xray_macos/`.

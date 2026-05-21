@@ -1,9 +1,16 @@
 import SwiftUI
 
 #if os(iOS)
-private let snackBarChromeInset: CGFloat = 49
+private enum SnackBarLayout {
+    /// UITabBar standard height — keeps the toast above the tab bar chrome.
+    static let tabBarClearance: CGFloat = 32
+    static let spacingAboveTabBar: CGFloat = 8
+}
 #else
-private let snackBarChromeInset: CGFloat = 0
+private enum SnackBarLayout {
+    static let tabBarClearance: CGFloat = 0
+    static let spacingAboveTabBar: CGFloat = 16
+}
 #endif
 
 enum DemarSnackKind: CaseIterable {
@@ -75,7 +82,12 @@ struct DemarSnackBarModifier: ViewModifier {
                         controller.dismiss()
                     }
                     .padding(.horizontal, 16)
-                    .padding(.bottom, geo.safeAreaInsets.bottom + snackBarChromeInset + 16)
+                    .padding(
+                        .bottom,
+                        geo.safeAreaInsets.bottom
+                            + SnackBarLayout.tabBarClearance
+                            + SnackBarLayout.spacingAboveTabBar
+                    )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .zIndex(1)
                 }

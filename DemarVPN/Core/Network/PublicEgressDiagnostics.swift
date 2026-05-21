@@ -1,0 +1,322 @@
+import Foundation
+import Network
+
+struct PublicEgressInfo: Sendable {
+    let ip: String
+    let country: String
+}
+
+struct EgressHostProbe: Sendable {
+    let tcpMs: Int
+    let httpsMs: Int
+}
+
+enum PublicEgressDiagnostics {
+    static let probeHosts = [
+        "github.com", "bing.com", "ya.ru", "vk.ru", "x.com", "bbc.com", "www.gov.cn",
+    ]
+    static let probeTimeout: TimeInterval = 2.5
+    private static let geoTotalBudget: TimeInterval = 3
+
+    static let fallback = PublicEgressInfo(ip: "localhost", country: "None 🏳️")
+
+    private static let session: URLSession = {
+        let cfg = URLSessionConfiguration.ephemeral
+        cfg.waitsForConnectivity = false
+        cfg.timeoutIntervalForRequest = probeTimeout
+        cfg.timeoutIntervalForResource = probeTimeout
+        return URLSession(configuration: cfg)
+    }()
+
+    static func egressHostProbeLabel(_ probe: EgressHostProbe) -> String {
+        let t = probe.tcpMs > 0 ? "\(probe.tcpMs)" : "0"
+        let h = probe.httpsMs > 0 ? "\(probe.httpsMs)" : "0"
+        return "TCP \(t) · HTTPS \(h)"
+    }
+
+    static func censorPublicIPv4ForDisplay(_ ip: String) -> String {
+        if ip == "localhost" || ip == "127.0.0.1" { return "localhost" }
+        let parts = ip.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 4 else { return "**.***" }
+        return "**.***.\(parts[2]).\(parts[3])"
+    }
+
+    static func fetchPublicEgressGeo() async -> PublicEgressInfo {
+        await withTaskGroup(of: PublicEgressInfo?.self) { group in
+            group.addTask { await fetchIpWhoIs(url: "https://ipwho.is/") }
+            group.addTask { await fetchCloudflareTrace() }
+            group.addTask { await fetchIpApiCo() }
+            group.addTask { await fetchPublicIPv4Info() }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(geoTotalBudget))
+                return nil
+            }
+            for await candidate in group {
+                if let info = candidate, isIPv4(info.ip) {
+                    group.cancelAll()
+                    return info
+                }
+            }
+            return fallback
+        }
+    }
+
+    static func probeAllHosts(
+        onHostReady: (@Sendable (Int, EgressHostProbe) -> Void)? = nil
+    ) async -> [EgressHostProbe] {
+        await withTaskGroup(of: (Int, EgressHostProbe).self, returning: [EgressHostProbe].self) { group in
+            for (index, host) in probeHosts.enumerated() {
+                group.addTask {
+                    let probe = await probeEgressHost(host)
+                    onHostReady?(index, probe)
+                    return (index, probe)
+                }
+            }
+            var ordered = Array(repeating: EgressHostProbe(tcpMs: 0, httpsMs: 0), count: probeHosts.count)
+            for await (index, probe) in group {
+                ordered[index] = probe
+            }
+            return ordered
+        }
+    }
+
+    static func probeEgressHost(_ host: String) async -> EgressHostProbe {
+        let zero = EgressHostProbe(tcpMs: 0, httpsMs: 0)
+        return await withTaskGroup(of: EgressHostProbe.self) { group in
+            group.addTask {
+                async let tcp = tcp443Ms(host)
+                async let https = httpsSiteMs(host)
+                return EgressHostProbe(tcpMs: await tcp, httpsMs: await https)
+            }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(probeTimeout))
+                return zero
+            }
+            let result = await group.next() ?? zero
+            group.cancelAll()
+            return result
+        }
+    }
+
+    // MARK: - Probes
+
+    private static func tcp443Ms(_ host: String) async -> Int {
+        await withCheckedContinuation { cont in
+            let started = Date()
+            let conn = NWConnection(host: .init(host), port: 443, using: .tcp)
+            let gate = NSLock()
+            var done = false
+            let finish: @Sendable (Int) -> Void = { ms in
+                gate.lock()
+                defer { gate.unlock() }
+                guard !done else { return }
+                done = true
+                conn.cancel()
+                cont.resume(returning: ms)
+            }
+            conn.stateUpdateHandler = { state in
+                switch state {
+                case .ready:
+                    finish(max(0, Int(Date().timeIntervalSince(started) * 1000)))
+                case .failed, .cancelled:
+                    finish(0)
+                default:
+                    break
+                }
+            }
+            conn.start(queue: .global(qos: .utility))
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + probeTimeout) {
+                finish(0)
+            }
+        }
+    }
+
+    private static func httpsSiteMs(_ host: String) async -> Int {
+        await withCheckedContinuation { cont in
+            guard let url = URL(string: "https://\(host)/") else {
+                cont.resume(returning: 0)
+                return
+            }
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.timeoutInterval = probeTimeout
+            let started = Date()
+            let gate = NSLock()
+            var done = false
+            let finish: @Sendable (Int) -> Void = { ms in
+                gate.lock()
+                defer { gate.unlock() }
+                guard !done else { return }
+                done = true
+                cont.resume(returning: ms)
+            }
+            let task = session.dataTask(with: request) { _, response, _ in
+                guard let http = response as? HTTPURLResponse, http.statusCode >= 100 else {
+                    finish(0)
+                    return
+                }
+                finish(max(0, Int(Date().timeIntervalSince(started) * 1000)))
+            }
+            task.resume()
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + probeTimeout) {
+                task.cancel()
+                finish(0)
+            }
+        }
+    }
+
+    // MARK: - Geo
+
+    private static func fetchPublicIPv4Info() async -> PublicEgressInfo? {
+        if let ip = await raceFirstIPv4(from: [
+            "https://api.ipify.org?format=json",
+            "https://api64.ipify.org?format=json",
+            "https://ipv4.icanhazip.com/",
+            "https://ifconfig.me/ip",
+            "https://api.ip.sb/ip",
+        ]) {
+            if let byIp = await fetchIpWhoIs(url: "https://ipwho.is/\(ip)") { return byIp }
+            return PublicEgressInfo(ip: ip, country: fallback.country)
+        }
+        return nil
+    }
+
+    private static func raceFirstIPv4(from urls: [String]) async -> String? {
+        await withTaskGroup(of: String?.self) { group in
+            for url in urls {
+                group.addTask {
+                    if url.contains("format=json") {
+                        guard let body = await httpGetBody(url: url),
+                              let data = body.data(using: .utf8),
+                              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                              let ip = (obj["ip"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                              isIPv4(ip)
+                        else { return nil }
+                        return ip
+                    }
+                    guard let body = await httpGetBody(url: url)?
+                        .trimmingCharacters(in: .whitespacesAndNewlines),
+                        isIPv4(body)
+                    else { return nil }
+                    return body
+                }
+            }
+            for await ip in group {
+                if let ip {
+                    group.cancelAll()
+                    return ip
+                }
+            }
+            return nil
+        }
+    }
+
+    private static func fetchIpWhoIs(url: String) async -> PublicEgressInfo? {
+        guard let body = await httpGetBody(url: url),
+              let data = body.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let success = obj["success"] as? Bool, success,
+              let ip = (obj["ip"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              isIPv4(ip),
+              let country = (obj["country"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !country.isEmpty
+        else { return nil }
+        let code = (obj["country_code"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return PublicEgressInfo(ip: ip, country: countryWithFlag(country, code: code))
+    }
+
+    private static func fetchIpApiCo() async -> PublicEgressInfo? {
+        guard let body = await httpGetBody(url: "https://ipapi.co/json/"),
+              let data = body.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let ip = (obj["ip"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              isIPv4(ip),
+              let country = (obj["country_name"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !country.isEmpty
+        else { return nil }
+        let code = (obj["country_code"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return PublicEgressInfo(ip: ip, country: countryWithFlag(country, code: code))
+    }
+
+    private static func fetchCloudflareTrace() async -> PublicEgressInfo? {
+        guard let body = await httpGetBody(url: "https://www.cloudflare.com/cdn-cgi/trace") else {
+            return nil
+        }
+        var ip: String?
+        var loc: String?
+        for line in body.split(whereSeparator: \.isNewline) {
+            let parts = line.split(separator: "=", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { continue }
+            let key = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+            let value = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+            if key == "ip", isIPv4(value) { ip = value }
+            if key == "loc", value.count == 2 { loc = value.uppercased() }
+        }
+        guard let ip else { return nil }
+        if let loc {
+            return PublicEgressInfo(ip: ip, country: countryWithFlag(loc, code: loc))
+        }
+        return PublicEgressInfo(ip: ip, country: fallback.country)
+    }
+
+    private static func httpGetBody(url: String) async -> String? {
+        await withTimeout(seconds: probeTimeout) { () -> String? in
+            guard let endpoint = URL(string: url) else { return nil }
+            var request = URLRequest(url: endpoint)
+            request.httpMethod = "GET"
+            request.timeoutInterval = probeTimeout
+            request.setValue("application/json,text/plain,*/*", forHTTPHeaderField: "Accept")
+            do {
+                let (data, response) = try await session.data(for: request)
+                guard let http = response as? HTTPURLResponse, http.statusCode == 200,
+                      let text = String(data: data, encoding: .utf8)
+                else { return nil }
+                return text
+            } catch {
+                return nil
+            }
+        }
+    }
+
+    private static func withTimeout<T: Sendable>(
+        seconds: TimeInterval,
+        operation: @escaping @Sendable () async -> T?
+    ) async -> T? {
+        await withTaskGroup(of: T?.self) { group in
+            group.addTask { await operation() }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(seconds))
+                return nil
+            }
+            defer { group.cancelAll() }
+            return await group.next() ?? nil
+        }
+    }
+
+    private static func isIPv4(_ value: String) -> Bool {
+        let parts = value.split(separator: ".")
+        guard parts.count == 4 else { return false }
+        for part in parts {
+            guard let n = Int(part), (0...255).contains(n) else { return false }
+        }
+        return true
+    }
+
+    private static func countryWithFlag(_ country: String, code: String) -> String {
+        let flag = flagEmoji(from: code)
+        return flag.isEmpty ? country : "\(country) \(flag)"
+    }
+
+    private static func flagEmoji(from countryCode: String) -> String {
+        let upper = countryCode.uppercased()
+        guard upper.count == 2 else { return "" }
+        var scalars = String.UnicodeScalarView()
+        for scalar in upper.unicodeScalars {
+            guard scalar.value >= 65, scalar.value <= 90,
+                  let regional = UnicodeScalar(127397 + scalar.value)
+            else { return "" }
+            scalars.append(regional)
+        }
+        return String(scalars)
+    }
+}

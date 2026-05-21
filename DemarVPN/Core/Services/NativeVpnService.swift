@@ -1,16 +1,21 @@
-#if os(iOS)
+#if os(iOS) || os(macOS)
 import Foundation
 
-final class IosVpnService: VpnControlling, @unchecked Sendable {
+final class NativeVpnService: VpnControlling, @unchecked Sendable {
     private let controller = VpnTunnelController.shared
 
     func connect(server: ServerProfile) async throws {
         let profile = try VlessUriParser.parse(server.uri)
         let tunSuffix = Int(Date().timeIntervalSince1970 * 1_000_000) & 0xFFFFFF
+        #if os(macOS)
+        let outboundIface: String? = nil
+        #else
+        let outboundIface: String? = "auto"
+        #endif
         let configJson = try XrayConfigBuilder.buildTunConfigJson(
             profile: profile,
             tunName: "utun\(tunSuffix)",
-            autoOutboundsInterface: "auto"
+            autoOutboundsInterface: outboundIface
         )
         let sessionId = Self.newSessionId()
 

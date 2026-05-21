@@ -10,13 +10,12 @@ final class AppState {
     var downloadBps: Double = 0
     var uploadBps: Double = 0
 
-    var appVersionLabel: String = "1.0.0"
+    var appVersionLabel: String = "1.0.1"
     var xrayVersionToken: String = BundledXrayVersion.label
 
     private let vpn: VpnControlling
-    private var throughputTask: Task<Void, Never>?
 
-    #if os(iOS)
+    #if os(iOS) || os(macOS)
     private var statusMonitor: VpnStatusMonitor?
     #endif
 
@@ -27,8 +26,8 @@ final class AppState {
             appVersionLabel = bundleVersion
         }
 
-        #if os(iOS)
-        self.vpn = vpn ?? IosVpnService()
+        #if os(iOS) || os(macOS)
+        self.vpn = vpn ?? NativeVpnService()
         xrayVersionToken = BundledXrayVersion.label
         let monitor = VpnStatusMonitor()
         monitor.onStatusChange = { [weak self] state in
@@ -36,8 +35,14 @@ final class AppState {
         }
         statusMonitor = monitor
         monitor.start()
-        #else
-        self.vpn = vpn ?? MockVpnControlling()
+        #if os(macOS)
+        for line in MacVpnDiag.startupLines() {
+            AppLog.shared.append("[app] \(line)")
+        }
+        if case .disabled = MacVpnDiag.pluginkitStatus() {
+            AppLog.shared.append("[app] packet-tunnel: disabled — enable Demar VPN in System Settings → Login Items & Extensions → Network Extensions")
+        }
+        #endif
         #endif
     }
 
@@ -52,26 +57,40 @@ final class AppState {
 
     func connect() async {
         guard let server = selectedServer else { return }
+        if case .connecting = vpnState { return }
         guard !vpnState.isBusy else { return }
 
-        vpnState = .connecting
-        downloadBps = 0
-        uploadBps = 0
-        stopThroughputMock()
+        if case .disconnected = vpnState {
+            vpnState = .connecting
+            downloadBps = 0
+            uploadBps = 0
+        }
         AppLog.shared.append("[ui] connect → \(server.displayName)")
 
+        #if os(macOS)
+        if let block = MacVpnDiag.connectBlockReason() {
+            if MacVpnDiag.pluginkitStatus().shouldOpenSystemSettings {
+                MacVpnDiag.openNetworkExtensionsSettings()
+            }
+            vpnState = .error(message: block)
+            AppLog.shared.append("[vpn] connect blocked: \(block)")
+            return
+        }
+        if MacVpnDiag.consumeVPNProfileResetFlag() {
+            AppLog.shared.append("[vpn] host bundle changed — resetting VPN profile")
+            await resetDemarVPNProfileForNewHostBundle()
+        }
+        #endif
+
+        statusMonitor?.beginConnectAttempt()
         do {
             try await vpn.connect(server: server)
-            #if os(iOS)
-            statusMonitor?.refreshStatus(reason: "connect", force: true)
-            #elseif os(macOS)
-            if !Task.isCancelled {
-                vpnState = .connected
-                AppLog.shared.append("[mock] VPN connected")
-                startThroughputMock()
+            for line in VpnSharedStore.drainPendingUiDiagLinesAndClear() where !line.isEmpty {
+                AppLog.shared.append(line)
             }
-            #endif
+            statusMonitor?.refreshStatus(reason: "connect", force: true)
         } catch {
+            statusMonitor?.endConnectAttempt()
             if Task.isCancelled { return }
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             vpnState = .error(message: message)
@@ -82,22 +101,17 @@ final class AppState {
     func disconnect() async {
         guard !vpnState.isBusy else { return }
 
-        vpnState = .disconnecting
-        stopThroughputMock()
+        if vpnState.isConnected {
+            vpnState = .disconnecting
+            downloadBps = 0
+            uploadBps = 0
+        }
         AppLog.shared.append("[ui] disconnect")
+        statusMonitor?.endConnectAttempt()
 
         do {
             try await vpn.disconnect()
-            #if os(iOS)
             statusMonitor?.refreshStatus(reason: "disconnect", force: true)
-            #elseif os(macOS)
-            if !Task.isCancelled {
-                vpnState = .disconnected
-                downloadBps = 0
-                uploadBps = 0
-                AppLog.shared.append("[mock] VPN disconnected")
-            }
-            #endif
         } catch {
             if Task.isCancelled { return }
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -114,8 +128,19 @@ final class AppState {
         }
     }
 
-    #if os(iOS)
+    #if os(macOS)
+    private func resetDemarVPNProfileForNewHostBundle() async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            VpnTunnelController.shared.removeAllDemarVPNProfiles {
+                continuation.resume()
+            }
+        }
+    }
+    #endif
+
+    #if os(iOS) || os(macOS)
     func syncVpnStatusFromSystem() {
+        statusMonitor?.importForegroundDiagnostics()
         statusMonitor?.refreshStatus(reason: "sync", force: true)
     }
 
@@ -123,35 +148,14 @@ final class AppState {
         vpnState = state
         switch state {
         case .connected:
-            startThroughputMock()
+            break
         case .disconnected, .error:
-            stopThroughputMock()
             downloadBps = 0
             uploadBps = 0
         case .connecting, .disconnecting:
-            stopThroughputMock()
             downloadBps = 0
             uploadBps = 0
         }
     }
     #endif
-
-    private func startThroughputMock() {
-        #if os(macOS)
-        stopThroughputMock()
-        throughputTask = Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
-                guard let self, !Task.isCancelled, self.vpnState.isConnected else { continue }
-                self.downloadBps = MockVpnService.mockDownloadBps
-                self.uploadBps = MockVpnService.mockUploadBps
-            }
-        }
-        #endif
-    }
-
-    private func stopThroughputMock() {
-        throughputTask?.cancel()
-        throughputTask = nil
-    }
 }

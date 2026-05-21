@@ -15,11 +15,11 @@
 		B10000010000000000000006 /* ServerProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000006 /* ServerProfile.swift */; };
 		B10000010000000000000007 /* TestServers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000007 /* TestServers.swift */; };
 		B10000010000000000000008 /* AppLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000008 /* AppLog.swift */; };
-		B10000010000000000000009 /* MockVpnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000009 /* MockVpnService.swift */; };
 		B1000001000000000000000A /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000A /* AppState.swift */; };
 		B1000001000000000000000B /* ThroughputFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000B /* ThroughputFormatter.swift */; };
 		B1000001000000000000000C /* VpnMainToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000C /* VpnMainToggle.swift */; };
 		B1000001000000000000000D /* SectionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000D /* SectionCard.swift */; };
+		B10000010000000000000032 /* DiagnosticsJournalTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000032 /* DiagnosticsJournalTextView.swift */; };
 		B1000001000000000000000E /* SettingsActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000E /* SettingsActionButton.swift */; };
 		B1000001000000000000000F /* SettingsLinksStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000F /* SettingsLinksStrip.swift */; };
 		B10000010000000000000010 /* DemarSnackBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000010 /* DemarSnackBar.swift */; };
@@ -33,33 +33,38 @@
 		B10000010000000000000018 /* FontAwesomeBrands.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000001B /* FontAwesomeBrands.swift */; };
 		B1000001000000000000001A /* fa-brands-400.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000001C /* fa-brands-400.ttf */; };
 		B1000001000000000000001B /* PlatformServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000001D /* PlatformServices.swift */; };
+		B10000010000000000000031 /* MacVpnDiag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002E /* MacVpnDiag.swift */; };
 		B1000001000000000000001C /* DemarNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000001F /* DemarNavigation.swift */; };
 		B1000001000000000000001D /* AppPlatform.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000020 /* AppPlatform.swift */; };
 		B1000001000000000000001E /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000021 /* DeviceIdentity.swift */; };
 		B10000010000000000000021 /* IDFATracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000024 /* IDFATracking.swift */; };
 		B10000010000000000000020 /* DemarKvRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000023 /* DemarKvRow.swift */; };
+		B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000035 /* PublicEgressDiagnostics.swift */; };
 
 		B10000010000000000000022 /* xray in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000025 /* xray */; platformFilter = ios; };
-		B10000010000000000000023 /* VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* VpnAppGroup.swift */; platformFilter = ios; };
-		B10000010000000000000024 /* VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* VpnSharedStore.swift */; platformFilter = ios; };
-		B10000010000000000000025 /* VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* VpnTunnelController.swift */; platformFilter = ios; };
-		B10000010000000000000026 /* VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* VpnControlConstants.swift */; platformFilter = ios; };
+		B10000010000000000000030 /* xray_macos in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000030 /* xray-macos */; platformFilter = macos; };
+		B10000010000000000000023 /* VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* VpnAppGroup.swift */; };
+		B10000010000000000000024 /* VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* VpnSharedStore.swift */; };
+		B10000010000000000000025 /* VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* VpnTunnelController.swift */; };
+		B10000010000000000000026 /* VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* VpnControlConstants.swift */; };
 		B10000010000000000000027 /* VlessRealityProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000026 /* VlessRealityProfile.swift */; };
 		B10000010000000000000028 /* VlessUriParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000027 /* VlessUriParser.swift */; };
 		B10000010000000000000029 /* XrayConfigBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000028 /* XrayConfigBuilder.swift */; };
 		B1000001000000000000002A /* VpnControlling.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000029 /* VpnControlling.swift */; };
-		B1000001000000000000002B /* IosVpnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002A /* IosVpnService.swift */; platformFilter = ios; };
-		B1000001000000000000002C /* VpnStatusMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002B /* VpnStatusMonitor.swift */; platformFilter = ios; };
-		B1000001000000000000002D /* MockVpnControlling.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002C /* MockVpnControlling.swift */; platformFilter = macos; };
+		B10000010000000000000034 /* NativeVpnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000034 /* NativeVpnService.swift */; };
+		B1000001000000000000002C /* VpnStatusMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002B /* VpnStatusMonitor.swift */; };
 		B1000001000000000000002E /* BundledXrayVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002D /* BundledXrayVersion.swift */; };
-		E20000011CF9000F007C117D /* DemarPacketTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E20000021CF9000F007C117D /* DemarPacketTunnel.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E20000011CF9000F007C117D /* DemarPacketTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E20000021CF9000F007C117D /* DemarPacketTunnel.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E20000031CF9000F007C117D /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000041CF9000F007C117D /* PacketTunnelProvider.swift */; };
 		E20000051CF9000F007C117D /* VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* VpnAppGroup.swift */; };
 		E20000061CF9000F007C117D /* VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* VpnSharedStore.swift */; };
 		E20000071CF9000F007C117D /* VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* VpnTunnelController.swift */; };
 		E20000081CF9000F007C117D /* VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* VpnControlConstants.swift */; };
-		E20000091CF9000F007C117D /* DemarXray.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E20001051CF9000F007C117D /* DemarXray.xcframework */; };
-		E200000A1CF9000F007C117D /* DemarXray.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E20001051CF9000F007C117D /* DemarXray.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		E20000091CF9000F007C117D /* DemarXray.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E20001051CF9000F007C117D /* DemarXray.xcframework */; platformFilter = ios; };
+		E200000A1CF9000F007C117D /* DemarXray.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E20001051CF9000F007C117D /* DemarXray.xcframework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		E20000121CF9000F007C117D /* MacXrayProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000111CF9000F007C117D /* MacXrayProcess.swift */; };
+		E20000141CF9000F007C117D /* TunnelLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000161CF9000F007C117D /* TunnelLifecycle.swift */; };
+		E20000131CF9000F007C117D /* xray_macos in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000030 /* xray-macos */; platformFilter = macos; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -71,11 +76,11 @@
 		F10000010000000000000006 /* ServerProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerProfile.swift; sourceTree = "<group>"; };
 		F10000010000000000000007 /* TestServers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestServers.swift; sourceTree = "<group>"; };
 		F10000010000000000000008 /* AppLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLog.swift; sourceTree = "<group>"; };
-		F10000010000000000000009 /* MockVpnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockVpnService.swift; sourceTree = "<group>"; };
 		F1000001000000000000000A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		F1000001000000000000000B /* ThroughputFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThroughputFormatter.swift; sourceTree = "<group>"; };
 		F1000001000000000000000C /* VpnMainToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnMainToggle.swift; sourceTree = "<group>"; };
 		F1000001000000000000000D /* SectionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionCard.swift; sourceTree = "<group>"; };
+		F10000010000000000000032 /* DiagnosticsJournalTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsJournalTextView.swift; sourceTree = "<group>"; };
 		F1000001000000000000000E /* SettingsActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsActionButton.swift; sourceTree = "<group>"; };
 		F1000001000000000000000F /* SettingsLinksStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsLinksStrip.swift; sourceTree = "<group>"; };
 		F10000010000000000000010 /* DemarSnackBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarSnackBar.swift; sourceTree = "<group>"; };
@@ -92,11 +97,13 @@
 		F1000001000000000000001B /* FontAwesomeBrands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontAwesomeBrands.swift; sourceTree = "<group>"; };
 		F1000001000000000000001C /* fa-brands-400.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "fa-brands-400.ttf"; sourceTree = "<group>"; };
 		F1000001000000000000001D /* PlatformServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformServices.swift; sourceTree = "<group>"; };
+		F1000001000000000000002E /* MacVpnDiag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacVpnDiag.swift; sourceTree = "<group>"; };
 		F1000001000000000000001E /* Info-macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-macOS.plist"; sourceTree = "<group>"; };
 		F1000001000000000000001F /* DemarNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarNavigation.swift; sourceTree = "<group>"; };
 		F10000010000000000000020 /* AppPlatform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPlatform.swift; sourceTree = "<group>"; };
 		F10000010000000000000021 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
 		F10000010000000000000023 /* DemarKvRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarKvRow.swift; sourceTree = "<group>"; };
+		F10000010000000000000035 /* PublicEgressDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicEgressDiagnostics.swift; sourceTree = "<group>"; };
 		F10000010000000000000024 /* IDFATracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFATracking.swift; sourceTree = "<group>"; };
 
 		F10000010000000000000025 /* xray */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ios/Shared/xray; sourceTree = SOURCE_ROOT; };
@@ -104,9 +111,11 @@
 		F10000010000000000000027 /* VlessUriParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VlessUriParser.swift; sourceTree = "<group>"; };
 		F10000010000000000000028 /* XrayConfigBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XrayConfigBuilder.swift; sourceTree = "<group>"; };
 		F10000010000000000000029 /* VpnControlling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnControlling.swift; sourceTree = "<group>"; };
-		F1000001000000000000002A /* IosVpnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosVpnService.swift; sourceTree = "<group>"; };
 		F1000001000000000000002B /* VpnStatusMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnStatusMonitor.swift; sourceTree = "<group>"; };
-		F1000001000000000000002C /* MockVpnControlling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockVpnControlling.swift; sourceTree = "<group>"; };
+		F10000010000000000000030 /* xray-macos */ = {isa = PBXFileReference; lastKnownFileType = folder; path = macos/xray_macos; sourceTree = SOURCE_ROOT; };
+		F10000010000000000000034 /* NativeVpnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVpnService.swift; sourceTree = "<group>"; };
+		E20000111CF9000F007C117D /* MacXrayProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/MacXrayProcess.swift; sourceTree = SOURCE_ROOT; };
+		E20000161CF9000F007C117D /* TunnelLifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/TunnelLifecycle.swift; sourceTree = SOURCE_ROOT; };
 		F1000001000000000000002D /* BundledXrayVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledXrayVersion.swift; sourceTree = "<group>"; };
 		E20000021CF9000F007C117D /* DemarPacketTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DemarPacketTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E20000041CF9000F007C117D /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/PacketTunnelProvider.swift; sourceTree = SOURCE_ROOT; };
@@ -178,6 +187,7 @@
 			children = (
 				G10000010000000000000002 /* DemarVPN */,
 				G20000011CF9000F007C117D /* ios */,
+				G10000010000000000000012 /* macos */,
 				G10000010000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -214,6 +224,7 @@
 				G10000010000000000000007 /* Theme */,
 				G10000010000000000000008 /* Models */,
 				G10000010000000000000011 /* Vpn */,
+				G10000010000000000000013 /* Network */,
 				G10000010000000000000009 /* Services */,
 				G1000001000000000000000A /* Utilities */,
 				G1000001000000000000000E /* Icons */,
@@ -227,6 +238,7 @@
 				F1000001000000000000001A /* DemarCardRow.swift */,
 				F1000001000000000000000C /* VpnMainToggle.swift */,
 				F1000001000000000000000D /* SectionCard.swift */,
+				F10000010000000000000032 /* DiagnosticsJournalTextView.swift */,
 				F10000010000000000000023 /* DemarKvRow.swift */,
 				F1000001000000000000000E /* SettingsActionButton.swift */,
 				F1000001000000000000000F /* SettingsLinksStrip.swift */,
@@ -264,16 +276,22 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		G10000010000000000000013 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				F10000010000000000000035 /* PublicEgressDiagnostics.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
 		G10000010000000000000009 /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				F10000010000000000000008 /* AppLog.swift */,
-				F10000010000000000000009 /* MockVpnService.swift */,
 				F1000001000000000000000A /* AppState.swift */,
 				F10000010000000000000029 /* VpnControlling.swift */,
-				F1000001000000000000002A /* IosVpnService.swift */,
+				F10000010000000000000034 /* NativeVpnService.swift */,
 				F1000001000000000000002B /* VpnStatusMonitor.swift */,
-				F1000001000000000000002C /* MockVpnControlling.swift */,
 				F10000010000000000000021 /* DeviceIdentity.swift */,
 				F10000010000000000000024 /* IDFATracking.swift */,
 			);
@@ -285,6 +303,7 @@
 			children = (
 				F1000001000000000000000B /* ThroughputFormatter.swift */,
 				F1000001000000000000001D /* PlatformServices.swift */,
+				F1000001000000000000002E /* MacVpnDiag.swift */,
 				F1000001000000000000001F /* DemarNavigation.swift */,
 				F10000010000000000000020 /* AppPlatform.swift */,
 				F1000001000000000000002D /* BundledXrayVersion.swift */,
@@ -381,6 +400,8 @@
 				E200000B1CF9000F007C117D /* DemarPacketTunnel.entitlements */,
 				E200000C1CF9000F007C117D /* Info.plist */,
 				E20000041CF9000F007C117D /* PacketTunnelProvider.swift */,
+				E20000111CF9000F007C117D /* MacXrayProcess.swift */,
+				E20000161CF9000F007C117D /* TunnelLifecycle.swift */,
 			);
 			path = DemarPacketTunnel;
 			sourceTree = "<group>";
@@ -391,6 +412,14 @@
 				E20001051CF9000F007C117D /* DemarXray.xcframework */,
 			);
 			path = Frameworks;
+			sourceTree = "<group>";
+		};
+		G10000010000000000000012 /* macos */ = {
+			isa = PBXGroup;
+			children = (
+				F10000010000000000000030 /* xray-macos */,
+			);
+			path = macos;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -422,6 +451,7 @@
 			buildPhases = (
 				S20000011CF9000F007C117D /* Sources */,
 				C20000011CF9000F007C117D /* Frameworks */,
+				R20000011CF9000F007C117D /* Resources */,
 				E200000F1CF9000F007C117D /* Embed Frameworks */,
 			);
 			buildRules = (
@@ -480,6 +510,15 @@
 				B10000010000000000000016 /* Assets.xcassets in Resources */,
 				B1000001000000000000001A /* fa-brands-400.ttf in Resources */,
 				B10000010000000000000022 /* xray in Resources */,
+				B10000010000000000000030 /* xray_macos in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		R20000011CF9000F007C117D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E20000131CF9000F007C117D /* xray_macos in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -500,13 +539,14 @@
 				B10000010000000000000006 /* ServerProfile.swift in Sources */,
 				B10000010000000000000007 /* TestServers.swift in Sources */,
 				B10000010000000000000008 /* AppLog.swift in Sources */,
-				B10000010000000000000009 /* MockVpnService.swift in Sources */,
 				B1000001000000000000000A /* AppState.swift in Sources */,
 				B1000001000000000000000B /* ThroughputFormatter.swift in Sources */,
 				B1000001000000000000001B /* PlatformServices.swift in Sources */,
+				B10000010000000000000031 /* MacVpnDiag.swift in Sources */,
 				B1000001000000000000001C /* DemarNavigation.swift in Sources */,
 				B1000001000000000000000C /* VpnMainToggle.swift in Sources */,
 				B1000001000000000000000D /* SectionCard.swift in Sources */,
+				B10000010000000000000032 /* DiagnosticsJournalTextView.swift in Sources */,
 				B1000001000000000000000E /* SettingsActionButton.swift in Sources */,
 				B1000001000000000000000F /* SettingsLinksStrip.swift in Sources */,
 				B10000010000000000000010 /* DemarSnackBar.swift in Sources */,
@@ -527,10 +567,10 @@
 				B10000010000000000000028 /* VlessUriParser.swift in Sources */,
 				B10000010000000000000029 /* XrayConfigBuilder.swift in Sources */,
 				B1000001000000000000002A /* VpnControlling.swift in Sources */,
-				B1000001000000000000002B /* IosVpnService.swift in Sources */,
+				B10000010000000000000034 /* NativeVpnService.swift in Sources */,
 				B1000001000000000000002C /* VpnStatusMonitor.swift in Sources */,
-				B1000001000000000000002D /* MockVpnControlling.swift in Sources */,
 				B1000001000000000000002E /* BundledXrayVersion.swift in Sources */,
+				B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -540,6 +580,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				E20000031CF9000F007C117D /* PacketTunnelProvider.swift in Sources */,
+				E20000141CF9000F007C117D /* TunnelLifecycle.swift in Sources */,
+				E20000121CF9000F007C117D /* MacXrayProcess.swift in Sources */,
 				E20000051CF9000F007C117D /* VpnAppGroup.swift in Sources */,
 				E20000061CF9000F007C117D /* VpnSharedStore.swift in Sources */,
 				E20000071CF9000F007C117D /* VpnTunnelController.swift in Sources */,
@@ -553,7 +595,6 @@
 /* Begin PBXTargetDependency section */
 		E20000101CF9000F007C117D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			platformFilter = ios;
 			target = T20000011CF9000F007C117D /* DemarPacketTunnel */;
 			targetProxy = E200000D1CF9000F007C117D /* PBXContainerItemProxy */;
 		};
@@ -673,10 +714,11 @@
 			buildSettings = {
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DemarVPN/Info.plist;
 				"INFOPLIST_FILE[sdk=macosx*]" = DemarVPN/Info-macOS.plist;
@@ -686,13 +728,16 @@
 					"@executable_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.demar.vpn;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
+				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 			};
 			name = Debug;
 		};
@@ -701,10 +746,11 @@
 			buildSettings = {
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DemarVPN/Info.plist;
 				"INFOPLIST_FILE[sdk=macosx*]" = DemarVPN/Info-macOS.plist;
@@ -714,13 +760,16 @@
 					"@executable_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.demar.vpn;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
+				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 			};
 			name = Release;
 		};
@@ -752,9 +801,13 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 3268G7233C;
-				FRAMEWORK_SEARCH_PATHS = (
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ios/Frameworks",
+				);
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]" = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ios/Frameworks",
 				);
@@ -765,21 +818,35 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = (
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.1;
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"$(inherited)",
 					"-framework",
 					DemarXray,
 					"-lresolv",
 				);
+				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
+					"$(inherited)",
+					"-framework",
+					DemarXray,
+					"-lresolv",
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"$(inherited)",
+					"-lresolv",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.demar.vpn.packet-tunnel";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
+				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 			};
 			name = Debug;
 		};
@@ -789,9 +856,13 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 3268G7233C;
-				FRAMEWORK_SEARCH_PATHS = (
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ios/Frameworks",
+				);
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]" = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ios/Frameworks",
 				);
@@ -802,21 +873,35 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = (
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.1;
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"$(inherited)",
 					"-framework",
 					DemarXray,
 					"-lresolv",
 				);
+				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
+					"$(inherited)",
+					"-framework",
+					DemarXray,
+					"-lresolv",
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"$(inherited)",
+					"-lresolv",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.demar.vpn.packet-tunnel";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
+				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 			};
 			name = Release;
 		};

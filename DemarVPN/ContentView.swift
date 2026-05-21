@@ -40,6 +40,10 @@ struct ContentView: View {
         }
         .tint(Color.demarPrimary)
         #if os(iOS)
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            appState.syncVpnStatusFromSystem()
+        }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
             appState.syncVpnStatusFromSystem()

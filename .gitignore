@@ -7,9 +7,13 @@ xcuserdata/
 
 # Xray: geo, macOS binary, bundled_version (scripts/xray-download-auto.py)
 **/xray/
+**/xray_macos/
 
 # DemarXray gomobile binaries only (../demar_vpn/scripts/build_xray_ios_xcframework.py)
 **/DemarXray.framework/DemarXray
 
-# Local tooling scripts
-scripts/
+# Local tooling scripts (tracked: xray downloader + macOS build)
+scripts/*
+!scripts/xray-download-auto.py
+!scripts/build-macos.ps1
+!scripts/build-macos.local.ps1.example
