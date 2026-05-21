@@ -101,22 +101,13 @@ enum PublicEgressDiagnostics {
     // MARK: - Probes
 
     private static func tcp443Ms(_ host: String) async -> Int {
-        await withCheckedContinuation { cont in
+        await probeMs { finish in
             let started = Date()
             let conn = NWConnection(host: .init(host), port: 443, using: .tcp)
-            let gate = NSLock()
-            var done = false
-            let finish: @Sendable (Int) -> Void = { ms in
-                gate.lock()
-                defer { gate.unlock() }
-                guard !done else { return }
-                done = true
-                conn.cancel()
-                cont.resume(returning: ms)
-            }
             conn.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
+                    conn.cancel()
                     finish(max(0, Int(Date().timeIntervalSince(started) * 1000)))
                 case .failed, .cancelled:
                     finish(0)
@@ -125,41 +116,35 @@ enum PublicEgressDiagnostics {
                 }
             }
             conn.start(queue: .global(qos: .utility))
-            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + probeTimeout) {
-                finish(0)
-            }
         }
     }
 
     private static func httpsSiteMs(_ host: String) async -> Int {
+        guard let url = URL(string: "https://\(host)/") else { return 0 }
+        let started = Date()
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = probeTimeout
+        do {
+            let (_, response) = try await session.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode >= 100 else { return 0 }
+            return max(0, Int(Date().timeIntervalSince(started) * 1000))
+        } catch {
+            return 0
+        }
+    }
+
+    private static func probeMs(
+        _ start: @escaping @Sendable (@escaping @Sendable (Int) -> Void) -> Void
+    ) async -> Int {
         await withCheckedContinuation { cont in
-            guard let url = URL(string: "https://\(host)/") else {
-                cont.resume(returning: 0)
-                return
-            }
-            var request = URLRequest(url: url)
-            request.httpMethod = "GET"
-            request.timeoutInterval = probeTimeout
-            let started = Date()
-            let gate = NSLock()
-            var done = false
+            let gate = OnceGate()
             let finish: @Sendable (Int) -> Void = { ms in
-                gate.lock()
-                defer { gate.unlock() }
-                guard !done else { return }
-                done = true
+                guard gate.take() else { return }
                 cont.resume(returning: ms)
             }
-            let task = session.dataTask(with: request) { _, response, _ in
-                guard let http = response as? HTTPURLResponse, http.statusCode >= 100 else {
-                    finish(0)
-                    return
-                }
-                finish(max(0, Int(Date().timeIntervalSince(started) * 1000)))
-            }
-            task.resume()
+            start(finish)
             DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + probeTimeout) {
-                task.cancel()
                 finish(0)
             }
         }
@@ -318,5 +303,18 @@ enum PublicEgressDiagnostics {
             scalars.append(regional)
         }
         return String(scalars)
+    }
+}
+
+private final class OnceGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var taken = false
+
+    func take() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !taken else { return false }
+        taken = true
+        return true
     }
 }

@@ -19,7 +19,6 @@
 		B1000001000000000000000B /* ThroughputFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000B /* ThroughputFormatter.swift */; };
 		B1000001000000000000000C /* VpnMainToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000C /* VpnMainToggle.swift */; };
 		B1000001000000000000000D /* SectionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000D /* SectionCard.swift */; };
-		B10000010000000000000032 /* DiagnosticsJournalTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000032 /* DiagnosticsJournalTextView.swift */; };
 		B1000001000000000000000E /* SettingsActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000E /* SettingsActionButton.swift */; };
 		B1000001000000000000000F /* SettingsLinksStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000F /* SettingsLinksStrip.swift */; };
 		B10000010000000000000010 /* DemarSnackBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000010 /* DemarSnackBar.swift */; };
@@ -33,122 +32,52 @@
 		B10000010000000000000018 /* FontAwesomeBrands.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000001B /* FontAwesomeBrands.swift */; };
 		B1000001000000000000001A /* fa-brands-400.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000001C /* fa-brands-400.ttf */; };
 		B1000001000000000000001B /* PlatformServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000001D /* PlatformServices.swift */; };
-		B10000010000000000000031 /* MacVpnDiag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002E /* MacVpnDiag.swift */; };
 		B1000001000000000000001C /* DemarNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000001F /* DemarNavigation.swift */; };
 		B1000001000000000000001D /* AppPlatform.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000020 /* AppPlatform.swift */; };
 		B1000001000000000000001E /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000021 /* DeviceIdentity.swift */; };
-		B10000010000000000000021 /* IDFATracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000024 /* IDFATracking.swift */; };
 		B10000010000000000000020 /* DemarKvRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000023 /* DemarKvRow.swift */; };
-		B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000035 /* PublicEgressDiagnostics.swift */; };
-		B10000010000000000000036 /* DeviceTrafficTotals.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000036 /* DeviceTrafficTotals.swift */; };
-
-		B10000010000000000000022 /* xray in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000025 /* xray */; platformFilter = ios; };
-		B10000010000000000000030 /* xray_macos in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000030 /* xray-macos */; platformFilter = macos; };
-		B10000010000000000000023 /* VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* VpnAppGroup.swift */; };
-		B10000010000000000000024 /* VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* VpnSharedStore.swift */; };
-		B10000010000000000000025 /* VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* VpnTunnelController.swift */; };
-		B10000010000000000000038 /* VpnStatusSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001071CF9000F007C117D /* VpnStatusSignal.swift */; };
-		B10000010000000000000026 /* VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* VpnControlConstants.swift */; };
+		B10000010000000000000021 /* IDFATracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000024 /* IDFATracking.swift */; };
+		B10000010000000000000022 /* ios/Shared/xray in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000025 /* ios/Shared/xray */; platformFilter = ios; };
+		B10000010000000000000023 /* ios/Shared/VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */; };
+		B10000010000000000000024 /* ios/Shared/VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */; };
+		B10000010000000000000025 /* ios/Shared/VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */; };
+		B10000010000000000000026 /* ios/Shared/VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */; };
 		B10000010000000000000027 /* VlessRealityProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000026 /* VlessRealityProfile.swift */; };
 		B10000010000000000000028 /* VlessUriParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000027 /* VlessUriParser.swift */; };
 		B10000010000000000000029 /* XrayConfigBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000028 /* XrayConfigBuilder.swift */; };
 		B1000001000000000000002A /* VpnControlling.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000029 /* VpnControlling.swift */; };
-		B10000010000000000000034 /* NativeVpnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000034 /* NativeVpnService.swift */; };
 		B1000001000000000000002C /* VpnStatusMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002B /* VpnStatusMonitor.swift */; };
 		B1000001000000000000002E /* BundledXrayVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002D /* BundledXrayVersion.swift */; };
-		E20000011CF9000F007C117D /* DemarPacketTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E20000021CF9000F007C117D /* DemarPacketTunnel.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		E20000031CF9000F007C117D /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000041CF9000F007C117D /* PacketTunnelProvider.swift */; };
-		E20000051CF9000F007C117D /* VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* VpnAppGroup.swift */; };
-		E20000061CF9000F007C117D /* VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* VpnSharedStore.swift */; };
-		E20000071CF9000F007C117D /* VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* VpnTunnelController.swift */; };
-		E20001081CF9000F007C117D /* VpnStatusSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001071CF9000F007C117D /* VpnStatusSignal.swift */; };
-		E20000081CF9000F007C117D /* VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* VpnControlConstants.swift */; };
-		E20000091CF9000F007C117D /* DemarXray.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E20001051CF9000F007C117D /* DemarXray.xcframework */; platformFilter = ios; };
-		E200000A1CF9000F007C117D /* DemarXray.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E20001051CF9000F007C117D /* DemarXray.xcframework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		E20000121CF9000F007C117D /* MacXrayProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000111CF9000F007C117D /* MacXrayProcess.swift */; };
-		E20000141CF9000F007C117D /* TunnelLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000161CF9000F007C117D /* TunnelLifecycle.swift */; };
-		E20000131CF9000F007C117D /* xray_macos in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000030 /* xray-macos */; platformFilter = macos; };
-		B10000010000000000000037 /* VpnControlIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001061CF9000F007C117D /* VpnControlIntent.swift */; platformFilter = ios; };
+		B10000010000000000000030 /* macos/xray_macos in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000030 /* macos/xray_macos */; };
+		B10000010000000000000031 /* MacVpnDiag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002E /* MacVpnDiag.swift */; };
+		B10000010000000000000032 /* DiagnosticsJournalTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000032 /* DiagnosticsJournalTextView.swift */; };
+		B10000010000000000000034 /* NativeVpnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000034 /* NativeVpnService.swift */; };
+		B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000035 /* PublicEgressDiagnostics.swift */; };
+		B10000010000000000000036 /* DeviceTrafficTotals.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000036 /* DeviceTrafficTotals.swift */; };
+		B10000010000000000000037 /* ios/Shared/VpnControlIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */; platformFilter = ios; };
+		B10000010000000000000038 /* ios/Shared/VpnStatusSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */; };
 		C30000001CF9000F007C117D /* DemarControls.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E30000011CF9000F007C117D /* DemarControls.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		E30000081CF9000F007C117D /* DemarControlsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30000021CF9000F007C117D /* DemarControlsBundle.swift */; };
-		E30000111CF9000F007C117D /* VpnToggleControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30000031CF9000F007C117D /* VpnToggleControl.swift */; };
-		E30000121CF9000F007C117D /* VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* VpnAppGroup.swift */; };
-		E30000131CF9000F007C117D /* VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* VpnSharedStore.swift */; };
-		E30000141CF9000F007C117D /* VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* VpnTunnelController.swift */; };
-		E30000171CF9000F007C117D /* VpnStatusSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001071CF9000F007C117D /* VpnStatusSignal.swift */; };
-		E30000151CF9000F007C117D /* VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* VpnControlConstants.swift */; };
-		E30000161CF9000F007C117D /* VpnControlIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001061CF9000F007C117D /* VpnControlIntent.swift */; };
+		E20000011CF9000F007C117D /* DemarPacketTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E20000021CF9000F007C117D /* DemarPacketTunnel.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		E20000031CF9000F007C117D /* ios/DemarPacketTunnel/PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000041CF9000F007C117D /* ios/DemarPacketTunnel/PacketTunnelProvider.swift */; };
+		E20000051CF9000F007C117D /* ios/Shared/VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */; };
+		E20000061CF9000F007C117D /* ios/Shared/VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */; };
+		E20000071CF9000F007C117D /* ios/Shared/VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */; };
+		E20000081CF9000F007C117D /* ios/Shared/VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */; };
+		E20000091CF9000F007C117D /* ios/Frameworks/DemarXray.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E20001051CF9000F007C117D /* ios/Frameworks/DemarXray.xcframework */; platformFilter = ios; };
+		E200000A1CF9000F007C117D /* ios/Frameworks/DemarXray.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E20001051CF9000F007C117D /* ios/Frameworks/DemarXray.xcframework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		E20000121CF9000F007C117D /* ios/DemarPacketTunnel/MacXrayProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000111CF9000F007C117D /* ios/DemarPacketTunnel/MacXrayProcess.swift */; };
+		E20000131CF9000F007C117D /* macos/xray_macos in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000030 /* macos/xray_macos */; };
+		E20000141CF9000F007C117D /* ios/DemarPacketTunnel/TunnelLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000161CF9000F007C117D /* ios/DemarPacketTunnel/TunnelLifecycle.swift */; };
+		E20001081CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */; };
+		E30000081CF9000F007C117D /* ios/DemarControls/DemarControlsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30000021CF9000F007C117D /* ios/DemarControls/DemarControlsBundle.swift */; };
+		E30000111CF9000F007C117D /* ios/DemarControls/VpnToggleControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30000031CF9000F007C117D /* ios/DemarControls/VpnToggleControl.swift */; };
+		E30000121CF9000F007C117D /* ios/Shared/VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */; };
+		E30000131CF9000F007C117D /* ios/Shared/VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */; };
+		E30000141CF9000F007C117D /* ios/Shared/VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */; };
+		E30000151CF9000F007C117D /* ios/Shared/VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */; };
+		E30000161CF9000F007C117D /* ios/Shared/VpnControlIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */; };
+		E30000171CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXFileReference section */
-		F10000010000000000000001 /* DemarVPNApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarVPNApp.swift; sourceTree = "<group>"; };
-		F10000010000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		F10000010000000000000003 /* DemarTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarTheme.swift; sourceTree = "<group>"; };
-		F10000010000000000000004 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
-		F10000010000000000000005 /* VpnConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnConnectionState.swift; sourceTree = "<group>"; };
-		F10000010000000000000006 /* ServerProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerProfile.swift; sourceTree = "<group>"; };
-		F10000010000000000000007 /* TestServers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestServers.swift; sourceTree = "<group>"; };
-		F10000010000000000000008 /* AppLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLog.swift; sourceTree = "<group>"; };
-		F1000001000000000000000A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
-		F1000001000000000000000B /* ThroughputFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThroughputFormatter.swift; sourceTree = "<group>"; };
-		F1000001000000000000000C /* VpnMainToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnMainToggle.swift; sourceTree = "<group>"; };
-		F1000001000000000000000D /* SectionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionCard.swift; sourceTree = "<group>"; };
-		F10000010000000000000032 /* DiagnosticsJournalTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsJournalTextView.swift; sourceTree = "<group>"; };
-		F1000001000000000000000E /* SettingsActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsActionButton.swift; sourceTree = "<group>"; };
-		F1000001000000000000000F /* SettingsLinksStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsLinksStrip.swift; sourceTree = "<group>"; };
-		F10000010000000000000010 /* DemarSnackBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarSnackBar.swift; sourceTree = "<group>"; };
-		F10000010000000000000011 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		F10000010000000000000012 /* ServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersView.swift; sourceTree = "<group>"; };
-		F10000010000000000000013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		F10000010000000000000014 /* AppSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsView.swift; sourceTree = "<group>"; };
-		F10000010000000000000015 /* ServiceMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceMenuView.swift; sourceTree = "<group>"; };
-		F10000010000000000000016 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		F10000010000000000000017 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		F10000010000000000000018 /* DemarVPN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DemarVPN.entitlements; sourceTree = "<group>"; };
-		F10000010000000000000019 /* DemarVPN.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DemarVPN.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		F1000001000000000000001A /* DemarCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarCardRow.swift; sourceTree = "<group>"; };
-		F1000001000000000000001B /* FontAwesomeBrands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontAwesomeBrands.swift; sourceTree = "<group>"; };
-		F1000001000000000000001C /* fa-brands-400.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "fa-brands-400.ttf"; sourceTree = "<group>"; };
-		F1000001000000000000001D /* PlatformServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformServices.swift; sourceTree = "<group>"; };
-		F1000001000000000000002E /* MacVpnDiag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacVpnDiag.swift; sourceTree = "<group>"; };
-		F1000001000000000000001E /* Info-macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-macOS.plist"; sourceTree = "<group>"; };
-		F1000001000000000000001F /* DemarNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarNavigation.swift; sourceTree = "<group>"; };
-		F10000010000000000000020 /* AppPlatform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPlatform.swift; sourceTree = "<group>"; };
-		F10000010000000000000021 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
-		F10000010000000000000023 /* DemarKvRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarKvRow.swift; sourceTree = "<group>"; };
-		F10000010000000000000035 /* PublicEgressDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicEgressDiagnostics.swift; sourceTree = "<group>"; };
-		F10000010000000000000036 /* DeviceTrafficTotals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceTrafficTotals.swift; sourceTree = "<group>"; };
-		F10000010000000000000024 /* IDFATracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFATracking.swift; sourceTree = "<group>"; };
-
-		F10000010000000000000025 /* xray */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ios/Shared/xray; sourceTree = SOURCE_ROOT; };
-		F10000010000000000000026 /* VlessRealityProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VlessRealityProfile.swift; sourceTree = "<group>"; };
-		F10000010000000000000027 /* VlessUriParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VlessUriParser.swift; sourceTree = "<group>"; };
-		F10000010000000000000028 /* XrayConfigBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XrayConfigBuilder.swift; sourceTree = "<group>"; };
-		F10000010000000000000029 /* VpnControlling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnControlling.swift; sourceTree = "<group>"; };
-		F1000001000000000000002B /* VpnStatusMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnStatusMonitor.swift; sourceTree = "<group>"; };
-		F10000010000000000000030 /* xray-macos */ = {isa = PBXFileReference; lastKnownFileType = folder; path = macos/xray_macos; sourceTree = SOURCE_ROOT; };
-		F10000010000000000000034 /* NativeVpnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVpnService.swift; sourceTree = "<group>"; };
-		E20000111CF9000F007C117D /* MacXrayProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/MacXrayProcess.swift; sourceTree = SOURCE_ROOT; };
-		E20000161CF9000F007C117D /* TunnelLifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/TunnelLifecycle.swift; sourceTree = SOURCE_ROOT; };
-		F1000001000000000000002D /* BundledXrayVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledXrayVersion.swift; sourceTree = "<group>"; };
-		E20000021CF9000F007C117D /* DemarPacketTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DemarPacketTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		E20000041CF9000F007C117D /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/PacketTunnelProvider.swift; sourceTree = SOURCE_ROOT; };
-		E200000B1CF9000F007C117D /* DemarPacketTunnel.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements; sourceTree = SOURCE_ROOT; };
-		E200000C1CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = ios/DemarPacketTunnel/Info.plist; sourceTree = SOURCE_ROOT; };
-		E20001011CF9000F007C117D /* VpnAppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnAppGroup.swift; sourceTree = SOURCE_ROOT; };
-		E20001021CF9000F007C117D /* VpnSharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnSharedStore.swift; sourceTree = SOURCE_ROOT; };
-		E20001031CF9000F007C117D /* VpnTunnelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnTunnelController.swift; sourceTree = SOURCE_ROOT; };
-		E20001071CF9000F007C117D /* VpnStatusSignal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnStatusSignal.swift; sourceTree = SOURCE_ROOT; };
-		E20001041CF9000F007C117D /* VpnControlConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnControlConstants.swift; sourceTree = SOURCE_ROOT; };
-		E20001051CF9000F007C117D /* DemarXray.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = ios/Frameworks/DemarXray.xcframework; sourceTree = SOURCE_ROOT; };
-		E20001061CF9000F007C117D /* VpnControlIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnControlIntent.swift; sourceTree = SOURCE_ROOT; };
-		E30000011CF9000F007C117D /* DemarControls.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DemarControls.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		E30000021CF9000F007C117D /* DemarControlsBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarControls/DemarControlsBundle.swift; sourceTree = SOURCE_ROOT; };
-		E30000031CF9000F007C117D /* VpnToggleControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarControls/VpnToggleControl.swift; sourceTree = SOURCE_ROOT; };
-		E30000041CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = ios/DemarControls/Info.plist; sourceTree = SOURCE_ROOT; };
-		E30000051CF9000F007C117D /* DemarControls.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ios/DemarControls/DemarControls.entitlements; sourceTree = SOURCE_ROOT; };
-/* End PBXFileReference section */
-
 
 /* Begin PBXContainerItemProxy section */
 		E200000D1CF9000F007C117D /* PBXContainerItemProxy */ = {
@@ -157,13 +86,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = T20000011CF9000F007C117D;
 			remoteInfo = DemarPacketTunnel;
-		};
-		E300000D1CF9000F007C117D /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = P10000010000000000000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = T30000011CF9000F007C117D;
-			remoteInfo = DemarControls;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -186,12 +108,81 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				E200000A1CF9000F007C117D /* DemarXray.xcframework in Embed Frameworks */,
+				E200000A1CF9000F007C117D /* ios/Frameworks/DemarXray.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		E20000021CF9000F007C117D /* DemarPacketTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DemarPacketTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E20000041CF9000F007C117D /* ios/DemarPacketTunnel/PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/PacketTunnelProvider.swift; sourceTree = SOURCE_ROOT; };
+		E200000B1CF9000F007C117D /* ios/DemarPacketTunnel/DemarPacketTunnel.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements; sourceTree = SOURCE_ROOT; };
+		E200000C1CF9000F007C117D /* ios/DemarPacketTunnel/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = ios/DemarPacketTunnel/Info.plist; sourceTree = SOURCE_ROOT; };
+		E20000111CF9000F007C117D /* ios/DemarPacketTunnel/MacXrayProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/MacXrayProcess.swift; sourceTree = SOURCE_ROOT; };
+		E20000161CF9000F007C117D /* ios/DemarPacketTunnel/TunnelLifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/TunnelLifecycle.swift; sourceTree = SOURCE_ROOT; };
+		E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnAppGroup.swift; sourceTree = SOURCE_ROOT; };
+		E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnSharedStore.swift; sourceTree = SOURCE_ROOT; };
+		E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnTunnelController.swift; sourceTree = SOURCE_ROOT; };
+		E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnControlConstants.swift; sourceTree = SOURCE_ROOT; };
+		E20001051CF9000F007C117D /* ios/Frameworks/DemarXray.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = ios/Frameworks/DemarXray.xcframework; sourceTree = SOURCE_ROOT; };
+		E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnControlIntent.swift; sourceTree = SOURCE_ROOT; };
+		E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnStatusSignal.swift; sourceTree = SOURCE_ROOT; };
+		E30000011CF9000F007C117D /* DemarControls.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DemarControls.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E30000021CF9000F007C117D /* ios/DemarControls/DemarControlsBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarControls/DemarControlsBundle.swift; sourceTree = SOURCE_ROOT; };
+		E30000031CF9000F007C117D /* ios/DemarControls/VpnToggleControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarControls/VpnToggleControl.swift; sourceTree = SOURCE_ROOT; };
+		E30000041CF9000F007C117D /* ios/DemarControls/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = ios/DemarControls/Info.plist; sourceTree = SOURCE_ROOT; };
+		E30000051CF9000F007C117D /* ios/DemarControls/DemarControls.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ios/DemarControls/DemarControls.entitlements; sourceTree = SOURCE_ROOT; };
+		F10000010000000000000001 /* DemarVPNApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarVPNApp.swift; sourceTree = "<group>"; };
+		F10000010000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F10000010000000000000003 /* DemarTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarTheme.swift; sourceTree = "<group>"; };
+		F10000010000000000000004 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		F10000010000000000000005 /* VpnConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnConnectionState.swift; sourceTree = "<group>"; };
+		F10000010000000000000006 /* ServerProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerProfile.swift; sourceTree = "<group>"; };
+		F10000010000000000000007 /* TestServers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestServers.swift; sourceTree = "<group>"; };
+		F10000010000000000000008 /* AppLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLog.swift; sourceTree = "<group>"; };
+		F1000001000000000000000A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		F1000001000000000000000B /* ThroughputFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThroughputFormatter.swift; sourceTree = "<group>"; };
+		F1000001000000000000000C /* VpnMainToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnMainToggle.swift; sourceTree = "<group>"; };
+		F1000001000000000000000D /* SectionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionCard.swift; sourceTree = "<group>"; };
+		F1000001000000000000000E /* SettingsActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsActionButton.swift; sourceTree = "<group>"; };
+		F1000001000000000000000F /* SettingsLinksStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsLinksStrip.swift; sourceTree = "<group>"; };
+		F10000010000000000000010 /* DemarSnackBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarSnackBar.swift; sourceTree = "<group>"; };
+		F10000010000000000000011 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		F10000010000000000000012 /* ServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersView.swift; sourceTree = "<group>"; };
+		F10000010000000000000013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		F10000010000000000000014 /* AppSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsView.swift; sourceTree = "<group>"; };
+		F10000010000000000000015 /* ServiceMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceMenuView.swift; sourceTree = "<group>"; };
+		F10000010000000000000016 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F10000010000000000000017 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F10000010000000000000018 /* DemarVPN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DemarVPN.entitlements; sourceTree = "<group>"; };
+		F10000010000000000000019 /* DemarVPN.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DemarVPN.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1000001000000000000001A /* DemarCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarCardRow.swift; sourceTree = "<group>"; };
+		F1000001000000000000001B /* FontAwesomeBrands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontAwesomeBrands.swift; sourceTree = "<group>"; };
+		F1000001000000000000001C /* fa-brands-400.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "fa-brands-400.ttf"; sourceTree = "<group>"; };
+		F1000001000000000000001D /* PlatformServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformServices.swift; sourceTree = "<group>"; };
+		F1000001000000000000001E /* Info-macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-macOS.plist"; sourceTree = "<group>"; };
+		F1000001000000000000001F /* DemarNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarNavigation.swift; sourceTree = "<group>"; };
+		F10000010000000000000020 /* AppPlatform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPlatform.swift; sourceTree = "<group>"; };
+		F10000010000000000000021 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
+		F10000010000000000000023 /* DemarKvRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarKvRow.swift; sourceTree = "<group>"; };
+		F10000010000000000000024 /* IDFATracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFATracking.swift; sourceTree = "<group>"; };
+		F10000010000000000000025 /* ios/Shared/xray */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ios/Shared/xray; sourceTree = SOURCE_ROOT; };
+		F10000010000000000000026 /* VlessRealityProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VlessRealityProfile.swift; sourceTree = "<group>"; };
+		F10000010000000000000027 /* VlessUriParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VlessUriParser.swift; sourceTree = "<group>"; };
+		F10000010000000000000028 /* XrayConfigBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XrayConfigBuilder.swift; sourceTree = "<group>"; };
+		F10000010000000000000029 /* VpnControlling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnControlling.swift; sourceTree = "<group>"; };
+		F1000001000000000000002B /* VpnStatusMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnStatusMonitor.swift; sourceTree = "<group>"; };
+		F1000001000000000000002D /* BundledXrayVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledXrayVersion.swift; sourceTree = "<group>"; };
+		F1000001000000000000002E /* MacVpnDiag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacVpnDiag.swift; sourceTree = "<group>"; };
+		F10000010000000000000030 /* macos/xray_macos */ = {isa = PBXFileReference; lastKnownFileType = folder; path = macos/xray_macos; sourceTree = SOURCE_ROOT; };
+		F10000010000000000000032 /* DiagnosticsJournalTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsJournalTextView.swift; sourceTree = "<group>"; };
+		F10000010000000000000034 /* NativeVpnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVpnService.swift; sourceTree = "<group>"; };
+		F10000010000000000000035 /* PublicEgressDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicEgressDiagnostics.swift; sourceTree = "<group>"; };
+		F10000010000000000000036 /* DeviceTrafficTotals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceTrafficTotals.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		C10000010000000000000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -204,7 +195,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E20000091CF9000F007C117D /* DemarXray.xcframework in Frameworks */,
+				E20000091CF9000F007C117D /* ios/Frameworks/DemarXray.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -313,15 +304,6 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		G10000010000000000000013 /* Network */ = {
-			isa = PBXGroup;
-			children = (
-				F10000010000000000000035 /* PublicEgressDiagnostics.swift */,
-				F10000010000000000000036 /* DeviceTrafficTotals.swift */,
-			);
-			path = Network;
-			sourceTree = "<group>";
-		};
 		G10000010000000000000009 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -365,22 +347,6 @@
 			path = Servers;
 			sourceTree = "<group>";
 		};
-		G1000001000000000000000F /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				G10000010000000000000010 /* Fonts */,
-			);
-			path = Resources;
-			sourceTree = "<group>";
-		};
-		G10000010000000000000010 /* Fonts */ = {
-			isa = PBXGroup;
-			children = (
-				F1000001000000000000001C /* fa-brands-400.ttf */,
-			);
-			path = Fonts;
-			sourceTree = "<group>";
-		};
 		G1000001000000000000000D /* Settings */ = {
 			isa = PBXGroup;
 			children = (
@@ -399,7 +365,22 @@
 			path = Icons;
 			sourceTree = "<group>";
 		};
-
+		G1000001000000000000000F /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				G10000010000000000000010 /* Fonts */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		G10000010000000000000010 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				F1000001000000000000001C /* fa-brands-400.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
 		G10000010000000000000011 /* Vpn */ = {
 			isa = PBXGroup;
 			children = (
@@ -408,6 +389,23 @@
 				F10000010000000000000028 /* XrayConfigBuilder.swift */,
 			);
 			path = Vpn;
+			sourceTree = "<group>";
+		};
+		G10000010000000000000012 /* macos */ = {
+			isa = PBXGroup;
+			children = (
+				F10000010000000000000030 /* macos/xray_macos */,
+			);
+			path = macos;
+			sourceTree = "<group>";
+		};
+		G10000010000000000000013 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				F10000010000000000000035 /* PublicEgressDiagnostics.swift */,
+				F10000010000000000000036 /* DeviceTrafficTotals.swift */,
+			);
+			path = Network;
 			sourceTree = "<group>";
 		};
 		G20000011CF9000F007C117D /* ios */ = {
@@ -424,13 +422,13 @@
 		G20000021CF9000F007C117D /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				E20001011CF9000F007C117D /* VpnAppGroup.swift */,
-				E20001041CF9000F007C117D /* VpnControlConstants.swift */,
-				E20001061CF9000F007C117D /* VpnControlIntent.swift */,
-				E20001021CF9000F007C117D /* VpnSharedStore.swift */,
-				E20001071CF9000F007C117D /* VpnStatusSignal.swift */,
-				E20001031CF9000F007C117D /* VpnTunnelController.swift */,
-				F10000010000000000000025 /* xray */,
+				E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */,
+				E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */,
+				E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */,
+				E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */,
+				E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */,
+				E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */,
+				F10000010000000000000025 /* ios/Shared/xray */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -438,11 +436,11 @@
 		G20000031CF9000F007C117D /* DemarPacketTunnel */ = {
 			isa = PBXGroup;
 			children = (
-				E200000B1CF9000F007C117D /* DemarPacketTunnel.entitlements */,
-				E200000C1CF9000F007C117D /* Info.plist */,
-				E20000041CF9000F007C117D /* PacketTunnelProvider.swift */,
-				E20000111CF9000F007C117D /* MacXrayProcess.swift */,
-				E20000161CF9000F007C117D /* TunnelLifecycle.swift */,
+				E200000B1CF9000F007C117D /* ios/DemarPacketTunnel/DemarPacketTunnel.entitlements */,
+				E200000C1CF9000F007C117D /* ios/DemarPacketTunnel/Info.plist */,
+				E20000041CF9000F007C117D /* ios/DemarPacketTunnel/PacketTunnelProvider.swift */,
+				E20000111CF9000F007C117D /* ios/DemarPacketTunnel/MacXrayProcess.swift */,
+				E20000161CF9000F007C117D /* ios/DemarPacketTunnel/TunnelLifecycle.swift */,
 			);
 			path = DemarPacketTunnel;
 			sourceTree = "<group>";
@@ -450,7 +448,7 @@
 		G20000041CF9000F007C117D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				E20001051CF9000F007C117D /* DemarXray.xcframework */,
+				E20001051CF9000F007C117D /* ios/Frameworks/DemarXray.xcframework */,
 			);
 			path = Frameworks;
 			sourceTree = "<group>";
@@ -458,20 +456,12 @@
 		G30000011CF9000F007C117D /* DemarControls */ = {
 			isa = PBXGroup;
 			children = (
-				E30000051CF9000F007C117D /* DemarControls.entitlements */,
-				E30000041CF9000F007C117D /* Info.plist */,
-				E30000021CF9000F007C117D /* DemarControlsBundle.swift */,
-				E30000031CF9000F007C117D /* VpnToggleControl.swift */,
+				E30000051CF9000F007C117D /* ios/DemarControls/DemarControls.entitlements */,
+				E30000041CF9000F007C117D /* ios/DemarControls/Info.plist */,
+				E30000021CF9000F007C117D /* ios/DemarControls/DemarControlsBundle.swift */,
+				E30000031CF9000F007C117D /* ios/DemarControls/VpnToggleControl.swift */,
 			);
 			path = DemarControls;
-			sourceTree = "<group>";
-		};
-		G10000010000000000000012 /* macos */ = {
-			isa = PBXGroup;
-			children = (
-				F10000010000000000000030 /* xray-macos */,
-			);
-			path = macos;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -496,7 +486,6 @@
 			productReference = F10000010000000000000019 /* DemarVPN.app */;
 			productType = "com.apple.product-type.application";
 		};
-
 		T20000011CF9000F007C117D /* DemarPacketTunnel */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = X20000011CF9000F007C117D /* Build configuration list for PBXNativeTarget "DemarPacketTunnel" */;
@@ -540,7 +529,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 2640;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					T10000010000000000000001 = {
 						CreatedOnToolsVersion = 15.0;
@@ -583,8 +572,8 @@
 			files = (
 				B10000010000000000000016 /* Assets.xcassets in Resources */,
 				B1000001000000000000001A /* fa-brands-400.ttf in Resources */,
-				B10000010000000000000022 /* xray in Resources */,
-				B10000010000000000000030 /* xray_macos in Resources */,
+				B10000010000000000000022 /* ios/Shared/xray in Resources */,
+				B10000010000000000000030 /* macos/xray_macos in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -592,7 +581,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E20000131CF9000F007C117D /* xray_macos in Resources */,
+				E20000131CF9000F007C117D /* macos/xray_macos in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -640,12 +629,12 @@
 				B1000001000000000000001E /* DeviceIdentity.swift in Sources */,
 				B10000010000000000000021 /* IDFATracking.swift in Sources */,
 				B10000010000000000000020 /* DemarKvRow.swift in Sources */,
-				B10000010000000000000023 /* VpnAppGroup.swift in Sources */,
-				B10000010000000000000024 /* VpnSharedStore.swift in Sources */,
-				B10000010000000000000025 /* VpnTunnelController.swift in Sources */,
-				B10000010000000000000038 /* VpnStatusSignal.swift in Sources */,
-				B10000010000000000000026 /* VpnControlConstants.swift in Sources */,
-				B10000010000000000000037 /* VpnControlIntent.swift in Sources */,
+				B10000010000000000000023 /* ios/Shared/VpnAppGroup.swift in Sources */,
+				B10000010000000000000024 /* ios/Shared/VpnSharedStore.swift in Sources */,
+				B10000010000000000000025 /* ios/Shared/VpnTunnelController.swift in Sources */,
+				B10000010000000000000038 /* ios/Shared/VpnStatusSignal.swift in Sources */,
+				B10000010000000000000026 /* ios/Shared/VpnControlConstants.swift in Sources */,
+				B10000010000000000000037 /* ios/Shared/VpnControlIntent.swift in Sources */,
 				B10000010000000000000027 /* VlessRealityProfile.swift in Sources */,
 				B10000010000000000000028 /* VlessUriParser.swift in Sources */,
 				B10000010000000000000029 /* XrayConfigBuilder.swift in Sources */,
@@ -658,19 +647,18 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-
 		S20000011CF9000F007C117D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E20000031CF9000F007C117D /* PacketTunnelProvider.swift in Sources */,
-				E20000141CF9000F007C117D /* TunnelLifecycle.swift in Sources */,
-				E20000121CF9000F007C117D /* MacXrayProcess.swift in Sources */,
-				E20000051CF9000F007C117D /* VpnAppGroup.swift in Sources */,
-				E20000061CF9000F007C117D /* VpnSharedStore.swift in Sources */,
-				E20000071CF9000F007C117D /* VpnTunnelController.swift in Sources */,
-				E20001081CF9000F007C117D /* VpnStatusSignal.swift in Sources */,
-				E20000081CF9000F007C117D /* VpnControlConstants.swift in Sources */,
+				E20000031CF9000F007C117D /* ios/DemarPacketTunnel/PacketTunnelProvider.swift in Sources */,
+				E20000141CF9000F007C117D /* ios/DemarPacketTunnel/TunnelLifecycle.swift in Sources */,
+				E20000121CF9000F007C117D /* ios/DemarPacketTunnel/MacXrayProcess.swift in Sources */,
+				E20000051CF9000F007C117D /* ios/Shared/VpnAppGroup.swift in Sources */,
+				E20000061CF9000F007C117D /* ios/Shared/VpnSharedStore.swift in Sources */,
+				E20000071CF9000F007C117D /* ios/Shared/VpnTunnelController.swift in Sources */,
+				E20001081CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift in Sources */,
+				E20000081CF9000F007C117D /* ios/Shared/VpnControlConstants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -678,19 +666,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E30000121CF9000F007C117D /* VpnAppGroup.swift in Sources */,
-				E30000151CF9000F007C117D /* VpnControlConstants.swift in Sources */,
-				E30000131CF9000F007C117D /* VpnSharedStore.swift in Sources */,
-				E30000141CF9000F007C117D /* VpnTunnelController.swift in Sources */,
-				E30000171CF9000F007C117D /* VpnStatusSignal.swift in Sources */,
-				E30000161CF9000F007C117D /* VpnControlIntent.swift in Sources */,
-				E30000081CF9000F007C117D /* DemarControlsBundle.swift in Sources */,
-				E30000111CF9000F007C117D /* VpnToggleControl.swift in Sources */,
+				E30000121CF9000F007C117D /* ios/Shared/VpnAppGroup.swift in Sources */,
+				E30000151CF9000F007C117D /* ios/Shared/VpnControlConstants.swift in Sources */,
+				E30000131CF9000F007C117D /* ios/Shared/VpnSharedStore.swift in Sources */,
+				E30000141CF9000F007C117D /* ios/Shared/VpnTunnelController.swift in Sources */,
+				E30000171CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift in Sources */,
+				E30000161CF9000F007C117D /* ios/Shared/VpnControlIntent.swift in Sources */,
+				E30000081CF9000F007C117D /* ios/DemarControls/DemarControlsBundle.swift in Sources */,
+				E30000111CF9000F007C117D /* ios/DemarControls/VpnToggleControl.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
 
 /* Begin PBXTargetDependency section */
 		E20000101CF9000F007C117D /* PBXTargetDependency */ = {
@@ -698,12 +685,8 @@
 			target = T20000011CF9000F007C117D /* DemarPacketTunnel */;
 			targetProxy = E200000D1CF9000F007C117D /* PBXContainerItemProxy */;
 		};
-		E30000101CF9000F007C117D /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = T30000011CF9000F007C117D /* DemarControls */;
-			targetProxy = E300000D1CF9000F007C117D /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		X10000010000000000000004 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -732,6 +715,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -790,6 +774,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 3268G7233C;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -817,16 +802,20 @@
 		X10000010000000000000006 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
+				DEAD_CODE_STRIPPING = YES;
+				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DemarVPN/Info.plist;
-				"INFOPLIST_FILE[sdk=macosx*]" = DemarVPN/Info-macOS.plist;
+				"INFOPLIST_FILE[sdk=macosx*]" = "DemarVPN/Info-macOS.plist";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -836,29 +825,31 @@
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.demar.vpn;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
-				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
-				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
-				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 			};
 			name = Debug;
 		};
 		X10000010000000000000007 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
+				DEAD_CODE_STRIPPING = YES;
+				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DemarVPN/Info.plist;
-				"INFOPLIST_FILE[sdk=macosx*]" = DemarVPN/Info-macOS.plist;
+				"INFOPLIST_FILE[sdk=macosx*]" = "DemarVPN/Info-macOS.plist";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -868,38 +859,14 @@
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.demar.vpn;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
-				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
-				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
-				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 			};
 			name = Release;
 		};
-/* End XCBuildConfiguration section */
-
-/* Begin XCConfigurationList section */
-		X10000010000000000000001 /* Build configuration list for PBXProject "DemarVPN" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				X10000010000000000000004 /* Debug */,
-				X10000010000000000000005 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		X10000010000000000000003 /* Build configuration list for PBXNativeTarget "DemarVPN" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				X10000010000000000000006 /* Debug */,
-				X10000010000000000000007 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-
 		X20000021CF9000F007C117D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -907,7 +874,11 @@
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
+				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ios/Frameworks",
@@ -943,15 +914,13 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.demar.vpn.packet-tunnel";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
-				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
-				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
-				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 			};
 			name = Debug;
 		};
@@ -962,7 +931,11 @@
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
+				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ios/Frameworks",
@@ -998,26 +971,15 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.demar.vpn.packet-tunnel";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
-				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
-				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
-				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 			};
 			name = Release;
-		};
-		X20000011CF9000F007C117D /* Build configuration list for PBXNativeTarget "DemarPacketTunnel" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				X20000021CF9000F007C117D /* Debug */,
-				X20000031CF9000F007C117D /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
 		};
 		X30000021CF9000F007C117D /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -1035,7 +997,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.demar.vpn.controls";
+				PRODUCT_BUNDLE_IDENTIFIER = com.demar.vpn.controls;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1062,7 +1024,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.demar.vpn.controls";
+				PRODUCT_BUNDLE_IDENTIFIER = com.demar.vpn.controls;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1072,6 +1034,36 @@
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		X10000010000000000000001 /* Build configuration list for PBXProject "DemarVPN" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X10000010000000000000004 /* Debug */,
+				X10000010000000000000005 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		X10000010000000000000003 /* Build configuration list for PBXNativeTarget "DemarVPN" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X10000010000000000000006 /* Debug */,
+				X10000010000000000000007 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		X20000011CF9000F007C117D /* Build configuration list for PBXNativeTarget "DemarPacketTunnel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X20000021CF9000F007C117D /* Debug */,
+				X20000031CF9000F007C117D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		X30000011CF9000F007C117D /* Build configuration list for PBXNativeTarget "DemarControls" */ = {
 			isa = XCConfigurationList;
