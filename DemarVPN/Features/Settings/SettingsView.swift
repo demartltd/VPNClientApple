@@ -48,6 +48,9 @@ struct SettingsView: View {
             }
         }
         .background(Color.demarSurface)
+        #if os(iOS)
+        .demarNavigationRoot(backHistoryLabel: "Настройки")
+        #endif
     }
 
     private func perform(_ item: SettingsMenuItem) {

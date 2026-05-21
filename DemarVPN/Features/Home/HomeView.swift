@@ -53,5 +53,11 @@ struct HomeView: View {
             Spacer()
         }
         .padding(16)
+        #if os(iOS)
+        .task(id: isActive) {
+            guard isActive else { return }
+            await appState.runHomeThroughputSampling()
+        }
+        #endif
     }
 }

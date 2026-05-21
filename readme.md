@@ -70,7 +70,7 @@ xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17'
 
 ### Главная
 
-Вкл/выкл VPN, статус, имя сервера, скорость RX/TX (на macOS throughput пока 0).
+Вкл/выкл VPN, статус, имя сервера, скорость RX/TX при подключении (iOS: дельта `getifaddrs`, 1 с; macOS пока 0).
 
 ### Сервера
 

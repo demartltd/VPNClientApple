@@ -40,6 +40,7 @@
 		B10000010000000000000021 /* IDFATracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000024 /* IDFATracking.swift */; };
 		B10000010000000000000020 /* DemarKvRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000023 /* DemarKvRow.swift */; };
 		B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000035 /* PublicEgressDiagnostics.swift */; };
+		B10000010000000000000036 /* DeviceTrafficTotals.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000036 /* DeviceTrafficTotals.swift */; };
 
 		B10000010000000000000022 /* xray in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000025 /* xray */; platformFilter = ios; };
 		B10000010000000000000030 /* xray_macos in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000030 /* xray-macos */; platformFilter = macos; };
@@ -104,6 +105,7 @@
 		F10000010000000000000021 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
 		F10000010000000000000023 /* DemarKvRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarKvRow.swift; sourceTree = "<group>"; };
 		F10000010000000000000035 /* PublicEgressDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicEgressDiagnostics.swift; sourceTree = "<group>"; };
+		F10000010000000000000036 /* DeviceTrafficTotals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceTrafficTotals.swift; sourceTree = "<group>"; };
 		F10000010000000000000024 /* IDFATracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFATracking.swift; sourceTree = "<group>"; };
 
 		F10000010000000000000025 /* xray */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ios/Shared/xray; sourceTree = SOURCE_ROOT; };
@@ -280,6 +282,7 @@
 			isa = PBXGroup;
 			children = (
 				F10000010000000000000035 /* PublicEgressDiagnostics.swift */,
+				F10000010000000000000036 /* DeviceTrafficTotals.swift */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -571,6 +574,7 @@
 				B1000001000000000000002C /* VpnStatusMonitor.swift in Sources */,
 				B1000001000000000000002E /* BundledXrayVersion.swift in Sources */,
 				B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */,
+				B10000010000000000000036 /* DeviceTrafficTotals.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

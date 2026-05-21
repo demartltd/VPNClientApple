@@ -18,6 +18,10 @@ final class AppState {
     #if os(iOS) || os(macOS)
     private var statusMonitor: VpnStatusMonitor?
     #endif
+    #if os(iOS)
+    private var throughputBaseline: (rx: UInt64, tx: UInt64, at: Date)?
+    private var throughputSampling = false
+    #endif
 
     init(vpn: VpnControlling? = nil) {
         servers = TestServers.profiles
@@ -62,8 +66,7 @@ final class AppState {
 
         if case .disconnected = vpnState {
             vpnState = .connecting
-            downloadBps = 0
-            uploadBps = 0
+            resetThroughput()
         }
         AppLog.shared.append("[ui] connect → \(server.displayName)")
 
@@ -103,8 +106,7 @@ final class AppState {
 
         if vpnState.isConnected {
             vpnState = .disconnecting
-            downloadBps = 0
-            uploadBps = 0
+            resetThroughput()
         }
         AppLog.shared.append("[ui] disconnect")
         statusMonitor?.endConnectAttempt()
@@ -146,16 +148,57 @@ final class AppState {
 
     private func applyRemoteVpnState(_ state: VpnConnectionState) {
         vpnState = state
-        switch state {
-        case .connected:
-            break
-        case .disconnected, .error:
-            downloadBps = 0
-            uploadBps = 0
-        case .connecting, .disconnecting:
-            downloadBps = 0
-            uploadBps = 0
+        if !state.isConnected { resetThroughput() }
+    }
+
+    private func resetThroughput() {
+        #if os(iOS)
+        throughputBaseline = nil
+        #endif
+        downloadBps = 0
+        uploadBps = 0
+    }
+
+    #if os(iOS)
+    func runHomeThroughputSampling() async {
+        resetThroughput()
+        while !Task.isCancelled {
+            await sampleThroughputIfConnected()
+            try? await Task.sleep(for: .seconds(1))
         }
     }
+
+    private func sampleThroughputIfConnected() async {
+        guard vpnState.isConnected else {
+            resetThroughput()
+            return
+        }
+        guard !throughputSampling else { return }
+        throughputSampling = true
+        defer { throughputSampling = false }
+
+        let totals = await Task.detached(priority: .utility) {
+            DeviceTrafficTotals.cumulativeRXTXBytes()
+        }.value
+        guard let totals else {
+            resetThroughput()
+            return
+        }
+
+        let now = Date()
+        if let base = throughputBaseline {
+            let dt = now.timeIntervalSince(base.at)
+            if dt > 0 {
+                let drx = Int64(totals.rx) - Int64(base.rx)
+                let dtx = Int64(totals.tx) - Int64(base.tx)
+                if drx >= 0, dtx >= 0 {
+                    downloadBps = Double(drx) / dt
+                    uploadBps = Double(dtx) / dt
+                }
+            }
+        }
+        throughputBaseline = (totals.rx, totals.tx, now)
+    }
+    #endif
     #endif
 }
