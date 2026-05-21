@@ -41,8 +41,18 @@ final class VpnTunnelController {
   private static let providerKeyConnectSource = "connectTriggerSource"
 
   private var connectInFlight = false
+  private var cachedManager: NETunnelProviderManager?
+
+  var isConnectInFlight: Bool { connectInFlight }
 
   private init() {}
+
+  private static func isDemarManager(_ manager: NETunnelProviderManager) -> Bool {
+    guard let proto = manager.protocolConfiguration as? NETunnelProviderProtocol else {
+      return false
+    }
+    return proto.providerBundleIdentifier == packetTunnelBundleId
+  }
 
   private func diag(_ message: String) {
     #if os(macOS)
@@ -52,39 +62,94 @@ final class VpnTunnelController {
     #endif
   }
 
-  func loadTunnelManager(completion: @escaping (Result<NETunnelProviderManager?, Error>) -> Void) {
-    NETunnelProviderManager.loadAllFromPreferences { managers, error in
+  /// Reloads preferences and returns fresh Demar manager + `NEVPNConnection.status`.
+  /// - Parameter reloadPreferences: When `false`, reads cached manager status only (safe during `startTunnel`).
+  func refreshDemarStatus(
+    reloadPreferences: Bool = true,
+    completion: @escaping (Result<(manager: NETunnelProviderManager?, status: NEVPNStatus), Error>) -> Void
+  ) {
+    let finish: (Result<(NETunnelProviderManager?, NEVPNStatus), Error>) -> Void = { result in
       DispatchQueue.main.async {
-        if let error {
+        switch result {
+        case let .success((manager, status)):
+          completion(.success((manager: manager, status: status)))
+        case let .failure(error):
           completion(.failure(error))
+        }
+      }
+    }
+
+    if !reloadPreferences, let cached = cachedManager {
+      finish(.success((cached, cached.connection.status)))
+      return
+    }
+
+    if let cached = cachedManager {
+      cached.loadFromPreferences { [weak self] error in
+        if let error {
+          self?.cachedManager = nil
+          finish(.failure(error))
           return
         }
-        let match = managers?.first(where: { manager in
-          guard let proto = manager.protocolConfiguration as? NETunnelProviderProtocol else {
-            return false
-          }
-          return proto.providerBundleIdentifier == Self.packetTunnelBundleId
-        })
-        completion(.success(match))
+        finish(.success((cached, cached.connection.status)))
+      }
+      return
+    }
+
+    NETunnelProviderManager.loadAllFromPreferences { [weak self] managers, error in
+      if let error {
+        finish(.failure(error))
+        return
+      }
+      let match = managers?.first(where: Self.isDemarManager)
+      guard let match else {
+        self?.cachedManager = nil
+        finish(.success((nil, .disconnected)))
+        return
+      }
+      self?.cachedManager = match
+      match.loadFromPreferences { loadError in
+        if let loadError {
+          self?.cachedManager = nil
+          finish(.failure(loadError))
+          return
+        }
+        finish(.success((match, match.connection.status)))
+      }
+    }
+  }
+
+  func loadTunnelManager(completion: @escaping (Result<NETunnelProviderManager?, Error>) -> Void) {
+    refreshDemarStatus { result in
+      switch result {
+      case let .success((manager, _)):
+        completion(.success(manager))
+      case let .failure(error):
+        completion(.failure(error))
       }
     }
   }
 
   func currentStatus(completion: @escaping (NEVPNStatus) -> Void) {
-    loadTunnelManager { result in
+    refreshDemarStatus { result in
       switch result {
-      case let .success(manager):
-        completion(manager?.connection.status ?? .disconnected)
+      case let .success((_, status)):
+        completion(status)
       case .failure:
         completion(.disconnected)
       }
     }
   }
 
+  func invalidateCachedManager() {
+    cachedManager = nil
+  }
+
   func connectWithStoredPayload(
     triggerSource: String = "controlIntent",
     completion: @escaping (Result<Void, Error>) -> Void
   ) {
+    invalidateCachedManager()
     loadTunnelManager { result in
       switch result {
       case let .failure(error):
@@ -139,6 +204,7 @@ final class VpnTunnelController {
       return
     }
     connectInFlight = true
+    invalidateCachedManager()
     let finish: (Result<Void, Error>) -> Void = { [weak self] result in
       self?.connectInFlight = false
       completion(result)
@@ -152,10 +218,10 @@ final class VpnTunnelController {
       VpnSharedStore.clearExtensionHeartbeat()
       VpnSharedStore.clearTunnelStartFailure()
       VpnSharedStore.appendJournalLine("[vpn] connect: writing config and assets")
-      VpnSharedStore.saveControlState("connecting")
+      VpnSharedStore.saveControlState("connecting", notify: false)
       Self.reloadControls()
     } catch {
-      VpnSharedStore.saveControlState("error")
+      VpnSharedStore.saveControlState("error", notify: false)
       Self.reloadControls()
       finish(.failure(error))
       return
@@ -165,7 +231,7 @@ final class VpnTunnelController {
       guard let self else { return }
       switch result {
       case let .failure(error):
-        VpnSharedStore.saveControlState("error")
+        VpnSharedStore.saveControlState("error", notify: false)
         Self.reloadControls()
         finish(.failure(error))
       case let .success(existing):
@@ -185,15 +251,14 @@ final class VpnTunnelController {
           connectTriggerSource: connectTriggerSource
         )
         manager.localizedDescription = "Demar VPN"
+        // Enable profile so iOS prefers Demar over another VPN app when the user connects from our UI.
         manager.isEnabled = true
-        // Do not use NEOnDemandRuleConnect / on-demand "always connect": if the user turns VPN off in
-        // Settings, iOS would immediately reconnect and our Control toggle could not stay off.
         manager.onDemandRules = nil
         manager.isOnDemandEnabled = false
 
         manager.saveToPreferences { error in
           if let error {
-            VpnSharedStore.saveControlState("error")
+            VpnSharedStore.saveControlState("error", notify: false)
             Self.reloadControls()
             #if os(macOS)
             self.diag("saveToPreferences failed: \(error.localizedDescription)")
@@ -203,11 +268,12 @@ final class VpnTunnelController {
           }
             manager.loadFromPreferences { error in
             if let error {
-              VpnSharedStore.saveControlState("error")
+              VpnSharedStore.saveControlState("error", notify: false)
               Self.reloadControls()
               DispatchQueue.main.async { finish(.failure(error)) }
               return
             }
+            self.cachedManager = manager
             #if os(macOS)
             self.diagNeSnapshot(manager, label: "preferences loaded")
             #endif
@@ -251,7 +317,10 @@ final class VpnTunnelController {
         group.enter()
         manager.removeFromPreferences { _ in group.leave() }
       }
-      group.notify(queue: .main) { completion() }
+      group.notify(queue: .main) {
+        self.invalidateCachedManager()
+        completion()
+      }
     }
   }
 
@@ -263,17 +332,17 @@ final class VpnTunnelController {
     triggerSource: String,
     completion: @escaping (Result<Void, Error>) -> Void
   ) {
-    VpnSharedStore.saveControlState("disconnecting")
+    VpnSharedStore.saveControlState("disconnecting", notify: false)
     Self.reloadControls()
     loadTunnelManager { result in
       switch result {
       case let .failure(error):
-        VpnSharedStore.saveControlState("error")
+        VpnSharedStore.saveControlState("error", notify: false)
         Self.reloadControls()
         completion(.failure(error))
       case let .success(manager):
         guard let manager else {
-          VpnSharedStore.saveControlState("disconnected")
+          VpnSharedStore.saveControlState("disconnected", notify: false)
           Self.reloadControls()
           completion(.success(()))
           return
@@ -284,7 +353,7 @@ final class VpnTunnelController {
         manager.saveToPreferences { error in
           DispatchQueue.main.async {
             if let error {
-              VpnSharedStore.saveControlState("error")
+              VpnSharedStore.saveControlState("error", notify: false)
               Self.reloadControls()
               completion(.failure(error))
               return
@@ -294,7 +363,7 @@ final class VpnTunnelController {
             manager.connection.stopVPNTunnel()
             VpnSharedStore.clearExtensionHeartbeat()
             VpnSharedStore.clearTunnelStartFailure()
-            VpnSharedStore.saveControlState("disconnected")
+            VpnSharedStore.saveControlState("disconnected", notify: false)
             Self.reloadControls()
             completion(.success(()))
           }
@@ -493,6 +562,7 @@ final class VpnTunnelController {
           if let error {
             completion(.failure(error))
           } else {
+            self.cachedManager = manager
             completion(.success(manager))
           }
         }
@@ -507,21 +577,21 @@ final class VpnTunnelController {
     connectTriggerSource: String,
     completion: @escaping (Result<Void, Error>) -> Void
   ) {
-    #if os(macOS)
-    diagNeSnapshot(manager, label: "pre-startTunnel")
     diag("startTunnel session=\(sessionId) source=\(connectTriggerSource)")
     guard manager.isEnabled else {
       diag("startTunnel blocked: VPN profile disabled (isEnabled=false)")
-      VpnSharedStore.saveControlState("error")
+      VpnSharedStore.saveControlState("error", notify: false)
       Self.reloadControls()
       completion(.failure(VpnTunnelError.managerDisabled))
       return
     }
+    #if os(macOS)
+    diagNeSnapshot(manager, label: "pre-startTunnel")
     #endif
     guard let session = manager.connection as? NETunnelProviderSession else {
       let kind = String(describing: type(of: manager.connection))
       diag("startTunnel failed: connection type=\(kind), expected NETunnelProviderSession")
-      VpnSharedStore.saveControlState("error")
+      VpnSharedStore.saveControlState("error", notify: false)
       Self.reloadControls()
       completion(.failure(VpnTunnelError.noProviderSession))
       return
@@ -537,7 +607,7 @@ final class VpnTunnelController {
         connectTriggerSource: connectTriggerSource
       )
       #endif
-      VpnSharedStore.saveControlState("connecting")
+      VpnSharedStore.saveControlState("connecting", notify: false)
       Self.reloadControls()
       completion(.success(()))
       return
@@ -557,7 +627,7 @@ final class VpnTunnelController {
         let delay: TimeInterval = shouldStop ? 0.6 : 0.2
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
           if let loadError {
-            VpnSharedStore.saveControlState("error")
+            VpnSharedStore.saveControlState("error", notify: false)
             Self.reloadControls()
             completion(.failure(loadError))
             return
@@ -571,19 +641,19 @@ final class VpnTunnelController {
             )
             guard let refreshedSession = manager.connection as? NETunnelProviderSession else {
               self.diag("startTunnel retry failed: no NETunnelProviderSession")
-              VpnSharedStore.saveControlState("error")
+              VpnSharedStore.saveControlState("error", notify: false)
               Self.reloadControls()
               completion(.failure(VpnTunnelError.noProviderSession))
               return
             }
             try refreshedSession.startTunnel(options: options)
             self.diag("startTunnel retry succeeded")
-            VpnSharedStore.saveControlState("connecting")
+            VpnSharedStore.saveControlState("connecting", notify: false)
             Self.reloadControls()
             completion(.success(()))
           } catch {
             self.diag("startTunnel retry failed: \(error.localizedDescription)")
-            VpnSharedStore.saveControlState("error")
+            VpnSharedStore.saveControlState("error", notify: false)
             Self.reloadControls()
             completion(.failure(error))
           }

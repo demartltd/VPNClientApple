@@ -63,7 +63,12 @@ scripts/
 └── increment_version.ps1              # интерактивно задать X.Y.Z (+ build +1)
 
 ios/
-├── Shared/ … + xray/
+├── Shared/ … + xray/ (+ VpnControlIntent.swift, VpnStatusSignal.swift)
+├── DemarControls/                       # iOS 18+: Control Center VPN toggle
+│   ├── DemarControlsBundle.swift
+│   ├── VpnToggleControl.swift
+│   ├── Info.plist
+│   └── DemarControls.entitlements
 ├── DemarPacketTunnel/
 │   ├── PacketTunnelProvider.swift
 │   ├── TunnelLifecycle.swift          # iOS: NWPathMonitor + wake recovery

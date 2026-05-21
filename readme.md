@@ -21,7 +21,7 @@ python3 scripts/xray-download-auto.py   # → macos/xray_macos/, ios/Shared/xray
 
 Xcode копирует `macos/xray_macos` в app и в `DemarPacketTunnel.appex` (macOS).
 
-В [Apple Developer](https://developer.apple.com/account) для App ID `com.demar.vpn` и `com.demar.vpn.packet-tunnel` включите: **App Groups** (`group.com.demar.vpn`), **Network Extensions** → Packet Tunnel. Entitlements уже в `DemarVPN.entitlements` и `ios/DemarPacketTunnel/DemarPacketTunnel.entitlements`.
+В [Apple Developer](https://developer.apple.com/account) для App ID `com.demar.vpn`, `com.demar.vpn.packet-tunnel` и **`com.demar.vpn.controls`** (Control Center) включите: **App Groups** (`group.com.demar.vpn`), **Network Extensions** → Packet Tunnel. Entitlements уже в `DemarVPN.entitlements`, `ios/DemarPacketTunnel/DemarPacketTunnel.entitlements` и `ios/DemarControls/DemarControls.entitlements`.
 
 ### Definition of Done: capabilities/provisioning
 
@@ -70,7 +70,7 @@ xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17'
 
 ### Главная
 
-Вкл/выкл VPN, статус, имя сервера, скорость RX/TX при подключении (iOS: дельта `getifaddrs`, 1 с; macOS пока 0).
+Вкл/выкл VPN, статус, имя сервера, скорость RX/TX при подключении (iOS: дельта `getifaddrs`, 1 с; macOS пока 0). **iOS:** control «Demar VPN» в Control Center; UI синхронизируется с `NEVPNConnection` при любом переключении Demar (приложение, control, Настройки → VPN, системная кнопка VPN в CC).
 
 ### Сервера
 
@@ -80,8 +80,3 @@ xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17'
 
 Ссылки, действия, переход в настройки приложения (журнал). **Служебное меню** — тройной тап по версии внизу экрана: сводка приложения и идентификаторы устройства (IDFV/IDFA или macOS UUID). **iOS IDFA:** системный запрос ATT при первом запуске (когда статус ещё не определён); в служебном меню кнопка **«Включить IDFA»** — повторный ATT или переход в настройки приложения, если отслеживание уже запрещено.
 
-## Roadmap (VPN)
-
-1. ~~`DemarPacketTunnel` + `VpnTunnelController` на iOS~~
-2. `DemarControls` (Control Center, iOS 18+) — отдельно
-3. ~~macOS VPN (Network Extension + `xray` в extension)~~

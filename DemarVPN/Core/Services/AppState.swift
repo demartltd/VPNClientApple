@@ -1,5 +1,8 @@
 import Foundation
 import Observation
+#if os(iOS)
+import WidgetKit
+#endif
 
 @MainActor
 @Observable
@@ -91,7 +94,7 @@ final class AppState {
             for line in VpnSharedStore.drainPendingUiDiagLinesAndClear() where !line.isEmpty {
                 AppLog.shared.append(line)
             }
-            statusMonitor?.refreshStatus(reason: "connect", force: true)
+            statusMonitor?.refreshStatus(reason: "connect", force: true, reloadPreferences: false)
         } catch {
             statusMonitor?.endConnectAttempt()
             if Task.isCancelled { return }
@@ -144,6 +147,9 @@ final class AppState {
     func syncVpnStatusFromSystem() {
         statusMonitor?.importForegroundDiagnostics()
         statusMonitor?.refreshStatus(reason: "sync", force: true)
+        #if os(iOS)
+        ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
+        #endif
     }
 
     private func applyRemoteVpnState(_ state: VpnConnectionState) {

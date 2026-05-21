@@ -80,6 +80,7 @@ enum VpnSharedStore {
       ]
       let data = try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
       try data.write(to: try extensionHeartbeatURL(), options: [.atomic])
+      VpnStatusSignal.post()
     } catch {
       NSLog("[DemarVpn] saveExtensionHeartbeat failed: %@", String(describing: error))
     }
@@ -175,11 +176,13 @@ enum VpnSharedStore {
     return try JSONDecoder().decode(VpnConnectPayload.self, from: data)
   }
 
-  static func saveControlState(_ state: String) {
+  /// - Parameter notify: Post Darwin signal for cross-process UI sync (extension only; host uses `false`).
+  static func saveControlState(_ state: String, notify: Bool = true) {
     do {
       let body = ["state": state, "updatedAt": ISO8601DateFormatter().string(from: Date())]
       let data = try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
       try data.write(to: try stateURL(), options: [.atomic])
+      if notify { VpnStatusSignal.post() }
     } catch {
       // Best effort cache for controls; ignore write failures.
     }
