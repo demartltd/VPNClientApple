@@ -47,7 +47,9 @@ final class VpnStatusMonitor {
                 guard let self else { return }
                 guard !self.connectAttemptActive, !self.controller.isConnectInFlight else { return }
                 self.refreshStatus(reason: "app-group", force: true)
+                #if os(iOS)
                 self.reloadVpnControls()
+                #endif
             }
         }
         refreshStatus(reason: "start")

@@ -37,14 +37,13 @@ Xcode копирует `macos/xray_macos` в app и в `DemarPacketTunnel.appex`
 Для macOS/App Store не используем root/helper-эскалацию привилегий: для Packet Tunnel корректный путь только через Network Extension entitlement + системное разрешение пользователя.
 
 ```powershell
-# Рекомендуемый локальный путь для macOS: xray + сборка + подпись + установка
+# Локально: Apple Development из Keychain (открывается без нотаризации)
 pwsh ./scripts/build-macos.ps1 -Install
 
 # Один раз: cp scripts/build-macos.local.ps1.example scripts/build-macos.local.ps1
-# Заполните P12_PASSWORD, APPLE_ID, APPLE_APP_PASSWORD (+ demar_vpn_client_apple.p12 в scripts/)
-pwsh ./scripts/build-macos.ps1 -Package -Install
+# Для -Notarize: P12_PASSWORD, APPLE_ID, APPLE_APP_PASSWORD + demar_vpn_client_apple.p12 в scripts/
 
-# Распространение (+ notarytool, те же секреты в local.ps1)
+# Распространение: Developer ID + нотаризация (иначе macOS: «can't be opened»)
 pwsh ./scripts/build-macos.ps1 -Notarize -Package
 ```
 
