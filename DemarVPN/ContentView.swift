@@ -4,42 +4,34 @@ struct ContentView: View {
     @Bindable var appState: AppState
     var snackBar: SnackBarController
 
-    @State private var selectedTab = 0
+    @State private var section: DemarSection? = .home
     #if os(iOS)
     @Environment(\.scenePhase) private var scenePhase
     #endif
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            tabShell(tag: 0) {
-                HomeView(appState: appState, isActive: selectedTab == 0)
+        #if os(macOS)
+        NavigationSplitView {
+            List(DemarSection.allCases, id: \.self, selection: $section) { item in
+                Label(item.title, systemImage: item.sidebarIcon)
+                    .tag(item)
             }
-            .tabItem {
-                Label("Главная", systemImage: selectedTab == 0 ? "shield.fill" : "shield")
-            }
-
-            tabShell(tag: 1) {
-                ServersView(appState: appState, isActive: selectedTab == 1, snackBar: snackBar)
-            }
-            .tabItem {
-                Label("Сервера", systemImage: "globe")
-            }
-
-            tabShell(tag: 2) {
-                NavigationStack {
-                    SettingsView(
-                        appState: appState,
-                        isActive: selectedTab == 2,
-                        snackBar: snackBar
-                    )
-                }
-            }
-            .tabItem {
-                Label("Настройки", systemImage: selectedTab == 2 ? "gearshape.fill" : "gearshape")
+            .listStyle(.sidebar)
+            .navigationSplitViewColumnWidth(min: 170, ideal: 170, max: 170)
+        } detail: {
+            screen(section ?? .home, active: true)
+                .id(section ?? .home)
+        }
+        .tint(Color.demarPrimary)
+        #else
+        TabView(selection: $section) {
+            ForEach(DemarSection.allCases) { item in
+                screen(item, active: section == item)
+                    .tabItem { Label(item.title, systemImage: item.tabIcon(selected: section == item)) }
+                    .tag(item)
             }
         }
         .tint(Color.demarPrimary)
-        #if os(iOS)
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             appState.syncVpnStatusFromSystem()
@@ -53,10 +45,20 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private func tabShell<Content: View>(tag: Int, @ViewBuilder content: () -> Content) -> some View {
-        content()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.demarSurface)
-            .tag(tag)
+    private func screen(_ section: DemarSection, active: Bool) -> some View {
+        Group {
+            switch section {
+            case .home:
+                HomeView(appState: appState, isActive: active)
+            case .servers:
+                ServersView(appState: appState, isActive: active, snackBar: snackBar)
+            case .settings:
+                NavigationStack {
+                    SettingsView(appState: appState, isActive: active, snackBar: snackBar)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.demarSurface)
     }
 }

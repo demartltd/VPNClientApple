@@ -1,5 +1,35 @@
 import SwiftUI
 
+enum DemarSection: CaseIterable, Hashable, Identifiable {
+    case home, servers, settings
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .home: "Главная"
+        case .servers: "Сервера"
+        case .settings: "Настройки"
+        }
+    }
+
+    var sidebarIcon: String {
+        switch self {
+        case .home: "shield"
+        case .servers: "globe"
+        case .settings: "gearshape"
+        }
+    }
+
+    func tabIcon(selected: Bool) -> String {
+        switch self {
+        case .home: selected ? "shield.fill" : "shield"
+        case .servers: "globe"
+        case .settings: selected ? "gearshape.fill" : "gearshape"
+        }
+    }
+}
+
 extension View {
     @ViewBuilder
     func demarInlineNavigationTitle() -> some View {

@@ -5,7 +5,7 @@
 ```
 DemarVPN/                              # SwiftUI app target
 ├── DemarVPNApp.swift                  # @main, AppState, тема
-├── ContentView.swift                  # TabView; iOS: ATT при scenePhase == .active
+├── ContentView.swift                  # iOS: TabView + ATT; macOS: NavigationSplitView sidebar
 ├── Info.plist                         # iOS (+ NSUserTrackingUsageDescription для ATT)
 ├── Info-macOS.plist                   # macOS
 ├── DemarVPN.entitlements              # App Group (iOS)

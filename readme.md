@@ -65,7 +65,7 @@ xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17'
 
 ## Навигация
 
-Три раздела (нижние вкладки): **Главная**, **Сервера**, **Настройки**.
+Три раздела: **Главная**, **Сервера**, **Настройки**. **iOS** — нижние вкладки (`TabView`). **macOS** — боковая панель слева (`NavigationSplitView`).
 
 ### Главная
 
