@@ -69,7 +69,7 @@ xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17'
 
 ### Подключение
 
-Вкл/выкл VPN, статус, имя сервера, скорость RX/TX при подключении (iOS: дельта `getifaddrs`, 1 с; macOS пока 0). **iOS:** control «Demar VPN» в Control Center; UI синхронизируется с `NEVPNConnection` при любом переключении Demar (приложение, control, Настройки → VPN, системная кнопка VPN в CC).
+Вкл/выкл VPN, статус, имя сервера, скорость RX/TX при подключении (дельта `getifaddrs`, 1 с; macOS — `utun*`). **iOS:** control «Demar VPN» в Control Center; UI синхронизируется с `NEVPNConnection` при любом переключении Demar (приложение, control, Настройки → VPN, системная кнопка VPN в CC).
 
 ### Сервера
 

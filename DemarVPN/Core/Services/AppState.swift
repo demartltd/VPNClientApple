@@ -21,7 +21,7 @@ final class AppState {
     #if os(iOS) || os(macOS)
     private var statusMonitor: VpnStatusMonitor?
     #endif
-    #if os(iOS)
+    #if os(iOS) || os(macOS)
     private var throughputBaseline: (rx: UInt64, tx: UInt64, at: Date)?
     private var throughputSampling = false
     #endif
@@ -158,14 +158,14 @@ final class AppState {
     }
 
     private func resetThroughput() {
-        #if os(iOS)
+        #if os(iOS) || os(macOS)
         throughputBaseline = nil
         #endif
         downloadBps = 0
         uploadBps = 0
     }
 
-    #if os(iOS)
+    #if os(iOS) || os(macOS)
     func runHomeThroughputSampling() async {
         resetThroughput()
         while !Task.isCancelled {
@@ -183,8 +183,13 @@ final class AppState {
         throughputSampling = true
         defer { throughputSampling = false }
 
+        #if os(macOS)
+        let tunnelOnly = true
+        #else
+        let tunnelOnly = false
+        #endif
         let totals = await Task.detached(priority: .utility) {
-            DeviceTrafficTotals.cumulativeRXTXBytes()
+            DeviceTrafficTotals.cumulativeRXTXBytes(vpnTunnelOnly: tunnelOnly)
         }.value
         guard let totals else {
             resetThroughput()

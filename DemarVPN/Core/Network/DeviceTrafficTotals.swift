@@ -2,7 +2,8 @@ import Darwin
 
 /// Cumulative link-layer byte counters since boot (non-loopback `AF_LINK`), same as Flutter iOS bridge.
 enum DeviceTrafficTotals {
-    static func cumulativeRXTXBytes() -> (rx: UInt64, tx: UInt64)? {
+    /// When `vpnTunnelOnly`, sums `utun*` only (macOS home throughput while VPN is up).
+    static func cumulativeRXTXBytes(vpnTunnelOnly: Bool = false) -> (rx: UInt64, tx: UInt64)? {
         var head: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&head) == 0 else { return nil }
         defer { freeifaddrs(head) }
@@ -16,6 +17,7 @@ enum DeviceTrafficTotals {
             guard let addr = iface.ifa_addr, addr.pointee.sa_family == UInt8(AF_LINK) else { continue }
             let name = String(cString: iface.ifa_name)
             if name == "lo0" || name.hasPrefix("lo") { continue }
+            if vpnTunnelOnly, !name.hasPrefix("utun") { continue }
             guard let rawData = iface.ifa_data else { continue }
             let data = rawData.assumingMemoryBound(to: if_data.self)
             rx += UInt64(data.pointee.ifi_ibytes)
