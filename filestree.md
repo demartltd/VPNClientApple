@@ -22,7 +22,7 @@ DemarVPN/                              # SwiftUI app target
 │   │   ├── ServerProfile.swift
 │   │   └── TestServers.swift
 │   ├── Network/
-│   │   ├── DeviceTrafficTotals.swift      # iOS: getifaddrs RX/TX (скорость на главной)
+│   │   ├── DeviceTrafficTotals.swift      # iOS: getifaddrs RX/TX (скорость на экране подключения)
 │   │   └── PublicEgressDiagnostics.swift   # служебное меню: IP/страна, TCP+HTTPS зонды (независимо)
 │   ├── Vpn/
 │   │   ├── VlessRealityProfile.swift

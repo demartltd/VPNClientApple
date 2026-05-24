@@ -19,8 +19,11 @@ struct ContentView: View {
             .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 170, ideal: 170, max: 170)
         } detail: {
-            screen(section ?? .home, active: true)
-                .id(section ?? .home)
+            NavigationStack {
+                screen(section ?? .home, active: true)
+                    .demarMacWindowTitle(section ?? .home)
+            }
+            .id(section ?? .home)
         }
         .tint(Color.demarPrimary)
         #else
@@ -53,9 +56,13 @@ struct ContentView: View {
             case .servers:
                 ServersView(appState: appState, isActive: active, snackBar: snackBar)
             case .settings:
+                #if os(macOS)
+                SettingsView(appState: appState, isActive: active, snackBar: snackBar)
+                #else
                 NavigationStack {
                     SettingsView(appState: appState, isActive: active, snackBar: snackBar)
                 }
+                #endif
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

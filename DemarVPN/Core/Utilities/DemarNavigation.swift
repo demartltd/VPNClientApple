@@ -7,7 +7,7 @@ enum DemarSection: CaseIterable, Hashable, Identifiable {
 
     var title: String {
         switch self {
-        case .home: "Главная"
+        case .home: "Подключение"
         case .servers: "Сервера"
         case .settings: "Настройки"
         }
@@ -31,6 +31,12 @@ enum DemarSection: CaseIterable, Hashable, Identifiable {
 }
 
 extension View {
+    #if os(macOS)
+    func demarMacWindowTitle(_ section: DemarSection) -> some View {
+        navigationTitle(section.title)
+    }
+    #endif
+
     @ViewBuilder
     func demarInlineNavigationTitle() -> some View {
         #if os(iOS)
