@@ -167,7 +167,7 @@ final class AppState {
 
     #if os(iOS) || os(macOS)
     func runHomeThroughputSampling() async {
-        resetThroughput()
+        throughputBaseline = nil
         while !Task.isCancelled {
             await sampleThroughputIfConnected()
             try? await Task.sleep(for: .seconds(1))
