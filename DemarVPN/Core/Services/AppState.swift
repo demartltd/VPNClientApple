@@ -15,6 +15,7 @@ final class AppState {
 
     var appVersionLabel: String = "1.0.1"
     var xrayVersionToken: String = BundledXrayVersion.label
+    var accountUser: AccountUser?
 
     private let vpn: VpnControlling
 
@@ -60,6 +61,22 @@ final class AppState {
     func selectServer(_ server: ServerProfile) {
         selectedServer = server
         AppLog.shared.append("[ui] server selected: \(server.displayName)")
+    }
+
+    @discardableResult
+    func signIn(email: String, password: String) -> Bool {
+        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.contains("@"), !password.isEmpty else { return false }
+        let name = trimmed.split(separator: "@").first.map(String.init) ?? trimmed
+        accountUser = AccountUser(email: trimmed, displayName: name.capitalized)
+        AppLog.shared.append("[ui] account sign-in: \(trimmed)")
+        return true
+    }
+
+    func signOut() {
+        guard let email = accountUser?.email else { return }
+        accountUser = nil
+        AppLog.shared.append("[ui] account sign-out: \(email)")
     }
 
     func connect() async {

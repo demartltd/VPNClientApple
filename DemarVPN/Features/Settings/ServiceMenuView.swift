@@ -101,6 +101,9 @@ private let kServiceMenuRefreshSpinDuration: TimeInterval = 2.5
 
 private struct ServiceEgressDiagnosticsCard: View {
     @Bindable var appState: AppState
+    #if os(macOS)
+    @Environment(\.openWindow) private var openWindow
+    #endif
 
     @State private var geoBusy = true
     @State private var inFlight = false
@@ -110,6 +113,10 @@ private struct ServiceEgressDiagnosticsCard: View {
         EgressHostProbe(tcpMs: 0, httpsMs: 0)
     }
     @State private var probesReady = Set<Int>()
+    @State private var userHosts = CustomEgressProbeStore.hosts
+    @State private var userProbes: [EgressHostProbe] = []
+    @State private var userProbesReady = Set<Int>()
+    @State private var showCustomList = false
     #if os(iOS)
     @Environment(\.scenePhase) private var scenePhase
     #endif
@@ -118,11 +125,21 @@ private struct ServiceEgressDiagnosticsCard: View {
         SectionCard(
             title: "Интернет",
             leading: { icon("cloud") },
-            trailing: { refreshButton }
+            trailing: { headerActions }
         ) {
             VStack(alignment: .leading, spacing: 8) {
                 DemarKvRow(key: "IP", value: ipCell)
                 DemarKvRow(key: "Страна", value: countryCell)
+                if !userHosts.isEmpty {
+                    ForEach(Array(userHosts.enumerated()), id: \.offset) { index, host in
+                        DemarKvRow(
+                            key: host,
+                            value: userProbesReady.contains(index)
+                                ? PublicEgressDiagnostics.egressHostProbeLabel(userProbes[index])
+                                : "…"
+                        )
+                    }
+                }
                 ForEach(Array(PublicEgressDiagnostics.probeHosts.enumerated()), id: \.offset) { index, host in
                     DemarKvRow(
                         key: host,
@@ -135,11 +152,27 @@ private struct ServiceEgressDiagnosticsCard: View {
         }
         .task { await load() }
         .onChange(of: appState.vpnState) { _, _ in Task { await load() } }
+        .customEgressProbesSheet(isPresented: $showCustomList)
+        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
+            syncUserHosts()
+        }
         #if os(iOS)
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await load() } }
         }
         #endif
+    }
+
+    private var headerActions: some View {
+        HStack(spacing: 14) {
+            Button(action: openCustomList) {
+                Image(systemName: "list.bullet.rectangle")
+                    .foregroundStyle(Color.demarPrimary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Свои проверки")
+            refreshButton
+        }
     }
 
     private var refreshButton: some View {
@@ -164,6 +197,20 @@ private struct ServiceEgressDiagnosticsCard: View {
         return geo?.country ?? PublicEgressDiagnostics.fallback.country
     }
 
+    private func openCustomList() {
+        #if os(macOS)
+        openWindow(id: CustomEgressProbesWindow.id)
+        #else
+        showCustomList = true
+        #endif
+    }
+
+    private func syncUserHosts() {
+        userHosts = CustomEgressProbeStore.hosts
+        userProbes = userHosts.map { _ in EgressHostProbe(tcpMs: 0, httpsMs: 0) }
+        userProbesReady = []
+    }
+
     private func icon(_ name: String) -> some View {
         Image(systemName: name)
             .foregroundStyle(Color.demarPrimary)
@@ -175,11 +222,15 @@ private struct ServiceEgressDiagnosticsCard: View {
         geoBusy = true
         geo = nil
         probesReady = []
+        userProbesReady = []
+        userHosts = CustomEgressProbeStore.hosts
+        userProbes = userHosts.map { _ in EgressHostProbe(tcpMs: 0, httpsMs: 0) }
         probes = PublicEgressDiagnostics.probeHosts.map { _ in EgressHostProbe(tcpMs: 0, httpsMs: 0) }
         async let spin: Void = runRefreshSpin()
         async let geoLoad: Void = fetchGeo()
         async let probesLoad: Void = fetchHostProbes()
-        _ = await (spin, geoLoad, probesLoad)
+        async let userLoad: Void = fetchUserProbes()
+        _ = await (spin, geoLoad, probesLoad, userLoad)
         inFlight = false
     }
 
@@ -210,6 +261,18 @@ private struct ServiceEgressDiagnosticsCard: View {
         await MainActor.run {
             probes = hostProbes
         }
+    }
+
+    private func fetchUserProbes() async {
+        let hosts = await MainActor.run { CustomEgressProbeStore.hosts }
+        guard !hosts.isEmpty else { return }
+        let results = await PublicEgressDiagnostics.probeHosts(hosts) { index, probe in
+            Task { @MainActor in
+                userProbes[index] = probe
+                userProbesReady.insert(index)
+            }
+        }
+        await MainActor.run { userProbes = results }
     }
 }
 

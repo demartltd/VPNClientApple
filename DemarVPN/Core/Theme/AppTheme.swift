@@ -13,11 +13,13 @@ enum AppTheme {
         UINavigationBar.appearance().standardAppearance = nav
         UINavigationBar.appearance().scrollEdgeAppearance = nav
 
-        let tab = UITabBarAppearance()
-        tab.configureWithOpaqueBackground()
-        tab.backgroundColor = surface
-        UITabBar.appearance().standardAppearance = tab
-        UITabBar.appearance().scrollEdgeAppearance = tab
+        if #unavailable(iOS 26.0) {
+            let tab = UITabBarAppearance()
+            tab.configureWithOpaqueBackground()
+            tab.backgroundColor = surface
+            UITabBar.appearance().standardAppearance = tab
+            UITabBar.appearance().scrollEdgeAppearance = tab
+        }
     }
 }
 #else

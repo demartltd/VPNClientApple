@@ -34,6 +34,16 @@ enum PublicEgressDiagnostics {
         return "TCP \(t) · HTTPS \(h)"
     }
 
+    /// `example.com`, `https://host/path`, `203.0.113.1` → hostname for probes.
+    static func normalizeProbeHost(_ raw: String) -> String? {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let withScheme = trimmed.contains("://") ? trimmed : "https://\(trimmed)"
+        if let host = URL(string: withScheme)?.host, !host.isEmpty { return host }
+        let bare = trimmed.split { "/:".contains($0) }.first.map(String.init) ?? ""
+        return bare.isEmpty ? nil : bare
+    }
+
     static func censorPublicIPv4ForDisplay(_ ip: String) -> String {
         if ip == "localhost" || ip == "127.0.0.1" { return "localhost" }
         let parts = ip.split(separator: ".", omittingEmptySubsequences: false)
@@ -64,15 +74,23 @@ enum PublicEgressDiagnostics {
     static func probeAllHosts(
         onHostReady: (@Sendable (Int, EgressHostProbe) -> Void)? = nil
     ) async -> [EgressHostProbe] {
-        await withTaskGroup(of: (Int, EgressHostProbe).self, returning: [EgressHostProbe].self) { group in
-            for (index, host) in probeHosts.enumerated() {
+        await probeHosts(probeHosts, onHostReady: onHostReady)
+    }
+
+    static func probeHosts(
+        _ hosts: [String],
+        onHostReady: (@Sendable (Int, EgressHostProbe) -> Void)? = nil
+    ) async -> [EgressHostProbe] {
+        guard !hosts.isEmpty else { return [] }
+        return await withTaskGroup(of: (Int, EgressHostProbe).self, returning: [EgressHostProbe].self) { group in
+            for (index, host) in hosts.enumerated() {
                 group.addTask {
                     let probe = await probeEgressHost(host)
                     onHostReady?(index, probe)
                     return (index, probe)
                 }
             }
-            var ordered = Array(repeating: EgressHostProbe(tcpMs: 0, httpsMs: 0), count: probeHosts.count)
+            var ordered = Array(repeating: EgressHostProbe(tcpMs: 0, httpsMs: 0), count: hosts.count)
             for await (index, probe) in group {
                 ordered[index] = probe
             }

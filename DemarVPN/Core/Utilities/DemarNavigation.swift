@@ -1,7 +1,9 @@
 import SwiftUI
 
 enum DemarSection: CaseIterable, Hashable, Identifiable {
-    case home, servers, settings
+    case home, servers, settings, account
+
+    static let main: [DemarSection] = [.home, .servers, .settings]
 
     var id: Self { self }
 
@@ -10,6 +12,7 @@ enum DemarSection: CaseIterable, Hashable, Identifiable {
         case .home: "Подключение"
         case .servers: "Сервера"
         case .settings: "Настройки"
+        case .account: "Аккаунт"
         }
     }
 
@@ -18,6 +21,7 @@ enum DemarSection: CaseIterable, Hashable, Identifiable {
         case .home: "shield"
         case .servers: "globe"
         case .settings: "gearshape"
+        case .account: "person.crop.circle"
         }
     }
 
@@ -26,6 +30,7 @@ enum DemarSection: CaseIterable, Hashable, Identifiable {
         case .home: selected ? "shield.fill" : "shield"
         case .servers: "globe"
         case .settings: selected ? "gearshape.fill" : "gearshape"
+        case .account: selected ? "person.crop.circle.fill" : "person.crop.circle"
         }
     }
 }
