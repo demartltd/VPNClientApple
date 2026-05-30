@@ -1,4 +1,4 @@
-**Demar VPN (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **Xray-core** (VLESS / REALITY), как в кроссплатформенной Flutter-версии [`demar_vpn`](../demar_vpn).
+**Demar VPN (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **Sing-box** (VLESS / REALITY), как в кроссплатформенной Flutter-версии [`demar_vpn`](../demar_vpn).
 
 Поддерживаются **iOS 18+** и **macOS 14+** (нативное приложение, один target). Web, Android, Windows и Linux не поддерживаются.
 
@@ -9,17 +9,17 @@
 - **Xcode 15+**
 - Deployment: **iOS 18+**, **macOS 14+** (VPN на Mac — **Apple Silicon arm64**)
 - Bundle ID: `com.demar.vpn`
-- **iOS:** SwiftUI + Network Extension (`DemarPacketTunnel`) + `DemarXray.xcframework` + App Group
-- **macOS:** Network Extension + subprocess `xray` в extension (`xray_macos/`, `XRAY_TUN_FD`)
+- **iOS:** SwiftUI + Network Extension (`DemarPacketTunnel`) + App Group + Sing-box config pipeline
+- **macOS:** Network Extension + subprocess `sing-box` в extension (`singbox_macos/`)
 - См. [`readme-core.md`](readme-core.md)
 
 Один раз перед сборкой (скрипт только для разработчиков, в runtime не вызывается):
 
 ```bash
-python3 scripts/xray-download-auto.py   # → macos/xray_macos/, ios/Shared/xray/
+python3 scripts/singbox-download-auto.py   # → macos/singbox_macos/, ios/Shared/singbox/ (+ geo db; iOS binary built from source via Go 1.24.7)
 ```
 
-Xcode копирует `macos/xray_macos` в app и в `DemarPacketTunnel.appex` (macOS).
+Xcode копирует runtime-assets в app и в `DemarPacketTunnel.appex` (macOS).
 
 В [Apple Developer](https://developer.apple.com/account) для App ID `com.demar.vpn`, `com.demar.vpn.packet-tunnel` и **`com.demar.vpn.controls`** (Control Center) включите: **App Groups** (`group.com.demar.vpn`), **Network Extensions** → Packet Tunnel. Entitlements уже в `DemarVPN.entitlements`, `ios/DemarPacketTunnel/DemarPacketTunnel.entitlements` и `ios/DemarControls/DemarControls.entitlements`.
 
@@ -59,7 +59,7 @@ xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17'
 
 Для проверки стабильного запуска Packet Tunnel на macOS используйте один путь установки: `pwsh ./scripts/build-macos.ps1 -Install`, затем включите `Demar VPN` в `System Settings → Login Items & Extensions → Network Extensions`.
 
-Документация Xray: https://xtls.github.io/en/document/
+Документация Sing-box: https://sing-box.sagernet.org/
 
 Структура кода: [`filestree.md`](filestree.md) — обновляй при изменениях в проекте.
 

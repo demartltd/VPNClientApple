@@ -2,8 +2,8 @@
 import Darwin
 import Foundation
 
-/// Running xray subprocess started via posix_spawn with an inherited utun fd.
-final class MacXrayChild {
+/// Running sing-box subprocess started via posix_spawn.
+final class MacCoreChild {
     let pid: pid_t
     private let stdoutReadFD: Int32
     private let stderrReadFD: Int32
@@ -77,30 +77,23 @@ final class MacXrayChild {
                     self.logLines.removeFirst(self.logLines.count - 40)
                 }
                 self.logLock.unlock()
-                VpnSharedStore.appendPendingUiDiagLine("[xray] \(trimmed)")
+                VpnSharedStore.appendPendingUiDiagLine("[core] \(trimmed)")
             }
         }
         return source
     }
 }
 
-enum MacXrayProcess {
-    /// Child fd number xray reads via XRAY_TUN_FD (must match env and dup2 target).
-    private static let childTunFd: Int32 = 3
+enum MacCoreProcess {
 
     @discardableResult
-    static func start(configPath: String, tunFd: Int64, assetDir: String) throws -> MacXrayChild {
+    static func start(configPath: String, tunFd: Int64, assetDir: String) throws -> MacCoreChild {
         let exe = try resolveExecutable()
-        let parentTunFd = Int32(tunFd)
-        guard parentTunFd >= 0 else {
-            throw NSError(domain: "DemarVpn", code: 24, userInfo: [
-                NSLocalizedDescriptionKey: "Invalid utun file descriptor.",
-            ])
-        }
-        try validateUtunFd(parentTunFd)
+        let _ = tunFd
+        let _ = assetDir
 
         VpnSharedStore.appendPendingUiDiagLine(
-            "[mac] xray path=\(exe.path) spawn tun parentFd=\(parentTunFd) childFd=\(childTunFd)"
+            "[core] sing-box path=\(exe.path) spawn"
         )
 
         var outPipe: [Int32] = [0, 0]
@@ -128,16 +121,11 @@ enum MacXrayProcess {
         posix_spawn_file_actions_addclose(&actions, outPipe[1])
         posix_spawn_file_actions_addclose(&actions, errPipe[1])
         let devNull = "/dev/null"
-        devNull.withCString { devNullPath in
+        _ = devNull.withCString { devNullPath in
             posix_spawn_file_actions_addopen(&actions, STDIN_FILENO, devNullPath, O_RDONLY, mode_t(0))
         }
-        posix_spawn_file_actions_adddup2(&actions, parentTunFd, childTunFd)
-
         let argv = [exe.path, "run", "-c", configPath]
-        var env = ProcessInfo.processInfo.environment
-        env["XRAY_TUN_FD"] = String(childTunFd)
-        env["XRAY_LOCATION_ASSET"] = assetDir
-        let envPairs = env.map { "\($0.key)=\($0.value)" }
+        let envPairs = ProcessInfo.processInfo.environment.map { "\($0.key)=\($0.value)" }
 
         var pid: pid_t = 0
         let spawnStatus: Int32 = exe.path.withCString { exePath in
@@ -161,21 +149,21 @@ enum MacXrayProcess {
             ])
         }
 
-        let child = MacXrayChild(pid: pid, stdoutReadFD: outPipe[0], stderrReadFD: errPipe[0])
+        let child = MacCoreChild(pid: pid, stdoutReadFD: outPipe[0], stderrReadFD: errPipe[0])
         child.startLogReaders()
 
         Thread.sleep(forTimeInterval: 0.25)
         if !child.isRunning {
             child.stopLogReaders()
             let tail = child.recentLogTail()
-            let lastXray = VpnSharedStore.readLastXrayErrorLineSnapshot() ?? ""
-            let humanDetail = [tail, lastXray]
+            let lastCoreError = VpnSharedStore.readLastCoreErrorLineSnapshot() ?? ""
+            let humanDetail = [tail, lastCoreError]
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .first(where: { !$0.isEmpty })
             let code = child.terminationStatus
             let message = humanDetail?.isEmpty == false
-                ? "xray завершился сразу после запуска (код \(code)): \(humanDetail!)"
-                : "xray завершился сразу после запуска (код \(code))."
+                ? "sing-box завершился сразу после запуска (код \(code)): \(humanDetail!)"
+                : "sing-box завершился сразу после запуска (код \(code))."
             VpnSharedStore.saveTunnelStartFailure(message)
             throw NSError(domain: "DemarVpn", code: 22, userInfo: [
                 NSLocalizedDescriptionKey: message,
@@ -184,7 +172,7 @@ enum MacXrayProcess {
         return child
     }
 
-    static func stop(_ child: MacXrayChild?) {
+    static func stop(_ child: MacCoreChild?) {
         guard let child else { return }
         if child.isRunning {
             kill(child.pid, SIGTERM)
@@ -200,34 +188,39 @@ enum MacXrayProcess {
         child.stopLogReaders()
     }
 
-    private static func validateUtunFd(_ fd: Int32) throws {
-        var flags = fcntl(fd, F_GETFL)
-        guard flags >= 0 else {
-            throw NSError(domain: "DemarVpn", code: 29, userInfo: [
-                NSLocalizedDescriptionKey: "utun fd \(fd) is not open (errno \(errno)).",
-            ])
-        }
-        _ = fcntl(fd, F_SETFL, flags | O_NONBLOCK)
-    }
-
     private static func closePipeEnds(_ pipe: [Int32]) {
         if pipe[0] >= 0 { close(pipe[0]) }
         if pipe[1] >= 0 { close(pipe[1]) }
     }
 
     private static func resolveExecutable() throws -> URL {
-        guard let dir = Bundle.main.resourceURL?.appendingPathComponent("xray_macos") else {
+        let fm = FileManager.default
+        guard let root = Bundle.main.resourceURL else {
             throw NSError(domain: "DemarVpn", code: 20, userInfo: [
-                NSLocalizedDescriptionKey: "xray_macos bundle folder missing in extension.",
+                NSLocalizedDescriptionKey: "extension bundle has no resourceURL.",
             ])
         }
-        let exe = dir.appendingPathComponent("xray")
-        guard FileManager.default.isExecutableFile(atPath: exe.path) else {
-            throw NSError(domain: "DemarVpn", code: 21, userInfo: [
-                NSLocalizedDescriptionKey: "xray binary missing in extension bundle.",
-            ])
+        #if os(iOS)
+        let subdir = "singbox"
+        #if targetEnvironment(simulator)
+        let names = ["sing-box-simulator", "sing-box"]
+        #else
+        let names = ["sing-box"]
+        #endif
+        #else
+        let subdir = "singbox_macos"
+        let names = ["sing-box"]
+        #endif
+        for name in names {
+            let exe = root.appendingPathComponent("\(subdir)/\(name)")
+            var isDir: ObjCBool = false
+            guard fm.fileExists(atPath: exe.path, isDirectory: &isDir), !isDir.boolValue else { continue }
+            guard fm.isReadableFile(atPath: exe.path) else { continue }
+            return exe
         }
-        return exe
+        throw NSError(domain: "DemarVpn", code: 21, userInfo: [
+            NSLocalizedDescriptionKey: "sing-box binary missing in extension bundle (\(subdir)/).",
+        ])
     }
 }
 
@@ -246,4 +239,5 @@ private extension Array where Element == String {
         withSpawnArgv(body)
     }
 }
+
 #endif

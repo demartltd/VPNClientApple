@@ -23,7 +23,9 @@ final class VpnStatusMonitor {
     private var disconnectingSince: Date?
     private var connectFailureGraceTask: Task<Void, Never>?
     private var lastTrackedNeStatus: NEVPNStatus?
+    private var disconnectFlickerGraceUntil: Date?
     private static let connectTimeout: TimeInterval = 45
+    private static let disconnectFlickerGrace: TimeInterval = 2
     private static let connectStallTimeout: TimeInterval = 10
     private static let extensionLaunchTimeout: TimeInterval = 3
     private static let connectProbeIntervalNs: UInt64 = 400_000_000
@@ -46,7 +48,7 @@ final class VpnStatusMonitor {
             Task { @MainActor in
                 guard let self else { return }
                 guard !self.connectAttemptActive, !self.controller.isConnectInFlight else { return }
-                self.refreshStatus(reason: "app-group", force: true)
+                self.refreshStatus(reason: "app-group", force: true, reloadPreferences: false)
                 #if os(iOS)
                 self.reloadVpnControls()
                 #endif
@@ -163,11 +165,11 @@ final class VpnStatusMonitor {
         pollTimer = nil
         trackedConnection = nil
     }
-    /// Imports extension journal, stop-reason history, and xray log tail (e.g. when app becomes active).
+    /// Imports extension journal, stop-reason history, and core log tail (e.g. when app becomes active).
     func importForegroundDiagnostics() {
         AppLog.shared.importSharedJournal()
         Self.importPendingDiagLines()
-        importXrayTailIfNeeded()
+        importCoreTailIfNeeded()
         for line in VpnSharedStore.drainTunnelStopReasonHistoryAndClear() where !line.isEmpty {
             AppLog.shared.append(line)
         }
@@ -215,7 +217,7 @@ final class VpnStatusMonitor {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                self?.refreshStatus(reason: "nevpn", force: true)
+                self?.refreshStatus(reason: "nevpn", force: true, reloadPreferences: false)
             }
         }
     }
@@ -225,7 +227,27 @@ final class VpnStatusMonitor {
         ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
     }
     #endif
+
+    /// Ignores brief `NEVPNStatus.disconnected` while extension heartbeat is still fresh.
+    private func shouldHoldConnectedDespiteNeDisconnected(_ neStatus: NEVPNStatus) -> Bool {
+        guard neStatus == .disconnected, !connectAttemptActive else {
+            disconnectFlickerGraceUntil = nil
+            return false
+        }
+        guard case .connected = lastDeliveredState, VpnSharedStore.extensionSignalsAlive() else {
+            disconnectFlickerGraceUntil = nil
+            return false
+        }
+        let now = Date()
+        if let until = disconnectFlickerGraceUntil, now < until { return true }
+        disconnectFlickerGraceUntil = now.addingTimeInterval(Self.disconnectFlickerGrace)
+        return true
+    }
+
     private func publishResolvedStatus(neStatus: NEVPNStatus, reason: String) {
+        if shouldHoldConnectedDespiteNeDisconnected(neStatus) {
+            return
+        }
         let previousNeStatus = lastTrackedNeStatus
         lastTrackedNeStatus = neStatus
         if neStatus == .disconnected, !connectAttemptActive {
@@ -251,7 +273,7 @@ final class VpnStatusMonitor {
             let elapsed = Date().timeIntervalSince(since)
             if elapsed > Self.connectTimeout {
                 finishConnectAttempt(
-                    .error(message: "Таймаут подключения VPN. Откройте журнал ([mac]/[xray]) или удалите профиль в Системных настройках → VPN."),
+                    .error(message: "Таймаут подключения VPN. Откройте журнал ([mac]/[core]) или удалите профиль в Системных настройках → VPN."),
                     logReason: "connect-timeout"
                 )
                 return
@@ -311,7 +333,7 @@ final class VpnStatusMonitor {
     private func publish(_ state: VpnConnectionState, neStatus: NEVPNStatus, logReason: String) {
         var state = state
         // Only promote disconnected → error while a connect attempt is active.
-        // After user disconnect, stale journal/xray lines must not surface as errors.
+        // After user disconnect, stale journal/core lines must not surface as errors.
         if case .disconnected = state, connectAttemptActive, let failure = Self.resolveFailureState() {
             state = failure
         }
@@ -346,13 +368,13 @@ final class VpnStatusMonitor {
                         self.refreshStatus(reason: "poll-connect", reloadPreferences: false)
                     }
                 } else {
-                    self.refreshStatus(reason: "poll", reloadPreferences: true)
+                    self.refreshStatus(reason: "poll", reloadPreferences: false)
                 }
                 AppLog.shared.importSharedJournal()
                 if self.connectAttemptActive {
                     Self.importPendingDiagLines()
                 }
-                self.importXrayTailIfNeeded()
+                self.importCoreTailIfNeeded()
             }
         }
     }
@@ -376,6 +398,25 @@ final class VpnStatusMonitor {
         return elapsed >= connectStallTimeout
         #endif
     }
+    private static func activeSessionStartedAt() -> Date? {
+        guard let raw = VpnSharedStore.loadActiveSession()?["startedAt"], !raw.isEmpty else { return nil }
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: raw) ?? ISO8601DateFormatter().date(from: raw)
+    }
+
+    private static func journalLineIsAfterSessionStart(_ line: String, sessionStartedAt: Date) -> Bool {
+        guard line.first == "[",
+              let end = line.firstIndex(of: "]"),
+              end > line.startIndex
+        else { return true }
+        let raw = String(line[line.index(after: line.startIndex)..<end])
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let ts = fractional.date(from: raw) ?? ISO8601DateFormatter().date(from: raw) else { return true }
+        return ts >= sessionStartedAt.addingTimeInterval(-1)
+    }
+
     /// Drains extension diagnostics and returns a user-facing error, if any.
     private static func resolveFailureState() -> VpnConnectionState? {
         AppLog.shared.importSharedJournal()
@@ -385,7 +426,14 @@ final class VpnStatusMonitor {
         if let startError = VpnSharedStore.drainTunnelStartFailureAndClear() {
             return .error(message: startError)
         }
+        if VpnSharedStore.extensionHeartbeatIsFresh(maxAge: 45) {
+            return nil
+        }
+        let sessionStartedAt = activeSessionStartedAt()
         for line in VpnSharedStore.recentJournalLines(48).reversed() {
+            if let sessionStartedAt, !journalLineIsAfterSessionStart(line, sessionStartedAt: sessionStartedAt) {
+                continue
+            }
             if isFailureDiagLine(line) {
                 return .error(message: Self.diagLineMessage(line))
             }
@@ -421,6 +469,9 @@ final class VpnStatusMonitor {
     }
 
     private static func isUserInitiatedStop(label: String, triggerSource: String) -> Bool {
+        if label == "userInitiated", triggerSource.lowercased().contains("externaluserorsystem") {
+            return false
+        }
         if label == "userInitiated" { return true }
         let src = triggerSource.lowercased()
         if src.contains("hostappdisconnect") || src.contains("controlintent") { return true }
@@ -428,21 +479,24 @@ final class VpnStatusMonitor {
     }
     private static func isFailureDiagLine(_ line: String) -> Bool {
         let msg = diagLineMessage(line).lowercased()
-        if line.contains("[xray]") {
+        if line.contains("[core]") {
+            if msg.contains("connection was refused"), VpnSharedStore.extensionSignalsAlive() {
+                return false
+            }
             return msg.contains("failed to start") || msg.contains(" failed")
                 || msg.contains("error:") || msg.contains("fatal")
         }
         guard line.contains("[mac]") || line.contains("[ios]") else { return false }
         if msg.hasPrefix("post-start probe ") { return false }
         if msg.hasPrefix("tunnel stop:") { return false }
-        if msg.contains("xray subprocess started") { return false }
+        if msg.contains("core subprocess started") { return false }
         if msg.contains("ne accepted start, but extension is not running") { return false }
         return msg.contains("error:") || msg.contains(" failed") || msg.hasPrefix("failed")
             || msg.contains(" missing") || msg.hasPrefix("missing")
-            || msg.contains("could not") || msg.contains("xray start error")
+            || msg.contains("could not") || msg.contains("core start error")
     }
     private static func diagLineMessage(_ line: String) -> String {
-        for prefix in ["[mac] ", "[ios] ", "[xray] ", "[vpn] "] {
+        for prefix in ["[mac] ", "[ios] ", "[core] ", "[vpn] "] {
             if let range = line.range(of: prefix) {
                 return String(line[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
             }
@@ -451,6 +505,7 @@ final class VpnStatusMonitor {
     }
     private static let failureStopLabels: Set<String> = [
         "configurationFailed",
+        "configurationDisabled",
         "providerFailed",
         "connectionFailed",
         "unrecoverableNetworkChange",
@@ -472,20 +527,22 @@ final class VpnStatusMonitor {
         if !tail.isEmpty {
             return "Туннель не подключился (heartbeat=\(hb)): \(tail)"
         }
-        return "Туннель не запустился (heartbeat=\(hb)). Проверьте Network Extensions/VPN в System Settings и откройте журнал ([mac]/[xray])."
+        return "Туннель не запустился (heartbeat=\(hb)). Проверьте Network Extensions/VPN в System Settings и откройте журнал ([mac]/[core])."
         #else
         return "Не удалось подключить VPN. Откройте журнал или перезапустите приложение."
         #endif
     }
     private static func messageForStopLabel(_ label: String) -> String {
         switch label {
+        case "configurationDisabled":
+            return "VPN-профиль отключен системой (configurationDisabled). Проверьте iOS Settings > VPN и включите Demar VPN снова."
         case "configurationFailed":
             return "Ошибка конфигурации VPN. Проверьте профиль и разрешение в Системных настройках → VPN."
         case "providerFailed":
             #if os(iOS)
-            return "Туннель остановлен (xray). Откройте журнал — строки [ios] и [xray]."
+            return "Туннель остановлен (core). Откройте журнал — строки [ios] и [core]."
             #else
-            return "Туннель остановлен (xray). Откройте журнал — строки [mac] и [xray]."
+            return "Туннель остановлен (core). Откройте журнал — строки [mac] и [core]."
             #endif
         case "connectionFailed":
             return "Не удалось установить VPN-соединение. Проверьте сеть и доступность сервера."
@@ -503,11 +560,11 @@ final class VpnStatusMonitor {
             return "VPN tunnel error (\(label))."
         }
     }
-    private func importXrayTailIfNeeded() {
-        for line in VpnSharedStore.readIncrementalSharedXrayLogLines() {
+    private func importCoreTailIfNeeded() {
+        for line in VpnSharedStore.readIncrementalSharedCoreLogLines() {
             let text = line.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else { continue }
-            AppLog.shared.append("[xray] \(text)")
+            AppLog.shared.append("[core] \(text)")
         }
     }
     /// Maps NE status to UI state. App Group hints never override NE for connected/disconnected.

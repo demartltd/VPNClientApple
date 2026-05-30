@@ -5,10 +5,6 @@ import NetworkExtension
 import WidgetKit
 #endif
 
-#if canImport(DemarXray)
-import DemarXray
-#endif
-
 private func logLine(_ message: String) {
   NSLog("[DemarPacketTunnel] %@", message)
 }
@@ -43,7 +39,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     )
   }
 
-  private let xrayQueue = DispatchQueue(label: "vpn.demar.xray", qos: .userInitiated)
+  private let coreQueue = DispatchQueue(label: "vpn.demar.core", qos: .userInitiated)
   private static let controlKind = "com.demar.vpn.controls.vpn-toggle"
   private static let providerKeySessionId = "vpnSessionId"
   private static let providerKeyConnectSource = "connectTriggerSource"
@@ -61,14 +57,13 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   private var reconfigurePendingReason: String?
   #endif
   #if os(macOS)
-  private var macXrayChild: MacXrayChild?
+  private var coreChild: MacCoreChild?
+  #endif
   private let startTunnelLock = NSLock()
   private var startTunnelInFlight = false
-  #endif
 
   override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
     _ = TunnelBootstrap.once
-    #if os(macOS)
     startTunnelLock.lock()
     if startTunnelInFlight {
       startTunnelLock.unlock()
@@ -78,7 +73,6 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
     startTunnelInFlight = true
     startTunnelLock.unlock()
-    #endif
     logLine("startTunnel invoked")
     VpnSharedStore.clearTunnelStartFailure()
     VpnSharedStore.saveExtensionHeartbeat(phase: "startTunnel")
@@ -92,7 +86,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       let cfgURL = try VpnAppGroup.configURL()
       guard FileManager.default.fileExists(atPath: cfgURL.path) else {
         clearStartTunnelInFlight()
-        Self.fail("Missing shared config.json", code: 2, completionHandler: completionHandler)
+        fail("Missing shared config.json", code: 2, completionHandler: completionHandler)
         return
       }
 
@@ -123,6 +117,15 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       reconfigureInFlight = false
       reconfigurePendingReason = nil
       #endif
+      #if os(iOS)
+      if !sessionId.isEmpty,
+         let prior = VpnSharedStore.loadActiveSession()?["sessionId"],
+         prior == sessionId,
+         VpnSharedStore.extensionHeartbeatIsFresh(maxAge: 120)
+      {
+        Self.diag("extension reload suspected (same session)")
+      }
+      #endif
       if !sessionId.isEmpty {
         currentSessionId = sessionId
         VpnSharedStore.saveActiveSession(sessionId: sessionId, triggerSource: connectSource)
@@ -133,16 +136,26 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           + "excludedIPv4=\(excludedIPv4.isEmpty ? "<empty>" : excludedIPv4.joined(separator: ",")) "
           + "session=\(sessionId.isEmpty ? "<none>" : sessionId) source=\(connectSource)")
 
+      #if os(iOS)
+      self.startLibboxTunnel(
+        cfgURL: cfgURL,
+        excludedIPv4: excludedIPv4,
+        uplinkHost: uplinkHost,
+        completionHandler: completionHandler
+      )
+      #else
       let settings = Self.buildTunnelSettings(excludedIPv4: excludedIPv4)
 
       setTunnelNetworkSettings(settings) { [weak self] error in
         guard let self else {
-          Self.fail("Tunnel released before completion.", code: 5, completionHandler: completionHandler)
+          completionHandler(NSError(domain: "DemarVpn", code: 5, userInfo: [
+            NSLocalizedDescriptionKey: "Tunnel released before completion.",
+          ]))
           return
         }
         if let error {
           self.clearStartTunnelInFlight()
-          Self.fail(
+          self.fail(
             "setTunnelNetworkSettings failed: \(error.localizedDescription)",
             code: 7,
             completionHandler: completionHandler
@@ -153,7 +166,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
         guard let selectedTun = Self.resolveTunnelAfterSettings() else {
           self.clearStartTunnelInFlight()
-          Self.fail("Could not locate utun file descriptor.", code: 3, completionHandler: completionHandler)
+          self.fail("Could not locate utun file descriptor.", code: 3, completionHandler: completionHandler)
           return
         }
 
@@ -161,7 +174,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         let ifaceName = selectedTun.name
         guard ifaceName.hasPrefix("utun"), Self.interfaceName(forUtunFd: tunFd) == ifaceName else {
           self.clearStartTunnelInFlight()
-          Self.fail(
+          self.fail(
             "Could not read utun interface name (fd=\(tunFd) interface=\(ifaceName)).",
             code: 4,
             completionHandler: completionHandler
@@ -176,7 +189,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           Self.diag("patched tun inbound name: \(ifaceName)")
         } catch {
           self.clearStartTunnelInFlight()
-          Self.fail(
+          self.fail(
             "patchTunInboundName failed: \(error.localizedDescription)",
             code: 11,
             completionHandler: completionHandler
@@ -189,11 +202,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           let assetDirURL = try VpnAppGroup.assetDirectoryURL()
           assetDir = assetDirURL.path
           Self.diag(
-            "xray assets: \(Self.assetFileDescription(named: "geoip.dat", in: assetDirURL)), "
-              + "\(Self.assetFileDescription(named: "geosite.dat", in: assetDirURL))")
+            "core assets: \(Self.assetFileDescription(named: "geoip.db", in: assetDirURL)), "
+              + "\(Self.assetFileDescription(named: "geosite.db", in: assetDirURL))")
         } catch {
           self.clearStartTunnelInFlight()
-          Self.fail(
+          self.fail(
             "asset directory lookup failed: \(error.localizedDescription)",
             code: 12,
             completionHandler: completionHandler
@@ -201,73 +214,118 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           return
         }
 
-        self.xrayQueue.async {
-          #if os(macOS)
-          VpnSharedStore.saveExtensionHeartbeat(phase: "xray-starting")
+        self.coreQueue.async {
+          VpnSharedStore.saveExtensionHeartbeat(phase: "core-starting")
           do {
-            let child = try MacXrayProcess.start(configPath: cfgURL.path, tunFd: tunFd, assetDir: assetDir)
-            self.macXrayChild = child
-            Self.diag("xray subprocess started (pid=\(child.pid))")
-            VpnSharedStore.saveExtensionHeartbeat(phase: "xray-started")
+            let child = try MacCoreProcess.start(configPath: cfgURL.path, tunFd: tunFd, assetDir: assetDir)
+            self.coreChild = child
+            Self.diag("core subprocess started (pid=\(child.pid))")
+            VpnSharedStore.saveExtensionHeartbeat(phase: "core-started")
             self.tunnelStartedAt = Date()
+            #if os(iOS)
+            self.activeTunFd = tunFd
+            self.activeIfaceName = ifaceName
+            self.activeAssetDir = assetDir
+            self.lastAppliedExcludedIPv4 = excludedIPv4.sorted()
+            self.tunnelLifecycle?.stop()
+            self.tunnelLifecycle = TunnelLifecycle(provider: self)
+            self.tunnelLifecycle?.start(uplinkHost: uplinkHost)
+            #endif
             VpnSharedStore.saveControlState("connected")
             Self.reloadControls()
             self.clearStartTunnelInFlight()
             DispatchQueue.main.async { completionHandler(nil) }
           } catch {
-            VpnSharedStore.saveExtensionHeartbeat(phase: "xray-failed")
+            VpnSharedStore.saveExtensionHeartbeat(phase: "core-failed")
             self.clearStartTunnelInFlight()
-            Self.fail(
-              "xray start error: \(error.localizedDescription)",
+            self.fail(
+              "core start error: \(error.localizedDescription)",
               code: 22,
               completionHandler: completionHandler
             )
           }
-          #else
-          var err: NSError?
-          let ok = DemarxrayStart(cfgURL.path, tunFd, assetDir, &err)
-          if !ok {
-            let out = err ?? NSError(
-              domain: "DemarVpn",
-              code: 6,
-              userInfo: [NSLocalizedDescriptionKey: "Xray failed to start (unknown error)."]
-            )
-            logLine("xray start error: \(out.localizedDescription)")
-            Self.diag("xray start error: \(out.localizedDescription)")
-            VpnSharedStore.saveControlState("error")
-            Self.reloadControls()
-            DispatchQueue.main.async { completionHandler(out) }
-            return
-          }
-          Self.diag("xray started successfully")
-          self.tunnelStartedAt = Date()
-          self.activeTunFd = tunFd
-          self.activeIfaceName = ifaceName
-          self.activeAssetDir = assetDir
-          self.lastAppliedExcludedIPv4 = excludedIPv4.sorted()
-          VpnSharedStore.saveExtensionHeartbeat(phase: "xray-started")
-          VpnSharedStore.saveControlState("connected")
-          Self.reloadControls()
-          self.tunnelLifecycle?.stop()
-          self.tunnelLifecycle = TunnelLifecycle(provider: self)
-          self.tunnelLifecycle?.start(uplinkHost: uplinkHost)
-          DispatchQueue.main.async { completionHandler(nil) }
-          #endif
         }
       }
+      #endif
     } catch {
       clearStartTunnelInFlight()
-      Self.fail(error.localizedDescription, code: 1, completionHandler: completionHandler)
+      fail(error.localizedDescription, code: 1, completionHandler: completionHandler)
     }
   }
 
   private func clearStartTunnelInFlight() {
-    #if os(macOS)
     startTunnelLock.lock()
     startTunnelInFlight = false
     startTunnelLock.unlock()
-    #endif
   }
+
+  #if os(iOS)
+  private func startLibboxTunnel(
+    cfgURL: URL,
+    excludedIPv4: [String],
+    uplinkHost: String?,
+    completionHandler: @escaping (Error?) -> Void
+  ) {
+    let configJSON: String
+    do {
+      configJSON = try String(contentsOf: cfgURL, encoding: .utf8)
+    } catch {
+      clearStartTunnelInFlight()
+      fail("read config failed: \(error.localizedDescription)", code: 13, completionHandler: completionHandler)
+      return
+    }
+
+    let assetDir: URL
+    do {
+      assetDir = try VpnAppGroup.assetDirectoryURL()
+      Self.diag(
+        "core assets: \(Self.assetFileDescription(named: "geoip.db", in: assetDir)), "
+          + "\(Self.assetFileDescription(named: "geosite.db", in: assetDir))"
+      )
+    } catch {
+      clearStartTunnelInFlight()
+      fail(
+        "asset directory lookup failed: \(error.localizedDescription)",
+        code: 12,
+        completionHandler: completionHandler
+      )
+      return
+    }
+
+    coreQueue.async {
+      VpnSharedStore.saveExtensionHeartbeat(phase: "core-starting")
+      do {
+        try IOSLibboxCore.start(
+          provider: self,
+          configJSON: configJSON,
+          excludedIPv4: excludedIPv4,
+          assetDir: assetDir
+        )
+        Self.diag("libbox service started")
+        VpnSharedStore.saveExtensionHeartbeat(phase: "core-started")
+        self.tunnelStartedAt = Date()
+        self.activeAssetDir = assetDir.path
+        self.lastAppliedExcludedIPv4 = excludedIPv4.sorted()
+        self.tunnelLifecycle?.stop()
+        self.tunnelLifecycle = TunnelLifecycle(provider: self)
+        self.tunnelLifecycle?.start(uplinkHost: uplinkHost)
+        VpnSharedStore.saveControlState("connected")
+        Self.reloadControls()
+        VpnSharedStore.clearTunnelStartFailure()
+        self.clearStartTunnelInFlight()
+        DispatchQueue.main.async { completionHandler(nil) }
+      } catch {
+        VpnSharedStore.saveExtensionHeartbeat(phase: "core-failed")
+        self.clearStartTunnelInFlight()
+        self.fail(
+          "core start error: \(error.localizedDescription)",
+          code: 22,
+          completionHandler: completionHandler
+        )
+      }
+    }
+  }
+  #endif
 
   #if os(iOS)
   override func sleep(completionHandler: @escaping () -> Void) {
@@ -280,12 +338,12 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     tunnelLifecycle?.scheduleRevalidate(reason: "wake")
   }
 
-  /// Re-applies routes and restarts xray after network path change or wake (extension-only).
+  /// Re-applies routes and restarts core after network path change or wake (extension-only).
   func reconfigureTunnel(reason: String) {
     guard !tunnelTeardownInFlight else { return }
-    guard activeTunFd != nil, activeAssetDir != nil else { return }
+    guard IOSLibboxCore.isRunning, activeAssetDir != nil else { return }
 
-    xrayQueue.async { [weak self] in
+    coreQueue.async { [weak self] in
       guard let self else { return }
       if self.reconfigureInFlight {
         self.reconfigurePendingReason = reason
@@ -302,7 +360,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       finishReconfigureCoalesced()
       return
     }
-    guard let tunFd = activeTunFd, let assetDir = activeAssetDir else {
+    guard IOSLibboxCore.isRunning, let assetDir = activeAssetDir else {
       finishReconfigureCoalesced()
       return
     }
@@ -320,41 +378,58 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
     let routesUnchanged = excluded == lastAppliedExcludedIPv4
     if routesUnchanged {
-      Self.diag("reconfigure(\(reason)) skipped: routes unchanged")
+      let heartbeatFresh = VpnSharedStore.extensionHeartbeatIsFresh(maxAge: 30)
+      if VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(
+        reason: reason,
+        heartbeatFresh: heartbeatFresh,
+        tunHealthy: IOSLibboxCore.isRunning
+      ) {
+        Self.diag(
+          "reconfigure(\(reason)) recovery soft-restart heartbeatFresh=\(heartbeatFresh) libboxRunning=\(IOSLibboxCore.isRunning)"
+        )
+        runSoftCoreRestart(reason: reason, cfgPath: cfgPath, excluded: excluded, assetDir: assetDir)
+        return
+      }
+      Self.diag("reconfigure(\(reason)) skipped: routes unchanged (stable tunnel)")
       finishReconfigureCoalesced()
       return
     }
 
-    let settings = Self.buildTunnelSettings(excludedIPv4: excluded)
-    setTunnelNetworkSettings(settings) { [weak self] error in
-      guard let self else { return }
-      self.xrayQueue.async {
-        guard !self.tunnelTeardownInFlight else {
-          self.finishReconfigureCoalesced()
-          return
-        }
-        if let error {
-          Self.diag("reconfigure(\(reason)) setTunnelNetworkSettings failed: \(error.localizedDescription)")
-          self.finishReconfigureCoalesced()
-          return
-        }
-        self.lastAppliedExcludedIPv4 = excluded
-        DemarxrayStop()
-        var err: NSError?
-        let ok = DemarxrayStart(cfgPath, tunFd, assetDir, &err)
-        if !ok {
-          let msg = err?.localizedDescription ?? "unknown"
-          Self.diag("reconfigure(\(reason)) xray restart failed: \(msg)")
-          self.finishReconfigureCoalesced()
-          return
-        }
-        VpnSharedStore.saveExtensionHeartbeat(phase: "running")
-        Self.diag(
-          "reconfigure(\(reason)) ok excluded=\(excluded.isEmpty ? "<empty>" : excluded.joined(separator: ","))"
-        )
-        self.finishReconfigureCoalesced()
-      }
+    runSoftCoreRestart(reason: reason, cfgPath: cfgPath, excluded: excluded, assetDir: assetDir)
+  }
+
+  private func runSoftCoreRestart(reason: String, cfgPath: String, excluded: [String], assetDir: String) {
+    let configJSON: String
+    do {
+      configJSON = try String(contentsOf: URL(fileURLWithPath: cfgPath), encoding: .utf8)
+    } catch {
+      Self.diag("reconfigure(\(reason)) read config failed: \(error.localizedDescription)")
+      finishReconfigureCoalesced()
+      return
     }
+    reasserting = true
+    var err: NSError?
+    let ok: Bool
+    do {
+      try IOSLibboxCore.reload(configJSON: configJSON, excludedIPv4: excluded)
+      ok = true
+    } catch {
+      err = error as NSError
+      ok = false
+    }
+    reasserting = false
+    if ok {
+      lastAppliedExcludedIPv4 = excluded
+      activeAssetDir = assetDir
+      VpnSharedStore.saveExtensionHeartbeat(phase: "running")
+      Self.diag(
+        "reconfigure(\(reason)) ok excluded=\(excluded.isEmpty ? "<empty>" : excluded.joined(separator: ","))"
+      )
+    } else {
+      let msg = err?.localizedDescription ?? "unknown"
+      Self.diag("reconfigure(\(reason)) libbox reload failed: \(msg)")
+    }
+    finishReconfigureCoalesced()
   }
 
   private func finishReconfigureCoalesced() {
@@ -405,18 +480,26 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       "tunnel stop: \(reasonLabel) raw=\(reason.rawValue) source=\(triggerSource) "
         + "session=\(sessionId ?? "<none>") \(advice)"
     )
-    if reason == .providerFailed, let lastXray = VpnSharedStore.readLastXrayErrorLineSnapshot() {
-      appendDiagLine("tunnel stop providerFailed: xray_last_error=\(lastXray)")
+    if reason == .userInitiated, triggerSource == "externalUserOrSystem" {
+      appendDiagLine("tunnel stop classified as external/system user action")
     }
-    xrayQueue.async {
-      #if os(macOS)
-      MacXrayProcess.stop(self.macXrayChild)
-      self.macXrayChild = nil
+    if reason == .configurationDisabled {
+      appendDiagLine("configuration disabled by system: verify VPN profile remains enabled in iOS Settings > VPN")
+    }
+    if reason == .providerFailed, let lastCore = VpnSharedStore.readLastCoreErrorLineSnapshot() {
+      appendDiagLine("tunnel stop providerFailed: core_last_error=\(lastCore)")
+    }
+    clearStartTunnelInFlight()
+    coreQueue.async {
+      #if os(iOS)
+      IOSLibboxCore.stop()
+      #else
+      MacCoreProcess.stop(self.coreChild)
+      self.coreChild = nil
+      #endif
       self.clearStartTunnelInFlight()
       VpnSharedStore.clearExtensionHeartbeat()
-      #else
-      DemarxrayStop()
-      VpnSharedStore.clearExtensionHeartbeat()
+      #if os(iOS)
       self.activeTunFd = nil
       self.activeIfaceName = nil
       self.activeAssetDir = nil
@@ -497,7 +580,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     case .noNetworkAvailable:
       return "advice=no active network; wait for connectivity and reconnect"
     case .providerFailed:
-      return "advice=inspect xray-ios error log for fatal core error"
+      return "advice=inspect core log for fatal error"
     default:
       return "advice=none"
     }
@@ -573,7 +656,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   private static func resolveTunnelAfterSettings() -> (fd: Int64, name: String)? {
     #if os(macOS)
     // Do not use tunnelFileDescriptorViaControl(): it returns a utun_control socket,
-    // not the packet I/O fd Xray needs (causes "bad file descriptor" on start).
+    // not the packet I/O fd sing-box needs (causes "bad file descriptor" on start).
     for attempt in 0..<12 {
       if let picked = selectUtunCandidate(),
          interfaceName(forUtunFd: picked.fd) == picked.name
@@ -591,7 +674,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     #endif
   }
 
-  /// Fallback: scan fds (Xray `proxy/tun/README.md` iOS loop).
+  /// Fallback: scan utun fds when control socket lookup is unavailable.
   private static func findUtunCandidates() -> [(fd: Int64, name: String)] {
     var buf = [CChar](repeating: 0, count: Int(IFNAMSIZ))
     let utunPrefix = Array("utun".utf8)
@@ -638,16 +721,20 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           var inbounds = root["inbounds"] as? [[String: Any]]
     else {
       throw NSError(domain: "DemarVpn", code: 11, userInfo: [
-        NSLocalizedDescriptionKey: "Invalid Xray JSON (expected object with inbounds[]).",
+        NSLocalizedDescriptionKey: "Invalid core JSON (expected object with inbounds[]).",
       ])
     }
 
     var patched = false
     for i in 0..<inbounds.count {
-      guard let proto = inbounds[i]["protocol"] as? String, proto == "tun" else { continue }
-      guard var settings = inbounds[i]["settings"] as? [String: Any] else { continue }
-      settings["name"] = interfaceName
-      inbounds[i]["settings"] = settings
+      let isTunInbound = (inbounds[i]["protocol"] as? String) == "tun" || (inbounds[i]["type"] as? String) == "tun"
+      guard isTunInbound else { continue }
+      if var settings = inbounds[i]["settings"] as? [String: Any] {
+        settings["name"] = interfaceName
+        inbounds[i]["settings"] = settings
+      } else {
+        inbounds[i]["interface_name"] = interfaceName
+      }
       patched = true
       break
     }
@@ -679,15 +766,16 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     appendDiagLine(message)
   }
 
-  private static func fail(
+  private func fail(
     _ message: String,
     code: Int,
     completionHandler: @escaping (Error?) -> Void
   ) {
+    clearStartTunnelInFlight()
     VpnSharedStore.saveControlState("error")
     VpnSharedStore.saveExtensionHeartbeat(phase: "failed-\(code)")
-    reloadControls()
-    diag(message)
+    Self.reloadControls()
+    Self.diag(message)
     VpnSharedStore.saveTunnelStartFailure(message)
     let error = NSError(domain: "DemarVpn", code: code, userInfo: [
       NSLocalizedDescriptionKey: message,

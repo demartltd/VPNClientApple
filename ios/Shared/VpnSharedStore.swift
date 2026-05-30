@@ -22,9 +22,8 @@ enum VpnSharedStore {
   private static let extensionHeartbeatFile = "extension_heartbeat.json"
   private static let stopReasonHistoryLimit = 32
 
-  private static let xrayJournalImportQueue = DispatchQueue(label: "com.demar.vpn.xrayJournalImport")
-  private static let journalOffsetXrayError = "demar_journal_xray_error_bytes"
-  private static let journalOffsetXrayAccess = "demar_journal_xray_access_bytes"
+  private static let coreJournalImportQueue = DispatchQueue(label: "com.demar.vpn.coreJournalImport")
+  private static let journalOffsetCore = "demar_journal_core_bytes"
   private static let firstImportTailBytes: Int64 = 64 * 1024
 
   static func vpnDirectoryURL() throws -> URL {
@@ -88,6 +87,30 @@ enum VpnSharedStore {
 
   static func extensionHeartbeatPhase() -> String? {
     extensionHeartbeatSnapshot()?["phase"]
+  }
+
+  private static let heartbeatISO8601: ISO8601DateFormatter = {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return f
+  }()
+
+  /// Extension recently reported a live tunnel phase (running / core-started).
+  static func extensionSignalsAlive(maxAge: TimeInterval = 60) -> Bool {
+    extensionHeartbeatIsFresh(maxAge: maxAge)
+  }
+
+  static func extensionHeartbeatIsFresh(maxAge: TimeInterval = 60) -> Bool {
+    guard let snapshot = extensionHeartbeatSnapshot() else { return false }
+    let phase = snapshot["phase"]?.lowercased() ?? ""
+    guard phase == "running" || phase == "core-started" || phase.hasPrefix("running") else {
+      return false
+    }
+    guard let raw = snapshot["updatedAt"], !raw.isEmpty else { return true }
+    let date = heartbeatISO8601.date(from: raw)
+      ?? ISO8601DateFormatter().date(from: raw)
+    guard let date else { return true }
+    return Date().timeIntervalSince(date) <= maxAge
   }
 
   static func extensionHeartbeatSnapshot() -> [String: String]? {
@@ -421,7 +444,7 @@ enum VpnSharedStore {
 
   /// New journal lines since the previous import (byte offset in App Group UserDefaults).
   static func readIncrementalJournalLines() -> [String] {
-    xrayJournalImportQueue.sync {
+    coreJournalImportQueue.sync {
       guard let ud = UserDefaults(suiteName: VpnAppGroup.id) else { return [] }
       do {
         return newUtf8LinesSinceLastImport(
@@ -502,25 +525,26 @@ enum VpnSharedStore {
     }
   }
 
-  /// New UTF-8 lines appended to shared xray logs since the last call (App Group byte offsets). First call skips backlog.
-  static func readIncrementalSharedXrayLogLines() -> [String] {
-    xrayJournalImportQueue.sync {
+  /// New UTF-8 lines appended to shared core logs since the last call (App Group byte offsets). First call skips backlog.
+  static func readIncrementalSharedCoreLogLines() -> [String] {
+    coreJournalImportQueue.sync {
       guard let ud = UserDefaults(suiteName: VpnAppGroup.id) else { return [] }
-      var out: [String] = []
       do {
-        out.append(contentsOf: newUtf8LinesSinceLastImport(
-          url: try VpnAppGroup.xrayErrorLogFileURL(), offsetKey: journalOffsetXrayError, ud: ud))
-        out.append(contentsOf: newUtf8LinesSinceLastImport(
-          url: try VpnAppGroup.xrayAccessLogFileURL(), offsetKey: journalOffsetXrayAccess, ud: ud))
-      } catch {}
-      return out
+        return newUtf8LinesSinceLastImport(
+          url: try VpnAppGroup.coreLogFileURL(),
+          offsetKey: journalOffsetCore,
+          ud: ud
+        )
+      } catch {
+        return []
+      }
     }
   }
 
-  /// Best-effort snapshot of the last non-empty UTF-8 line from shared xray error log.
-  static func readLastXrayErrorLineSnapshot() -> String? {
+  /// Best-effort snapshot of the last non-empty UTF-8 line from shared core log.
+  static func readLastCoreErrorLineSnapshot() -> String? {
     do {
-      let url = try VpnAppGroup.xrayErrorLogFileURL()
+      let url = try VpnAppGroup.coreLogFileURL()
       let path = url.path
       guard FileManager.default.fileExists(atPath: path) else { return nil }
       let text = try String(contentsOf: url, encoding: .utf8)
@@ -608,5 +632,20 @@ enum VpnSharedStore {
     } catch {
       // Best effort history for diagnostics.
     }
+  }
+}
+
+enum VpnReconfigurePolicy {
+  /// On iOS, unchanged routes should not trigger routine soft restarts.
+  /// Restart is allowed only as recovery when tunnel fd/name became invalid
+  /// or extension heartbeat indicates the core is no longer healthy.
+  static func shouldSoftRestartWhenRoutesUnchanged(
+    reason: String,
+    heartbeatFresh: Bool,
+    tunHealthy: Bool
+  ) -> Bool {
+    if reason == "pathRecovered" { return true }
+    guard reason == "pathChange" || reason == "wake" else { return false }
+    return !heartbeatFresh || !tunHealthy
   }
 }

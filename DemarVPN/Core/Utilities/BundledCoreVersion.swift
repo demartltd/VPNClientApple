@@ -1,9 +1,9 @@
 import Foundation
 
-enum BundledXrayVersion {
+enum BundledCoreVersion {
     static var label: String {
-        for subdirectory in ["Shared/xray", "xray", "xray_macos"] {
-            if let url = Bundle.main.url(forResource: "bundled_version", withExtension: "txt", subdirectory: subdirectory),
+        for sub in CoreBundleAssets.subdirectories {
+            if let url = Bundle.main.url(forResource: "bundled_version", withExtension: "txt", subdirectory: sub),
                let raw = try? String(contentsOf: url, encoding: .utf8)
             {
                 let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)

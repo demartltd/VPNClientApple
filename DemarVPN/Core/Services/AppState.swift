@@ -1,5 +1,8 @@
 import Foundation
 import Observation
+#if os(iOS) || os(macOS)
+import NetworkExtension
+#endif
 #if os(iOS)
 import WidgetKit
 #endif
@@ -14,7 +17,7 @@ final class AppState {
     var uploadBps: Double = 0
 
     var appVersionLabel: String = "1.0.1"
-    var xrayVersionToken: String = BundledXrayVersion.label
+    var coreVersionToken: String = BundledCoreVersion.label
     var accountUser: AccountUser?
 
     private let vpn: VpnControlling
@@ -36,7 +39,7 @@ final class AppState {
 
         #if os(iOS) || os(macOS)
         self.vpn = vpn ?? NativeVpnService()
-        xrayVersionToken = BundledXrayVersion.label
+        coreVersionToken = BundledCoreVersion.label
         let monitor = VpnStatusMonitor()
         monitor.onStatusChange = { [weak self] state in
             self?.applyRemoteVpnState(state)
@@ -81,6 +84,21 @@ final class AppState {
 
     func connect() async {
         guard let server = selectedServer else { return }
+        #if os(iOS) || os(macOS)
+        let systemStatus = await withCheckedContinuation { (continuation: CheckedContinuation<NEVPNStatus, Never>) in
+            VpnTunnelController.shared.currentStatus { status in
+                continuation.resume(returning: status)
+            }
+        }
+        if systemStatus == .connected || systemStatus == .connecting || systemStatus == .reasserting {
+            AppLog.shared.append("[ui] connect ignored: system tunnel already active (\(systemStatus.rawValue))")
+            return
+        }
+        #endif
+        if vpnState.isConnected {
+            AppLog.shared.append("[ui] connect ignored: already connected")
+            return
+        }
         if case .connecting = vpnState { return }
         guard !vpnState.isBusy else { return }
 
@@ -163,7 +181,7 @@ final class AppState {
     #if os(iOS) || os(macOS)
     func syncVpnStatusFromSystem() {
         statusMonitor?.importForegroundDiagnostics()
-        statusMonitor?.refreshStatus(reason: "sync", force: true)
+        statusMonitor?.refreshStatus(reason: "sync", force: true, reloadPreferences: false)
         #if os(iOS)
         ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
         #endif

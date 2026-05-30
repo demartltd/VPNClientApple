@@ -1,20 +1,54 @@
 import Foundation
 
-struct ServerProfile: Identifiable, Equatable, Hashable {
-    let id: String
-    let uri: String
+struct NaiveProfile: Equatable, Hashable, Sendable {
     let displayName: String
+    let server: String
+    let port: Int
+    let username: String
+    let password: String
+    let tlsServerName: String
+}
 
-    init(uri: String) {
-        self.uri = uri
-        self.id = uri
-        self.displayName = Self.displayName(from: uri)
+struct ServerProfile: Identifiable, Equatable, Hashable {
+    enum Kind: Equatable, Hashable {
+        case vless(String)
+        case naive(NaiveProfile)
     }
 
-    private static func displayName(from uri: String) -> String {
-        guard let fragmentRange = uri.range(of: "#") else { return "VLESS" }
+    let id: String
+    let displayName: String
+    let kind: Kind
+
+    var listTitle: String {
+        switch kind {
+        case let .vless(uri): uri
+        case let .naive(p): "\(p.server):\(p.port)"
+        }
+    }
+
+    var listSubtitle: String {
+        switch kind {
+        case .vless: "VLESS (test)"
+        case .naive: "Naive (test)"
+        }
+    }
+
+    init(vless uri: String) {
+        kind = .vless(uri)
+        id = uri
+        displayName = Self.displayName(from: uri, fallback: "VLESS")
+    }
+
+    init(naive profile: NaiveProfile) {
+        kind = .naive(profile)
+        id = "naive:\(profile.displayName)"
+        displayName = profile.displayName
+    }
+
+    private static func displayName(from uri: String, fallback: String) -> String {
+        guard let fragmentRange = uri.range(of: "#") else { return fallback }
         let raw = String(uri[fragmentRange.upperBound...])
-        guard !raw.isEmpty else { return "VLESS" }
+        guard !raw.isEmpty else { return fallback }
         return raw.removingPercentEncoding ?? raw
     }
 }

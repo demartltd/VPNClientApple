@@ -18,7 +18,7 @@ enum VpnTunnelError: LocalizedError {
     case .missingPayload:
       return "Откройте приложение Demar VPN один раз для первичной инициализации."
     case .missingAssets:
-      return "Отсутствуют geoip.dat/geosite.dat. Выполните: python3 scripts/xray-download-auto.py"
+      return "Отсутствуют core assets. Выполните: python3 scripts/singbox-download-auto.py"
     case .missingUplinkHost:
       return "Не удалось определить uplinkHost для исключения маршрута VPN."
     case .managerDisabled:
@@ -427,14 +427,14 @@ final class VpnTunnelController {
   private func writeSharedRuntimeFiles(configJson: String, refreshAssetsFromBundle: Bool) throws {
     _ = try VpnSharedStore.vpnDirectoryURL()
     let cfgURL = try VpnAppGroup.configURL()
-    let merged = try Self.configJsonWithXrayLogFiles(configJson)
+    let merged = try Self.configJsonWithCoreLogFile(configJson)
     try merged.data(using: .utf8)?.write(to: cfgURL, options: [.atomic])
     let assetDir = try VpnAppGroup.assetDirectoryURL()
     try FileManager.default.createDirectory(at: assetDir, withIntermediateDirectories: true)
     if refreshAssetsFromBundle {
-      try Self.copyBundledGeoIfPresent(to: assetDir)
+      try CoreBundleAssets.copyGeoIfPresent(to: assetDir)
     }
-    if !Self.hasRequiredAssets(in: assetDir) {
+    if !CoreBundleAssets.hasGeo(in: assetDir) {
       throw VpnTunnelError.missingAssets
     }
     #if os(macOS)
@@ -446,8 +446,8 @@ final class VpnTunnelController {
   private static func logConnectPreflight(cfgURL: URL, assetDir: URL) {
     let fm = FileManager.default
     let cfgSize = (try? fm.attributesOfItem(atPath: cfgURL.path)[.size] as? Int64) ?? -1
-    let geoip = assetDir.appendingPathComponent("geoip.dat")
-    let geosite = assetDir.appendingPathComponent("geosite.dat")
+    let geoip = assetDir.appendingPathComponent("geoip.db")
+    let geosite = assetDir.appendingPathComponent("geosite.db")
     let geoipSize = fm.fileExists(atPath: geoip.path)
       ? ((try? fm.attributesOfItem(atPath: geoip.path)[.size] as? Int64) ?? -1) : -1
     let geositeSize = fm.fileExists(atPath: geosite.path)
@@ -456,11 +456,11 @@ final class VpnTunnelController {
       "[vpn] preflight: config=\(cfgSize)B geoip=\(geoipSize)B geosite=\(geositeSize)B"
     )
     let appex = Bundle.main.builtInPlugInsURL?
-      .appendingPathComponent("DemarPacketTunnel.appex/Contents/Resources/xray_macos/xray")
-    let xrayPath = appex?.path ?? "<missing>"
-    let xrayOK = appex.map { fm.isExecutableFile(atPath: $0.path) } ?? false
+      .appendingPathComponent("DemarPacketTunnel.appex/Contents/Resources/singbox_macos/sing-box")
+    let corePath = appex?.path ?? "<missing>"
+    let coreOK = appex.map { fm.isExecutableFile(atPath: $0.path) } ?? false
     VpnSharedStore.appendPendingUiDiagLine(
-      "[vpn] preflight: appex_xray=\(xrayOK ? "ok" : "missing") path=\(xrayPath)"
+      "[vpn] preflight: appex_core=\(coreOK ? "ok" : "missing") path=\(corePath)"
     )
   }
   #endif
@@ -669,36 +669,6 @@ final class VpnTunnelController {
     return raw.isEmpty ? nil : raw
   }
 
-  private static func hasRequiredAssets(in assetDir: URL) -> Bool {
-    let fm = FileManager.default
-    let geoip = assetDir.appendingPathComponent("geoip.dat", isDirectory: false).path
-    let geosite = assetDir.appendingPathComponent("geosite.dat", isDirectory: false).path
-    return fm.fileExists(atPath: geoip) && fm.fileExists(atPath: geosite)
-  }
-
-  static func copyBundledGeoIfPresent(to destinationDir: URL) throws {
-    let names = ["geoip.dat", "geosite.dat"]
-    for name in names {
-      let components = name.split(separator: ".")
-      let base = String(components.first ?? "")
-      let ext = components.count > 1 ? String(components.dropFirst().joined(separator: ".")) : ""
-      let subs = ["Shared/xray", "xray", "xray_macos"]
-      var src: URL?
-      for sub in subs {
-        if let u = Bundle.main.url(forResource: base, withExtension: ext, subdirectory: sub) {
-          src = u
-          break
-        }
-      }
-      guard let src else { continue }
-      let dst = destinationDir.appendingPathComponent(name, isDirectory: false)
-      if FileManager.default.fileExists(atPath: dst.path) {
-        try FileManager.default.removeItem(at: dst)
-      }
-      try FileManager.default.copyItem(at: src, to: dst)
-    }
-  }
-
   private static func reloadControls() {
 #if canImport(WidgetKit) && os(iOS)
     DispatchQueue.main.async {
@@ -707,17 +677,15 @@ final class VpnTunnelController {
 #endif
   }
 
-  private static func configJsonWithXrayLogFiles(_ configJson: String) throws -> String {
-    let err = try VpnAppGroup.xrayErrorLogFileURL()
-    let acc = try VpnAppGroup.xrayAccessLogFileURL()
+  private static func configJsonWithCoreLogFile(_ configJson: String) throws -> String {
+    let output = try VpnAppGroup.coreLogFileURL()
     guard let data = configJson.data(using: .utf8),
       let rootRaw = try JSONSerialization.jsonObject(with: data) as? [String: Any]
     else { return configJson }
     var root = rootRaw
     var logObj = (root["log"] as? [String: Any]) ?? [:]
-    if logObj["loglevel"] == nil { logObj["loglevel"] = "info" }
-    logObj["error"] = err.path
-    logObj["access"] = acc.path
+    if logObj["loglevel"] == nil, logObj["level"] == nil { logObj["level"] = "info" }
+    logObj["output"] = output.path
     root["log"] = logObj
     let out = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted])
     return String(data: out, encoding: .utf8) ?? configJson
@@ -729,15 +697,20 @@ final class VpnTunnelController {
       let outbounds = root["outbounds"] as? [[String: Any]]
     else { return nil }
     for outbound in outbounds {
-      guard (outbound["protocol"] as? String) == "vless" else { continue }
+      if (outbound["type"] as? String) == "vless" || (outbound["protocol"] as? String) == "vless" {
+        let server = (outbound["server"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let server, !server.isEmpty { return server }
+      }
+      if (outbound["type"] as? String) == "naive" {
+        let server = (outbound["server"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let server, !server.isEmpty { return server }
+      }
       guard let settings = outbound["settings"] as? [String: Any],
-        let vnext = settings["vnext"] as? [[String: Any]]
+            let vnext = settings["vnext"] as? [[String: Any]]
       else { continue }
       for endpoint in vnext {
         let address = (endpoint["address"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let address, !address.isEmpty {
-          return address
-        }
+        if let address, !address.isEmpty { return address }
       }
     }
     return nil
@@ -767,6 +740,9 @@ final class VpnTunnelController {
     proto.serverAddress = "Demar VPN"
     #endif
     proto.disconnectOnSleep = false
+    #if os(iOS)
+    proto.includeAllNetworks = false
+    #endif
     var providerCfg = proto.providerConfiguration ?? [:]
     if let uplinkHost, !uplinkHost.isEmpty {
       providerCfg[providerKeyUplinkHost] = uplinkHost as NSObject

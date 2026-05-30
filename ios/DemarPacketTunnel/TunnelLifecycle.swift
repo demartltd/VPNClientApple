@@ -43,6 +43,14 @@ struct TunnelPathSignature: Equatable {
     if n.hasPrefix("ppp") { return true }
     return false
   }
+
+  func isSamePhysicalRoute(as other: TunnelPathSignature) -> Bool {
+    physicalInterfaces == other.physicalInterfaces
+      && usesWifi == other.usesWifi
+      && usesCellular == other.usesCellular
+      && isExpensive == other.isExpensive
+      && isConstrained == other.isConstrained
+  }
 }
 
 /// Monitors network path changes and coordinates in-extension tunnel recovery (iOS).
@@ -56,8 +64,10 @@ final class TunnelLifecycle {
   private var uplinkHost: String?
   private var isStopped = false
   private var lastPathSignature: TunnelPathSignature?
+  private var lastSatisfiedSignature: TunnelPathSignature?
+  private var pendingRecoveryAfterUnsatisfied = false
 
-  private static let pathDebounceInterval: TimeInterval = 1.5
+  private static let pathDebounceInterval: TimeInterval = 2.5
   private static let wakeDebounceInterval: TimeInterval = 0.3
   private static let heartbeatInterval: TimeInterval = 45
 
@@ -68,6 +78,8 @@ final class TunnelLifecycle {
   func start(uplinkHost: String?) {
     isStopped = false
     lastPathSignature = nil
+    lastSatisfiedSignature = nil
+    pendingRecoveryAfterUnsatisfied = false
     self.uplinkHost = uplinkHost?.trimmingCharacters(in: .whitespacesAndNewlines)
     startPathMonitor()
     startRunningHeartbeat()
@@ -80,6 +92,8 @@ final class TunnelLifecycle {
     wakeDebounceWork?.cancel()
     wakeDebounceWork = nil
     lastPathSignature = nil
+    lastSatisfiedSignature = nil
+    pendingRecoveryAfterUnsatisfied = false
     heartbeatTimer?.cancel()
     heartbeatTimer = nil
     pathMonitor.cancel()
@@ -115,23 +129,41 @@ final class TunnelLifecycle {
       )
 
       guard path.status == .satisfied else {
+        self.pendingRecoveryAfterUnsatisfied = true
         self.lastPathSignature = signature
         return
       }
 
+      let shouldForceRecovery = self.pendingRecoveryAfterUnsatisfied
+      if shouldForceRecovery {
+        self.pendingRecoveryAfterUnsatisfied = false
+      }
       if let previous = self.lastPathSignature, signature == previous {
+        if shouldForceRecovery {
+          self.lastPathSignature = signature
+          self.lastSatisfiedSignature = signature
+          self.schedulePathReconfigure(reason: "pathRecovered")
+        }
+        return
+      }
+      if let previousSatisfied = self.lastSatisfiedSignature,
+         signature.isSamePhysicalRoute(as: previousSatisfied),
+         !shouldForceRecovery
+      {
+        self.lastPathSignature = signature
         return
       }
       self.lastPathSignature = signature
-      self.schedulePathReconfigure()
+      self.lastSatisfiedSignature = signature
+      self.schedulePathReconfigure(reason: shouldForceRecovery ? "pathRecovered" : "pathChange")
     }
     pathMonitor.start(queue: monitorQueue)
   }
 
-  private func schedulePathReconfigure() {
+  private func schedulePathReconfigure(reason: String) {
     pathDebounceWork?.cancel()
     let work = DispatchWorkItem { [weak self] in
-      self?.provider?.reconfigureTunnel(reason: "pathChange")
+      self?.provider?.reconfigureTunnel(reason: reason)
     }
     pathDebounceWork = work
     monitorQueue.asyncAfter(deadline: .now() + Self.pathDebounceInterval, execute: work)

@@ -23,8 +23,8 @@ struct ServiceMenuView: View {
                         DemarKvRow(key: "Версия", value: appState.appVersionLabel)
                         DemarKvRow(key: "Платформа", value: AppPlatform.label)
                         DemarKvRow(
-                            key: "Xray",
-                            value: appState.xrayVersionToken.isEmpty ? "…" : appState.xrayVersionToken
+                            key: "Core",
+                            value: appState.coreVersionToken.isEmpty ? "…" : appState.coreVersionToken
                         )
                     }
                 }

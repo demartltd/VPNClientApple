@@ -1,11 +1,25 @@
-# DemarXray.xcframework
+# Core Runtime Artifacts
 
-В git — только оболочка (Headers, Info.plist, modulemap). Бинарники `DemarXray.framework/DemarXray` в `.gitignore` (сотни MB).
+Папка зарезервирована под локальные runtime-артефакты и вспомогательные файлы.
 
-Сборка после клона:
+## macOS + geo assets
 
 ```bash
-python ../demar_vpn/scripts/build_xray_ios_xcframework.py
+python3 scripts/singbox-download-auto.py
 ```
 
-Geo и macOS xray: `python3 scripts/xray-download-auto.py` → `ios/Shared/xray/`, `macos/xray_macos/`.
+Скрипт скачивает `sing-box` из release и geo-базы `geoip.db` / `geosite.db` в `ios/Shared/singbox/` и `macos/singbox_macos/`.
+
+## iOS — Libbox (in-process)
+
+На iOS Network Extension **нельзя** запускать `sing-box` через `posix_spawn` (EPERM). Ядро работает через **Libbox.xcframework** (gomobile), как в sing-box-for-apple.
+
+Сборка (один раз после обновления sing-box или при отсутствии framework):
+
+```bash
+python3 scripts/libbox-build.py   # → ios/Frameworks/Libbox.xcframework
+```
+
+Сборка включает `with_naive_outbound` (Naive proxy). Требуется Go и Xcode.
+
+macOS по-прежнему использует subprocess `sing-box` в extension (`macos/singbox_macos/`).

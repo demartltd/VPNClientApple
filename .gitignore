@@ -5,13 +5,15 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 
-# Xray: geo, macOS binary, bundled_version (scripts/xray-download-auto.py)
-**/xray/
-**/xray_macos/
+# Core assets/binaries (scripts/singbox-download-auto.py)
+**/singbox/
+**/singbox_macos/
 
-# DemarXray gomobile binaries only (../demar_vpn/scripts/build_xray_ios_xcframework.py)
-**/DemarXray.framework/DemarXray
-
-# Local tooling scripts (tracked: xray downloader + macOS build)
+# Local tooling scripts (tracked: sing-box downloader + iOS appex signing + libbox builder)
 scripts/*
-!scripts/xray-download-auto.py
+!scripts/singbox-download-auto.py
+!scripts/sign-singbox-in-appex.sh
+!scripts/libbox-build.py
+
+# Libbox (scripts/libbox-build.py)
+ios/Frameworks/Libbox.xcframework/

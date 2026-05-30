@@ -1,25 +1,58 @@
-# Ядро VPN: Xray-core (VLESS) — Demar VPN (Apple)
+# Ядро VPN: Sing-box (VLESS) — Demar VPN (Apple)
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
 
-Документация Xray (Project X):
+Документация Sing-box:
 
-- [VLESS outbound](https://xtls.github.io/en/config/outbounds/vless.html)
-- [Command line](https://xtls.github.io/en/document/command.html)
-- [Environment variables](https://xtls.github.io/en/config/features/env.html)
-- [TUN inbound](https://raw.githubusercontent.com/XTLS/Xray-core/main/proxy/tun/README.md)
+- [VLESS outbound](https://sing-box.sagernet.org/configuration/outbound/vless/)
+- [TUN inbound](https://sing-box.sagernet.org/configuration/inbound/tun/)
+- [TLS/Reality fields](https://sing-box.sagernet.org/configuration/shared/tls/)
+- [CLI](https://sing-box.sagernet.org/command/)
 
 ---
 
 ## Идея
 
-Xray-core — proxy-core. **Device-wide VPN** через **TUN inbound**: трафик уходит в Xray, наружу — **VLESS** outbound. На **iOS и macOS** маршруты и utun задаёт **Network Extension** (`NEPacketTunnelProvider`); xray получает fd через `XRAY_TUN_FD`.
+Sing-box используется как proxy-core. **Device-wide VPN** строится через **TUN inbound** в `config.json`; маршруты и utun создаёт **Network Extension** (`NEPacketTunnelProvider`), а extension запускает `sing-box run -c`.
 
 ---
 
 ## Профиль и config.json
 
-**VLESS URI → XrayConfig.json** — `VlessUriParser`, `XrayConfigBuilder` (TUN + REALITY). Имя utun в JSON патчится extension’ом под фактический интерфейс NE.
+Целевая версия core: **sing-box 1.13.x** (см. `macos/singbox_macos/bundled_version.txt`, Libbox из того же тега).
+
+**VLESS URI → Sing-box config.json** — [`VlessUriParser`](DemarVPN/Core/Vpn/VlessUriParser.swift), [`SingBoxStreamSettings`](DemarVPN/Core/Vpn/SingBoxStreamSettings.swift), [`SingBoxConfigBuilder`](DemarVPN/Core/Vpn/SingBoxConfigBuilder.swift). Имя utun патчится extension’ом под фактический интерфейс NE.
+
+Формат config.json соответствует sing-box **1.12+ / 1.13**:
+
+| Legacy (≤1.11) | Текущий формат |
+|----------------|----------------|
+| `routing` | `route` |
+| `inet4_address` | `address` |
+| `inbound.sniff` | `route.rules` → `action: sniff` |
+| `outbound: block` | `action: reject` |
+| DNS `address: 1.1.1.1` | DNS `type: udp`, `server: 1.1.1.1` |
+| `domain_strategy` на outbound | `domain_resolver: { server, strategy }` |
+| — | `route.default_domain_resolver` (обязателен с 1.12) |
+
+Проверка: `sing-box check -c config.json` (тесты `VlessUriParserTests`).
+
+`VlessUriParser` всё ещё парсит расширенные query-поля вручную, но runtime-builder для Sing-box строго отклоняет Xray-only параметры (`xhttp`, `pqv`, `spx`, `extra`, `mode`, `x_padding_bytes`, `encryption != none`).
+
+### Маппинг `vless://` query → Sing-box JSON
+
+| Query | JSON |
+|-------|------|
+| `flow` | `outbounds[].flow` |
+| `type` / `network` | `outbounds[].network` |
+| `security=tls` | `outbounds[].tls.enabled=true` |
+| `security=reality` + `pbk/sid` | `outbounds[].tls.reality.{public_key,short_id}` |
+| `sni`, `host` | `outbounds[].tls.server_name` |
+| `fp` | `outbounds[].tls.utls.fingerprint` |
+| `path`, `host`, `ed` | `outbounds[].transport` (ws) |
+| `path` | `outbounds[].transport.service_name` (grpc) |
+
+Тесты: target `DemarVPNTests` → `VlessUriParserTests` (golden на [`TestServers.swift`](DemarVPN/Core/Models/TestServers.swift)).
 
 ---
 
@@ -36,45 +69,33 @@ Xray-core — proxy-core. **Device-wide VPN** через **TUN inbound**: тра
 **App Group:** `group.com.demar.vpn`  
 **Bundle tunnel:** `com.demar.vpn.packet-tunnel`
 
-Geo: `python3 scripts/xray-download-auto.py` → `ios/Shared/xray/`, `macos/xray_macos/`
-
-### iOS
-
-| Компонент | Путь |
-|-----------|------|
-| Xray (gomobile) | `ios/Frameworks/DemarXray.xcframework` |
-
-Connect: App Group config → extension → `XRAY_TUN_FD` + `DemarxrayStart`.
-
-Сборка xcframework: `python ../demar_vpn/scripts/build_xray_ios_xcframework.py`
+Assets: `python3 scripts/singbox-download-auto.py` → `sing-box` из release + `geoip.db`/`geosite.db` из [sing-geoip](https://github.com/SagerNet/sing-geoip) и [sing-geosite](https://github.com/SagerNet/sing-geosite).
 
 ### macOS
 
 | Компонент | Путь |
 |-----------|------|
-| Xray subprocess в extension | `macos/xray_macos/` → Resources appex |
-| Запуск xray | `ios/DemarPacketTunnel/MacXrayProcess.swift` |
+| Sing-box subprocess в extension | `macos/singbox_macos/` → Resources appex |
+| Запуск core | `ios/DemarPacketTunnel/MacCoreProcess.swift` (`MacCoreProcess`) |
 
-Connect: `NativeVpnService` → `VpnTunnelController` → extension → `XRAY_TUN_FD` + `xray run` (без создания utun из app).
-
-Бинарник `xray` также в main app bundle (geo для App Group при connect).
+Connect: `NativeVpnService` → `VpnTunnelController` → extension → `sing-box run -c`.
 
 ---
 
 ## Чеклист интеграции
 
 - [x] `DemarPacketTunnel` + `NativeVpnService`
-- [x] VLESS → config (`VlessUriParser`, `XrayConfigBuilder`)
+- [x] VLESS → config (`VlessUriParser`, `SingBoxConfigBuilder`)
 - [x] Geo в bundle iOS / macOS
 - [x] `AppState` + `VpnStatusMonitor` (iOS + macOS)
-- [x] macOS Network Extension + xray в extension
+- [x] macOS Network Extension + sing-box в extension
 
 ---
 
 ## Текущее состояние
 
-**iOS:** SwiftUI + Network Extension + App Group + DemarXray.  
-**macOS:** SwiftUI + Network Extension + subprocess xray в extension (Apple Silicon).
+**iOS:** SwiftUI + Network Extension + App Group + Sing-box config pipeline.  
+**macOS:** SwiftUI + Network Extension + subprocess sing-box в extension (Apple Silicon).
 
 См. [`readme.md`](readme.md).
 

@@ -25,9 +25,10 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── DeviceTrafficTotals.swift  # RX/TX getifaddrs
 │   │   └── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
 │   ├── Vpn/
-│   │   ├── VlessRealityProfile.swift  # поля REALITY
+│   │   ├── VlessProfile.swift         # VLESS профиль
 │   │   ├── VlessUriParser.swift       # vless:// → модель
-│   │   └── XrayConfigBuilder.swift    # JSON TUN + VLESS
+│   │   ├── SingBoxStreamSettings.swift   # Sing-box transport/tls mapping
+│   │   └── SingBoxConfigBuilder.swift    # Sing-box JSON TUN + VLESS
 │   ├── Services/
 │   │   ├── AppState.swift             # UI state, toggle VPN
 │   │   ├── VpnControlling.swift       # connect/disconnect API
@@ -41,7 +42,7 @@ DemarVPN/                              # SwiftUI target
 │       ├── PlatformServices.swift     # pasteboard, haptic
 │       ├── MacVpnDiag.swift            # pluginkit, NE preflight
 │       ├── AppPlatform.swift          # «iOS» / «macOS»
-│       ├── BundledXrayVersion.swift    # версия из bundle
+│       ├── BundledCoreVersion.swift    # версия core из bundle
 │       └── DemarNavigation.swift      # секции навигации
 │
 ├── Components/
@@ -68,13 +69,14 @@ DemarVPN/                              # SwiftUI target
         ├── ServiceMenuView.swift      # служебное меню
         └── CustomEgressProbes.swift   # свои хосты зондов
 
+DemarVPNTests/                         # unit tests (VLESS URI)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка
-readme-core.md                         # ядро VPN/Xray
+readme-core.md                         # ядро VPN/Sing-box
 
 scripts/
-├── xray-download-auto.py              # geo + xray
+├── singbox-download-auto.py              # sing-box core + geo db
 ├── generate_icons.py                  # AppIcon
 ├── build-macos.ps1                    # build, sign, notarize
 ├── build-macos.local.ps1              # локальный конфиг
@@ -91,25 +93,24 @@ ios/
 │   ├── VpnControlConstants.swift      # kind CC widget
 │   ├── VpnControlIntent.swift         # CC toggle intent
 │   ├── VpnStatusSignal.swift          # Darwin notify
-│   └── xray/                          # geo (gitignore bin)
+│   └── singbox/                       # geo db (gitignore bin)
 ├── DemarControls/                     # Control Center (iOS 18+)
 │   ├── DemarControlsBundle.swift
 │   ├── VpnToggleControl.swift         # CC toggle UI
 │   ├── Info.plist
 │   └── DemarControls.entitlements
 ├── DemarPacketTunnel/
-│   ├── PacketTunnelProvider.swift     # tunnel + xray
+│   ├── PacketTunnelProvider.swift     # tunnel + sing-box
 │   ├── TunnelLifecycle.swift          # path monitor (iOS)
-│   ├── MacXrayProcess.swift           # subprocess (macOS)
+│   ├── MacCoreProcess.swift           # subprocess (core runtime)
 │   ├── FlutterExtension.xcconfig      # legacy paths
 │   ├── Info.plist
 │   └── DemarPacketTunnel.entitlements
 └── Frameworks/
-    ├── README.md
-    └── DemarXray.xcframework/         # iOS Xray (gitignore bin)
+    └── README.md                      # локальные runtime артефакты
 
 macos/
-└── xray_macos/                        # xray arm64 (gitignore)
+└── singbox_macos/                     # sing-box arm64 (gitignore)
     └── README.md
 ```
 
@@ -117,5 +118,4 @@ macos/
 
 Эталон UI: `demar_vpn/lib/presentation/`.  
 VPN iOS: `demar_vpn/ios/`.  
-Assets: `python3 scripts/xray-download-auto.py`.  
-XCFramework: `python ../demar_vpn/scripts/build_xray_ios_xcframework.py`.
+Assets: `python3 scripts/singbox-download-auto.py`.

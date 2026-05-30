@@ -29,7 +29,7 @@ final class AppLog {
 
     func append(_ line: String) {
         let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !Self.isXrayTrafficAccessNoise(trimmed) else { return }
+        guard !trimmed.isEmpty, !Self.isCoreTrafficAccessNoise(trimmed) else { return }
         let sanitized = Self.redactIPAddresses(in: trimmed)
         guard !containsEquivalentLine(sanitized) else { return }
 
@@ -76,9 +76,8 @@ final class AppLog {
         redactIPv6(in: redactIPv4(in: line))
     }
 
-    /// Xray access log lines (per-connection traffic) — too noisy for the app journal.
-    /// Mirrors `isXrayTrafficAccessNoise` in demar_vpn `lib/data/logging/app_log.dart`.
-    static func isXrayTrafficAccessNoise(_ line: String) -> Bool {
+    /// Core access log lines (per-connection traffic) — too noisy for the app journal.
+    static func isCoreTrafficAccessNoise(_ line: String) -> Bool {
         let s = line.trimmingCharacters(in: .whitespacesAndNewlines)
         guard s.contains(" accepted "),
               s.contains(" from "),

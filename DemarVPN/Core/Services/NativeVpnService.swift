@@ -5,24 +5,30 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
     private let controller = VpnTunnelController.shared
 
     func connect(server: ServerProfile) async throws {
-        let profile = try VlessUriParser.parse(server.uri)
-        let tunSuffix = Int(Date().timeIntervalSince1970 * 1_000_000) & 0xFFFFFF
         #if os(macOS)
-        let outboundIface: String? = nil
+        let tunSuffix = Int(Date().timeIntervalSince1970 * 1_000_000) & 0xFFFFFF
+        let tunName = "utun\(tunSuffix)"
         #else
-        let outboundIface: String? = "auto"
+        let tunName = "utun0"
         #endif
-        let configJson = try XrayConfigBuilder.buildTunConfigJson(
-            profile: profile,
-            tunName: "utun\(tunSuffix)",
-            autoOutboundsInterface: outboundIface
-        )
+
+        let configJson: String
+        let uplinkHost: String
+        switch server.kind {
+        case let .vless(uri):
+            let profile = try VlessUriParser.parse(uri, mode: .runtimeStrict)
+            configJson = try SingBoxConfigBuilder.buildTunConfigJson(profile: profile, tunName: tunName)
+            uplinkHost = profile.serverAddress
+        case let .naive(profile):
+            configJson = try SingBoxConfigBuilder.buildTunConfigJson(profile: profile, tunName: tunName)
+            uplinkHost = profile.server
+        }
         let sessionId = Self.newSessionId()
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             controller.connect(
                 configJson: configJson,
-                uplinkHost: profile.serverAddress,
+                uplinkHost: uplinkHost,
                 vpnSessionId: sessionId,
                 connectTriggerSource: "swiftApp",
                 refreshAssetsFromBundle: true,

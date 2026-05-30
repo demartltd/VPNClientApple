@@ -56,7 +56,7 @@ struct SettingsView: View {
     private func perform(_ item: SettingsMenuItem) {
         switch item {
         case .appSettings: showAppSettings = true
-        case .invite: snackBar.showInfo("Demar VPN — клиент VLESS/Xray.")
+        case .invite: snackBar.showInfo("Demar VPN — клиент VLESS/Sing-box.")
         case .feedback, .terms, .privacy: snackBar.showInfo("Скоро")
         }
     }
@@ -81,7 +81,7 @@ struct SettingsView: View {
         Button(action: onVersionFooterTap) {
             VStack(spacing: 2) {
                 Text("Demar VPN - \(appState.appVersionLabel) - \(AppPlatform.label)")
-                Text(appState.xrayVersionToken.isEmpty ? "xray - …" : "xray - \(appState.xrayVersionToken)")
+                Text(appState.coreVersionToken.isEmpty ? "core - …" : "core - \(appState.coreVersionToken)")
             }
             .font(.demarBodySmall)
             .foregroundStyle(Color.demarOnSurface.opacity(0.50))

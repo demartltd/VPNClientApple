@@ -23,14 +23,41 @@ enum VpnAppGroup {
   }
 
   static func assetDirectoryURL() throws -> URL {
-    try sharedDirectoryURL().appendingPathComponent("demar_vpn/xray_assets", isDirectory: true)
+    try sharedDirectoryURL().appendingPathComponent("demar_vpn/core_assets", isDirectory: true)
   }
 
-  static func xrayErrorLogFileURL() throws -> URL {
-    try sharedDirectoryURL().appendingPathComponent("demar_vpn/xray_error.log", isDirectory: false)
+  static func coreLogFileURL() throws -> URL {
+    try sharedDirectoryURL().appendingPathComponent("demar_vpn/core.log", isDirectory: false)
+  }
+}
+
+enum CoreBundleAssets {
+  static let subdirectories = ["singbox", "singbox_macos"]
+  static let geoFiles = ["geoip.db", "geosite.db"]
+
+  static func bundledURL(for filename: String) -> URL? {
+    let base = (filename as NSString).deletingPathExtension
+    let ext = (filename as NSString).pathExtension
+    for sub in subdirectories {
+      if let url = Bundle.main.url(forResource: base, withExtension: ext, subdirectory: sub) {
+        return url
+      }
+    }
+    return nil
   }
 
-  static func xrayAccessLogFileURL() throws -> URL {
-    try sharedDirectoryURL().appendingPathComponent("demar_vpn/xray_access.log", isDirectory: false)
+  static func copyGeoIfPresent(to destinationDir: URL) throws {
+    let fm = FileManager.default
+    for name in geoFiles {
+      guard let src = bundledURL(for: name) else { continue }
+      let dst = destinationDir.appendingPathComponent(name)
+      if fm.fileExists(atPath: dst.path) { try fm.removeItem(at: dst) }
+      try fm.copyItem(at: src, to: dst)
+    }
+  }
+
+  static func hasGeo(in directory: URL) -> Bool {
+    let fm = FileManager.default
+    return geoFiles.allSatisfy { fm.fileExists(atPath: directory.appendingPathComponent($0).path) }
   }
 }

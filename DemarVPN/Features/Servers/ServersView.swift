@@ -23,8 +23,8 @@ struct ServersView: View {
                                             ? Color.demarPrimary : Color.demarOnSurfaceVariant
                                     )
                                 },
-                                title: server.uri,
-                                subtitle: "VLESS (test)"
+                                title: server.listTitle,
+                                subtitle: server.listSubtitle
                             )
                         }
                         .buttonStyle(.plain)
