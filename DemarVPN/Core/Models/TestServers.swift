@@ -1,7 +1,6 @@
 import Foundation
 
 enum TestServers {
-
     static let naive: [NaiveProfile] = [
         NaiveProfile(
             displayName: "frendly.remader.ru",
@@ -13,14 +12,7 @@ enum TestServers {
         ),
     ]
 
-
-    static let uris: [String] = [
-
-    ]
-
-    
-
     static var profiles: [ServerProfile] {
-        uris.map(ServerProfile.init(vless:)) + naive.map(ServerProfile.init(naive:))
+        naive.map(ServerProfile.init(naive:))
     }
 }

@@ -18,25 +18,21 @@ struct ToggleVpnIntent: SetValueIntent {
     let action = value ? "enable" : "disable"
     VpnSharedStore.appendPendingUiDiagLine("[ui] ios control_center: \(action) requested")
     try await VpnControlExecutor.setVpnEnabled(value)
-    await MainActor.run {
-      ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
-    }
+    VpnControlReloader.reloadControls()
     return .result()
   }
 }
 
 private enum VpnControlExecutor {
   private static let tunnelController = VpnTunnelController.shared
-  private static let opGateKey = "demar_control_intent_gate_until_ms"
-  private static let opGateHoldMs: Int64 = 6000
 
   static func setVpnEnabled(_ enabled: Bool) async throws {
-    if isOperationInFlight() {
+    if VpnControlOperationGate.isOperationInFlight() {
       VpnSharedStore.appendPendingUiDiagLine("[ui] ios control_center: ignored (in-flight gate)")
       return
     }
-    markOperationInFlight()
-    defer { clearOperationGate() }
+    VpnControlOperationGate.markOperationInFlight()
+    defer { VpnControlOperationGate.clearOperationGate() }
 
     let currentStatus = await withCheckedContinuation { continuation in
       tunnelController.currentStatus { status in
@@ -68,21 +64,4 @@ private enum VpnControlExecutor {
     }
   }
 
-  private static func isOperationInFlight() -> Bool {
-    guard let ud = UserDefaults(suiteName: VpnAppGroup.id) else { return false }
-    let now = Int64(Date().timeIntervalSince1970 * 1000)
-    let gate = ud.object(forKey: opGateKey) as? NSNumber
-    return (gate?.int64Value ?? 0) > now
-  }
-
-  private static func markOperationInFlight() {
-    guard let ud = UserDefaults(suiteName: VpnAppGroup.id) else { return }
-    let now = Int64(Date().timeIntervalSince1970 * 1000)
-    ud.set(NSNumber(value: now + opGateHoldMs), forKey: opGateKey)
-  }
-
-  private static func clearOperationGate() {
-    guard let ud = UserDefaults(suiteName: VpnAppGroup.id) else { return }
-    ud.removeObject(forKey: opGateKey)
-  }
 }

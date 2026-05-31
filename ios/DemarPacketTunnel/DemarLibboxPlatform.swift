@@ -196,6 +196,10 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             )
             return
         }
+        if path.status == .unsatisfied {
+            listener.updateDefaultInterface("", interfaceIndex: -1, isExpensive: path.isExpensive, isConstrained: path.isConstrained)
+            return
+        }
         if lastDefaultInterfaceIndex >= 0, !lastDefaultInterfaceName.isEmpty {
             listener.updateDefaultInterface(
                 lastDefaultInterfaceName,

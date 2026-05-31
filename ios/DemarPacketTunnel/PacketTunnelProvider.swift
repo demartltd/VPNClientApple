@@ -17,6 +17,39 @@ private func appendDiagLine(_ message: String) {
   #endif
 }
 
+private struct TunnelStartContext {
+  let uplinkHost: String?
+  let sessionId: String
+  let connectSource: String
+
+  static func resolve(
+    options: [String: NSObject]?,
+    protocolConfiguration: NETunnelProviderProtocol?
+  ) -> TunnelStartContext {
+    let optionUplinkHost = (options?[VpnTunnelProviderKeys.uplinkHost] as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let configuredUplinkHost =
+      (protocolConfiguration?.providerConfiguration?[VpnTunnelProviderKeys.uplinkHost] as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let optionSessionId = (options?[VpnTunnelProviderKeys.sessionId] as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let configuredSessionId =
+      (protocolConfiguration?.providerConfiguration?[VpnTunnelProviderKeys.sessionId] as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let optionSource = (options?[VpnTunnelProviderKeys.connectSource] as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let configuredSource =
+      (protocolConfiguration?.providerConfiguration?[VpnTunnelProviderKeys.connectSource] as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    return TunnelStartContext(
+      uplinkHost: optionUplinkHost?.isEmpty == false ? optionUplinkHost : configuredUplinkHost,
+      sessionId: (optionSessionId?.isEmpty == false ? optionSessionId : configuredSessionId) ?? "",
+      connectSource: (optionSource?.isEmpty == false ? optionSource : configuredSource) ?? "unknown"
+    )
+  }
+}
+
 final class PacketTunnelProvider: NEPacketTunnelProvider {
 
   private enum TunnelBootstrap {
@@ -40,9 +73,6 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   }
 
   private let coreQueue = DispatchQueue(label: "vpn.demar.core", qos: .userInitiated)
-  private static let controlKind = "com.demar.vpn.controls.vpn-toggle"
-  private static let providerKeySessionId = "vpnSessionId"
-  private static let providerKeyConnectSource = "connectTriggerSource"
   private var currentSessionId: String?
   private var tunnelStartedAt: Date?
   #if os(iOS)
@@ -90,26 +120,13 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         return
       }
 
-      let optionUplinkHost = (options?["uplinkHost"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-      let configuredUplinkHost =
-        ((protocolConfiguration as? NETunnelProviderProtocol)?
-          .providerConfiguration?["uplinkHost"] as? String)?
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-      let optionSessionId = (options?[Self.providerKeySessionId] as? String)?
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-      let configuredSessionId =
-        ((protocolConfiguration as? NETunnelProviderProtocol)?
-          .providerConfiguration?[Self.providerKeySessionId] as? String)?
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-      let sessionId = (optionSessionId?.isEmpty == false ? optionSessionId : configuredSessionId) ?? ""
-      let optionSource = (options?[Self.providerKeyConnectSource] as? String)?
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-      let configuredSource =
-        ((protocolConfiguration as? NETunnelProviderProtocol)?
-          .providerConfiguration?[Self.providerKeyConnectSource] as? String)?
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-      let connectSource = (optionSource?.isEmpty == false ? optionSource : configuredSource) ?? "unknown"
-      let uplinkHost = (optionUplinkHost?.isEmpty == false ? optionUplinkHost : configuredUplinkHost)
+      let startContext = TunnelStartContext.resolve(
+        options: options,
+        protocolConfiguration: protocolConfiguration as? NETunnelProviderProtocol
+      )
+      let sessionId = startContext.sessionId
+      let connectSource = startContext.connectSource
+      let uplinkHost = startContext.uplinkHost
       #if os(iOS)
       activeUplinkHost = uplinkHost
       tunnelTeardownInFlight = false
@@ -222,15 +239,6 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             Self.diag("core subprocess started (pid=\(child.pid))")
             VpnSharedStore.saveExtensionHeartbeat(phase: "core-started")
             self.tunnelStartedAt = Date()
-            #if os(iOS)
-            self.activeTunFd = tunFd
-            self.activeIfaceName = ifaceName
-            self.activeAssetDir = assetDir
-            self.lastAppliedExcludedIPv4 = excludedIPv4.sorted()
-            self.tunnelLifecycle?.stop()
-            self.tunnelLifecycle = TunnelLifecycle(provider: self)
-            self.tunnelLifecycle?.start(uplinkHost: uplinkHost)
-            #endif
             VpnSharedStore.saveControlState("connected")
             Self.reloadControls()
             self.clearStartTunnelInFlight()
@@ -304,11 +312,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         Self.diag("libbox service started")
         VpnSharedStore.saveExtensionHeartbeat(phase: "core-started")
         self.tunnelStartedAt = Date()
-        self.activeAssetDir = assetDir.path
-        self.lastAppliedExcludedIPv4 = excludedIPv4.sorted()
-        self.tunnelLifecycle?.stop()
-        self.tunnelLifecycle = TunnelLifecycle(provider: self)
-        self.tunnelLifecycle?.start(uplinkHost: uplinkHost)
+        self.applyIOSCoreStartedState(
+          excludedIPv4: excludedIPv4,
+          assetDirPath: assetDir.path,
+          uplinkHost: uplinkHost
+        )
         VpnSharedStore.saveControlState("connected")
         Self.reloadControls()
         VpnSharedStore.clearTunnelStartFailure()
@@ -520,12 +528,94 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
   }
 
-  private static func reloadControls() {
-#if canImport(WidgetKit) && os(iOS)
-    DispatchQueue.main.async {
-      ControlCenter.shared.reloadControls(ofKind: Self.controlKind)
+  override func handleAppMessage(_ messageData: Data, completionHandler: ((Data?) -> Void)? = nil) {
+    guard String(data: messageData, encoding: .utf8) == "hardRestartCore" else {
+      completionHandler?(nil)
+      return
     }
-#endif
+    hardRestartCore { error in
+      if let error {
+        completionHandler?(Data("err:\(error.localizedDescription)".utf8))
+      } else {
+        completionHandler?(Data("ok".utf8))
+      }
+    }
+  }
+
+  private func hardRestartCore(completion: @escaping (Error?) -> Void) {
+    #if os(iOS)
+    guard !tunnelTeardownInFlight else {
+      completion(NSError(domain: "DemarVpn", code: 42, userInfo: [
+        NSLocalizedDescriptionKey: "Туннель останавливается.",
+      ]))
+      return
+    }
+    #endif
+    coreQueue.async { [weak self] in
+      self?.runHardRestartCore(completion: completion)
+    }
+  }
+
+  private func runHardRestartCore(completion: @escaping (Error?) -> Void) {
+    appendDiagLine("hardRestartCore")
+    #if os(iOS)
+    IOSLibboxCore.stop()
+    #else
+    MacCoreProcess.stop(coreChild)
+    coreChild = nil
+    #endif
+    do {
+      let cfgURL = try VpnAppGroup.configURL()
+      #if os(macOS)
+      guard let tun = Self.resolveTunnelAfterSettings() else {
+        throw NSError(domain: "DemarVpn", code: 43, userInfo: [
+          NSLocalizedDescriptionKey: "Не найден utun.",
+        ])
+      }
+      try Self.patchTunInboundName(at: cfgURL, interfaceName: tun.name)
+      let assetDir = try VpnAppGroup.assetDirectoryURL().path
+      coreChild = try MacCoreProcess.start(configPath: cfgURL.path, tunFd: tun.fd, assetDir: assetDir)
+      #else
+      let configJSON = try String(contentsOf: cfgURL, encoding: .utf8)
+      let excluded = try Self.resolveIPv4Addresses(host: activeUplinkHost).sorted()
+      let assetDir = try VpnAppGroup.assetDirectoryURL()
+      try IOSLibboxCore.start(
+        provider: self,
+        configJSON: configJSON,
+        excludedIPv4: excluded,
+        assetDir: assetDir
+      )
+      applyIOSCoreStartedState(
+        excludedIPv4: excluded,
+        assetDirPath: assetDir.path,
+        uplinkHost: activeUplinkHost
+      )
+      #endif
+      VpnSharedStore.saveExtensionHeartbeat(phase: "running")
+      Self.diag("hardRestartCore ok")
+      DispatchQueue.main.async { completion(nil) }
+    } catch {
+      Self.diag("hardRestartCore failed: \(error.localizedDescription)")
+      DispatchQueue.main.async { completion(error) }
+    }
+  }
+
+  #if os(iOS)
+  private func applyIOSCoreStartedState(
+    excludedIPv4: [String],
+    assetDirPath: String,
+    uplinkHost: String?
+  ) {
+    lastAppliedExcludedIPv4 = excludedIPv4.sorted()
+    activeAssetDir = assetDirPath
+    tunnelLifecycle?.stop()
+    tunnelLifecycle = TunnelLifecycle(provider: self)
+    tunnelLifecycle?.start(uplinkHost: uplinkHost)
+  }
+  #endif
+
+  private static func reloadControls() {
+    VpnControlReloader.reloadControls()
   }
 
   private static func stopReasonLabel(_ reason: NEProviderStopReason) -> String {
@@ -597,13 +687,12 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   }
 
   private static func resolveIPv4Addresses(host: String?) throws -> [String] {
-    guard let host, !host.isEmpty else { return [] }
-    if Self.isIPv4(host) {
-      return [host]
-    }
+    let clean = host?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    if clean.isEmpty { return [] }
+    if isIPv4(clean) { return [clean] }
 
     var hints = addrinfo(
-      ai_flags: AI_ADDRCONFIG,
+      ai_flags: AI_DEFAULT,
       ai_family: AF_INET,
       ai_socktype: SOCK_STREAM,
       ai_protocol: 0,
@@ -612,41 +701,43 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       ai_addr: nil,
       ai_next: nil
     )
-
-    var info: UnsafeMutablePointer<addrinfo>?
-    let rc = getaddrinfo(host, nil, &hints, &info)
-    guard rc == 0, let start = info else {
-      throw NSError(domain: "DemarVpn", code: 10, userInfo: [
-        NSLocalizedDescriptionKey: "DNS resolve failed for uplink host \(host): \(String(cString: gai_strerror(rc)))",
-      ])
-    }
-    defer { freeaddrinfo(start) }
-
-    var results: [String] = []
-    var ptr: UnsafeMutablePointer<addrinfo>? = start
-    while let p = ptr {
-      var hostBuf = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-      let gaRet = getnameinfo(
-        p.pointee.ai_addr,
-        p.pointee.ai_addrlen,
-        &hostBuf,
-        socklen_t(hostBuf.count),
-        nil,
-        0,
-        NI_NUMERICHOST
+    var resultPtr: UnsafeMutablePointer<addrinfo>?
+    let rc = getaddrinfo(clean, nil, &hints, &resultPtr)
+    guard rc == 0 else {
+      throw NSError(
+        domain: "DemarVpn",
+        code: 10,
+        userInfo: [NSLocalizedDescriptionKey: "DNS lookup failed for \(clean): \(String(cString: gai_strerror(rc)))"]
       )
-      if gaRet == 0 {
-        results.append(String(cString: hostBuf))
-      }
-      ptr = p.pointee.ai_next
     }
+    defer { if let resultPtr { freeaddrinfo(resultPtr) } }
 
-    return Array(Set(results))
+    var out: [String] = []
+    var ptr = resultPtr
+    while let info = ptr?.pointee {
+      if info.ai_family == AF_INET, let sa = info.ai_addr?.withMemoryRebound(to: sockaddr_in.self, capacity: 1, { $0 }) {
+        var addr = sa.pointee.sin_addr
+        var buf = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+        if inet_ntop(AF_INET, &addr, &buf, socklen_t(INET_ADDRSTRLEN)) != nil {
+          out.append(String(cString: buf))
+        }
+      }
+      ptr = info.ai_next
+    }
+    out = Array(Set(out)).sorted()
+    if out.isEmpty {
+      throw NSError(
+        domain: "DemarVpn",
+        code: 10,
+        userInfo: [NSLocalizedDescriptionKey: "DNS lookup returned no IPv4 for \(clean)"]
+      )
+    }
+    return out
   }
 
   private static func isIPv4(_ s: String) -> Bool {
-    var addr = in_addr()
-    return s.withCString { inet_pton(AF_INET, $0, &addr) == 1 }
+    var a = in_addr()
+    return s.withCString { inet_pton(AF_INET, $0, &a) } == 1
   }
 
   private static let sysprotoControl: Int32 = 2

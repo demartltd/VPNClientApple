@@ -43,11 +43,10 @@
 		B10000010000000000000024 /* ios/Shared/VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */; };
 		B10000010000000000000025 /* ios/Shared/VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */; };
 		B10000010000000000000026 /* ios/Shared/VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */; };
-		B10000010000000000000027 /* VlessProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000026 /* VlessProfile.swift */; };
-		B10000010000000000000028 /* VlessUriParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000027 /* VlessUriParser.swift */; };
+		B1000001000000000000003B /* NaiveProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000003C /* NaiveProfile.swift */; };
+		B1000001000000000000003C /* SingBoxConnectPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000003D /* SingBoxConnectPlan.swift */; };
 		B10000010000000000000029 /* SingBoxConfigBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000028 /* SingBoxConfigBuilder.swift */; };
-		B1000001000000000000003A /* SingBoxStreamSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000003B /* SingBoxStreamSettings.swift */; };
-		T40000021CF9000F007C117D /* VlessUriParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000011CF9000F007C117D /* VlessUriParserTests.swift */; };
+		T40000031CF9000F007C117E /* SingBoxConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000021CF9000F007C117E /* SingBoxConfigTests.swift */; };
 		B1000001000000000000002A /* VpnControlling.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000029 /* VpnControlling.swift */; };
 		B1000001000000000000002C /* VpnStatusMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002B /* VpnStatusMonitor.swift */; };
 		B1000001000000000000002E /* BundledCoreVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002D /* BundledCoreVersion.swift */; };
@@ -188,11 +187,10 @@
 		F10000010000000000000023 /* DemarKvRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarKvRow.swift; sourceTree = "<group>"; };
 		F10000010000000000000024 /* IDFATracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFATracking.swift; sourceTree = "<group>"; };
 		F10000010000000000000025 /* ios/Shared/singbox */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ios/Shared/singbox; sourceTree = SOURCE_ROOT; };
-		F10000010000000000000026 /* VlessProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VlessProfile.swift; sourceTree = "<group>"; };
-		F10000010000000000000027 /* VlessUriParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VlessUriParser.swift; sourceTree = "<group>"; };
+		F1000001000000000000003C /* NaiveProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NaiveProfile.swift; sourceTree = "<group>"; };
+		F1000001000000000000003D /* SingBoxConnectPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConnectPlan.swift; sourceTree = "<group>"; };
+		F40000021CF9000F007C117E /* SingBoxConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConfigTests.swift; sourceTree = "<group>"; };
 		F10000010000000000000028 /* SingBoxConfigBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConfigBuilder.swift; sourceTree = "<group>"; };
-		F1000001000000000000003B /* SingBoxStreamSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxStreamSettings.swift; sourceTree = "<group>"; };
-		F40000011CF9000F007C117D /* VlessUriParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VlessUriParserTests.swift; sourceTree = "<group>"; };
 		F40000021CF9000F007C117D /* DemarVPNTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DemarVPNTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F10000010000000000000029 /* VpnControlling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnControlling.swift; sourceTree = "<group>"; };
 		F1000001000000000000002B /* VpnStatusMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnStatusMonitor.swift; sourceTree = "<group>"; };
@@ -426,9 +424,8 @@
 		G10000010000000000000011 /* Vpn */ = {
 			isa = PBXGroup;
 			children = (
-				F10000010000000000000026 /* VlessProfile.swift */,
-				F10000010000000000000027 /* VlessUriParser.swift */,
-				F1000001000000000000003B /* SingBoxStreamSettings.swift */,
+				F1000001000000000000003C /* NaiveProfile.swift */,
+				F1000001000000000000003D /* SingBoxConnectPlan.swift */,
 				F10000010000000000000028 /* SingBoxConfigBuilder.swift */,
 			);
 			path = Vpn;
@@ -437,7 +434,7 @@
 		G40000011CF9000F007C117D /* DemarVPNTests */ = {
 			isa = PBXGroup;
 			children = (
-				F40000011CF9000F007C117D /* VlessUriParserTests.swift */,
+				F40000021CF9000F007C117E /* SingBoxConfigTests.swift */,
 			);
 			path = DemarVPNTests;
 			sourceTree = "<group>";
@@ -715,9 +712,8 @@
 				B10000010000000000000038 /* ios/Shared/VpnStatusSignal.swift in Sources */,
 				B10000010000000000000026 /* ios/Shared/VpnControlConstants.swift in Sources */,
 				B10000010000000000000037 /* ios/Shared/VpnControlIntent.swift in Sources */,
-				B10000010000000000000027 /* VlessProfile.swift in Sources */,
-				B10000010000000000000028 /* VlessUriParser.swift in Sources */,
-				B1000001000000000000003A /* SingBoxStreamSettings.swift in Sources */,
+				B1000001000000000000003B /* NaiveProfile.swift in Sources */,
+				B1000001000000000000003C /* SingBoxConnectPlan.swift in Sources */,
 				B10000010000000000000029 /* SingBoxConfigBuilder.swift in Sources */,
 				B1000001000000000000002A /* VpnControlling.swift in Sources */,
 				B10000010000000000000034 /* NativeVpnService.swift in Sources */,
@@ -750,7 +746,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				T40000021CF9000F007C117D /* VlessUriParserTests.swift in Sources */,
+				T40000031CF9000F007C117E /* SingBoxConfigTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

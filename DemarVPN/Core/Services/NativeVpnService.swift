@@ -12,23 +12,14 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
         let tunName = "utun0"
         #endif
 
-        let configJson: String
-        let uplinkHost: String
-        switch server.kind {
-        case let .vless(uri):
-            let profile = try VlessUriParser.parse(uri, mode: .runtimeStrict)
-            configJson = try SingBoxConfigBuilder.buildTunConfigJson(profile: profile, tunName: tunName)
-            uplinkHost = profile.serverAddress
-        case let .naive(profile):
-            configJson = try SingBoxConfigBuilder.buildTunConfigJson(profile: profile, tunName: tunName)
-            uplinkHost = profile.server
-        }
+        let plan = server.connectPlan
+        let configJson = try SingBoxConfigBuilder.buildTunConfigJson(plan: plan, tunName: tunName)
         let sessionId = Self.newSessionId()
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             controller.connect(
                 configJson: configJson,
-                uplinkHost: uplinkHost,
+                uplinkHost: plan.uplinkHost,
                 vpnSessionId: sessionId,
                 connectTriggerSource: "swiftApp",
                 refreshAssetsFromBundle: true,

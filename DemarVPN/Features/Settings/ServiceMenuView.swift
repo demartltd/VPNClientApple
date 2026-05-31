@@ -5,6 +5,7 @@ struct ServiceMenuView: View {
     var snackBar: SnackBarController
 
     @State private var deviceRows: [(String, String)]?
+    @State private var coreRestartBusy = false
     #if os(iOS)
     @Environment(\.scenePhase) private var scenePhase
     @State private var idfaBusy = false
@@ -61,6 +62,22 @@ struct ServiceMenuView: View {
                 ) {
                     FlowChipRow(snackBar: snackBar)
                 }
+
+                #if os(iOS) || os(macOS)
+                SectionCard(title: "Отладка", leading: { icon("wrench.and.screwdriver") }) {
+                    VStack(spacing: 8) {
+                        ServiceMenuOutlinedButton(
+                            title: "Перезапуск Sing-box",
+                            busy: coreRestartBusy
+                        ) {
+                            Task { await restartSingBoxCore() }
+                        }
+                        ServiceMenuOutlinedButton(title: "Краш приложения", destructive: true) {
+                            fatalError("service menu crash")
+                        }
+                    }
+                }
+                #endif
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
@@ -84,6 +101,25 @@ struct ServiceMenuView: View {
     private func reloadDevice() async {
         deviceRows = await DeviceIdentity.load()
     }
+
+    #if os(iOS) || os(macOS)
+    private func restartSingBoxCore() async {
+        guard !coreRestartBusy else { return }
+        coreRestartBusy = true
+        defer { coreRestartBusy = false }
+        let result: Result<Void, Error> = await withCheckedContinuation { continuation in
+            VpnTunnelController.shared.hardRestartCore { continuation.resume(returning: $0) }
+        }
+        switch result {
+        case .success:
+            snackBar.showSuccess("Sing-box перезапущен")
+            appState.syncVpnStatusFromSystem()
+        case let .failure(error):
+            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            snackBar.showError(message)
+        }
+    }
+    #endif
 
     #if os(iOS)
     private func requestIDFA() async {
@@ -276,38 +312,47 @@ private struct ServiceEgressDiagnosticsCard: View {
     }
 }
 
+private struct ServiceMenuOutlinedButton: View {
+    let title: String
+    var busy = false
+    var destructive = false
+    let action: () -> Void
+
+    private var tint: Color { destructive ? .red : .demarPrimary }
+
+    var body: some View {
+        Button(action: action) {
+            Group {
+                if busy {
+                    ProgressView().controlSize(.small).tint(tint)
+                } else {
+                    Text(title).font(.demarLabelLarge).fontWeight(.semibold)
+                }
+            }
+            .foregroundStyle(tint)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(tint.opacity(0.10))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(tint.opacity(0.28), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(busy)
+    }
+}
+
 #if os(iOS)
 private struct IDFAPermissionButton: View {
     var busy: Bool
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Group {
-                if busy {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(Color.demarPrimary)
-                } else {
-                    Text("Включить IDFA")
-                        .font(.demarLabelLarge)
-                        .fontWeight(.semibold)
-                }
-            }
-            .foregroundStyle(Color.demarPrimary)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.demarPrimary.opacity(0.10))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .strokeBorder(Color.demarPrimary.opacity(0.28), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(.plain)
-        .disabled(busy)
+        ServiceMenuOutlinedButton(title: "Включить IDFA", busy: busy, action: action)
     }
 }
 #endif

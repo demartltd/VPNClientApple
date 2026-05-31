@@ -23,10 +23,9 @@ struct DemarVpnToggleControl: ControlWidget {
 struct VpnControlValueProvider: ControlValueProvider {
   let previewValue: Bool = false
   private let tunnelController = VpnTunnelController.shared
-  private let opGateKey = "demar_control_intent_gate_until_ms"
 
   func currentValue() async throws -> Bool {
-    if isControlOperationInFlight() {
+    if VpnControlOperationGate.isOperationInFlight() {
       switch VpnSharedStore.loadControlState() {
       case "connected", "connecting":
         return true
@@ -61,12 +60,5 @@ struct VpnControlValueProvider: ControlValueProvider {
     default:
       return false
     }
-  }
-
-  private func isControlOperationInFlight() -> Bool {
-    guard let ud = UserDefaults(suiteName: VpnAppGroup.id) else { return false }
-    let now = Int64(Date().timeIntervalSince1970 * 1000)
-    let gate = ud.object(forKey: opGateKey) as? NSNumber
-    return (gate?.int64Value ?? 0) > now
   }
 }

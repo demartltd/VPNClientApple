@@ -56,7 +56,7 @@ struct SettingsView: View {
     private func perform(_ item: SettingsMenuItem) {
         switch item {
         case .appSettings: showAppSettings = true
-        case .invite: snackBar.showInfo("Demar VPN — клиент VLESS/Sing-box.")
+        case .invite: snackBar.showInfo("Demar VPN — клиент NaiveProxy / Sing-box.")
         case .feedback, .terms, .privacy: snackBar.showInfo("Скоро")
         }
     }

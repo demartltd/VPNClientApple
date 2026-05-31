@@ -1,27 +1,25 @@
-# Ядро VPN: Sing-box (VLESS) — Demar VPN (Apple)
+# Ядро VPN: Sing-box (NaiveProxy) — Demar VPN (Apple)
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
 
+Целевая версия core: **sing-box 1.13.12** (см. `macos/singbox_macos/bundled_version.txt`, Libbox из того же тега).
+
 Документация Sing-box:
 
-- [VLESS outbound](https://sing-box.sagernet.org/configuration/outbound/vless/)
+- [Naive outbound](https://sing-box.sagernet.org/configuration/outbound/naive/)
 - [TUN inbound](https://sing-box.sagernet.org/configuration/inbound/tun/)
-- [TLS/Reality fields](https://sing-box.sagernet.org/configuration/shared/tls/)
+- [TLS outbound](https://sing-box.sagernet.org/configuration/shared/tls/)
+- [UDP over TCP](https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/)
+- [Dial fields](https://sing-box.sagernet.org/configuration/shared/dial/)
 - [CLI](https://sing-box.sagernet.org/command/)
 
 ---
 
 ## Идея
 
-Sing-box используется как proxy-core. **Device-wide VPN** строится через **TUN inbound** в `config.json`; маршруты и utun создаёт **Network Extension** (`NEPacketTunnelProvider`), а extension запускает `sing-box run -c`.
+Sing-box используется как proxy-core. **Device-wide VPN** строится через **TUN inbound** в `config.json`; маршруты и utun создаёт **Network Extension** (`NEPacketTunnelProvider`), extension запускает `sing-box run -c`.
 
----
-
-## Профиль и config.json
-
-Целевая версия core: **sing-box 1.13.x** (см. `macos/singbox_macos/bundled_version.txt`, Libbox из того же тега).
-
-**VLESS URI → Sing-box config.json** — [`VlessUriParser`](DemarVPN/Core/Vpn/VlessUriParser.swift), [`SingBoxStreamSettings`](DemarVPN/Core/Vpn/SingBoxStreamSettings.swift), [`SingBoxConfigBuilder`](DemarVPN/Core/Vpn/SingBoxConfigBuilder.swift). Имя utun патчится extension’ом под фактический интерфейс NE.
+Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxConnectPlan.swift) → [`SingBoxConfigBuilder`](DemarVPN/Core/Vpn/SingBoxConfigBuilder.swift) → `config.json`. Имя utun патчится extension’ом под фактический интерфейс NE.
 
 Формат config.json соответствует sing-box **1.12+ / 1.13**:
 
@@ -35,24 +33,79 @@ Sing-box используется как proxy-core. **Device-wide VPN** стр�
 | `domain_strategy` на outbound | `domain_resolver: { server, strategy }` |
 | — | `route.default_domain_resolver` (обязателен с 1.12) |
 
-Проверка: `sing-box check -c config.json` (тесты `VlessUriParserTests`).
+Проверка: `sing-box check -c config.json` (тесты `SingBoxConfigTests`).
 
-`VlessUriParser` всё ещё парсит расширенные query-поля вручную, но runtime-builder для Sing-box строго отклоняет Xray-only параметры (`xhttp`, `pqv`, `spx`, `extra`, `mode`, `x_padding_bytes`, `encryption != none`).
+---
 
-### Маппинг `vless://` query → Sing-box JSON
+## NaiveProxy: профиль и config.json
 
-| Query | JSON |
-|-------|------|
-| `flow` | `outbounds[].flow` |
-| `type` / `network` | `outbounds[].network` |
-| `security=tls` | `outbounds[].tls.enabled=true` |
-| `security=reality` + `pbk/sid` | `outbounds[].tls.reality.{public_key,short_id}` |
-| `sni`, `host` | `outbounds[].tls.server_name` |
-| `fp` | `outbounds[].tls.utls.fingerprint` |
-| `path`, `host`, `ed` | `outbounds[].transport` (ws) |
-| `path` | `outbounds[].transport.service_name` (grpc) |
+### App model — `NaiveProfile`
 
-Тесты: target `DemarVPNTests` → `VlessUriParserTests` (golden на [`TestServers.swift`](DemarVPN/Core/Models/TestServers.swift)).
+[`NaiveProfile`](DemarVPN/Core/Vpn/NaiveProfile.swift) — структурированный профиль (без URI-парсера). Тестовые значения: [`TestServers.swift`](DemarVPN/Core/Models/TestServers.swift).
+
+| App field | sing-box key | Required |
+|-----------|--------------|----------|
+| `server` | `server` | yes |
+| `port` | `server_port` | yes |
+| `username` | `username` | no |
+| `password` | `password` | no |
+| `tlsServerName` | `tls.server_name` | yes (TLS обязателен для naive) |
+| `displayName` | — | UI only |
+
+### Hardcoded defaults (Demar builder)
+
+Задаются в `SingBoxConnectPlan.naive(_:)`:
+
+| sing-box key | Значение | Зачем |
+|--------------|----------|-------|
+| `type` | `"naive"` | |
+| `tag` | `"proxy"` | route final |
+| `tls.enabled` | `true` | naive требует TLS |
+| `domain_resolver` | `{ server: "dns-direct", strategy: "ipv4_only" }` | sing-box 1.12+ |
+| `insecure_concurrency` | `1` | один туннель (меньше fingerprint) |
+| `udp_over_tcp` | `{ enabled: true }` | UDP через TCP |
+| `quic` | `false` | HTTP/2, не QUIC |
+
+### TUN / DNS / route overrides (Naive)
+
+| Параметр | Значение | Эффект |
+|----------|----------|--------|
+| `dns.final` | `dns-remote` | DNS через proxy |
+| route resolve `server` | `dns-direct` | resolve до прокси |
+| DNS bootstrap | `[tlsServerName]` | SNI → direct DNS |
+| `strict_route` | `true` | |
+| direct domain | `[tlsServerName]` | SNI → direct outbound |
+| `directIPs` | IPv4 literal `server` | exclude/route bypass |
+
+### sing-box 1.13.12: поля Naive (не экспонированы в app)
+
+Из [upstream docs](https://sing-box.sagernet.org/configuration/outbound/naive/) — для будущего расширения:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `extra_headers` | object | Доп. HTTP-заголовки |
+| `udp_over_tcp.enabled` | bool | Включение UDP-over-TCP (сейчас hardcoded `true`) |
+| `quic` | bool | QUIC вместо HTTP/2 (сейчас `false`) |
+| `quic_congestion_control` | string | `bbr` (default), `bbr2`, `cubic`, `reno` |
+| `tls.certificate` | string[] | Self-signed (не для production) |
+| `tls.certificate_path` | string | Путь к сертификату |
+| `tls.ech` | object | ECH |
+| Dial fields | — | `detour`, `bind_interface`, `inet4_bind_address`, … см. [Dial Fields](https://sing-box.sagernet.org/configuration/shared/dial/) |
+
+**Platform:** Naive outbound доступен на Apple platforms; iOS Libbox собирается с `with_naive_outbound` — см. [`ios/Frameworks/README.md`](ios/Frameworks/README.md).
+
+---
+
+## Добавление протокола
+
+1. **Profile** — struct с полями сервера (или URI parser → struct).
+2. **`SingBoxConnectPlan`** — factory `static func yourProtocol(_:)` с `proxyOutbound`, `directIPs`, `tun`.
+3. **`ServerProfile.Kind`** — новый case + `connectPlan` switch.
+4. **`TestServers`** — seed для dev.
+5. **`SingBoxConfigTests`** — `sing-box check` на сгенерированный JSON.
+6. **Libbox** — при необходимости обновить build tags в `scripts/libbox-build.py`.
+
+Config builder, tunnel и NE менять не нужно — они protocol-agnostic.
 
 ---
 
@@ -60,6 +113,8 @@ Sing-box используется как proxy-core. **Device-wide VPN** стр�
 
 | Компонент | Путь |
 |-----------|------|
+| Connect plan | `DemarVPN/Core/Vpn/SingBoxConnectPlan.swift` |
+| Config builder | `DemarVPN/Core/Vpn/SingBoxConfigBuilder.swift` |
 | App Group, пути | `ios/Shared/VpnAppGroup.swift` |
 | Connect/disconnect | `ios/Shared/VpnTunnelController.swift` |
 | UI VPN API | `DemarVPN/Core/Services/NativeVpnService.swift` |
@@ -76,7 +131,7 @@ Assets: `python3 scripts/singbox-download-auto.py` → `sing-box` из release +
 | Компонент | Путь |
 |-----------|------|
 | Sing-box subprocess в extension | `macos/singbox_macos/` → Resources appex |
-| Запуск core | `ios/DemarPacketTunnel/MacCoreProcess.swift` (`MacCoreProcess`) |
+| Запуск core | `ios/DemarPacketTunnel/MacCoreProcess.swift` |
 
 Connect: `NativeVpnService` → `VpnTunnelController` → extension → `sing-box run -c`.
 
@@ -85,7 +140,7 @@ Connect: `NativeVpnService` → `VpnTunnelController` → extension → `sing-bo
 ## Чеклист интеграции
 
 - [x] `DemarPacketTunnel` + `NativeVpnService`
-- [x] VLESS → config (`VlessUriParser`, `SingBoxConfigBuilder`)
+- [x] NaiveProxy → config (`SingBoxConnectPlan`, `SingBoxConfigBuilder`)
 - [x] Geo в bundle iOS / macOS
 - [x] `AppState` + `VpnStatusMonitor` (iOS + macOS)
 - [x] macOS Network Extension + sing-box в extension

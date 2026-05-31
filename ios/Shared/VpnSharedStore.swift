@@ -419,20 +419,7 @@ enum VpnSharedStore {
   private static func appendJournalLineRaw(_ stamped: String) {
     do {
       let url = try journalURL()
-      var lines: [String] = []
-      if FileManager.default.fileExists(atPath: url.path) {
-        let existing = try String(contentsOf: url, encoding: .utf8)
-        lines = existing
-          .split(separator: "\n", omittingEmptySubsequences: true)
-          .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
-          .filter { !$0.isEmpty }
-      }
-      lines.append(stamped)
-      if lines.count > journalMaxLines {
-        lines.removeFirst(lines.count - journalMaxLines)
-      }
-      let out = (lines + [""]).joined(separator: "\n")
-      try out.data(using: .utf8)?.write(to: url, options: [.atomic])
+      try VpnSharedLineFile.appendLine(stamped, to: url, maxLines: journalMaxLines)
     } catch {
       NSLog("[DemarVpn] appendJournal failed: %@", String(describing: error))
     }
@@ -462,12 +449,7 @@ enum VpnSharedStore {
     guard maxLines > 0 else { return [] }
     do {
       let url = try journalURL()
-      guard FileManager.default.fileExists(atPath: url.path) else { return [] }
-      let text = try String(contentsOf: url, encoding: .utf8)
-      let lines = text
-        .split(separator: "\n", omittingEmptySubsequences: true)
-        .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
-        .filter { !$0.isEmpty }
+      let lines = try VpnSharedLineFile.readTrimmedLines(from: url)
       return Array(lines.suffix(maxLines))
     } catch {
       return []
@@ -498,12 +480,7 @@ enum VpnSharedStore {
   static func drainPendingUiDiagLinesAndClear() -> [String] {
     do {
       let url = try vpnDirectoryURL().appendingPathComponent(pendingUiDiagFile, isDirectory: false)
-      guard FileManager.default.fileExists(atPath: url.path) else { return [] }
-      let text = try String(contentsOf: url, encoding: .utf8)
-      try FileManager.default.removeItem(at: url)
-      return text.split(separator: "\n", omittingEmptySubsequences: true)
-        .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
-        .filter { !$0.isEmpty }
+      return try VpnSharedLineFile.drainLinesAndDelete(from: url)
     } catch {
       return []
     }
@@ -513,13 +490,7 @@ enum VpnSharedStore {
   static func drainTunnelStopReasonHistoryAndClear() -> [String] {
     do {
       let url = try vpnDirectoryURL().appendingPathComponent(stopReasonHistoryFile, isDirectory: false)
-      guard FileManager.default.fileExists(atPath: url.path) else { return [] }
-      let text = try String(contentsOf: url, encoding: .utf8)
-      try FileManager.default.removeItem(at: url)
-      return text
-        .split(separator: "\n", omittingEmptySubsequences: true)
-        .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
-        .filter { !$0.isEmpty }
+      return try VpnSharedLineFile.drainLinesAndDelete(from: url)
     } catch {
       return []
     }
@@ -614,24 +585,45 @@ enum VpnSharedStore {
     if trimmed.isEmpty { return }
     do {
       let url = try vpnDirectoryURL().appendingPathComponent(stopReasonHistoryFile, isDirectory: false)
-      var lines: [String] = []
-      if FileManager.default.fileExists(atPath: url.path) {
-        let existing = try String(contentsOf: url, encoding: .utf8)
-        lines = existing
-          .split(separator: "\n", omittingEmptySubsequences: true)
-          .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
-          .filter { !$0.isEmpty }
-      }
-      lines.append(trimmed)
-      if lines.count > stopReasonHistoryLimit {
-        lines.removeFirst(lines.count - stopReasonHistoryLimit)
-      }
-      let out = (lines + [""]).joined(separator: "\n")
-      guard let data = out.data(using: .utf8) else { return }
-      try data.write(to: url, options: [.atomic])
+      try VpnSharedLineFile.appendLine(trimmed, to: url, maxLines: stopReasonHistoryLimit)
     } catch {
       // Best effort history for diagnostics.
     }
+  }
+}
+
+enum VpnSharedLineFile {
+  static func readTrimmedLines(from url: URL) throws -> [String] {
+    guard FileManager.default.fileExists(atPath: url.path) else { return [] }
+    let text = try String(contentsOf: url, encoding: .utf8)
+    return text
+      .split(separator: "\n", omittingEmptySubsequences: true)
+      .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty }
+  }
+
+  static func appendLine(
+    _ line: String,
+    to url: URL,
+    maxLines: Int
+  ) throws {
+    let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.isEmpty { return }
+    var lines = try readTrimmedLines(from: url)
+    lines.append(trimmed)
+    if lines.count > maxLines {
+      lines.removeFirst(lines.count - maxLines)
+    }
+    let out = (lines + [""]).joined(separator: "\n")
+    guard let data = out.data(using: .utf8) else { return }
+    try data.write(to: url, options: [.atomic])
+  }
+
+  static func drainLinesAndDelete(from url: URL) throws -> [String] {
+    guard FileManager.default.fileExists(atPath: url.path) else { return [] }
+    let lines = try readTrimmedLines(from: url)
+    try FileManager.default.removeItem(at: url)
+    return lines
   }
 }
 
@@ -645,7 +637,8 @@ enum VpnReconfigurePolicy {
     tunHealthy: Bool
   ) -> Bool {
     if reason == "pathRecovered" { return true }
-    guard reason == "pathChange" || reason == "wake" else { return false }
+    if reason == "wake" { return true }
+    guard reason == "pathChange" else { return false }
     return !heartbeatFresh || !tunHealthy
   }
 }

@@ -1,8 +1,5 @@
 import Foundation
 import NetworkExtension
-#if canImport(WidgetKit)
-import WidgetKit
-#endif
 
 enum VpnTunnelError: LocalizedError {
   case missingPayload
@@ -36,14 +33,16 @@ enum VpnTunnelError: LocalizedError {
 final class VpnTunnelController {
   static let shared = VpnTunnelController()
   static let packetTunnelBundleId = "com.demar.vpn.packet-tunnel"
-  private static let providerKeyUplinkHost = "uplinkHost"
-  private static let providerKeySessionId = "vpnSessionId"
-  private static let providerKeyConnectSource = "connectTriggerSource"
 
   private var connectInFlight = false
+  private let connectStateLock = NSLock()
   private var cachedManager: NETunnelProviderManager?
 
-  var isConnectInFlight: Bool { connectInFlight }
+  var isConnectInFlight: Bool {
+    connectStateLock.lock()
+    defer { connectStateLock.unlock() }
+    return connectInFlight
+  }
 
   private init() {}
 
@@ -60,6 +59,27 @@ final class VpnTunnelController {
     #else
     VpnSharedStore.appendPendingUiDiagLine("[ios] \(message)")
     #endif
+  }
+
+  private func beginConnectOperation() -> Bool {
+    connectStateLock.lock()
+    defer { connectStateLock.unlock() }
+    if connectInFlight {
+      return false
+    }
+    connectInFlight = true
+    return true
+  }
+
+  private func endConnectOperation() {
+    connectStateLock.lock()
+    connectInFlight = false
+    connectStateLock.unlock()
+  }
+
+  private static func setControlState(_ state: String) {
+    VpnSharedStore.saveControlState(state, notify: false)
+    VpnControlReloader.reloadControls()
   }
 
   /// Reloads preferences and returns fresh Demar manager + `NEVPNConnection.status`.
@@ -149,14 +169,23 @@ final class VpnTunnelController {
     triggerSource: String = "controlIntent",
     completion: @escaping (Result<Void, Error>) -> Void
   ) {
+    guard beginConnectOperation() else {
+      diag("connectWithStoredPayload rejected: already in flight")
+      completion(.failure(VpnTunnelError.connectInProgress))
+      return
+    }
+    let finish: (Result<Void, Error>) -> Void = { [weak self] result in
+      self?.endConnectOperation()
+      completion(result)
+    }
     invalidateCachedManager()
     loadTunnelManager { result in
       switch result {
       case let .failure(error):
-        completion(.failure(error))
+        finish(.failure(error))
       case let .success(manager):
         guard let manager else {
-          completion(.failure(VpnTunnelError.missingPayload))
+          finish(.failure(VpnTunnelError.missingPayload))
           return
         }
         let payload = (try? VpnSharedStore.loadConnectPayload()) ?? nil
@@ -174,14 +203,14 @@ final class VpnTunnelController {
         ) { prepareResult in
           switch prepareResult {
           case let .failure(error):
-            completion(.failure(error))
+            finish(.failure(error))
           case let .success(preparedManager):
             self.startExistingManagerTunnel(
               manager: preparedManager,
               payload: payload,
               sessionId: sessionId,
               connectTriggerSource: triggerSource,
-              completion: completion
+              completion: finish
             )
           }
         }
@@ -198,15 +227,14 @@ final class VpnTunnelController {
     savePayload: Bool,
     completion: @escaping (Result<Void, Error>) -> Void
   ) {
-    if connectInFlight {
+    guard beginConnectOperation() else {
       diag("connect rejected: already in flight")
       completion(.failure(VpnTunnelError.connectInProgress))
       return
     }
-    connectInFlight = true
     invalidateCachedManager()
     let finish: (Result<Void, Error>) -> Void = { [weak self] result in
-      self?.connectInFlight = false
+      self?.endConnectOperation()
       completion(result)
     }
 
@@ -218,11 +246,9 @@ final class VpnTunnelController {
       VpnSharedStore.clearExtensionHeartbeat()
       VpnSharedStore.clearTunnelStartFailure()
       VpnSharedStore.appendJournalLine("[vpn] connect: writing config and assets")
-      VpnSharedStore.saveControlState("connecting", notify: false)
-      Self.reloadControls()
+      Self.setControlState("connecting")
     } catch {
-      VpnSharedStore.saveControlState("error", notify: false)
-      Self.reloadControls()
+      Self.setControlState("error")
       finish(.failure(error))
       return
     }
@@ -231,8 +257,7 @@ final class VpnTunnelController {
       guard let self else { return }
       switch result {
       case let .failure(error):
-        VpnSharedStore.saveControlState("error", notify: false)
-        Self.reloadControls()
+        Self.setControlState("error")
         finish(.failure(error))
       case let .success(existing):
         #if os(macOS)
@@ -258,8 +283,7 @@ final class VpnTunnelController {
 
         manager.saveToPreferences { error in
           if let error {
-            VpnSharedStore.saveControlState("error", notify: false)
-            Self.reloadControls()
+            Self.setControlState("error")
             #if os(macOS)
             self.diag("saveToPreferences failed: \(error.localizedDescription)")
             #endif
@@ -268,8 +292,7 @@ final class VpnTunnelController {
           }
             manager.loadFromPreferences { error in
             if let error {
-              VpnSharedStore.saveControlState("error", notify: false)
-              Self.reloadControls()
+              Self.setControlState("error")
               DispatchQueue.main.async { finish(.failure(error)) }
               return
             }
@@ -279,9 +302,9 @@ final class VpnTunnelController {
             #endif
 
             let opts: [String: NSObject] = [
-              Self.providerKeyUplinkHost: (uplinkHost ?? "") as NSObject,
-              Self.providerKeySessionId: effectiveSessionId as NSObject,
-              Self.providerKeyConnectSource: connectTriggerSource as NSObject,
+              VpnTunnelProviderKeys.uplinkHost: (uplinkHost ?? "") as NSObject,
+              VpnTunnelProviderKeys.sessionId: effectiveSessionId as NSObject,
+              VpnTunnelProviderKeys.connectSource: connectTriggerSource as NSObject,
             ]
             VpnSharedStore.saveActiveSession(
               sessionId: effectiveSessionId,
@@ -332,18 +355,15 @@ final class VpnTunnelController {
     triggerSource: String,
     completion: @escaping (Result<Void, Error>) -> Void
   ) {
-    VpnSharedStore.saveControlState("disconnecting", notify: false)
-    Self.reloadControls()
+    Self.setControlState("disconnecting")
     loadTunnelManager { result in
       switch result {
       case let .failure(error):
-        VpnSharedStore.saveControlState("error", notify: false)
-        Self.reloadControls()
+        Self.setControlState("error")
         completion(.failure(error))
       case let .success(manager):
         guard let manager else {
-          VpnSharedStore.saveControlState("disconnected", notify: false)
-          Self.reloadControls()
+          Self.setControlState("disconnected")
           completion(.success(()))
           return
         }
@@ -353,8 +373,7 @@ final class VpnTunnelController {
         manager.saveToPreferences { error in
           DispatchQueue.main.async {
             if let error {
-              VpnSharedStore.saveControlState("error", notify: false)
-              Self.reloadControls()
+              Self.setControlState("error")
               completion(.failure(error))
               return
             }
@@ -363,10 +382,58 @@ final class VpnTunnelController {
             manager.connection.stopVPNTunnel()
             VpnSharedStore.clearExtensionHeartbeat()
             VpnSharedStore.clearTunnelStartFailure()
-            VpnSharedStore.saveControlState("disconnected", notify: false)
-            Self.reloadControls()
+            Self.setControlState("disconnected")
             completion(.success(()))
           }
+        }
+      }
+    }
+  }
+
+  /// Stops and cold-starts sing-box / Libbox in the packet-tunnel extension (tunnel must be connected).
+  func hardRestartCore(completion: @escaping (Result<Void, Error>) -> Void) {
+    sendProviderCommand("hardRestartCore", completion: completion)
+  }
+
+  private func sendProviderCommand(_ command: String, completion: @escaping (Result<Void, Error>) -> Void) {
+    guard let payload = command.data(using: .utf8) else {
+      completion(.failure(NSError(domain: "DemarVpn", code: 39, userInfo: [
+        NSLocalizedDescriptionKey: "Некорректная команда.",
+      ])))
+      return
+    }
+    refreshDemarStatus(reloadPreferences: false) { result in
+      switch result {
+      case let .failure(error):
+        completion(.failure(error))
+      case let .success((manager, status)):
+        guard status == .connected || status == .reasserting else {
+          completion(.failure(NSError(domain: "DemarVpn", code: 40, userInfo: [
+            NSLocalizedDescriptionKey: "VPN не подключён.",
+          ])))
+          return
+        }
+        guard let session = manager?.connection as? NETunnelProviderSession else {
+          completion(.failure(VpnTunnelError.noProviderSession))
+          return
+        }
+        do {
+          try session.sendProviderMessage(payload) { response in
+            DispatchQueue.main.async {
+              if let response,
+                 let text = String(data: response, encoding: .utf8),
+                 text.hasPrefix("err:")
+              {
+                completion(.failure(NSError(domain: "DemarVpn", code: 41, userInfo: [
+                  NSLocalizedDescriptionKey: String(text.dropFirst(4)),
+                ])))
+              } else {
+                completion(.success(()))
+              }
+            }
+          }
+        } catch {
+          completion(.failure(error))
         }
       }
     }
@@ -494,7 +561,7 @@ final class VpnTunnelController {
     let payloadHostFromConfig = resolvedPayload.flatMap { payload in
       Self.extractUplinkHost(fromConfigJson: payload.configJson)
     }
-    let providerHost = (proto?.providerConfiguration?["uplinkHost"] as? String)?
+    let providerHost = (proto?.providerConfiguration?[VpnTunnelProviderKeys.uplinkHost] as? String)?
       .trimmingCharacters(in: .whitespacesAndNewlines)
     let uplinkHost: String?
     if let payloadHost, !payloadHost.isEmpty {
@@ -519,9 +586,9 @@ final class VpnTunnelController {
       connectTriggerSource: connectTriggerSource
     )
     let opts: [String: NSObject] = [
-      Self.providerKeyUplinkHost: uplinkHost as NSObject,
-      Self.providerKeySessionId: sessionId as NSObject,
-      Self.providerKeyConnectSource: connectTriggerSource as NSObject,
+      VpnTunnelProviderKeys.uplinkHost: uplinkHost as NSObject,
+      VpnTunnelProviderKeys.sessionId: sessionId as NSObject,
+      VpnTunnelProviderKeys.connectSource: connectTriggerSource as NSObject,
     ]
     VpnSharedStore.saveActiveSession(sessionId: sessionId, triggerSource: connectTriggerSource)
 
@@ -580,8 +647,7 @@ final class VpnTunnelController {
     diag("startTunnel session=\(sessionId) source=\(connectTriggerSource)")
     guard manager.isEnabled else {
       diag("startTunnel blocked: VPN profile disabled (isEnabled=false)")
-      VpnSharedStore.saveControlState("error", notify: false)
-      Self.reloadControls()
+      Self.setControlState("error")
       completion(.failure(VpnTunnelError.managerDisabled))
       return
     }
@@ -591,8 +657,7 @@ final class VpnTunnelController {
     guard let session = manager.connection as? NETunnelProviderSession else {
       let kind = String(describing: type(of: manager.connection))
       diag("startTunnel failed: connection type=\(kind), expected NETunnelProviderSession")
-      VpnSharedStore.saveControlState("error", notify: false)
-      Self.reloadControls()
+      Self.setControlState("error")
       completion(.failure(VpnTunnelError.noProviderSession))
       return
     }
@@ -607,8 +672,7 @@ final class VpnTunnelController {
         connectTriggerSource: connectTriggerSource
       )
       #endif
-      VpnSharedStore.saveControlState("connecting", notify: false)
-      Self.reloadControls()
+      Self.setControlState("connecting")
       completion(.success(()))
       return
     } catch {
@@ -627,8 +691,7 @@ final class VpnTunnelController {
         let delay: TimeInterval = shouldStop ? 0.6 : 0.2
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
           if let loadError {
-            VpnSharedStore.saveControlState("error", notify: false)
-            Self.reloadControls()
+            Self.setControlState("error")
             completion(.failure(loadError))
             return
           }
@@ -641,20 +704,17 @@ final class VpnTunnelController {
             )
             guard let refreshedSession = manager.connection as? NETunnelProviderSession else {
               self.diag("startTunnel retry failed: no NETunnelProviderSession")
-              VpnSharedStore.saveControlState("error", notify: false)
-              Self.reloadControls()
+              Self.setControlState("error")
               completion(.failure(VpnTunnelError.noProviderSession))
               return
             }
             try refreshedSession.startTunnel(options: options)
             self.diag("startTunnel retry succeeded")
-            VpnSharedStore.saveControlState("connecting", notify: false)
-            Self.reloadControls()
+            Self.setControlState("connecting")
             completion(.success(()))
           } catch {
             self.diag("startTunnel retry failed: \(error.localizedDescription)")
-            VpnSharedStore.saveControlState("error", notify: false)
-            Self.reloadControls()
+            Self.setControlState("error")
             completion(.failure(error))
           }
         }
@@ -667,14 +727,6 @@ final class VpnTunnelController {
     guard FileManager.default.fileExists(atPath: cfgURL.path) else { return nil }
     let raw = try String(contentsOf: cfgURL, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
     return raw.isEmpty ? nil : raw
-  }
-
-  private static func reloadControls() {
-#if canImport(WidgetKit) && os(iOS)
-    DispatchQueue.main.async {
-      ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
-    }
-#endif
   }
 
   private static func configJsonWithCoreLogFile(_ configJson: String) throws -> String {
@@ -697,32 +749,11 @@ final class VpnTunnelController {
       let outbounds = root["outbounds"] as? [[String: Any]]
     else { return nil }
     for outbound in outbounds {
-      if (outbound["type"] as? String) == "vless" || (outbound["protocol"] as? String) == "vless" {
-        let server = (outbound["server"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let server, !server.isEmpty { return server }
-      }
-      if (outbound["type"] as? String) == "naive" {
-        let server = (outbound["server"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let server, !server.isEmpty { return server }
-      }
-      guard let settings = outbound["settings"] as? [String: Any],
-            let vnext = settings["vnext"] as? [[String: Any]]
-      else { continue }
-      for endpoint in vnext {
-        let address = (endpoint["address"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let address, !address.isEmpty { return address }
-      }
+      guard (outbound["tag"] as? String) == "proxy" else { continue }
+      let server = (outbound["server"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+      if let server, !server.isEmpty { return server }
     }
     return nil
-  }
-
-  private func syncManagerUplinkHost(_ manager: NETunnelProviderManager, uplinkHost: String) {
-    syncManagerConnectionMetadata(
-      manager,
-      uplinkHost: uplinkHost,
-      sessionId: nil,
-      connectTriggerSource: nil
-    )
   }
 
   /// Applies packet-tunnel protocol fields shared by full connect and Control Center reconnect.
@@ -743,19 +774,12 @@ final class VpnTunnelController {
     #if os(iOS)
     proto.includeAllNetworks = false
     #endif
-    var providerCfg = proto.providerConfiguration ?? [:]
-    if let uplinkHost, !uplinkHost.isEmpty {
-      providerCfg[providerKeyUplinkHost] = uplinkHost as NSObject
-    }
-    if let sessionId = normalizedSessionId(sessionId) {
-      providerCfg[providerKeySessionId] = sessionId as NSObject
-    }
-    if let connectTriggerSource,
-      !connectTriggerSource.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    {
-      providerCfg[providerKeyConnectSource] = connectTriggerSource as NSObject
-    }
-    proto.providerConfiguration = providerCfg
+    proto.providerConfiguration = mergedProviderConfiguration(
+      current: proto.providerConfiguration,
+      uplinkHost: uplinkHost,
+      sessionId: sessionId,
+      connectTriggerSource: connectTriggerSource
+    )
     manager.protocolConfiguration = proto
   }
 
@@ -766,25 +790,39 @@ final class VpnTunnelController {
     connectTriggerSource: String?
   ) {
     guard let proto = manager.protocolConfiguration as? NETunnelProviderProtocol else { return }
-    var providerCfg = proto.providerConfiguration ?? [:]
-    if let uplinkHost, !uplinkHost.isEmpty {
-      providerCfg[Self.providerKeyUplinkHost] = uplinkHost as NSObject
-    }
-    if let sessionId = Self.normalizedSessionId(sessionId) {
-      providerCfg[Self.providerKeySessionId] = sessionId as NSObject
-    }
-    if let connectTriggerSource,
-      !connectTriggerSource.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    {
-      providerCfg[Self.providerKeyConnectSource] = connectTriggerSource as NSObject
-    }
-    proto.providerConfiguration = providerCfg
+    proto.providerConfiguration = Self.mergedProviderConfiguration(
+      current: proto.providerConfiguration,
+      uplinkHost: uplinkHost,
+      sessionId: sessionId,
+      connectTriggerSource: connectTriggerSource
+    )
     manager.protocolConfiguration = proto
   }
 
   private func extractSessionId(from manager: NETunnelProviderManager) -> String? {
     guard let proto = manager.protocolConfiguration as? NETunnelProviderProtocol else { return nil }
-    return Self.normalizedSessionId(proto.providerConfiguration?[Self.providerKeySessionId] as? String)
+    return Self.normalizedSessionId(proto.providerConfiguration?[VpnTunnelProviderKeys.sessionId] as? String)
+  }
+
+  private static func mergedProviderConfiguration(
+    current: [String: Any]?,
+    uplinkHost: String?,
+    sessionId: String?,
+    connectTriggerSource: String?
+  ) -> [String: Any] {
+    var providerCfg = current ?? [:]
+    if let uplinkHost, !uplinkHost.isEmpty {
+      providerCfg[VpnTunnelProviderKeys.uplinkHost] = uplinkHost as NSObject
+    }
+    if let sessionId = normalizedSessionId(sessionId) {
+      providerCfg[VpnTunnelProviderKeys.sessionId] = sessionId as NSObject
+    }
+    if let connectTriggerSource,
+      !connectTriggerSource.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    {
+      providerCfg[VpnTunnelProviderKeys.connectSource] = connectTriggerSource as NSObject
+    }
+    return providerCfg
   }
 
   private static func normalizedSessionId(_ value: String?) -> String? {

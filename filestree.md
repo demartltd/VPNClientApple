@@ -19,16 +19,15 @@ DemarVPN/                              # SwiftUI target
 │   │   └── FontAwesomeBrands.swift    # FA brands, соцссылки
 │   ├── Models/
 │   │   ├── VpnConnectionState.swift   # enum статуса VPN
-│   │   ├── ServerProfile.swift        # VLESS профиль в UI
-│   │   └── TestServers.swift          # тестовые URI
+│   │   ├── ServerProfile.swift        # профиль сервера в UI
+│   │   └── TestServers.swift          # тестовые профили
 │   ├── Network/
 │   │   ├── DeviceTrafficTotals.swift  # RX/TX getifaddrs
 │   │   └── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
 │   ├── Vpn/
-│   │   ├── VlessProfile.swift         # VLESS профиль
-│   │   ├── VlessUriParser.swift       # vless:// → модель
-│   │   ├── SingBoxStreamSettings.swift   # Sing-box transport/tls mapping
-│   │   └── SingBoxConfigBuilder.swift    # Sing-box JSON TUN + VLESS
+│   │   ├── NaiveProfile.swift         # NaiveProxy профиль
+│   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun options
+│   │   └── SingBoxConfigBuilder.swift # Sing-box JSON TUN
 │   ├── Services/
 │   │   ├── AppState.swift             # UI state, toggle VPN
 │   │   ├── VpnControlling.swift       # connect/disconnect API
@@ -69,7 +68,7 @@ DemarVPN/                              # SwiftUI target
         ├── ServiceMenuView.swift      # служебное меню
         └── CustomEgressProbes.swift   # свои хосты зондов
 
-DemarVPNTests/                         # unit tests (VLESS URI)
+DemarVPNTests/                         # unit tests (Sing-box config)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка
