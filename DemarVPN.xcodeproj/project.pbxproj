@@ -50,7 +50,7 @@
 		B1000001000000000000002A /* VpnControlling.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000029 /* VpnControlling.swift */; };
 		B1000001000000000000002C /* VpnStatusMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002B /* VpnStatusMonitor.swift */; };
 		B1000001000000000000002E /* BundledCoreVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002D /* BundledCoreVersion.swift */; };
-		B10000010000000000000030 /* macos/singbox_macos in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000030 /* macos/singbox_macos */; };
+		B10000010000000000000030 /* macos/singbox_macos in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000030 /* macos/singbox_macos */; platformFilter = macos; };
 		B10000010000000000000031 /* MacVpnDiag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002E /* MacVpnDiag.swift */; };
 		B10000010000000000000032 /* DiagnosticsJournalTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000032 /* DiagnosticsJournalTextView.swift */; };
 		B10000010000000000000034 /* NativeVpnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000034 /* NativeVpnService.swift */; };
@@ -122,7 +122,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				E200000A1CF9000F007C117D /* ios/Frameworks/Libbox.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -545,7 +544,6 @@
 				C20000011CF9000F007C117D /* Frameworks */,
 				R20000011CF9000F007C117D /* Resources */,
 				E20000201CF9000F007C117D /* Sign sing-box in appex */,
-				E200000F1CF9000F007C117D /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -666,7 +664,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		E20000201CF9000F007C117D /* Sign sing-box in appex */ = {isa = PBXShellScriptBuildPhase; alwaysOutOfDate = 1; buildActionMask = 2147483647; files = (); inputPaths = (); name = "Sign sing-box in appex"; outputPaths = (); runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "\"${SRCROOT}/scripts/sign-singbox-in-appex.sh\"\n"; showEnvVarsInLog = 0; };
+		E20000201CF9000F007C117D /* Sign sing-box in appex */ = {isa = PBXShellScriptBuildPhase; alwaysOutOfDate = 1; buildActionMask = 2147483647; files = (); inputPaths = (); name = "Sign embedded binaries in appex"; outputPaths = (); runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "\"${SRCROOT}/scripts/sign-singbox-in-appex.sh\"\n"; showEnvVarsInLog = 0; };
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -901,7 +899,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -909,6 +907,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DemarVPN/Info.plist;
 				"INFOPLIST_FILE[sdk=macosx*]" = "DemarVPN/Info-macOS.plist";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -936,7 +935,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -944,6 +943,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DemarVPN/Info.plist;
 				"INFOPLIST_FILE[sdk=macosx*]" = "DemarVPN/Info-macOS.plist";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -967,7 +967,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1026,7 +1026,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1085,7 +1085,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1112,7 +1112,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1138,7 +1138,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1162,7 +1162,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
