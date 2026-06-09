@@ -1,4 +1,3 @@
-#if os(iOS)
 import Foundation
 
 func libboxRunBlocking<T>(_ body: @escaping () async throws -> T) throws -> T {
@@ -15,5 +14,3 @@ func libboxRunBlocking<T>(_ body: @escaping () async throws -> T) throws -> T {
     semaphore.wait()
     return try result.get()
 }
-
-#endif

@@ -75,19 +75,14 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   private let coreQueue = DispatchQueue(label: "vpn.demar.core", qos: .userInitiated)
   private var currentSessionId: String?
   private var tunnelStartedAt: Date?
-  #if os(iOS)
-  private var tunnelLifecycle: TunnelLifecycle?
-  private var activeTunFd: Int64?
-  private var activeIfaceName: String?
   private var activeAssetDir: String?
   private var activeUplinkHost: String?
   private var tunnelTeardownInFlight = false
   private var lastAppliedExcludedIPv4: [String] = []
   private var reconfigureInFlight = false
   private var reconfigurePendingReason: String?
-  #endif
-  #if os(macOS)
-  private var coreChild: MacCoreChild?
+  #if os(iOS)
+  private var tunnelLifecycle: TunnelLifecycle?
   #endif
   private let startTunnelLock = NSLock()
   private var startTunnelInFlight = false
@@ -127,13 +122,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       let sessionId = startContext.sessionId
       let connectSource = startContext.connectSource
       let uplinkHost = startContext.uplinkHost
-      #if os(iOS)
       activeUplinkHost = uplinkHost
       tunnelTeardownInFlight = false
       lastAppliedExcludedIPv4 = []
       reconfigureInFlight = false
       reconfigurePendingReason = nil
-      #endif
       #if os(iOS)
       if !sessionId.isEmpty,
          let prior = VpnSharedStore.loadActiveSession()?["sessionId"],
@@ -153,108 +146,12 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           + "excludedIPv4=\(excludedIPv4.isEmpty ? "<empty>" : excludedIPv4.joined(separator: ",")) "
           + "session=\(sessionId.isEmpty ? "<none>" : sessionId) source=\(connectSource)")
 
-      #if os(iOS)
       self.startLibboxTunnel(
         cfgURL: cfgURL,
         excludedIPv4: excludedIPv4,
         uplinkHost: uplinkHost,
         completionHandler: completionHandler
       )
-      #else
-      let settings = Self.buildTunnelSettings(excludedIPv4: excludedIPv4)
-
-      setTunnelNetworkSettings(settings) { [weak self] error in
-        guard let self else {
-          completionHandler(NSError(domain: "DemarVpn", code: 5, userInfo: [
-            NSLocalizedDescriptionKey: "Tunnel released before completion.",
-          ]))
-          return
-        }
-        if let error {
-          self.clearStartTunnelInFlight()
-          self.fail(
-            "setTunnelNetworkSettings failed: \(error.localizedDescription)",
-            code: 7,
-            completionHandler: completionHandler
-          )
-          return
-        }
-        VpnSharedStore.saveExtensionHeartbeat(phase: "setTunnelNetworkSettings-ok")
-
-        guard let selectedTun = Self.resolveTunnelAfterSettings() else {
-          self.clearStartTunnelInFlight()
-          self.fail("Could not locate utun file descriptor.", code: 3, completionHandler: completionHandler)
-          return
-        }
-
-        let tunFd = selectedTun.fd
-        let ifaceName = selectedTun.name
-        guard ifaceName.hasPrefix("utun"), Self.interfaceName(forUtunFd: tunFd) == ifaceName else {
-          self.clearStartTunnelInFlight()
-          self.fail(
-            "Could not read utun interface name (fd=\(tunFd) interface=\(ifaceName)).",
-            code: 4,
-            completionHandler: completionHandler
-          )
-          return
-        }
-        Self.diag("utun selected: fd=\(tunFd) interface=\(ifaceName)")
-        VpnSharedStore.saveExtensionHeartbeat(phase: "utun-ok")
-
-        do {
-          try Self.patchTunInboundName(at: cfgURL, interfaceName: ifaceName)
-          Self.diag("patched tun inbound name: \(ifaceName)")
-        } catch {
-          self.clearStartTunnelInFlight()
-          self.fail(
-            "patchTunInboundName failed: \(error.localizedDescription)",
-            code: 11,
-            completionHandler: completionHandler
-          )
-          return
-        }
-
-        let assetDir: String
-        do {
-          let assetDirURL = try VpnAppGroup.assetDirectoryURL()
-          assetDir = assetDirURL.path
-          Self.diag(
-            "core assets: \(Self.assetFileDescription(named: "geoip.db", in: assetDirURL)), "
-              + "\(Self.assetFileDescription(named: "geosite.db", in: assetDirURL))")
-        } catch {
-          self.clearStartTunnelInFlight()
-          self.fail(
-            "asset directory lookup failed: \(error.localizedDescription)",
-            code: 12,
-            completionHandler: completionHandler
-          )
-          return
-        }
-
-        self.coreQueue.async {
-          VpnSharedStore.saveExtensionHeartbeat(phase: "core-starting")
-          do {
-            let child = try MacCoreProcess.start(configPath: cfgURL.path, tunFd: tunFd, assetDir: assetDir)
-            self.coreChild = child
-            Self.diag("core subprocess started (pid=\(child.pid))")
-            VpnSharedStore.saveExtensionHeartbeat(phase: "core-started")
-            self.tunnelStartedAt = Date()
-            VpnSharedStore.saveControlState("connected")
-            Self.reloadControls()
-            self.clearStartTunnelInFlight()
-            DispatchQueue.main.async { completionHandler(nil) }
-          } catch {
-            VpnSharedStore.saveExtensionHeartbeat(phase: "core-failed")
-            self.clearStartTunnelInFlight()
-            self.fail(
-              "core start error: \(error.localizedDescription)",
-              code: 22,
-              completionHandler: completionHandler
-            )
-          }
-        }
-      }
-      #endif
     } catch {
       clearStartTunnelInFlight()
       fail(error.localizedDescription, code: 1, completionHandler: completionHandler)
@@ -267,7 +164,6 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     startTunnelLock.unlock()
   }
 
-  #if os(iOS)
   private func startLibboxTunnel(
     cfgURL: URL,
     excludedIPv4: [String],
@@ -312,7 +208,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         Self.diag("libbox service started")
         VpnSharedStore.saveExtensionHeartbeat(phase: "core-started")
         self.tunnelStartedAt = Date()
-        self.applyIOSCoreStartedState(
+        self.applyCoreStartedState(
           excludedIPv4: excludedIPv4,
           assetDirPath: assetDir.path,
           uplinkHost: uplinkHost
@@ -333,7 +229,6 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       }
     }
   }
-  #endif
 
   #if os(iOS)
   override func sleep(completionHandler: @escaping () -> Void) {
@@ -451,10 +346,10 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   #endif
 
   override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
-    #if os(iOS)
     tunnelTeardownInFlight = true
     reconfigureInFlight = false
     reconfigurePendingReason = nil
+    #if os(iOS)
     tunnelLifecycle?.stop()
     tunnelLifecycle = nil
     #endif
@@ -499,20 +394,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
     clearStartTunnelInFlight()
     coreQueue.async {
-      #if os(iOS)
       IOSLibboxCore.stop()
-      #else
-      MacCoreProcess.stop(self.coreChild)
-      self.coreChild = nil
-      #endif
       self.clearStartTunnelInFlight()
       VpnSharedStore.clearExtensionHeartbeat()
-      #if os(iOS)
-      self.activeTunFd = nil
-      self.activeIfaceName = nil
       self.activeAssetDir = nil
       self.activeUplinkHost = nil
-      #endif
       // User may disconnect from Settings; persisted NEOnDemandRuleConnect would otherwise reconnect.
       VpnTunnelController.shared.disableOnDemandAutoReconnect { err in
         if let err {
@@ -543,14 +429,12 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   }
 
   private func hardRestartCore(completion: @escaping (Error?) -> Void) {
-    #if os(iOS)
     guard !tunnelTeardownInFlight else {
       completion(NSError(domain: "DemarVpn", code: 42, userInfo: [
         NSLocalizedDescriptionKey: "Туннель останавливается.",
       ]))
       return
     }
-    #endif
     coreQueue.async { [weak self] in
       self?.runHardRestartCore(completion: completion)
     }
@@ -558,24 +442,9 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
   private func runHardRestartCore(completion: @escaping (Error?) -> Void) {
     appendDiagLine("hardRestartCore")
-    #if os(iOS)
     IOSLibboxCore.stop()
-    #else
-    MacCoreProcess.stop(coreChild)
-    coreChild = nil
-    #endif
     do {
       let cfgURL = try VpnAppGroup.configURL()
-      #if os(macOS)
-      guard let tun = Self.resolveTunnelAfterSettings() else {
-        throw NSError(domain: "DemarVpn", code: 43, userInfo: [
-          NSLocalizedDescriptionKey: "Не найден utun.",
-        ])
-      }
-      try Self.patchTunInboundName(at: cfgURL, interfaceName: tun.name)
-      let assetDir = try VpnAppGroup.assetDirectoryURL().path
-      coreChild = try MacCoreProcess.start(configPath: cfgURL.path, tunFd: tun.fd, assetDir: assetDir)
-      #else
       let configJSON = try String(contentsOf: cfgURL, encoding: .utf8)
       let excluded = try Self.resolveIPv4Addresses(host: activeUplinkHost).sorted()
       let assetDir = try VpnAppGroup.assetDirectoryURL()
@@ -585,12 +454,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         excludedIPv4: excluded,
         assetDir: assetDir
       )
-      applyIOSCoreStartedState(
+      applyCoreStartedState(
         excludedIPv4: excluded,
         assetDirPath: assetDir.path,
         uplinkHost: activeUplinkHost
       )
-      #endif
       VpnSharedStore.saveExtensionHeartbeat(phase: "running")
       Self.diag("hardRestartCore ok")
       DispatchQueue.main.async { completion(nil) }
@@ -600,19 +468,19 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
   }
 
-  #if os(iOS)
-  private func applyIOSCoreStartedState(
+  private func applyCoreStartedState(
     excludedIPv4: [String],
     assetDirPath: String,
     uplinkHost: String?
   ) {
     lastAppliedExcludedIPv4 = excludedIPv4.sorted()
     activeAssetDir = assetDirPath
+    #if os(iOS)
     tunnelLifecycle?.stop()
     tunnelLifecycle = TunnelLifecycle(provider: self)
     tunnelLifecycle?.start(uplinkHost: uplinkHost)
+    #endif
   }
-  #endif
 
   private static func reloadControls() {
     VpnControlReloader.reloadControls()
@@ -676,16 +544,6 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
   }
 
-  private static func buildTunnelSettings(excludedIPv4: [String]) -> NEPacketTunnelNetworkSettings {
-    let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "127.0.0.1")
-    let ipv4 = NEIPv4Settings(addresses: ["10.0.0.2"], subnetMasks: ["255.255.255.255"])
-    ipv4.includedRoutes = [NEIPv4Route.default()]
-    ipv4.excludedRoutes = excludedIPv4.map { NEIPv4Route(destinationAddress: $0, subnetMask: "255.255.255.255") }
-    settings.ipv4Settings = ipv4
-    settings.dnsSettings = NEDNSSettings(servers: ["1.1.1.1"])
-    return settings
-  }
-
   private static func resolveIPv4Addresses(host: String?) throws -> [String] {
     let clean = host?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     if clean.isEmpty { return [] }
@@ -738,107 +596,6 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   private static func isIPv4(_ s: String) -> Bool {
     var a = in_addr()
     return s.withCString { inet_pton(AF_INET, $0, &a) } == 1
-  }
-
-  private static let sysprotoControl: Int32 = 2
-  private static let utunOptIfName: Int32 = 2
-
-  /// Call only after setTunnelNetworkSettings succeeds.
-  private static func resolveTunnelAfterSettings() -> (fd: Int64, name: String)? {
-    #if os(macOS)
-    // Do not use tunnelFileDescriptorViaControl(): it returns a utun_control socket,
-    // not the packet I/O fd sing-box needs (causes "bad file descriptor" on start).
-    for attempt in 0..<12 {
-      if let picked = selectUtunCandidate(),
-         interfaceName(forUtunFd: picked.fd) == picked.name
-      {
-        return picked
-      }
-      if attempt < 11 { Thread.sleep(forTimeInterval: 0.05) }
-    }
-    return nil
-    #else
-    guard let picked = selectUtunCandidate(),
-          interfaceName(forUtunFd: picked.fd) == picked.name
-    else { return nil }
-    return picked
-    #endif
-  }
-
-  /// Fallback: scan utun fds when control socket lookup is unavailable.
-  private static func findUtunCandidates() -> [(fd: Int64, name: String)] {
-    var buf = [CChar](repeating: 0, count: Int(IFNAMSIZ))
-    let utunPrefix = Array("utun".utf8)
-    var out: [(fd: Int64, name: String)] = []
-    for fd: Int32 in 0...1024 {
-      var len = socklen_t(buf.count)
-      buf = [CChar](repeating: 0, count: Int(IFNAMSIZ))
-      if getsockopt(fd, 2, 2, &buf, &len) != 0 {
-        continue
-      }
-      let checkLen = min(Int(len), buf.count)
-      guard checkLen >= utunPrefix.count else { continue }
-      var ok = true
-      for i in 0..<utunPrefix.count {
-        if UInt8(bitPattern: buf[i]) != utunPrefix[i] {
-          ok = false
-          break
-        }
-      }
-      if ok {
-        out.append((Int64(fd), String(cString: buf)))
-      }
-    }
-    return out
-  }
-
-  private static func selectUtunCandidate() -> (fd: Int64, name: String)? {
-    let candidates = findUtunCandidates().filter { $0.name.hasPrefix("utun") }
-    return candidates.max(by: { $0.fd < $1.fd })
-  }
-
-  private static func interfaceName(forUtunFd fd: Int64) -> String? {
-    var buf = [CChar](repeating: 0, count: Int(IFNAMSIZ))
-    var len = socklen_t(buf.count)
-    guard getsockopt(Int32(fd), sysprotoControl, utunOptIfName, &buf, &len) == 0 else {
-      return nil
-    }
-    return String(cString: buf)
-  }
-
-  private static func patchTunInboundName(at url: URL, interfaceName: String) throws {
-    let data = try Data(contentsOf: url)
-    guard var root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-          var inbounds = root["inbounds"] as? [[String: Any]]
-    else {
-      throw NSError(domain: "DemarVpn", code: 11, userInfo: [
-        NSLocalizedDescriptionKey: "Invalid core JSON (expected object with inbounds[]).",
-      ])
-    }
-
-    var patched = false
-    for i in 0..<inbounds.count {
-      let isTunInbound = (inbounds[i]["protocol"] as? String) == "tun" || (inbounds[i]["type"] as? String) == "tun"
-      guard isTunInbound else { continue }
-      if var settings = inbounds[i]["settings"] as? [String: Any] {
-        settings["name"] = interfaceName
-        inbounds[i]["settings"] = settings
-      } else {
-        inbounds[i]["interface_name"] = interfaceName
-      }
-      patched = true
-      break
-    }
-
-    guard patched else {
-      throw NSError(domain: "DemarVpn", code: 12, userInfo: [
-        NSLocalizedDescriptionKey: "No tun inbound found to patch.",
-      ])
-    }
-
-    root["inbounds"] = inbounds
-    let out = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
-    try out.write(to: url, options: [.atomic])
   }
 
   private static func assetFileDescription(named name: String, in dir: URL) -> String {

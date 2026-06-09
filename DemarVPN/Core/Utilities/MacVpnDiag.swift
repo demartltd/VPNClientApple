@@ -205,10 +205,10 @@ enum MacVpnDiag {
 
     static func embeddedAppexSummary() -> String {
         guard let appex = embeddedAppexURL() else { return "appex path unavailable" }
-        let core = appex.appendingPathComponent("Contents/Resources/singbox_macos/sing-box").path
+        let exe = appex.appendingPathComponent("Contents/MacOS/DemarPacketTunnel").path
         let fm = FileManager.default
         if !fm.fileExists(atPath: appex.path) { return "appex missing in bundle" }
-        let coreOK = fm.isExecutableFile(atPath: core)
+        let coreOK = fm.isExecutableFile(atPath: exe)
         return "appex=\(appex.path) core=\(coreOK ? "ok" : "missing")"
     }
 

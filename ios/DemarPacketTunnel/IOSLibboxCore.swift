@@ -1,4 +1,3 @@
-#if os(iOS)
 import Foundation
 import Libbox
 import NetworkExtension
@@ -80,5 +79,3 @@ enum IOSLibboxCore {
         isSetup = true
     }
 }
-
-#endif

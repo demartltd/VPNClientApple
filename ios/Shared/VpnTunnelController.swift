@@ -522,12 +522,12 @@ final class VpnTunnelController {
     VpnSharedStore.appendPendingUiDiagLine(
       "[vpn] preflight: config=\(cfgSize)B geoip=\(geoipSize)B geosite=\(geositeSize)B"
     )
-    let appex = Bundle.main.builtInPlugInsURL?
-      .appendingPathComponent("DemarPacketTunnel.appex/Contents/Resources/singbox_macos/sing-box")
-    let corePath = appex?.path ?? "<missing>"
-    let coreOK = appex.map { fm.isExecutableFile(atPath: $0.path) } ?? false
+    let appexExe = Bundle.main.builtInPlugInsURL?
+      .appendingPathComponent("DemarPacketTunnel.appex/Contents/MacOS/DemarPacketTunnel")
+    let corePath = appexExe?.path ?? "<missing>"
+    let coreOK = appexExe.map { fm.isExecutableFile(atPath: $0.path) } ?? false
     VpnSharedStore.appendPendingUiDiagLine(
-      "[vpn] preflight: appex_core=\(coreOK ? "ok" : "missing") path=\(corePath)"
+      "[vpn] preflight: appex=\(coreOK ? "ok" : "missing") path=\(corePath)"
     )
   }
   #endif

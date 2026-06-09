@@ -19,7 +19,6 @@ scripts/*
 !scripts/increment_version_common.ps1
 !scripts/ios-export-options.plist
 !scripts/macos-export-options.plist
-!scripts/macos-singbox-helper.entitlements
 scripts/.env
 scripts/AuthKey_*.p8
 

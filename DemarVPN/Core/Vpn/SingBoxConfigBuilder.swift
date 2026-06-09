@@ -173,11 +173,7 @@ enum SingBoxTunInboundBuilder {
         directIPs: [String],
         strictRoute: Bool
     ) -> [String: Any] {
-        #if os(iOS)
         let effectiveMtu = min(mtu, 1400)
-        #else
-        let effectiveMtu = mtu
-        #endif
         var tunInbound: [String: Any] = [
             "type": "tun",
             "tag": SingBoxConfigConstants.tunInboundTag,
@@ -186,16 +182,12 @@ enum SingBoxTunInboundBuilder {
             "auto_route": true,
             "strict_route": strictRoute,
             "address": ["172.19.0.1/30"],
+            "stack": "gvisor",
         ]
-        #if os(iOS)
-        tunInbound["stack"] = "gvisor"
         if !directIPs.isEmpty {
             tunInbound["route_address"] = ["0.0.0.0/1", "128.0.0.0/1"]
             tunInbound["route_exclude_address"] = directIPs.map { "\($0)/32" }
         }
-        #elseif os(macOS)
-        tunInbound["stack"] = "system"
-        #endif
         return tunInbound
     }
 }

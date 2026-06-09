@@ -2,7 +2,7 @@
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
 
-Целевая версия core: **sing-box 1.13.12** (см. `macos/singbox_macos/bundled_version.txt`, Libbox из того же тега).
+Целевая версия core: **sing-box 1.13.12** (Libbox из тега `v1.13.12`, см. `scripts/libbox-build.py`).
 
 Документация Sing-box:
 
@@ -130,10 +130,11 @@ Assets: `python3 scripts/singbox-download-auto.py` → `sing-box` из release +
 
 | Компонент | Путь |
 |-----------|------|
-| Sing-box subprocess в extension | `macos/singbox_macos/` → Resources appex |
-| Запуск core | `ios/DemarPacketTunnel/MacCoreProcess.swift` |
+| Libbox in-process | `ios/Frameworks/Libbox.xcframework` |
+| Platform interface | `ios/DemarPacketTunnel/DemarLibboxPlatform.swift` |
+| Запуск core | `ios/DemarPacketTunnel/IOSLibboxCore.swift` |
 
-Connect: `NativeVpnService` → `VpnTunnelController` → extension → `sing-box run -c`.
+Connect: `NativeVpnService` → `VpnTunnelController` → extension → Libbox (тот же путь, что iOS).
 
 ---
 
@@ -143,14 +144,14 @@ Connect: `NativeVpnService` → `VpnTunnelController` → extension → `sing-bo
 - [x] NaiveProxy → config (`SingBoxConnectPlan`, `SingBoxConfigBuilder`)
 - [x] Geo в bundle iOS / macOS
 - [x] `AppState` + `VpnStatusMonitor` (iOS + macOS)
-- [x] macOS Network Extension + sing-box в extension
+- [x] macOS Network Extension + Libbox in-process
 
 ---
 
 ## Текущее состояние
 
 **iOS:** SwiftUI + Network Extension + App Group + Sing-box config pipeline.  
-**macOS:** SwiftUI + Network Extension + subprocess sing-box в extension (Apple Silicon).
+**macOS:** SwiftUI + Network Extension + Libbox in-process (Apple Silicon).
 
 См. [`readme.md`](readme.md).
 

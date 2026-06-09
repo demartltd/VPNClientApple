@@ -38,8 +38,11 @@ enum CoreBundleAssets {
   static func bundledURL(for filename: String) -> URL? {
     let base = (filename as NSString).deletingPathExtension
     let ext = (filename as NSString).pathExtension
+    if let url = Bundle.main.url(forResource: base, withExtension: ext.isEmpty ? nil : ext) {
+      return url
+    }
     for sub in subdirectories {
-      if let url = Bundle.main.url(forResource: base, withExtension: ext, subdirectory: sub) {
+      if let url = Bundle.main.url(forResource: base, withExtension: ext.isEmpty ? nil : ext, subdirectory: sub) {
         return url
       }
     }

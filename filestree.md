@@ -99,18 +99,17 @@ ios/
 │   ├── Info.plist
 │   └── DemarControls.entitlements
 ├── DemarPacketTunnel/
-│   ├── PacketTunnelProvider.swift     # tunnel + sing-box
+│   ├── PacketTunnelProvider.swift     # tunnel + Libbox
 │   ├── TunnelLifecycle.swift          # path monitor (iOS)
-│   ├── MacCoreProcess.swift           # subprocess (core runtime)
+│   ├── IOSLibboxCore.swift            # Libbox in-process (iOS + macOS)
+│   ├── DemarLibboxPlatform.swift      # NE platform interface
+│   ├── LibboxRunBlocking.swift        # async bridge for openTun
 │   ├── FlutterExtension.xcconfig      # legacy paths
 │   ├── Info.plist
 │   └── DemarPacketTunnel.entitlements
 └── Frameworks/
-    └── README.md                      # локальные runtime артефакты
-
-macos/
-└── singbox_macos/                     # sing-box arm64 (gitignore)
-    └── README.md
+    ├── README.md                      # Libbox build инструкции
+    └── Libbox.xcframework/            # sing-box gomobile (gitignore; libbox-build.py)
 ```
 
 ## Связь с demar_vpn

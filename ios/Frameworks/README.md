@@ -1,18 +1,16 @@
 # Core Runtime Artifacts
 
-Папка зарезервирована под локальные runtime-артефакты и вспомогательные файлы.
-
-## macOS + geo assets
+## Geo assets
 
 ```bash
 python3 scripts/singbox-download-auto.py
 ```
 
-Скрипт скачивает `sing-box` из release и geo-базы `geoip.db` / `geosite.db` в `ios/Shared/singbox/` и `macos/singbox_macos/`.
+Скрипт скачивает geo-базы `geoip.db` / `geosite.db` в `ios/Shared/singbox/` (и опционально dev-бинарник в `macos/singbox_macos/` для `sing-box check` в тестах).
 
-## iOS — Libbox (in-process)
+## Libbox (iOS + macOS, in-process)
 
-На iOS Network Extension **нельзя** запускать `sing-box` через `posix_spawn` (EPERM). Ядро работает через **Libbox.xcframework** (gomobile), как в sing-box-for-apple.
+Network Extension **нельзя** запускать `sing-box` через `posix_spawn` (EPERM на TUN). Ядро работает через **Libbox.xcframework** (gomobile), как в sing-box-for-apple.
 
 Сборка (один раз после обновления sing-box или при отсутствии framework):
 
@@ -20,6 +18,4 @@ python3 scripts/singbox-download-auto.py
 python3 scripts/libbox-build.py   # → ios/Frameworks/Libbox.xcframework
 ```
 
-Сборка включает `with_naive_outbound` (Naive proxy). Требуется Go и Xcode.
-
-macOS по-прежнему использует subprocess `sing-box` в extension (`macos/singbox_macos/`).
+Сборка включает `with_naive_outbound` (Naive proxy). Требуется Go и Xcode. Целевой тег: **v1.13.12** (iOS + macOS arm64).

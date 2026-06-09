@@ -1,4 +1,3 @@
-#if os(iOS)
 import Foundation
 import Libbox
 import Network
@@ -301,4 +300,3 @@ private final class DemarNetworkInterfaceIterator: NSObject, LibboxNetworkInterf
     func next() -> LibboxNetworkInterface? { nextValue }
 }
 
-#endif

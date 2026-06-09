@@ -10,13 +10,14 @@
 - Deployment: **iOS 18+**, **macOS 14+** (VPN на Mac — **Apple Silicon arm64**)
 - Bundle ID: `com.demar.vpn`
 - **iOS:** SwiftUI + Network Extension (`DemarPacketTunnel`) + App Group + Sing-box config pipeline
-- **macOS:** Network Extension + subprocess `sing-box` в extension (`singbox_macos/`)
+- **macOS:** Network Extension + Libbox in-process (как iOS)
 - См. [`readme-core.md`](readme-core.md)
 
 Один раз перед сборкой (скрипт только для разработчиков, в runtime не вызывается):
 
 ```bash
-python3 scripts/singbox-download-auto.py   # → macos/singbox_macos/, ios/Shared/singbox/ (+ geo db; iOS binary built from source via Go 1.24.7)
+python3 scripts/singbox-download-auto.py   # → geo db в ios/Shared/singbox/
+python3 scripts/libbox-build.py           # → ios/Frameworks/Libbox.xcframework (iOS + macOS)
 ```
 
 Xcode копирует runtime-assets в app и в `DemarPacketTunnel.appex` (macOS).

@@ -5,12 +5,7 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
     private let controller = VpnTunnelController.shared
 
     func connect(server: ServerProfile) async throws {
-        #if os(macOS)
-        let tunSuffix = Int(Date().timeIntervalSince1970 * 1_000_000) & 0xFFFFFF
-        let tunName = "utun\(tunSuffix)"
-        #else
         let tunName = "utun0"
-        #endif
 
         let plan = server.connectPlan
         let configJson = try SingBoxConfigBuilder.buildTunConfigJson(plan: plan, tunName: tunName)
