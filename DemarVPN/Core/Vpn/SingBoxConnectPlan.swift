@@ -5,7 +5,6 @@ import Darwin
 
 struct SingBoxTunOptions {
     var dnsFinal: String
-    var routeResolveServer: String
     var dnsBootstrapDomains: [String]
     var directDomains: [String]
     var strictRoute: Bool
@@ -39,7 +38,6 @@ struct SingBoxConnectPlan {
             directIPs: directIPs(forHost: profile.server),
             tun: SingBoxTunOptions(
                 dnsFinal: SingBoxConfigConstants.dnsRemoteTag,
-                routeResolveServer: SingBoxConfigConstants.dnsDirectTag,
                 dnsBootstrapDomains: [profile.tlsServerName],
                 directDomains: [profile.tlsServerName],
                 strictRoute: true

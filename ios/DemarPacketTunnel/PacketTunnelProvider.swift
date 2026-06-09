@@ -280,19 +280,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     let routesUnchanged = excluded == lastAppliedExcludedIPv4
-    if routesUnchanged {
-      let heartbeatFresh = VpnSharedStore.extensionHeartbeatIsFresh(maxAge: 30)
-      if VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(
-        reason: reason,
-        heartbeatFresh: heartbeatFresh,
-        tunHealthy: IOSLibboxCore.isRunning
-      ) {
-        Self.diag(
-          "reconfigure(\(reason)) recovery soft-restart heartbeatFresh=\(heartbeatFresh) libboxRunning=\(IOSLibboxCore.isRunning)"
-        )
-        runSoftCoreRestart(reason: reason, cfgPath: cfgPath, excluded: excluded, assetDir: assetDir)
-        return
-      }
+    if routesUnchanged, !VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(reason: reason) {
       Self.diag("reconfigure(\(reason)) skipped: routes unchanged (stable tunnel)")
       finishReconfigureCoalesced()
       return

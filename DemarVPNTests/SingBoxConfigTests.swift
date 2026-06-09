@@ -30,6 +30,12 @@ final class SingBoxConfigTests: XCTestCase {
         let proxyOutbound = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
         XCTAssertNotNil(proxyOutbound["domain_resolver"])
 
+        let dns = try XCTUnwrap(root["dns"] as? [String: Any])
+        let dnsServers = try XCTUnwrap(dns["servers"] as? [[String: Any]])
+        let remoteServer = try XCTUnwrap(dnsServers.first { ($0["tag"] as? String) == "dns-remote" })
+        XCTAssertEqual(remoteServer["type"] as? String, "https")
+        XCTAssertEqual(remoteServer["detour"] as? String, "proxy")
+
         let inbounds = try XCTUnwrap(root["inbounds"] as? [[String: Any]])
         let tunInbound = try XCTUnwrap(inbounds.first { ($0["type"] as? String) == "tun" })
         XCTAssertEqual(tunInbound["strict_route"] as? Bool, true)
@@ -59,48 +65,16 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertTrue(json.contains("\"action\" : \"sniff\"") || json.contains("\"action\": \"sniff\""))
     }
 
-    func testReconfigurePolicySkipsStableRoutes() {
-        XCTAssertFalse(
-            VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(
-                reason: "pathChange",
-                heartbeatFresh: true,
-                tunHealthy: true
-            )
-        )
+    func testReconfigurePolicySkipsRoutinePathChange() {
+        XCTAssertFalse(VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(reason: "pathChange"))
     }
 
     func testReconfigurePolicyRestartsOnWake() {
-        XCTAssertTrue(
-            VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(
-                reason: "wake",
-                heartbeatFresh: true,
-                tunHealthy: true
-            )
-        )
+        XCTAssertTrue(VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(reason: "wake"))
     }
 
-    func testReconfigurePolicyAllowsRecoveryRestart() {
-        XCTAssertTrue(
-            VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(
-                reason: "pathChange",
-                heartbeatFresh: false,
-                tunHealthy: true
-            )
-        )
-        XCTAssertTrue(
-            VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(
-                reason: "wake",
-                heartbeatFresh: true,
-                tunHealthy: false
-            )
-        )
-        XCTAssertTrue(
-            VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(
-                reason: "pathRecovered",
-                heartbeatFresh: true,
-                tunHealthy: true
-            )
-        )
+    func testReconfigurePolicyRestartsOnPathRecovered() {
+        XCTAssertTrue(VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(reason: "pathRecovered"))
     }
 
     private func assertSingBoxCheckPasses(json: String) throws {

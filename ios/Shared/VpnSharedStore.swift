@@ -628,17 +628,10 @@ enum VpnSharedLineFile {
 }
 
 enum VpnReconfigurePolicy {
-  /// On iOS, unchanged routes should not trigger routine soft restarts.
-  /// Restart is allowed only as recovery when tunnel fd/name became invalid
-  /// or extension heartbeat indicates the core is no longer healthy.
-  static func shouldSoftRestartWhenRoutesUnchanged(
-    reason: String,
-    heartbeatFresh: Bool,
-    tunHealthy: Bool
-  ) -> Bool {
-    if reason == "pathRecovered" { return true }
-    if reason == "wake" { return true }
-    guard reason == "pathChange" else { return false }
-    return !heartbeatFresh || !tunHealthy
+  /// With unchanged routes, only true recovery events soft-restart the core.
+  /// Routine Wi-Fi/cellular changes are handled by sing-box `auto_detect_interface`
+  /// and never reach here, so we restart only after wake or a restored path.
+  static func shouldSoftRestartWhenRoutesUnchanged(reason: String) -> Bool {
+    reason == "wake" || reason == "pathRecovered"
   }
 }

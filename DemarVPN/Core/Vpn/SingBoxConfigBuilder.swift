@@ -14,7 +14,6 @@ enum SingBoxConfigBuilder {
             mtu: mtu,
             logLevel: logLevel,
             dnsFinal: plan.tun.dnsFinal,
-            routeResolveServer: plan.tun.routeResolveServer,
             dnsBootstrapDomains: plan.tun.dnsBootstrapDomains,
             strictRoute: plan.tun.strictRoute,
             directDomains: plan.tun.directDomains
@@ -33,7 +32,6 @@ enum SingBoxConfigBuilder {
         mtu: Int,
         logLevel: String,
         dnsFinal: String,
-        routeResolveServer: String,
         dnsBootstrapDomains: [String],
         strictRoute: Bool,
         directDomains: [String]
@@ -50,13 +48,13 @@ enum SingBoxConfigBuilder {
             "route": SingBoxRouteBuilder.makeRoute(
                 inboundTag: SingBoxConfigConstants.tunInboundTag,
                 directIPs: directIPs,
-                directDomains: directDomains,
-                resolveServer: routeResolveServer
+                directDomains: directDomains
             ),
             "outbounds": [
                 proxyOutbound,
                 ["type": "direct", "tag": SingBoxConfigConstants.directTag],
             ],
+            "experimental": ["cache_file": ["enabled": true]],
         ]
     }
 }
@@ -89,7 +87,11 @@ enum SingBoxDnsBuilder {
     }
 
     static func makeDns(final dnsFinal: String, bootstrapDomains: [String] = []) -> [String: Any] {
-        var rules: [[String: Any]] = []
+        // Drop local reverse lookups (*.in-addr.arpa / _dns-sd._udp floods) instead of
+        // dialing a direct resolver that is unreachable inside the macOS Network Extension.
+        var rules: [[String: Any]] = [
+            ["query_type": ["PTR"], "action": "reject", "method": "drop"],
+        ]
         for domain in bootstrapDomains {
             guard let cleanDomain = cleanedDomain(domain) else { continue }
             rules.append(["domain": [cleanDomain], "server": SingBoxConfigConstants.dnsDirectTag])
@@ -97,8 +99,10 @@ enum SingBoxDnsBuilder {
         return [
             "servers": [
                 ["type": "udp", "tag": SingBoxConfigConstants.dnsDirectTag, "server": "1.1.1.1"],
+                // DoH keeps one multiplexed connection through the proxy instead of a
+                // new stream per query (raw tcp/udp), which avoids the abort cascade.
                 [
-                    "type": "udp",
+                    "type": "https",
                     "tag": SingBoxConfigConstants.dnsRemoteTag,
                     "server": "1.1.1.1",
                     "detour": SingBoxConfigConstants.proxyTag,
@@ -115,20 +119,22 @@ enum SingBoxRouteBuilder {
     static func makeRoute(
         inboundTag: String,
         directIPs: [String],
-        directDomains: [String] = [],
-        resolveServer: String = SingBoxConfigConstants.dnsDirectTag
+        directDomains: [String] = []
     ) -> [String: Any] {
+        // No per-connection direct resolve: domains route to the proxy, which resolves
+        // them server-side, so the data path never depends on direct DNS.
         var rules: [[String: Any]] = [[
-            "inbound": [inboundTag],
-            "action": "resolve",
-            "server": resolveServer,
-            "strategy": "ipv4_only",
-        ], [
             "inbound": [inboundTag],
             "action": "sniff",
         ], [
             "protocol": "dns",
             "action": "hijack-dns",
+        ], [
+            // Drop QUIC so apps fall back to TCP, preventing IPv6/UDP leaks and easing
+            // the single naive connection.
+            "network": ["udp"],
+            "port": [443],
+            "action": "reject",
         ], [
             "ip_is_private": true,
             "action": "route",

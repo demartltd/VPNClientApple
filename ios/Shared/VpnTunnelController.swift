@@ -676,47 +676,75 @@ final class VpnTunnelController {
       completion(.success(()))
       return
     } catch {
-      // Retry once after stopping our own stale session and reloading preferences.
-      diag("startTunnel failed, retrying once: \(error.localizedDescription)")
-      let status = manager.connection.status
-      let shouldStop = Self.shouldStopBeforeRetry(status)
-      if shouldStop {
-        VpnSharedStore.setPendingStopContext(triggerSource: "recovery", sessionId: sessionId)
-        manager.connection.stopVPNTunnel()
-        diag("recovery requested stop for status=\(Self.statusLabel(status))")
-      } else {
-        diag("recovery skip stop for status=\(Self.statusLabel(status))")
-      }
-      manager.loadFromPreferences { loadError in
-        let delay: TimeInterval = shouldStop ? 0.6 : 0.2
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-          if let loadError {
+      // NE preference propagation can lag; retry a few times after stopping our stale session.
+      diag("startTunnel failed, retrying: \(error.localizedDescription)")
+      retryStartTunnel(
+        manager: manager,
+        options: options,
+        sessionId: sessionId,
+        connectTriggerSource: connectTriggerSource,
+        attemptsRemaining: 2,
+        completion: completion
+      )
+    }
+  }
+
+  private func retryStartTunnel(
+    manager: NETunnelProviderManager,
+    options: [String: NSObject],
+    sessionId: String,
+    connectTriggerSource: String,
+    attemptsRemaining: Int,
+    completion: @escaping (Result<Void, Error>) -> Void
+  ) {
+    let status = manager.connection.status
+    if Self.shouldStopBeforeRetry(status) {
+      VpnSharedStore.setPendingStopContext(triggerSource: "recovery", sessionId: sessionId)
+      manager.connection.stopVPNTunnel()
+      diag("recovery requested stop for status=\(Self.statusLabel(status))")
+    } else {
+      diag("recovery skip stop for status=\(Self.statusLabel(status))")
+    }
+    manager.loadFromPreferences { loadError in
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        if let loadError {
+          Self.setControlState("error")
+          completion(.failure(loadError))
+          return
+        }
+        do {
+          self.syncManagerConnectionMetadata(
+            manager,
+            uplinkHost: nil,
+            sessionId: sessionId,
+            connectTriggerSource: connectTriggerSource
+          )
+          guard let refreshedSession = manager.connection as? NETunnelProviderSession else {
+            self.diag("startTunnel retry failed: no NETunnelProviderSession")
             Self.setControlState("error")
-            completion(.failure(loadError))
+            completion(.failure(VpnTunnelError.noProviderSession))
             return
           }
-          do {
-            self.syncManagerConnectionMetadata(
-              manager,
-              uplinkHost: nil,
-              sessionId: sessionId,
-              connectTriggerSource: connectTriggerSource
-            )
-            guard let refreshedSession = manager.connection as? NETunnelProviderSession else {
-              self.diag("startTunnel retry failed: no NETunnelProviderSession")
-              Self.setControlState("error")
-              completion(.failure(VpnTunnelError.noProviderSession))
-              return
-            }
-            try refreshedSession.startTunnel(options: options)
-            self.diag("startTunnel retry succeeded")
-            Self.setControlState("connecting")
-            completion(.success(()))
-          } catch {
+          try refreshedSession.startTunnel(options: options)
+          self.diag("startTunnel retry succeeded (attemptsLeft=\(attemptsRemaining))")
+          Self.setControlState("connecting")
+          completion(.success(()))
+        } catch {
+          guard attemptsRemaining > 1 else {
             self.diag("startTunnel retry failed: \(error.localizedDescription)")
             Self.setControlState("error")
             completion(.failure(error))
+            return
           }
+          self.diag("startTunnel retry failed, retrying again: \(error.localizedDescription)")
+          self.retryStartTunnel(
+            manager: manager,
+            options: options,
+            sessionId: sessionId,
+            connectTriggerSource: connectTriggerSource,
+            attemptsRemaining: attemptsRemaining - 1,
+            completion: completion
+          )
         }
       }
     }

@@ -2,7 +2,7 @@
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
 
-Целевая версия core: **sing-box 1.13.12** (Libbox из тега `v1.13.12`, см. `scripts/libbox-build.py`).
+Целевая версия core: **sing-box 1.13.13** (Libbox из тега `v1.13.13`, см. `scripts/libbox-build.py`).
 
 Документация Sing-box:
 
@@ -71,13 +71,18 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 | Параметр | Значение | Эффект |
 |----------|----------|--------|
 | `dns.final` | `dns-remote` | DNS через proxy |
-| route resolve `server` | `dns-direct` | resolve до прокси |
+| `dns-remote` тип | `https` (DoH, `detour: proxy`) | одно мультиплексированное соединение через прокси вместо потока на каждый запрос (raw tcp/udp) — без лавины `stream failed: aborted` |
+| `dns-direct` тип | `udp` 1.1.1.1 | bootstrap/SNI напрямую |
+| PTR (reverse) запросы | `action: reject` (`drop`) | локальные `*.in-addr.arpa` / `_dns-sd._udp` отбрасываются: прямой резолвер недоступен внутри macOS NE и перегружал единственное соединение naive |
+| `experimental.cache_file` | `enabled: true` | кэш DNS/rule-set переживает рестарты |
+| route resolve | нет | данные не зависят от прямого DNS: домены идут в прокси, резолв на стороне сервера |
+| QUIC (`udp` :443) | `action: reject` | apps падают на TCP — без утечек IPv6/UDP и без нагрузки на единственное соединение naive |
 | DNS bootstrap | `[tlsServerName]` | SNI → direct DNS |
 | `strict_route` | `true` | |
 | direct domain | `[tlsServerName]` | SNI → direct outbound |
 | `directIPs` | IPv4 literal `server` | exclude/route bypass |
 
-### sing-box 1.13.12: поля Naive (не экспонированы в app)
+### sing-box 1.13.13: поля Naive (не экспонированы в app)
 
 Из [upstream docs](https://sing-box.sagernet.org/configuration/outbound/naive/) — для будущего расширения:
 

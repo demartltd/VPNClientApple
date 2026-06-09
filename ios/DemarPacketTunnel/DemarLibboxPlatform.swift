@@ -183,32 +183,28 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     }
 
     private func updateDefaultInterface(_ listener: LibboxInterfaceUpdateListenerProtocol, path: Network.NWPath) {
-        if path.status != .unsatisfied, let interface = preferredPhysicalInterface(from: path) {
-            lastDefaultInterfaceName = interface.name
-            lastDefaultInterfaceIndex = Int32(interface.index)
-            lastKnownPhysicalInterfaces = physicalLibboxInterfaces(from: path)
-            listener.updateDefaultInterface(
-                interface.name,
-                interfaceIndex: Int32(interface.index),
-                isExpensive: path.isExpensive,
-                isConstrained: path.isConstrained
-            )
-            return
-        }
         if path.status == .unsatisfied {
             listener.updateDefaultInterface("", interfaceIndex: -1, isExpensive: path.isExpensive, isConstrained: path.isConstrained)
             return
         }
-        if lastDefaultInterfaceIndex >= 0, !lastDefaultInterfaceName.isEmpty {
-            listener.updateDefaultInterface(
-                lastDefaultInterfaceName,
-                interfaceIndex: lastDefaultInterfaceIndex,
-                isExpensive: path.isExpensive,
-                isConstrained: path.isConstrained
-            )
+        // Path is satisfied: bind to a physical interface. Falling back to the last known
+        // one (instead of reporting "") avoids a transient `missing default interface` at
+        // startup that would block the proxy from dialing the server.
+        if let interface = preferredPhysicalInterface(from: path) {
+            lastDefaultInterfaceName = interface.name
+            lastDefaultInterfaceIndex = Int32(interface.index)
+            lastKnownPhysicalInterfaces = physicalLibboxInterfaces(from: path)
+        }
+        guard lastDefaultInterfaceIndex >= 0, !lastDefaultInterfaceName.isEmpty else {
+            listener.updateDefaultInterface("", interfaceIndex: -1, isExpensive: false, isConstrained: false)
             return
         }
-        listener.updateDefaultInterface("", interfaceIndex: -1, isExpensive: false, isConstrained: false)
+        listener.updateDefaultInterface(
+            lastDefaultInterfaceName,
+            interfaceIndex: lastDefaultInterfaceIndex,
+            isExpensive: path.isExpensive,
+            isConstrained: path.isConstrained
+        )
     }
 
     private func physicalLibboxInterfaces(from path: Network.NWPath) -> [LibboxNetworkInterface] {
