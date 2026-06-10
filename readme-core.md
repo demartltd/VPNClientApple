@@ -99,6 +99,14 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 
 **Platform:** Naive outbound доступен на Apple platforms; iOS Libbox собирается с `with_naive_outbound` — см. [`ios/Frameworks/README.md`](ios/Frameworks/README.md).
 
+### Default interface monitor (NE, iOS + macOS)
+
+Libbox v1.13.13 закрывает **все** соединения, как только платформа сообщает пустой default interface (`updateDefaultInterface("", -1)`) — с naive (`insecure_concurrency: 1`) это убивает единственный HTTP/2-туннель (каскад `stream failed: aborted`, `dial: operation was canceled`). Внутри NE `NWPathMonitor` кратковременно флапает в `.unsatisfied` (применение routes/DNS, Wi-Fi-скан, sleep/wake), поэтому сырые апдейты в ядро не передаются:
+
+- `DefaultInterfaceReportFilter` (`ios/Shared/DefaultInterfaceReporter.swift`) — дедуп одинаковых апдейтов; потеря интерфейса репортится только если держится ≥3 c (debounce), восстановление отменяет потерю.
+- Интерфейс выбирается как первый не-туннельный из `path.availableInterfaces` (системный приоритет, как в официальном SFI) — без предпочтения Wi-Fi, чтобы не ломать Mac с Ethernet.
+- `TunnelLifecycle` (path monitor, sleep/wake, heartbeat) работает на обеих платформах; софт-рестарт ядра — только при `pathRecovered` или смене excluded-маршрутов, wake (каждая разблокировка) здоровый туннель не перезапускает.
+
 ---
 
 ## Добавление протокола

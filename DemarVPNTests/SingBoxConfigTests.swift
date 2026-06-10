@@ -69,8 +69,9 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertFalse(VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(reason: "pathChange"))
     }
 
-    func testReconfigurePolicyRestartsOnWake() {
-        XCTAssertTrue(VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(reason: "wake"))
+    func testReconfigurePolicySkipsWake() {
+        // Wake fires on every unlock; restarting a healthy core flaps the path itself.
+        XCTAssertFalse(VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(reason: "wake"))
     }
 
     func testReconfigurePolicyRestartsOnPathRecovered() {

@@ -81,9 +81,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   private var lastAppliedExcludedIPv4: [String] = []
   private var reconfigureInFlight = false
   private var reconfigurePendingReason: String?
-  #if os(iOS)
   private var tunnelLifecycle: TunnelLifecycle?
-  #endif
   private let startTunnelLock = NSLock()
   private var startTunnelInFlight = false
 
@@ -230,7 +228,6 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
   }
 
-  #if os(iOS)
   override func sleep(completionHandler: @escaping () -> Void) {
     appendDiagLine("device sleep (disconnectOnSleep=false, tunnel stays up)")
     completionHandler()
@@ -331,16 +328,13 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     reconfigureInFlight = true
     runReconfigurePass(reason: pending)
   }
-  #endif
 
   override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
     tunnelTeardownInFlight = true
     reconfigureInFlight = false
     reconfigurePendingReason = nil
-    #if os(iOS)
     tunnelLifecycle?.stop()
     tunnelLifecycle = nil
-    #endif
     let reasonLabel = Self.stopReasonLabel(reason)
     let advice = Self.stopReasonAdvice(reason)
     logLine("stopTunnel reason=\(reasonLabel) raw=\(reason.rawValue)")
@@ -463,11 +457,9 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   ) {
     lastAppliedExcludedIPv4 = excludedIPv4.sorted()
     activeAssetDir = assetDirPath
-    #if os(iOS)
     tunnelLifecycle?.stop()
     tunnelLifecycle = TunnelLifecycle(provider: self)
     tunnelLifecycle?.start(uplinkHost: uplinkHost)
-    #endif
   }
 
   private static func reloadControls() {

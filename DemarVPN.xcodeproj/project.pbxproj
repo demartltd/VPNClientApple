@@ -42,12 +42,14 @@
 		B10000010000000000000040 /* macos/singbox_macos/bundled_version.txt in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000040 /* macos/singbox_macos/bundled_version.txt */; platformFilter = macos; };
 		B10000010000000000000023 /* ios/Shared/VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */; };
 		B10000010000000000000024 /* ios/Shared/VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */; };
+		B100000100000000000000DE /* ios/Shared/DefaultInterfaceReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift */; };
 		B10000010000000000000025 /* ios/Shared/VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */; };
 		B10000010000000000000026 /* ios/Shared/VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */; };
 		B1000001000000000000003B /* NaiveProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000003C /* NaiveProfile.swift */; };
 		B1000001000000000000003C /* SingBoxConnectPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000003D /* SingBoxConnectPlan.swift */; };
 		B10000010000000000000029 /* SingBoxConfigBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000028 /* SingBoxConfigBuilder.swift */; };
 		T40000031CF9000F007C117E /* SingBoxConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000021CF9000F007C117E /* SingBoxConfigTests.swift */; };
+		T40000041CF9000F007C117E /* DefaultInterfaceReporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000031CF9000F007C117E /* DefaultInterfaceReporterTests.swift */; };
 		B1000001000000000000002A /* VpnControlling.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000029 /* VpnControlling.swift */; };
 		B1000001000000000000002C /* VpnStatusMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002B /* VpnStatusMonitor.swift */; };
 		B1000001000000000000002E /* BundledCoreVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002D /* BundledCoreVersion.swift */; };
@@ -64,6 +66,7 @@
 		E20000031CF9000F007C117D /* ios/DemarPacketTunnel/PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000041CF9000F007C117D /* ios/DemarPacketTunnel/PacketTunnelProvider.swift */; };
 		E20000051CF9000F007C117D /* ios/Shared/VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */; };
 		E20000061CF9000F007C117D /* ios/Shared/VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */; };
+		E20000DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift */; };
 		E20000071CF9000F007C117D /* ios/Shared/VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */; };
 		E20000081CF9000F007C117D /* ios/Shared/VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */; };
 		E20000171CF9000F007C117D /* ios/Shared/singbox in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000025 /* ios/Shared/singbox */; platformFilter = ios; };
@@ -138,6 +141,7 @@
 		E20001051CF9000F007C117D /* ios/Frameworks/Libbox.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = ios/Frameworks/Libbox.xcframework; sourceTree = SOURCE_ROOT; };
 		E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnAppGroup.swift; sourceTree = SOURCE_ROOT; };
 		E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnSharedStore.swift; sourceTree = SOURCE_ROOT; };
+		E20001DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/DefaultInterfaceReporter.swift; sourceTree = SOURCE_ROOT; };
 		E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnTunnelController.swift; sourceTree = SOURCE_ROOT; };
 		E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnControlConstants.swift; sourceTree = SOURCE_ROOT; };
 		E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnControlIntent.swift; sourceTree = SOURCE_ROOT; };
@@ -187,6 +191,7 @@
 		F1000001000000000000003C /* NaiveProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NaiveProfile.swift; sourceTree = "<group>"; };
 		F1000001000000000000003D /* SingBoxConnectPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConnectPlan.swift; sourceTree = "<group>"; };
 		F40000021CF9000F007C117E /* SingBoxConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConfigTests.swift; sourceTree = "<group>"; };
+		F40000031CF9000F007C117E /* DefaultInterfaceReporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInterfaceReporterTests.swift; sourceTree = "<group>"; };
 		F10000010000000000000028 /* SingBoxConfigBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConfigBuilder.swift; sourceTree = "<group>"; };
 		F40000021CF9000F007C117D /* DemarVPNTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DemarVPNTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F10000010000000000000029 /* VpnControlling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnControlling.swift; sourceTree = "<group>"; };
@@ -431,6 +436,7 @@
 			isa = PBXGroup;
 			children = (
 				F40000021CF9000F007C117E /* SingBoxConfigTests.swift */,
+				F40000031CF9000F007C117E /* DefaultInterfaceReporterTests.swift */,
 			);
 			path = DemarVPNTests;
 			sourceTree = "<group>";
@@ -462,6 +468,7 @@
 				E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */,
 				E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */,
 				E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */,
+				E20001DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift */,
 				E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */,
 				E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */,
 				F10000010000000000000025 /* ios/Shared/singbox */,
@@ -693,6 +700,7 @@
 				B10000010000000000000020 /* DemarKvRow.swift in Sources */,
 				B10000010000000000000023 /* ios/Shared/VpnAppGroup.swift in Sources */,
 				B10000010000000000000024 /* ios/Shared/VpnSharedStore.swift in Sources */,
+				B100000100000000000000DE /* ios/Shared/DefaultInterfaceReporter.swift in Sources */,
 				B10000010000000000000025 /* ios/Shared/VpnTunnelController.swift in Sources */,
 				B10000010000000000000038 /* ios/Shared/VpnStatusSignal.swift in Sources */,
 				B10000010000000000000026 /* ios/Shared/VpnControlConstants.swift in Sources */,
@@ -720,6 +728,7 @@
 				E200001C1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift in Sources */,
 				E20000051CF9000F007C117D /* ios/Shared/VpnAppGroup.swift in Sources */,
 				E20000061CF9000F007C117D /* ios/Shared/VpnSharedStore.swift in Sources */,
+				E20000DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift in Sources */,
 				E20000071CF9000F007C117D /* ios/Shared/VpnTunnelController.swift in Sources */,
 				E20001081CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift in Sources */,
 				E20000081CF9000F007C117D /* ios/Shared/VpnControlConstants.swift in Sources */,
@@ -731,6 +740,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				T40000031CF9000F007C117E /* SingBoxConfigTests.swift in Sources */,
+				T40000041CF9000F007C117E /* DefaultInterfaceReporterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -885,7 +895,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -921,7 +931,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -953,7 +963,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1000,7 +1010,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1047,7 +1057,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1074,7 +1084,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1100,7 +1110,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1124,7 +1134,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (

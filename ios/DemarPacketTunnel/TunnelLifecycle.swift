@@ -1,4 +1,3 @@
-#if os(iOS)
 import Foundation
 import Network
 import NetworkExtension
@@ -45,7 +44,7 @@ struct TunnelPathSignature: Equatable {
   }
 }
 
-/// Monitors network path changes and coordinates in-extension tunnel recovery (iOS).
+/// Monitors network path changes and coordinates in-extension tunnel recovery.
 final class TunnelLifecycle {
   private weak var provider: PacketTunnelProvider?
   private let pathMonitor = NWPathMonitor()
@@ -113,9 +112,11 @@ final class TunnelLifecycle {
       } else {
         note = "initial \(signature.logLabel)"
       }
-      VpnSharedStore.appendJournalLine(
-        "[ios] path update: all=\(allIfaces) \(note)"
-      )
+      #if os(macOS)
+      VpnSharedStore.appendJournalLine("[mac] path update: all=\(allIfaces) \(note)")
+      #else
+      VpnSharedStore.appendJournalLine("[ios] path update: all=\(allIfaces) \(note)")
+      #endif
       self.lastPathSignature = signature
 
       guard path.status == .satisfied else {
@@ -152,4 +153,3 @@ final class TunnelLifecycle {
     VpnSharedStore.saveExtensionHeartbeat(phase: "running")
   }
 }
-#endif

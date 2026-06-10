@@ -68,7 +68,7 @@ DemarVPN/                              # SwiftUI target
         ├── ServiceMenuView.swift      # служебное меню
         └── CustomEgressProbes.swift   # свои хосты зондов
 
-DemarVPNTests/                         # unit tests (Sing-box config)
+DemarVPNTests/                         # unit tests (Sing-box config, interface reporter)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка
@@ -88,6 +88,7 @@ ios/
 ├── Shared/
 │   ├── VpnAppGroup.swift              # App Group paths
 │   ├── VpnSharedStore.swift           # journal, payload, state
+│   ├── DefaultInterfaceReporter.swift # дедуп/debounce default interface для libbox
 │   ├── VpnTunnelController.swift      # NETunnelProviderManager
 │   ├── VpnControlConstants.swift      # kind CC widget
 │   ├── VpnControlIntent.swift         # CC toggle intent
@@ -100,7 +101,7 @@ ios/
 │   └── DemarControls.entitlements
 ├── DemarPacketTunnel/
 │   ├── PacketTunnelProvider.swift     # tunnel + Libbox
-│   ├── TunnelLifecycle.swift          # path monitor (iOS)
+│   ├── TunnelLifecycle.swift          # path monitor (iOS + macOS)
 │   ├── IOSLibboxCore.swift            # Libbox in-process (iOS + macOS)
 │   ├── DemarLibboxPlatform.swift      # NE platform interface
 │   ├── LibboxRunBlocking.swift        # async bridge for openTun

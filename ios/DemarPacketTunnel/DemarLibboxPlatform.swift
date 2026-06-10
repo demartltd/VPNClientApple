@@ -8,9 +8,12 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     private var excludedIPv4: [String] = []
     private var networkSettings: NEPacketTunnelNetworkSettings?
     private var nwMonitor: NWPathMonitor?
-    private var lastDefaultInterfaceName: String = ""
-    private var lastDefaultInterfaceIndex: Int32 = -1
+    private let monitorQueue = DispatchQueue(label: "vpn.demar.iface-monitor", qos: .utility)
+    private let reportFilter = DefaultInterfaceReportFilter()
+    private var lossDebounceWork: DispatchWorkItem?
     private var lastKnownPhysicalInterfaces: [LibboxNetworkInterface] = []
+
+    private static let lossDebounceInterval: TimeInterval = 3
 
     init(provider: NEPacketTunnelProvider, excludedIPv4: [String]) {
         self.provider = provider
@@ -178,32 +181,52 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
                 self?.updateDefaultInterface(listener, path: path)
             }
         }
-        monitor.start(queue: DispatchQueue.global())
+        monitor.start(queue: monitorQueue)
         semaphore.wait()
     }
 
     private func updateDefaultInterface(_ listener: LibboxInterfaceUpdateListenerProtocol, path: Network.NWPath) {
-        if path.status == .unsatisfied {
-            listener.updateDefaultInterface("", interfaceIndex: -1, isExpensive: path.isExpensive, isConstrained: path.isConstrained)
-            return
-        }
-        // Path is satisfied: bind to a physical interface. Falling back to the last known
-        // one (instead of reporting "") avoids a transient `missing default interface` at
-        // startup that would block the proxy from dialing the server.
-        if let interface = preferredPhysicalInterface(from: path) {
-            lastDefaultInterfaceName = interface.name
-            lastDefaultInterfaceIndex = Int32(interface.index)
+        let update: DefaultInterfaceUpdate
+        if path.status != .unsatisfied, let interface = preferredPhysicalInterface(from: path) {
             lastKnownPhysicalInterfaces = physicalLibboxInterfaces(from: path)
+            update = DefaultInterfaceUpdate(
+                name: interface.name,
+                index: Int32(interface.index),
+                isExpensive: path.isExpensive,
+                isConstrained: path.isConstrained
+            )
+        } else {
+            update = .lost
         }
-        guard lastDefaultInterfaceIndex >= 0, !lastDefaultInterfaceName.isEmpty else {
-            listener.updateDefaultInterface("", interfaceIndex: -1, isExpensive: false, isConstrained: false)
-            return
+
+        switch reportFilter.decide(update) {
+        case let .report(update):
+            lossDebounceWork?.cancel()
+            lossDebounceWork = nil
+            send(update, to: listener)
+        case .scheduleLoss:
+            scheduleLossReport(listener)
+        case .ignore:
+            break
         }
+    }
+
+    private func scheduleLossReport(_ listener: LibboxInterfaceUpdateListenerProtocol) {
+        lossDebounceWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, let confirmed = self.reportFilter.confirmLoss() else { return }
+            self.send(confirmed, to: listener)
+        }
+        lossDebounceWork = work
+        monitorQueue.asyncAfter(deadline: .now() + Self.lossDebounceInterval, execute: work)
+    }
+
+    private func send(_ update: DefaultInterfaceUpdate, to listener: LibboxInterfaceUpdateListenerProtocol) {
         listener.updateDefaultInterface(
-            lastDefaultInterfaceName,
-            interfaceIndex: lastDefaultInterfaceIndex,
-            isExpensive: path.isExpensive,
-            isConstrained: path.isConstrained
+            update.name,
+            interfaceIndex: update.index,
+            isExpensive: update.isExpensive,
+            isConstrained: update.isConstrained
         )
     }
 
@@ -224,14 +247,17 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             }
     }
 
+    // First non-tunnel interface in system priority order (same as the official
+    // SFI client) — preferring Wi-Fi would bind dials to the wrong interface on
+    // a Mac whose default route is Ethernet.
     private func preferredPhysicalInterface(from path: Network.NWPath) -> NWInterface? {
-        let physical = path.availableInterfaces.filter { !$0.name.hasPrefix("utun") }
-        return physical.first(where: { $0.type == .wifi })
-            ?? physical.first(where: { $0.type == .cellular })
-            ?? physical.first
+        path.availableInterfaces.first { !$0.name.hasPrefix("utun") }
     }
 
     func closeDefaultInterfaceMonitor(_: LibboxInterfaceUpdateListenerProtocol?) throws {
+        lossDebounceWork?.cancel()
+        lossDebounceWork = nil
+        reportFilter.reset()
         nwMonitor?.cancel()
         nwMonitor = nil
     }
@@ -271,11 +297,12 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     }
 
     func reset() {
+        lossDebounceWork?.cancel()
+        lossDebounceWork = nil
+        reportFilter.reset()
         nwMonitor?.cancel()
         nwMonitor = nil
         networkSettings = nil
-        lastDefaultInterfaceName = ""
-        lastDefaultInterfaceIndex = -1
         lastKnownPhysicalInterfaces = []
     }
 }
