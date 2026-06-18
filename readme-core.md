@@ -62,7 +62,6 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 | `tag` | `"proxy"` | route final |
 | `tls.enabled` | `true` | naive требует TLS |
 | `domain_resolver` | `{ server: "dns-direct", strategy: "ipv4_only" }` | sing-box 1.12+ |
-| `insecure_concurrency` | `1` | один туннель (меньше fingerprint) |
 | `udp_over_tcp` | `{ enabled: true }` | UDP через TCP |
 | `quic` | `false` | HTTP/2, не QUIC |
 
@@ -101,7 +100,7 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 
 ### Default interface monitor (NE, iOS + macOS)
 
-Libbox v1.13.13 закрывает **все** соединения, как только платформа сообщает пустой default interface (`updateDefaultInterface("", -1)`) — с naive (`insecure_concurrency: 1`) это убивает единственный HTTP/2-туннель (каскад `stream failed: aborted`, `dial: operation was canceled`). Внутри NE `NWPathMonitor` кратковременно флапает в `.unsatisfied` (применение routes/DNS, Wi-Fi-скан, sleep/wake), поэтому сырые апдейты в ядро не передаются:
+Libbox v1.13.13 закрывает **все** соединения, как только платформа сообщает пустой default interface (`updateDefaultInterface("", -1)`) — для naive это рвёт HTTP/2-туннель (каскад `stream failed: aborted`, `dial: operation was canceled`). Внутри NE `NWPathMonitor` кратковременно флапает в `.unsatisfied` (применение routes/DNS, Wi-Fi-скан, sleep/wake), поэтому сырые апдейты в ядро не передаются:
 
 - `DefaultInterfaceReportFilter` (`ios/Shared/DefaultInterfaceReporter.swift`) — дедуп одинаковых апдейтов; потеря интерфейса репортится только если держится ≥3 c (debounce), восстановление отменяет потерю.
 - Интерфейс выбирается как первый не-туннельный из `path.availableInterfaces` (системный приоритет, как в официальном SFI) — без предпочтения Wi-Fi, чтобы не ломать Mac с Ethernet.
