@@ -27,7 +27,7 @@ struct SingBoxConnectPlan {
                 "username": profile.username,
                 "password": profile.password,
                 "domain_resolver": SingBoxDnsBuilder.domainResolver(server: SingBoxConfigConstants.dnsDirectTag),
-                "udp_over_tcp": ["enabled": true],
+                "udp_over_tcp": ["enabled": true, "version": 2],
                 "quic": false,
                 "tls": [
                     "enabled": true,

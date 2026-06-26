@@ -10,6 +10,14 @@ enum TestServers {
             password: "REDACTED",
             tlsServerName: "backronym.ru"
         ),
+        NaiveProfile(
+            displayName: "de-f-1.backronym.ru",
+            server: "de-f-1.backronym.ru",
+            port: 443,
+            username: "u_5f0d9beeab98bf6c",
+            password: "REDACTED",
+            tlsServerName: "de-f-1.backronym.ru"
+        ),
     ]
 
     static var profiles: [ServerProfile] {

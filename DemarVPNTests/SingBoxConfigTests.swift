@@ -3,9 +3,11 @@ import XCTest
 
 final class SingBoxConfigTests: XCTestCase {
     func testNaiveConfigPassesSingBoxCheck() throws {
-        try assertSingBoxCheckPasses(json: try SingBoxConfigBuilder.buildTunConfigJson(
-            plan: TestServers.profiles[0].connectPlan
-        ))
+        for profile in TestServers.profiles {
+            try assertSingBoxCheckPasses(json: try SingBoxConfigBuilder.buildTunConfigJson(
+                plan: profile.connectPlan
+            ))
+        }
     }
 
     func testNaiveOutboundMatchesServerReference() throws {
@@ -19,7 +21,7 @@ final class SingBoxConfigTests: XCTestCase {
             json.contains("\"server_name\" : \"\(profile.tlsServerName)\"") ||
             json.contains("\"server_name\": \"\(profile.tlsServerName)\"")
         )
-        XCTAssertFalse(json.contains("\"version\""))
+        XCTAssertTrue(json.contains("\"version\" : 2") || json.contains("\"version\": 2"))
         XCTAssertFalse(json.contains("\"predefined\""))
         XCTAssertTrue(json.contains("\"quic\" : false") || json.contains("\"quic\": false"))
         XCTAssertTrue(json.contains("\"final\" : \"dns-remote\"") || json.contains("\"final\": \"dns-remote\""))
@@ -49,6 +51,21 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertFalse(allCIDRs.contains("2001:4860:4860::8888/128"))
         XCTAssertFalse(allCIDRs.contains("2606:4700:4700::1111/128"))
 
+        try assertSingBoxCheckPasses(json: json)
+    }
+
+    func testNaiveHostnameServerDirectDomainRouting() throws {
+        let profile = TestServers.naive[1]
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .naive(profile))
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
+        let route = try XCTUnwrap(root["route"] as? [String: Any])
+        let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
+        let domainRules = rules.compactMap { $0["domain"] as? [String] }
+        XCTAssertTrue(domainRules.contains { $0.contains(profile.tlsServerName) })
+        let outbounds = try XCTUnwrap(root["outbounds"] as? [[String: Any]])
+        let proxy = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
+        let uot = try XCTUnwrap(proxy["udp_over_tcp"] as? [String: Any])
+        XCTAssertEqual(uot["version"] as? Int, 2)
         try assertSingBoxCheckPasses(json: json)
     }
 
