@@ -15,12 +15,6 @@ struct ServerProfile: Identifiable, Equatable, Hashable {
         }
     }
 
-    var listTitle: String {
-        switch kind {
-        case let .naive(p): "\(p.server):\(p.port)"
-        }
-    }
-
     var listSubtitle: String {
         switch kind {
         case .naive: "Naive (test)"

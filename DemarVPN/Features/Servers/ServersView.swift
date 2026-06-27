@@ -23,7 +23,7 @@ struct ServersView: View {
                                             ? Color.demarPrimary : Color.demarOnSurfaceVariant
                                     )
                                 },
-                                title: server.listTitle,
+                                title: server.displayName,
                                 subtitle: server.listSubtitle
                             )
                         }
