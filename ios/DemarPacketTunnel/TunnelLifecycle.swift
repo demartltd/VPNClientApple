@@ -15,7 +15,7 @@ struct TunnelPathSignature: Equatable {
     let physical = Set(
       path.availableInterfaces
         .map { $0.name }
-        .filter { !Self.isTunnelInterface($0) }
+        .filter { !PhysicalInterfaceSelector.isTunnelInterface($0) }
     )
     return TunnelPathSignature(
       status: path.status,
@@ -33,15 +33,6 @@ struct TunnelPathSignature: Equatable {
     return "status=\(status) phys=\(ifaces.isEmpty ? "<none>" : ifaces) "
       + "wifi=\(usesWifi) cell=\(usesCellular) expensive=\(isExpensive) constrained=\(isConstrained)"
   }
-
-  private static func isTunnelInterface(_ name: String) -> Bool {
-    let n = name.lowercased()
-    if n == "lo0" { return true }
-    if n.hasPrefix("utun") { return true }
-    if n.hasPrefix("ipsec") { return true }
-    if n.hasPrefix("ppp") { return true }
-    return false
-  }
 }
 
 /// Monitors network path changes and coordinates in-extension tunnel recovery.
@@ -56,8 +47,10 @@ final class TunnelLifecycle {
   private var isStopped = false
   private var lastPathSignature: TunnelPathSignature?
   private var pendingRecoveryAfterUnsatisfied = false
+  private var unsatisfiedSince: Date?
 
   private static let pathDebounceInterval: TimeInterval = 2.5
+  private static let confirmedPathLossInterval: TimeInterval = 3
   private static let wakeDebounceInterval: TimeInterval = 0.3
   private static let heartbeatInterval: TimeInterval = 15
 
@@ -69,6 +62,7 @@ final class TunnelLifecycle {
     isStopped = false
     lastPathSignature = nil
     pendingRecoveryAfterUnsatisfied = false
+    unsatisfiedSince = nil
     self.uplinkHost = uplinkHost?.trimmingCharacters(in: .whitespacesAndNewlines)
     startPathMonitor()
     startRunningHeartbeat()
@@ -82,6 +76,7 @@ final class TunnelLifecycle {
     wakeDebounceWork = nil
     lastPathSignature = nil
     pendingRecoveryAfterUnsatisfied = false
+    unsatisfiedSince = nil
     heartbeatTimer?.cancel()
     heartbeatTimer = nil
     pathMonitor.cancel()
@@ -120,14 +115,27 @@ final class TunnelLifecycle {
       self.lastPathSignature = signature
 
       guard path.status == .satisfied else {
+        if self.unsatisfiedSince == nil {
+          self.unsatisfiedSince = Date()
+        }
         self.pendingRecoveryAfterUnsatisfied = true
         return
       }
       // sing-box `auto_detect_interface` rebinds across Wi-Fi/cellular changes on its own;
-      // only force recovery when the path was fully lost and is now restored.
+      // only force recovery when path loss lasted long enough to reach libbox.
       guard self.pendingRecoveryAfterUnsatisfied else { return }
       self.pendingRecoveryAfterUnsatisfied = false
-      self.schedulePathReconfigure(reason: "pathRecovered")
+      let outage = self.unsatisfiedSince.map { Date().timeIntervalSince($0) } ?? 0
+      self.unsatisfiedSince = nil
+      guard outage >= Self.confirmedPathLossInterval else {
+        #if os(macOS)
+        VpnSharedStore.appendJournalLine("[mac] path recovered after short flap: \(String(format: "%.2f", outage))s")
+        #else
+        VpnSharedStore.appendJournalLine("[ios] path recovered after short flap: \(String(format: "%.2f", outage))s")
+        #endif
+        return
+      }
+      self.schedulePathReconfigure(reason: "pathRecoveredAfterLoss")
     }
     pathMonitor.start(queue: monitorQueue)
   }

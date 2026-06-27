@@ -76,6 +76,7 @@ readme-core.md                         # ядро VPN/Sing-box
 
 scripts/
 ├── singbox-download-auto.py              # sing-box core + geo db
+├── libbox-build.py                    # Libbox.xcframework
 ├── generate_icons.py                  # AppIcon
 ├── build-macos.ps1                    # build, sign, notarize
 ├── build-macos.local.ps1              # локальный конфиг

@@ -4,6 +4,8 @@ import XCTest
 final class DefaultInterfaceReporterTests: XCTestCase {
     private let en0 = DefaultInterfaceUpdate(name: "en0", index: 14, isExpensive: false, isConstrained: false)
     private let en1 = DefaultInterfaceUpdate(name: "en1", index: 15, isExpensive: false, isConstrained: false)
+    private let wifi = PhysicalInterfaceCandidate(name: "en0", index: 14, kind: .wifi)
+    private let cellular = PhysicalInterfaceCandidate(name: "pdp_ip0", index: 18, kind: .cellular)
 
     func testReportsFirstInterfaceAndDedupesRepeats() {
         let filter = DefaultInterfaceReportFilter()
@@ -51,5 +53,21 @@ final class DefaultInterfaceReporterTests: XCTestCase {
         XCTAssertEqual(filter.decide(.lost), .scheduleLoss)
         XCTAssertEqual(filter.confirmLoss(), .lost)
         XCTAssertEqual(filter.decide(en0), .report(en0))
+    }
+
+    func testPhysicalSelectorUsesCellularEvenWhenWifiIsListedFirst() {
+        let selected = PhysicalInterfaceSelector.preferred(
+            from: [wifi, cellular],
+            usesWifi: false,
+            usesCellular: true,
+            usesEthernet: false
+        )
+        XCTAssertEqual(selected, cellular)
+    }
+
+    func testPhysicalSelectorFiltersTunnelInterfaces() {
+        XCTAssertTrue(PhysicalInterfaceSelector.isTunnelInterface("utun4"))
+        XCTAssertTrue(PhysicalInterfaceSelector.isTunnelInterface("lo0"))
+        XCTAssertFalse(PhysicalInterfaceSelector.isTunnelInterface("pdp_ip0"))
     }
 }

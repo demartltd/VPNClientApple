@@ -2,7 +2,7 @@
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
 
-Целевая версия core: **sing-box 1.13.13** (Libbox из тега `v1.13.13`, см. `scripts/libbox-build.py`).
+Целевая версия core: **sing-box 1.13.14** (Libbox из latest release, см. `scripts/libbox-build.py`).
 
 Документация Sing-box:
 
@@ -11,6 +11,7 @@
 - [TLS outbound](https://sing-box.sagernet.org/configuration/shared/tls/)
 - [UDP over TCP](https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/)
 - [Dial fields](https://sing-box.sagernet.org/configuration/shared/dial/)
+- [DNS rule action](https://sing-box.sagernet.org/configuration/dns/rule_action/)
 - [CLI](https://sing-box.sagernet.org/command/)
 
 ---
@@ -62,7 +63,7 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 | `tag` | `"proxy"` | route final |
 | `tls.enabled` | `true` | naive требует TLS |
 | `domain_resolver` | `{ server: "dns-direct", strategy: "ipv4_only" }` | sing-box 1.12+ |
-| `udp_over_tcp` | `{ enabled: true }` | UDP через TCP |
+| `udp_over_tcp` | `{ enabled: true, version: 2 }` | UDP через TCP |
 | `quic` | `false` | HTTP/2, не QUIC |
 
 ### TUN / DNS / route overrides (Naive)
@@ -76,12 +77,12 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 | `experimental.cache_file` | `enabled: true` | кэш DNS/rule-set переживает рестарты |
 | route resolve | нет | данные не зависят от прямого DNS: домены идут в прокси, резолв на стороне сервера |
 | QUIC (`udp` :443) | `action: reject` | apps падают на TCP — без утечек IPv6/UDP и без нагрузки на единственное соединение naive |
-| DNS bootstrap | `[tlsServerName]` | SNI → direct DNS |
+| DNS bootstrap | `[tlsServerName]` через `action: route` | SNI → direct DNS |
 | `strict_route` | `true` | |
 | direct domain | `[tlsServerName]` | SNI → direct outbound |
 | `directIPs` | IPv4 literal `server` | exclude/route bypass |
 
-### sing-box 1.13.13: поля Naive (не экспонированы в app)
+### sing-box: поля Naive (не экспонированы в app)
 
 Из [upstream docs](https://sing-box.sagernet.org/configuration/outbound/naive/) — для будущего расширения:
 
@@ -100,11 +101,11 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 
 ### Default interface monitor (NE, iOS + macOS)
 
-Libbox v1.13.13 закрывает **все** соединения, как только платформа сообщает пустой default interface (`updateDefaultInterface("", -1)`) — для naive это рвёт HTTP/2-туннель (каскад `stream failed: aborted`, `dial: operation was canceled`). Внутри NE `NWPathMonitor` кратковременно флапает в `.unsatisfied` (применение routes/DNS, Wi-Fi-скан, sleep/wake), поэтому сырые апдейты в ядро не передаются:
+Libbox закрывает **все** соединения, как только платформа сообщает пустой default interface (`updateDefaultInterface("", -1)`) — для naive это рвёт HTTP/2-туннель (каскад `stream failed: aborted`, `dial: operation was canceled`). Внутри NE `NWPathMonitor` кратковременно флапает в `.unsatisfied` (применение routes/DNS, Wi-Fi-скан, sleep/wake), поэтому сырые апдейты в ядро не передаются:
 
 - `DefaultInterfaceReportFilter` (`ios/Shared/DefaultInterfaceReporter.swift`) — дедуп одинаковых апдейтов; потеря интерфейса репортится только если держится ≥3 c (debounce), восстановление отменяет потерю.
-- Интерфейс выбирается как первый не-туннельный из `path.availableInterfaces` (системный приоритет, как в официальном SFI) — без предпочтения Wi-Fi, чтобы не ломать Mac с Ethernet.
-- `TunnelLifecycle` (path monitor, sleep/wake, heartbeat) работает на обеих платформах; софт-рестарт ядра — только при `pathRecovered` или смене excluded-маршрутов, wake (каждая разблокировка) здоровый туннель не перезапускает.
+- Интерфейс выбирается по фактически используемому типу `NWPath.usesInterfaceType` (`wifi`/`cellular`/`wiredEthernet`) из non-tunnel `path.availableInterfaces`, поэтому Wi‑Fi → LTE сразу репортит `pdp_ip*`, даже если `en0` ещё остаётся в списке.
+- `TunnelLifecycle` (path monitor, sleep/wake, heartbeat) работает на обеих платформах; короткие `.unsatisfied` флапы при handoff не перезапускают core, софт-рестарт ядра — только после подтверждённой потери пути (`pathRecoveredAfterLoss`) или смены excluded-маршрутов, wake (каждая разблокировка) здоровый туннель не перезапускает.
 
 ---
 

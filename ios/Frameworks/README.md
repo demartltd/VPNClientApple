@@ -18,4 +18,4 @@ Network Extension **нельзя** запускать `sing-box` через `pos
 python3 scripts/libbox-build.py   # → ios/Frameworks/Libbox.xcframework
 ```
 
-Сборка включает `with_naive_outbound` (Naive proxy). Требуется Go и Xcode. Целевой тег: **v1.13.13** (iOS + macOS arm64).
+Сборка включает `with_naive_outbound` (Naive proxy). Требуется Go и Xcode. Целевой тег: **v1.13.14** (iOS + macOS arm64).

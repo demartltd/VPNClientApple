@@ -24,8 +24,10 @@ final class VpnStatusMonitor {
     private var connectFailureGraceTask: Task<Void, Never>?
     private var lastTrackedNeStatus: NEVPNStatus?
     private var disconnectFlickerGraceUntil: Date?
+    private var refreshGeneration = 0
     private static let connectTimeout: TimeInterval = 45
     private static let disconnectFlickerGrace: TimeInterval = 2
+    private static let connectedHoldHeartbeatMaxAge: TimeInterval = 10
     private static let connectStallTimeout: TimeInterval = 10
     private static let extensionLaunchTimeout: TimeInterval = 3
     private static let connectProbeIntervalNs: UInt64 = 400_000_000
@@ -182,12 +184,15 @@ final class VpnStatusMonitor {
     }
 
     func refreshStatus(reason: String, force: Bool = false, reloadPreferences: Bool = true) {
+        refreshGeneration += 1
+        let generation = refreshGeneration
         if force {
             lastDeliveredState = nil
         }
         controller.refreshDemarStatus(reloadPreferences: reloadPreferences) { [weak self] result in
             Task { @MainActor in
                 guard let self else { return }
+                guard self.refreshGeneration == generation else { return }
                 switch result {
                 case let .failure(error):
                     self.retargetObserver(connection: nil)
@@ -234,12 +239,18 @@ final class VpnStatusMonitor {
             disconnectFlickerGraceUntil = nil
             return false
         }
-        guard case .connected = lastDeliveredState, VpnSharedStore.extensionSignalsAlive() else {
+        guard case .connected = lastDeliveredState,
+              VpnSharedStore.extensionSignalsAlive(maxAge: Self.connectedHoldHeartbeatMaxAge)
+        else {
             disconnectFlickerGraceUntil = nil
             return false
         }
         let now = Date()
-        if let until = disconnectFlickerGraceUntil, now < until { return true }
+        if let until = disconnectFlickerGraceUntil {
+            if now < until { return true }
+            disconnectFlickerGraceUntil = nil
+            return false
+        }
         disconnectFlickerGraceUntil = now.addingTimeInterval(Self.disconnectFlickerGrace)
         return true
     }

@@ -12,8 +12,40 @@ struct DefaultInterfaceUpdate: Equatable {
   var isLost: Bool { index < 0 }
 }
 
+enum PhysicalInterfaceKind: Equatable {
+  case wifi
+  case cellular
+  case ethernet
+  case other
+}
+
+struct PhysicalInterfaceCandidate: Equatable {
+  var name: String
+  var index: Int32
+  var kind: PhysicalInterfaceKind
+}
+
+enum PhysicalInterfaceSelector {
+  static func isTunnelInterface(_ name: String) -> Bool {
+    let n = name.lowercased()
+    return n == "lo0" || n.hasPrefix("utun") || n.hasPrefix("ipsec") || n.hasPrefix("ppp")
+  }
+
+  static func preferred(
+    from interfaces: [PhysicalInterfaceCandidate],
+    usesWifi: Bool,
+    usesCellular: Bool,
+    usesEthernet: Bool
+  ) -> PhysicalInterfaceCandidate? {
+    if usesWifi, let item = interfaces.first(where: { $0.kind == .wifi }) { return item }
+    if usesCellular, let item = interfaces.first(where: { $0.kind == .cellular }) { return item }
+    if usesEthernet, let item = interfaces.first(where: { $0.kind == .ethernet }) { return item }
+    return interfaces.first
+  }
+}
+
 /// Filters default-interface updates before they reach libbox: duplicates are
-/// dropped and interface loss is debounced. Libbox v1.13.13 closes every
+/// dropped and interface loss is debounced. Libbox v1.13.14 closes every
 /// connection as soon as it sees an empty default interface, so the transient
 /// `unsatisfied` flaps NWPathMonitor emits inside a Network Extension
 /// (routes/DNS apply, Wi-Fi scan, sleep/wake) must never be forwarded raw.

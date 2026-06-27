@@ -94,7 +94,11 @@ enum SingBoxDnsBuilder {
         ]
         for domain in bootstrapDomains {
             guard let cleanDomain = cleanedDomain(domain) else { continue }
-            rules.append(["domain": [cleanDomain], "server": SingBoxConfigConstants.dnsDirectTag])
+            rules.append([
+                "domain": [cleanDomain],
+                "action": "route",
+                "server": SingBoxConfigConstants.dnsDirectTag,
+            ])
         }
         return [
             "servers": [

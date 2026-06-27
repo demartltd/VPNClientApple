@@ -191,7 +191,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             lastKnownPhysicalInterfaces = physicalLibboxInterfaces(from: path)
             update = DefaultInterfaceUpdate(
                 name: interface.name,
-                index: Int32(interface.index),
+                index: interface.index,
                 isExpensive: path.isExpensive,
                 isConstrained: path.isConstrained
             )
@@ -231,27 +231,49 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     }
 
     private func physicalLibboxInterfaces(from path: Network.NWPath) -> [LibboxNetworkInterface] {
-        path.availableInterfaces
-            .filter { !$0.name.hasPrefix("utun") }
+        physicalInterfaceCandidates(from: path)
             .map { interface -> LibboxNetworkInterface in
                 let item = LibboxNetworkInterface()
                 item.name = interface.name
-                item.index = Int32(interface.index)
-                switch interface.type {
+                item.index = interface.index
+                switch interface.kind {
                 case .wifi: item.type = LibboxInterfaceTypeWIFI
                 case .cellular: item.type = LibboxInterfaceTypeCellular
-                case .wiredEthernet: item.type = LibboxInterfaceTypeEthernet
+                case .ethernet: item.type = LibboxInterfaceTypeEthernet
                 default: item.type = LibboxInterfaceTypeOther
                 }
                 return item
             }
     }
 
-    // First non-tunnel interface in system priority order (same as the official
-    // SFI client) — preferring Wi-Fi would bind dials to the wrong interface on
-    // a Mac whose default route is Ethernet.
-    private func preferredPhysicalInterface(from path: Network.NWPath) -> NWInterface? {
-        path.availableInterfaces.first { !$0.name.hasPrefix("utun") }
+    private func physicalInterfaceCandidates(from path: Network.NWPath) -> [PhysicalInterfaceCandidate] {
+        path.availableInterfaces
+            .filter { !PhysicalInterfaceSelector.isTunnelInterface($0.name) }
+            .map { interface in
+                PhysicalInterfaceCandidate(
+                    name: interface.name,
+                    index: Int32(interface.index),
+                    kind: Self.kind(for: interface.type)
+                )
+            }
+    }
+
+    private func preferredPhysicalInterface(from path: Network.NWPath) -> PhysicalInterfaceCandidate? {
+        PhysicalInterfaceSelector.preferred(
+            from: physicalInterfaceCandidates(from: path),
+            usesWifi: path.usesInterfaceType(.wifi),
+            usesCellular: path.usesInterfaceType(.cellular),
+            usesEthernet: path.usesInterfaceType(.wiredEthernet)
+        )
+    }
+
+    private static func kind(for type: NWInterface.InterfaceType) -> PhysicalInterfaceKind {
+        switch type {
+        case .wifi: .wifi
+        case .cellular: .cellular
+        case .wiredEthernet: .ethernet
+        default: .other
+        }
     }
 
     func closeDefaultInterfaceMonitor(_: LibboxInterfaceUpdateListenerProtocol?) throws {

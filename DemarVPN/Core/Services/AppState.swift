@@ -16,7 +16,7 @@ final class AppState {
     var downloadBps: Double = 0
     var uploadBps: Double = 0
 
-    var appVersionLabel: String = "1.0.1"
+    var appVersionLabel: String = "1.0.2"
     var coreVersionToken: String = BundledCoreVersion.label
     var accountUser: AccountUser?
 
@@ -92,11 +92,13 @@ final class AppState {
         }
         if systemStatus == .connected || systemStatus == .connecting || systemStatus == .reasserting {
             AppLog.shared.append("[ui] connect ignored: system tunnel already active (\(systemStatus.rawValue))")
+            statusMonitor?.refreshStatus(reason: "connect-noop", force: true, reloadPreferences: false)
             return
         }
         #endif
         if vpnState.isConnected {
             AppLog.shared.append("[ui] connect ignored: already connected")
+            statusMonitor?.refreshStatus(reason: "connect-noop-ui", force: true, reloadPreferences: false)
             return
         }
         if case .connecting = vpnState { return }
@@ -218,11 +220,7 @@ final class AppState {
         throughputSampling = true
         defer { throughputSampling = false }
 
-        #if os(macOS)
         let tunnelOnly = true
-        #else
-        let tunnelOnly = false
-        #endif
         let totals = await Task.detached(priority: .utility) {
             DeviceTrafficTotals.cumulativeRXTXBytes(vpnTunnelOnly: tunnelOnly)
         }.value
@@ -240,6 +238,9 @@ final class AppState {
                 if drx >= 0, dtx >= 0 {
                     downloadBps = Double(drx) / dt
                     uploadBps = Double(dtx) / dt
+                } else {
+                    downloadBps = 0
+                    uploadBps = 0
                 }
             }
         }
