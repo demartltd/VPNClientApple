@@ -94,6 +94,19 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertFalse(json.contains("\"sniff\" : true") || json.contains("\"sniff\": true"))
         XCTAssertTrue(json.contains("default_domain_resolver"))
         XCTAssertTrue(json.contains("\"action\" : \"sniff\"") || json.contains("\"action\": \"sniff\""))
+        XCTAssertTrue(json.contains("\"timestamp\" : false") || json.contains("\"timestamp\": false"))
+    }
+
+    func testJournalTimeFormat() {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(secondsFromGMT: 0)!
+        let date = c.date(from: DateComponents(year: 2026, month: 6, day: 27, hour: 14, minute: 30, second: 45))!
+        XCTAssertEqual(DemarLogTime.stamp(date), "2026-06-27-14-30-45")
+        XCTAssertEqual(DemarLogTime.journalLine("ping", date: date), "2026-06-27-14-30-45 ping")
+        XCTAssertTrue(DemarLogTime.looksPreStamped("2026-06-27-14-30-45 ok"))
+        XCTAssertEqual(DemarLogTime.messageBody(in: "2026-06-27-14-30-45 [app] ok"), "[app] ok")
+        XCTAssertEqual(DemarLogTime.parseStamp("2026-06-27-14-30-45"), date)
+        XCTAssertNil(DemarLogTime.leadingStamp(in: "[2026-06-27-14-30-45] legacy"))
     }
 
     func testReconfigurePolicySkipsRoutinePathChange() {

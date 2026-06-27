@@ -88,6 +88,7 @@ scripts/
 ios/
 ├── Shared/
 │   ├── VpnAppGroup.swift              # App Group paths
+│   ├── DemarLogTime.swift             # journal stamp yyyy-MM-dd-HH-mm-ss (UTC)
 │   ├── VpnSharedStore.swift           # journal, payload, state
 │   ├── DefaultInterfaceReporter.swift # дедуп/debounce default interface для libbox
 │   ├── VpnTunnelController.swift      # NETunnelProviderManager

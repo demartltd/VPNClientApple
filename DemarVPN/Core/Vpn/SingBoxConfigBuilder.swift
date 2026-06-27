@@ -37,7 +37,7 @@ enum SingBoxConfigBuilder {
         directDomains: [String]
     ) -> [String: Any] {
         [
-            "log": ["level": logLevel],
+            "log": ["level": logLevel, "timestamp": false],
             "dns": SingBoxDnsBuilder.makeDns(final: dnsFinal, bootstrapDomains: dnsBootstrapDomains),
             "inbounds": [SingBoxTunInboundBuilder.makeTunInbound(
                 tunName: tunName,

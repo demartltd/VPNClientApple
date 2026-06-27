@@ -34,12 +34,9 @@ final class AppLog {
         guard !containsEquivalentLine(sanitized) else { return }
 
         let text: String
-        if Self.looksPreStamped(sanitized) {
-            text = sanitized
-        } else {
-            let stamp = ISO8601DateFormatter().string(from: Date())
-            text = "[\(stamp)] \(sanitized)"
-        }
+        text = DemarLogTime.looksPreStamped(sanitized)
+            ? sanitized
+            : DemarLogTime.journalLine(sanitized)
         lines.insert(JournalLine(id: UUID(), text: text), at: 0)
         if lines.count > VpnSharedStore.journalMaxLines {
             lines.removeLast(lines.count - VpnSharedStore.journalMaxLines)
@@ -54,14 +51,7 @@ final class AppLog {
     }
 
     private static func lineEquivalenceKey(_ line: String) -> String {
-        var s = line.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let close = s.firstIndex(of: "]"), s.first == "[" {
-            let after = s.index(after: close)
-            if after < s.endIndex {
-                s = String(s[after...]).trimmingCharacters(in: .whitespaces)
-            }
-        }
-        return s
+        DemarLogTime.messageBody(in: line)
     }
 
     /// Imports new lines from the App Group VPN journal (extension + host).
@@ -172,10 +162,6 @@ final class AppLog {
         return (0 ... 255).contains(value)
     }
 
-    private static func looksPreStamped(_ line: String) -> Bool {
-        line.count > 24 && line.first == "[" && line.contains("Z]")
-    }
-
     func clear() {
         lines.removeAll()
         append("[app] journal cleared")
@@ -194,8 +180,6 @@ final class AppLog {
     }
 
     private static func exportFileName() -> String {
-        let stamp = ISO8601DateFormatter().string(from: Date())
-            .replacingOccurrences(of: ":", with: "-")
-        return "demar-vpn-journal-\(stamp).txt"
+        DemarLogTime.exportFileName()
     }
 }

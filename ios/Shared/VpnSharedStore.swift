@@ -342,6 +342,7 @@ enum VpnSharedStore {
   ) {
     do {
       let updatedAt = ISO8601DateFormatter().string(from: Date())
+      let journalAt = DemarLogTime.stamp()
       let body: [String: Any] = [
         "label": label,
         "code": code,
@@ -365,7 +366,7 @@ enum VpnSharedStore {
       if let uptimeSinceStartSec, uptimeSinceStartSec >= 0 {
         parts.append("uptimeSec=\(uptimeSinceStartSec)")
       }
-      parts.append("at=\(updatedAt)")
+      parts.append("at=\(journalAt)")
       appendTunnelStopReasonHistoryLine(parts.joined(separator: " "))
     } catch {
       // Best effort diagnostics; ignore write failures.
@@ -412,7 +413,7 @@ enum VpnSharedStore {
   static func appendJournalLine(_ line: String) {
     let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
     if trimmed.isEmpty { return }
-    let stamped = "[\(ISO8601DateFormatter().string(from: Date()))] \(trimmed)"
+    let stamped = DemarLogTime.journalLine(trimmed)
     appendJournalLineRaw(stamped)
   }
 

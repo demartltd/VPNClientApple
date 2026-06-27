@@ -417,14 +417,9 @@ final class VpnStatusMonitor {
     }
 
     private static func journalLineIsAfterSessionStart(_ line: String, sessionStartedAt: Date) -> Bool {
-        guard line.first == "[",
-              let end = line.firstIndex(of: "]"),
-              end > line.startIndex
+        guard let stamp = DemarLogTime.leadingStamp(in: line),
+              let ts = DemarLogTime.parseStamp(stamp)
         else { return true }
-        let raw = String(line[line.index(after: line.startIndex)..<end])
-        let fractional = ISO8601DateFormatter()
-        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let ts = fractional.date(from: raw) ?? ISO8601DateFormatter().date(from: raw) else { return true }
         return ts >= sessionStartedAt.addingTimeInterval(-1)
     }
 
