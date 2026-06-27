@@ -75,15 +75,17 @@ readme.md                              # сборка
 readme-core.md                         # ядро VPN/Sing-box
 
 scripts/
-├── singbox-download-auto.py              # sing-box core + geo db
-├── libbox-build.py                    # Libbox.xcframework
-├── generate_icons.py                  # AppIcon
-├── build-macos.ps1                    # build, sign, notarize
-├── build-macos.local.ps1              # локальный конфиг
-├── increment_version_auto.ps1         # bump version
-├── increment_version.ps1              # version интерактивно
-├── increment_version_common.ps1       # shared bump
-└── push-github.ps1                    # push / tag
+├── singbox-download-auto.py           # latest sing-box + geo db
+├── libbox-build.py                    # Libbox.xcframework (latest)
+├── upload-testflight.ps1              # App Store archive/upload
+├── sign-singbox-in-appex.sh           # iOS appex binary signing
+├── increment_version_auto.ps1
+├── increment_version_common.ps1
+├── ios-export-options.plist
+└── macos-export-options.plist
+
+macos/
+└── singbox_macos/                      # geo db + dev sing-box CLI (gitignore)
 
 ios/
 ├── Shared/

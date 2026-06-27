@@ -40,6 +40,11 @@
 		B10000010000000000000021 /* IDFATracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000024 /* IDFATracking.swift */; };
 		B10000010000000000000022 /* ios/Shared/singbox in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000025 /* ios/Shared/singbox */; platformFilter = ios; };
 		B10000010000000000000040 /* macos/singbox_macos/bundled_version.txt in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000040 /* macos/singbox_macos/bundled_version.txt */; platformFilter = macos; };
+		B10000010000000000000041 /* macos/singbox_macos/geoip.db in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000041 /* macos/singbox_macos/geoip.db */; platformFilter = macos; };
+		B10000010000000000000042 /* macos/singbox_macos/geosite.db in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000042 /* macos/singbox_macos/geosite.db */; platformFilter = macos; };
+		E200001E1CF9000F007C117D /* macos/singbox_macos/geoip.db in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000041 /* macos/singbox_macos/geoip.db */; platformFilter = macos; };
+		E200001F1CF9000F007C117D /* macos/singbox_macos/geosite.db in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000042 /* macos/singbox_macos/geosite.db */; platformFilter = macos; };
+		E20000211CF9000F007C117D /* macos/singbox_macos/bundled_version.txt in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000040 /* macos/singbox_macos/bundled_version.txt */; platformFilter = macos; };
 		B10000010000000000000023 /* ios/Shared/VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */; };
 		B10000010000000000000024 /* ios/Shared/VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */; };
 		B100000100000000000000DE /* ios/Shared/DefaultInterfaceReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift */; };
@@ -76,6 +81,9 @@
 		E20000181CF9000F007C117D /* ios/DemarPacketTunnel/IOSLibboxCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000191CF9000F007C117D /* ios/DemarPacketTunnel/IOSLibboxCore.swift */; };
 		E200001A1CF9000F007C117D /* ios/DemarPacketTunnel/DemarLibboxPlatform.swift in Sources */ = {isa = PBXBuildFile; fileRef = E200001B1CF9000F007C117D /* ios/DemarPacketTunnel/DemarLibboxPlatform.swift */; };
 		E200001C1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift in Sources */ = {isa = PBXBuildFile; fileRef = E200001D1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift */; };
+		E20000221CF9000F007C117D /* SingBoxConfigBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000028 /* SingBoxConfigBuilder.swift */; };
+		E20000231CF9000F007C117D /* SingBoxConnectPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000003D /* SingBoxConnectPlan.swift */; };
+		E20000241CF9000F007C117D /* NaiveProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000003C /* NaiveProfile.swift */; };
 		E20000091CF9000F007C117D /* ios/Frameworks/Libbox.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E20001051CF9000F007C117D /* ios/Frameworks/Libbox.xcframework */; };
 		E200000A1CF9000F007C117D /* ios/Frameworks/Libbox.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E20001051CF9000F007C117D /* ios/Frameworks/Libbox.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E20001081CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */; };
@@ -191,7 +199,9 @@
 		F10000010000000000000023 /* DemarKvRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarKvRow.swift; sourceTree = "<group>"; };
 		F10000010000000000000024 /* IDFATracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDFATracking.swift; sourceTree = "<group>"; };
 		F10000010000000000000025 /* ios/Shared/singbox */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ios/Shared/singbox; sourceTree = SOURCE_ROOT; };
-		F10000010000000000000040 /* macos/singbox_macos/bundled_version.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = macos/singbox_macos/bundled_version.txt; sourceTree = SOURCE_ROOT; };
+		F10000010000000000000040 /* macos/singbox_macos/bundled_version.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = bundled_version.txt; sourceTree = "<group>"; };
+		F10000010000000000000041 /* macos/singbox_macos/geoip.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = geoip.db; sourceTree = "<group>"; };
+		F10000010000000000000042 /* macos/singbox_macos/geosite.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = geosite.db; sourceTree = "<group>"; };
 		F1000001000000000000003C /* NaiveProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NaiveProfile.swift; sourceTree = "<group>"; };
 		F1000001000000000000003D /* SingBoxConnectPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConnectPlan.swift; sourceTree = "<group>"; };
 		F40000021CF9000F007C117E /* SingBoxConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConfigTests.swift; sourceTree = "<group>"; };
@@ -248,7 +258,7 @@
 				G10000010000000000000002 /* DemarVPN */,
 				G40000011CF9000F007C117D /* DemarVPNTests */,
 				G20000011CF9000F007C117D /* ios */,
-				F10000010000000000000040 /* macos/singbox_macos/bundled_version.txt */,
+				G10000010000000000000012 /* macos/singbox_macos */,
 				G10000010000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -425,6 +435,17 @@
 			);
 			path = Fonts;
 			sourceTree = "<group>";
+		};
+		G10000010000000000000012 /* macos/singbox_macos */ = {
+			isa = PBXGroup;
+			children = (
+				F10000010000000000000041 /* macos/singbox_macos/geoip.db */,
+				F10000010000000000000042 /* macos/singbox_macos/geosite.db */,
+				F10000010000000000000040 /* macos/singbox_macos/bundled_version.txt */,
+			);
+			name = singbox_macos;
+			path = macos/singbox_macos;
+			sourceTree = SOURCE_ROOT;
 		};
 		G10000010000000000000011 /* Vpn */ = {
 			isa = PBXGroup;
@@ -642,6 +663,8 @@
 				B1000001000000000000001A /* fa-brands-400.ttf in Resources */,
 				B10000010000000000000022 /* ios/Shared/singbox in Resources */,
 				B10000010000000000000040 /* macos/singbox_macos/bundled_version.txt in Resources */,
+				B10000010000000000000041 /* macos/singbox_macos/geoip.db in Resources */,
+				B10000010000000000000042 /* macos/singbox_macos/geosite.db in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -650,6 +673,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				E20000171CF9000F007C117D /* ios/Shared/singbox in Resources */,
+				E200001E1CF9000F007C117D /* macos/singbox_macos/geoip.db in Resources */,
+				E200001F1CF9000F007C117D /* macos/singbox_macos/geosite.db in Resources */,
+				E20000211CF9000F007C117D /* macos/singbox_macos/bundled_version.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -732,6 +758,9 @@
 				E20000181CF9000F007C117D /* ios/DemarPacketTunnel/IOSLibboxCore.swift in Sources */,
 				E200001A1CF9000F007C117D /* ios/DemarPacketTunnel/DemarLibboxPlatform.swift in Sources */,
 				E200001C1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift in Sources */,
+				E20000241CF9000F007C117D /* NaiveProfile.swift in Sources */,
+				E20000231CF9000F007C117D /* SingBoxConnectPlan.swift in Sources */,
+				E20000221CF9000F007C117D /* SingBoxConfigBuilder.swift in Sources */,
 				E20000051CF9000F007C117D /* ios/Shared/VpnAppGroup.swift in Sources */,
 				E20000061CF9000F007C117D /* ios/Shared/VpnSharedStore.swift in Sources */,
 				E20000DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift in Sources */,
@@ -903,7 +932,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 25;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -939,7 +968,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 25;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -971,7 +1000,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 25;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1018,7 +1047,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 25;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1065,7 +1094,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 25;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1092,7 +1121,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 25;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1118,7 +1147,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 25;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1142,7 +1171,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 25;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (

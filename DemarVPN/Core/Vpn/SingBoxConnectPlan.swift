@@ -17,23 +17,25 @@ struct SingBoxConnectPlan {
     let tun: SingBoxTunOptions
 
     static func naive(_ profile: NaiveProfile) -> SingBoxConnectPlan {
-        SingBoxConnectPlan(
-            uplinkHost: profile.server,
-            proxyOutbound: [
-                "type": "naive",
-                "tag": SingBoxConfigConstants.proxyTag,
-                "server": profile.server,
-                "server_port": profile.port,
-                "username": profile.username,
-                "password": profile.password,
-                "domain_resolver": SingBoxDnsBuilder.domainResolver(server: SingBoxConfigConstants.dnsDirectTag),
-                "udp_over_tcp": ["enabled": true, "version": 2],
-                "quic": false,
-                "tls": [
-                    "enabled": true,
-                    "server_name": profile.tlsServerName,
-                ],
+        var outbound: [String: Any] = [
+            "type": "naive",
+            "tag": SingBoxConfigConstants.proxyTag,
+            "server": profile.server,
+            "server_port": profile.port,
+            "domain_resolver": SingBoxDnsBuilder.domainResolver(server: SingBoxConfigConstants.dnsDirectTag),
+            "udp_over_tcp": ["enabled": true, "version": 2],
+            "quic": false,
+            "tls": [
+                "enabled": true,
+                "server_name": profile.tlsServerName,
             ],
+        ]
+        if !profile.username.isEmpty { outbound["username"] = profile.username }
+        if !profile.password.isEmpty { outbound["password"] = profile.password }
+
+        return SingBoxConnectPlan(
+            uplinkHost: profile.server,
+            proxyOutbound: outbound,
             directIPs: directIPs(forHost: profile.server),
             tun: SingBoxTunOptions(
                 dnsFinal: SingBoxConfigConstants.dnsRemoteTag,

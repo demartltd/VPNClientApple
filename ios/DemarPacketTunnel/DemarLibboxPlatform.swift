@@ -187,7 +187,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
 
     private func updateDefaultInterface(_ listener: LibboxInterfaceUpdateListenerProtocol, path: Network.NWPath) {
         let update: DefaultInterfaceUpdate
-        if path.status != .unsatisfied, let interface = preferredPhysicalInterface(from: path) {
+        if let interface = preferredPhysicalInterface(from: path) {
             lastKnownPhysicalInterfaces = physicalLibboxInterfaces(from: path)
             update = DefaultInterfaceUpdate(
                 name: interface.name,
@@ -289,9 +289,6 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             throw NSError(domain: "DemarLibbox", code: 5, userInfo: [
                 NSLocalizedDescriptionKey: "Default interface monitor has not started.",
             ])
-        }
-        guard nwMonitor.currentPath.status != .unsatisfied else {
-            return DemarNetworkInterfaceIterator(lastKnownPhysicalInterfaces)
         }
         let interfaces = physicalLibboxInterfaces(from: nwMonitor.currentPath)
         if !interfaces.isEmpty {

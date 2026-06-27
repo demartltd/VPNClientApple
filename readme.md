@@ -1,4 +1,4 @@
-**Demar VPN (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **Sing-box 1.13.14** (NaiveProxy).
+**Demar VPN (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **latest sing-box** (NaiveProxy через Libbox).
 
 Поддерживаются **iOS 18+** и **macOS 14+** (нативное приложение, один target). Web, Android, Windows и Linux не поддерживаются.
 
@@ -16,11 +16,11 @@
 Один раз перед сборкой (скрипт только для разработчиков, в runtime не вызывается):
 
 ```bash
-python3 scripts/singbox-download-auto.py   # → geo db в ios/Shared/singbox/
+python3 scripts/singbox-download-auto.py   # → geo db: ios/Shared/singbox/, macos/singbox_macos/
 python3 scripts/libbox-build.py           # → ios/Frameworks/Libbox.xcframework (iOS + macOS)
 ```
 
-Xcode копирует runtime-assets в app и в `DemarPacketTunnel.appex` (macOS).
+Xcode копирует geo assets в host app и в `DemarPacketTunnel.appex` (iOS: `singbox/`, macOS: `singbox_macos/`). Dev binary `sing-box` в runtime bundle не включается.
 
 В [Apple Developer](https://developer.apple.com/account) для App ID `com.demar.vpn`, `com.demar.vpn.packet-tunnel` и **`com.demar.vpn.controls`** (Control Center) включите: **App Groups** (`group.com.demar.vpn`), **Network Extensions** → Packet Tunnel. Entitlements уже в `DemarVPN.entitlements`, `ios/DemarPacketTunnel/DemarPacketTunnel.entitlements` и `ios/DemarControls/DemarControls.entitlements`.
 
@@ -37,17 +37,6 @@ Xcode копирует runtime-assets в app и в `DemarPacketTunnel.appex` (ma
 
 Для macOS/App Store не используем root/helper-эскалацию привилегий: для Packet Tunnel корректный путь только через Network Extension entitlement + системное разрешение пользователя.
 
-```powershell
-# Локально: Apple Development из Keychain (открывается без нотаризации)
-pwsh ./scripts/build-macos.ps1 -Install
-
-# Один раз: cp scripts/build-macos.local.ps1.example scripts/build-macos.local.ps1
-# Для -Notarize: P12_PASSWORD, APPLE_ID, APPLE_APP_PASSWORD + demar_vpn_client_apple.p12 в scripts/
-
-# Распространение: Developer ID + нотаризация (иначе macOS: «can't be opened»)
-pwsh ./scripts/build-macos.ps1 -Notarize -Package
-```
-
 ```bash
 # macOS Debug (Xcode, только для отладки)
 xcodebuild -scheme DemarVPN -destination 'platform=macOS' build
@@ -58,7 +47,13 @@ xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17'
 
 В Xcode: выберите destination **My Mac** или симулятор iPhone.
 
-Для проверки стабильного запуска Packet Tunnel на macOS используйте один путь установки: `pwsh ./scripts/build-macos.ps1 -Install`, затем включите `Demar VPN` в `System Settings → Login Items & Extensions → Network Extensions`.
+Для App Store / TestFlight используйте:
+
+```powershell
+pwsh ./scripts/upload-testflight.ps1 -Platform macOS
+```
+
+Для проверки Packet Tunnel на macOS запускайте приложение через Xcode (**My Mac**) или установленную App Store/TestFlight сборку, затем включите `Demar VPN` в `System Settings → Login Items & Extensions → Network Extensions`.
 
 Документация Sing-box: https://sing-box.sagernet.org/
 

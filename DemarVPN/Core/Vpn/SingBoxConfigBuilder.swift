@@ -25,6 +25,53 @@ enum SingBoxConfigBuilder {
         )
     }
 
+    /// Injects runtime-resolved uplink IPv4 into route bypass and TUN exclude rules.
+    static func mergeDirectIPs(_ ips: [String], into configJson: String) throws -> String {
+        let merged = Array(Set(ips.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty })).sorted()
+        guard !merged.isEmpty else { return configJson }
+        guard let data = configJson.data(using: .utf8),
+              var root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return configJson }
+
+        if var inbounds = root["inbounds"] as? [[String: Any]] {
+            for index in inbounds.indices where (inbounds[index]["type"] as? String) == "tun" {
+                var tun = inbounds[index]
+                var exclude = Set((tun["route_exclude_address"] as? [String]) ?? [])
+                merged.forEach { exclude.insert("\($0)/32") }
+                tun["route_exclude_address"] = exclude.sorted()
+                if tun["route_address"] == nil {
+                    tun["route_address"] = ["0.0.0.0/1", "128.0.0.0/1"]
+                }
+                inbounds[index] = tun
+                break
+            }
+            root["inbounds"] = inbounds
+        }
+
+        if var route = root["route"] as? [String: Any], var rules = route["rules"] as? [[String: Any]] {
+            var existing = Set(rules.flatMap { ($0["ip_cidr"] as? [String]) ?? [] })
+            let insertAt = rules.firstIndex { ($0["ip_version"] as? Int) == 6 } ?? rules.count
+            for ip in merged {
+                let cidr = "\(ip)/32"
+                guard !existing.contains(cidr) else { continue }
+                rules.insert([
+                    "ip_cidr": [cidr],
+                    "action": "route",
+                    "outbound": SingBoxConfigConstants.directTag,
+                ], at: insertAt)
+                existing.insert(cidr)
+            }
+            route["rules"] = rules
+            root["route"] = route
+        }
+
+        return try SingBoxConfigEncoding.encodeConfigToJson(
+            root,
+            errorCode: 2,
+            description: "Failed to encode merged sing-box config JSON."
+        )
+    }
+
     private static func buildTunConfig(
         proxyOutbound: [String: Any],
         directIPs: [String],

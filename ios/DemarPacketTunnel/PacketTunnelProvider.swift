@@ -170,7 +170,8 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   ) {
     let configJSON: String
     do {
-      configJSON = try String(contentsOf: cfgURL, encoding: .utf8)
+      let raw = try String(contentsOf: cfgURL, encoding: .utf8)
+      configJSON = try Self.configWithMergedUplinkIPs(raw, excludedIPv4: excludedIPv4)
     } catch {
       clearStartTunnelInFlight()
       fail("read config failed: \(error.localizedDescription)", code: 13, completionHandler: completionHandler)
@@ -289,7 +290,8 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   private func runSoftCoreRestart(reason: String, cfgPath: String, excluded: [String], assetDir: String) {
     let configJSON: String
     do {
-      configJSON = try String(contentsOf: URL(fileURLWithPath: cfgPath), encoding: .utf8)
+      let raw = try String(contentsOf: URL(fileURLWithPath: cfgPath), encoding: .utf8)
+      configJSON = try Self.configWithMergedUplinkIPs(raw, excludedIPv4: excluded)
     } catch {
       Self.diag("reconfigure(\(reason)) read config failed: \(error.localizedDescription)")
       finishReconfigureCoalesced()
@@ -427,8 +429,9 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     IOSLibboxCore.stop()
     do {
       let cfgURL = try VpnAppGroup.configURL()
-      let configJSON = try String(contentsOf: cfgURL, encoding: .utf8)
+      let raw = try String(contentsOf: cfgURL, encoding: .utf8)
       let excluded = try Self.resolveIPv4Addresses(host: activeUplinkHost).sorted()
+      let configJSON = try Self.configWithMergedUplinkIPs(raw, excludedIPv4: excluded)
       let assetDir = try VpnAppGroup.assetDirectoryURL()
       try IOSLibboxCore.start(
         provider: self,
@@ -522,6 +525,10 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     default:
       return "advice=none"
     }
+  }
+
+  private static func configWithMergedUplinkIPs(_ configJSON: String, excludedIPv4: [String]) throws -> String {
+    try SingBoxConfigBuilder.mergeDirectIPs(excludedIPv4, into: configJSON)
   }
 
   private static func resolveIPv4Addresses(host: String?) throws -> [String] {

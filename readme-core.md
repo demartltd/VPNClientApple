@@ -2,7 +2,7 @@
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
 
-Целевая версия core: **sing-box 1.13.14** (Libbox из latest release, см. `scripts/libbox-build.py`).
+Целевая версия core: **latest sing-box release** (`scripts/libbox-build.py`, `scripts/singbox-download-auto.py`). Фактическая версия — в UI (`bundled_version.txt` в bundle).
 
 Документация Sing-box:
 
@@ -20,7 +20,7 @@
 
 Sing-box используется как proxy-core. **Device-wide VPN** строится через **TUN inbound** в `config.json`; маршруты и utun создаёт **Network Extension** (`NEPacketTunnelProvider`), extension запускает `sing-box run -c`.
 
-Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxConnectPlan.swift) → [`SingBoxConfigBuilder`](DemarVPN/Core/Vpn/SingBoxConfigBuilder.swift) → `config.json`. Имя utun патчится extension’ом под фактический интерфейс NE.
+Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxConnectPlan.swift) → [`SingBoxConfigBuilder`](DemarVPN/Core/Vpn/SingBoxConfigBuilder.swift) → `config.json`. Extension мержит runtime-resolved uplink IPv4 в bypass rules перед стартом Libbox; TUN fd создаёт NE platform interface.
 
 Формат config.json соответствует sing-box **1.12+ / 1.13**:
 
@@ -80,7 +80,7 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 | DNS bootstrap | `[tlsServerName]` через `action: route` | SNI → direct DNS |
 | `strict_route` | `true` | |
 | direct domain | `[tlsServerName]` | SNI → direct outbound |
-| `directIPs` | IPv4 literal `server` | exclude/route bypass |
+| `directIPs` | IPv4 literal `server` или runtime merge hostname → IPv4 | exclude/route bypass |
 
 ### sing-box: поля Naive (не экспонированы в app)
 
@@ -104,7 +104,7 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 Libbox закрывает **все** соединения, как только платформа сообщает пустой default interface (`updateDefaultInterface("", -1)`) — для naive это рвёт HTTP/2-туннель (каскад `stream failed: aborted`, `dial: operation was canceled`). Внутри NE `NWPathMonitor` кратковременно флапает в `.unsatisfied` (применение routes/DNS, Wi-Fi-скан, sleep/wake), поэтому сырые апдейты в ядро не передаются:
 
 - `DefaultInterfaceReportFilter` (`ios/Shared/DefaultInterfaceReporter.swift`) — дедуп одинаковых апдейтов; потеря интерфейса репортится только если держится ≥3 c (debounce), восстановление отменяет потерю.
-- Интерфейс выбирается по фактически используемому типу `NWPath.usesInterfaceType` (`wifi`/`cellular`/`wiredEthernet`) из non-tunnel `path.availableInterfaces`, поэтому Wi‑Fi → LTE сразу репортит `pdp_ip*`, даже если `en0` ещё остаётся в списке.
+- Интерфейс выбирается по фактически используемому типу `NWPath.usesInterfaceType` (`wifi`/`cellular`/`wiredEthernet`) из non-tunnel `path.availableInterfaces`, поэтому Wi‑Fi → LTE сразу репортит `pdp_ip*`, даже если `en0` ещё остаётся в списке. На macOS NE transient `.unsatisfied` не считается потерей, пока `availableInterfaces` содержит физический интерфейс (`en0`/Ethernet/etc.); иначе Libbox закрывает naive HTTP/2 и DNS падает с `use of closed network connection`.
 - `TunnelLifecycle` (path monitor, sleep/wake, heartbeat) работает на обеих платформах; короткие `.unsatisfied` флапы при handoff не перезапускают core, софт-рестарт ядра — только после подтверждённой потери пути (`pathRecoveredAfterLoss`) или смены excluded-маршрутов, wake (каждая разблокировка) здоровый туннель не перезапускает.
 
 ---

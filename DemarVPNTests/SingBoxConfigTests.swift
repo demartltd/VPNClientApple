@@ -76,14 +76,26 @@ final class SingBoxConfigTests: XCTestCase {
         let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
         let domainRules = rules.compactMap { $0["domain"] as? [String] }
         XCTAssertTrue(domainRules.contains { $0.contains(profile.tlsServerName) })
+        let allCIDRs = rules.compactMap { $0["ip_cidr"] as? [String] }.flatMap { $0 }
+        XCTAssertTrue(allCIDRs.isEmpty, "hostname uplink has no build-time IPv4 bypass")
+
+        let merged = try SingBoxConfigBuilder.mergeDirectIPs(["203.0.113.10"], into: json)
+        let mergedRoot = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(merged.data(using: .utf8))) as? [String: Any])
+        let mergedRoute = try XCTUnwrap(mergedRoot["route"] as? [String: Any])
+        let mergedRules = try XCTUnwrap(mergedRoute["rules"] as? [[String: Any]])
+        let mergedCIDRs = mergedRules.compactMap { $0["ip_cidr"] as? [String] }.flatMap { $0 }
+        XCTAssertTrue(mergedCIDRs.contains("203.0.113.10/32"))
+        let tunInbound = try XCTUnwrap((mergedRoot["inbounds"] as? [[String: Any]])?.first { ($0["type"] as? String) == "tun" })
+        XCTAssertTrue((tunInbound["route_exclude_address"] as? [String])?.contains("203.0.113.10/32") == true)
+
         let outbounds = try XCTUnwrap(root["outbounds"] as? [[String: Any]])
         let proxy = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
         let uot = try XCTUnwrap(proxy["udp_over_tcp"] as? [String: Any])
         XCTAssertEqual(uot["version"] as? Int, 2)
-        try assertSingBoxCheckPasses(json: json)
+        try assertSingBoxCheckPasses(json: merged)
     }
 
-    func testSingBoxConfigUses13Format() throws {
+    func testSingBoxConfigUsesModernFormat() throws {
         let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .naive(TestServers.naive[0]))
         XCTAssertTrue(json.contains("\"route\""))
         XCTAssertFalse(json.contains("\"routing\""))
@@ -94,7 +106,8 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertFalse(json.contains("\"sniff\" : true") || json.contains("\"sniff\": true"))
         XCTAssertTrue(json.contains("default_domain_resolver"))
         XCTAssertTrue(json.contains("\"action\" : \"sniff\"") || json.contains("\"action\": \"sniff\""))
-        XCTAssertTrue(json.contains("\"timestamp\" : false") || json.contains("\"timestamp\": false"))
+        XCTAssertFalse(json.contains("\"evaluate\""))
+        XCTAssertFalse(json.contains("\"disable_optimistic_cache\""))
     }
 
     func testJournalTimeFormat() {
@@ -132,7 +145,13 @@ final class SingBoxConfigTests: XCTestCase {
             .deletingLastPathComponent()
         let singboxURL = repoRoot.appendingPathComponent("macos/singbox_macos/sing-box")
         guard FileManager.default.isExecutableFile(atPath: singboxURL.path) else {
-            throw XCTSkip("sing-box binary not found; run scripts/singbox-download-auto.py")
+            let message = "sing-box binary not found; run scripts/singbox-download-auto.py"
+            if ProcessInfo.processInfo.environment["CI"] == "true" {
+                XCTFail(message)
+            } else {
+                throw XCTSkip(message)
+            }
+            return
         }
 
         let configURL = FileManager.default.temporaryDirectory
