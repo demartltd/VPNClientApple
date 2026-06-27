@@ -17,6 +17,9 @@ final class AppState {
     var uploadBps: Double = 0
 
     var appVersionLabel: String = "1.0.2"
+    var appVersionDetailLabel: String {
+        "\(appVersionLabel) (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"))"
+    }
     var coreVersionToken: String = BundledCoreVersion.label
     var accountUser: AccountUser?
 

@@ -21,7 +21,7 @@ struct ServiceMenuView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         DemarKvRow(key: "Имя", value: "Demar VPN")
                         DemarKvRow(key: "Пакет", value: Bundle.main.bundleIdentifier ?? "—")
-                        DemarKvRow(key: "Версия", value: appState.appVersionLabel)
+                        DemarKvRow(key: "Версия", value: appState.appVersionDetailLabel)
                         DemarKvRow(key: "Платформа", value: AppPlatform.label)
                         DemarKvRow(
                             key: "Core",
