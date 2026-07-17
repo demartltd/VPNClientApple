@@ -2,7 +2,7 @@ import XCTest
 @testable import DemarVPN
 
 final class SingBoxConfigTests: XCTestCase {
-    func testNaiveConfigPassesSingBoxCheck() throws {
+    func testAllConfigsPassSingBoxCheck() throws {
         for profile in TestServers.profiles {
             try assertSingBoxCheckPasses(json: try SingBoxConfigBuilder.buildTunConfigJson(
                 plan: profile.connectPlan
@@ -18,6 +18,10 @@ final class SingBoxConfigTests: XCTestCase {
             json.contains("\"server\": \"\(profile.server)\"")
         )
         XCTAssertTrue(
+            json.contains("\"server_port\" : \(profile.port)") ||
+            json.contains("\"server_port\": \(profile.port)")
+        )
+        XCTAssertTrue(
             json.contains("\"server_name\" : \"\(profile.tlsServerName)\"") ||
             json.contains("\"server_name\": \"\(profile.tlsServerName)\"")
         )
@@ -30,6 +34,7 @@ final class SingBoxConfigTests: XCTestCase {
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         let outbounds = try XCTUnwrap(root["outbounds"] as? [[String: Any]])
         let proxyOutbound = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
+        XCTAssertEqual(proxyOutbound["type"] as? String, "naive")
         XCTAssertNotNil(proxyOutbound["domain_resolver"])
 
         let dns = try XCTUnwrap(root["dns"] as? [String: Any])
@@ -53,7 +58,6 @@ final class SingBoxConfigTests: XCTestCase {
         let tunInbound = try XCTUnwrap(inbounds.first { ($0["type"] as? String) == "tun" })
         XCTAssertEqual(tunInbound["strict_route"] as? Bool, true)
         XCTAssertEqual(tunInbound["address"] as? [String], ["172.19.0.1/30"])
-        XCTAssertTrue((tunInbound["route_exclude_address"] as? [String])?.contains("\(profile.server)/32") == true)
 
         let route = try XCTUnwrap(root["route"] as? [String: Any])
         XCTAssertEqual(route["auto_detect_interface"] as? Bool, true)
@@ -61,10 +65,29 @@ final class SingBoxConfigTests: XCTestCase {
         let allCIDRs = rules
             .compactMap { $0["ip_cidr"] as? [String] }
             .flatMap { $0 }
-        XCTAssertTrue(allCIDRs.contains("\(profile.server)/32"))
+        XCTAssertTrue(allCIDRs.isEmpty, "hostname uplink has no build-time IPv4 bypass")
         XCTAssertFalse(allCIDRs.contains("2001:4860:4860::8888/128"))
         XCTAssertFalse(allCIDRs.contains("2606:4700:4700::1111/128"))
 
+        try assertSingBoxCheckPasses(json: json)
+    }
+
+    func testHysteria2OutboundMatchesServerReference() throws {
+        let profile = TestServers.hysteria2[0]
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(profile))
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
+        let outbounds = try XCTUnwrap(root["outbounds"] as? [[String: Any]])
+        let proxy = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
+        XCTAssertEqual(proxy["type"] as? String, "hysteria2")
+        XCTAssertEqual(proxy["server"] as? String, profile.server)
+        XCTAssertEqual(proxy["server_port"] as? Int, profile.port)
+        XCTAssertEqual(proxy["password"] as? String, profile.password)
+        XCTAssertNil(proxy["udp_over_tcp"])
+        XCTAssertNotNil(proxy["domain_resolver"])
+        let tls = try XCTUnwrap(proxy["tls"] as? [String: Any])
+        XCTAssertEqual(tls["enabled"] as? Bool, true)
+        XCTAssertEqual(tls["server_name"] as? String, profile.tlsServerName)
+        XCTAssertEqual(tls["alpn"] as? [String], ["h3"])
         try assertSingBoxCheckPasses(json: json)
     }
 

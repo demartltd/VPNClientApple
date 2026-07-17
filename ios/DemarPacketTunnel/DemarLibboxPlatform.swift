@@ -12,6 +12,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     private let reportFilter = DefaultInterfaceReportFilter()
     private var lossDebounceWork: DispatchWorkItem?
     private var lastKnownPhysicalInterfaces: [LibboxNetworkInterface] = []
+    private var lastGoodInterface: DefaultInterfaceUpdate?
 
     private static let lossDebounceInterval: TimeInterval = 3
 
@@ -186,17 +187,16 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     }
 
     private func updateDefaultInterface(_ listener: LibboxInterfaceUpdateListenerProtocol, path: Network.NWPath) {
-        let update: DefaultInterfaceUpdate
-        if let interface = preferredPhysicalInterface(from: path) {
-            lastKnownPhysicalInterfaces = physicalLibboxInterfaces(from: path)
-            update = DefaultInterfaceUpdate(
-                name: interface.name,
-                index: interface.index,
-                isExpensive: path.isExpensive,
-                isConstrained: path.isConstrained
-            )
-        } else {
-            update = .lost
+        let candidates = physicalInterfaceCandidates(from: path)
+        let pathContext = Self.pathContext(from: path)
+        let update = DefaultInterfaceResolver.resolve(
+            candidates: candidates,
+            path: pathContext,
+            lastGood: lastGoodInterface
+        )
+        if DefaultInterfaceResolver.isLiveCandidate(update, candidates: candidates) {
+            lastGoodInterface = update
+            lastKnownPhysicalInterfaces = physicalLibboxInterfaces(from: candidates)
         }
 
         switch reportFilter.decide(update) {
@@ -231,19 +231,22 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     }
 
     private func physicalLibboxInterfaces(from path: Network.NWPath) -> [LibboxNetworkInterface] {
-        physicalInterfaceCandidates(from: path)
-            .map { interface -> LibboxNetworkInterface in
-                let item = LibboxNetworkInterface()
-                item.name = interface.name
-                item.index = interface.index
-                switch interface.kind {
-                case .wifi: item.type = LibboxInterfaceTypeWIFI
-                case .cellular: item.type = LibboxInterfaceTypeCellular
-                case .ethernet: item.type = LibboxInterfaceTypeEthernet
-                default: item.type = LibboxInterfaceTypeOther
-                }
-                return item
+        physicalLibboxInterfaces(from: physicalInterfaceCandidates(from: path))
+    }
+
+    private func physicalLibboxInterfaces(from candidates: [PhysicalInterfaceCandidate]) -> [LibboxNetworkInterface] {
+        candidates.map { interface -> LibboxNetworkInterface in
+            let item = LibboxNetworkInterface()
+            item.name = interface.name
+            item.index = interface.index
+            switch interface.kind {
+            case .wifi: item.type = LibboxInterfaceTypeWIFI
+            case .cellular: item.type = LibboxInterfaceTypeCellular
+            case .ethernet: item.type = LibboxInterfaceTypeEthernet
+            default: item.type = LibboxInterfaceTypeOther
             }
+            return item
+        }
     }
 
     private func physicalInterfaceCandidates(from path: Network.NWPath) -> [PhysicalInterfaceCandidate] {
@@ -258,12 +261,14 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             }
     }
 
-    private func preferredPhysicalInterface(from path: Network.NWPath) -> PhysicalInterfaceCandidate? {
-        PhysicalInterfaceSelector.preferred(
-            from: physicalInterfaceCandidates(from: path),
+    private static func pathContext(from path: Network.NWPath) -> DefaultInterfaceResolver.PathContext {
+        DefaultInterfaceResolver.PathContext(
+            isSatisfied: path.status != .unsatisfied,
             usesWifi: path.usesInterfaceType(.wifi),
             usesCellular: path.usesInterfaceType(.cellular),
-            usesEthernet: path.usesInterfaceType(.wiredEthernet)
+            usesEthernet: path.usesInterfaceType(.wiredEthernet),
+            isExpensive: path.isExpensive,
+            isConstrained: path.isConstrained
         )
     }
 
@@ -289,6 +294,9 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             throw NSError(domain: "DemarLibbox", code: 5, userInfo: [
                 NSLocalizedDescriptionKey: "Default interface monitor has not started.",
             ])
+        }
+        guard nwMonitor.currentPath.status != .unsatisfied else {
+            return DemarNetworkInterfaceIterator(lastKnownPhysicalInterfaces)
         }
         let interfaces = physicalLibboxInterfaces(from: nwMonitor.currentPath)
         if !interfaces.isEmpty {
@@ -322,6 +330,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         nwMonitor?.cancel()
         nwMonitor = nil
         networkSettings = nil
+        lastGoodInterface = nil
         lastKnownPhysicalInterfaces = []
     }
 }

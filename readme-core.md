@@ -1,4 +1,4 @@
-# Ядро VPN: Sing-box (NaiveProxy) — Demar VPN (Apple)
+# Ядро VPN: Sing-box (NaiveProxy + Hysteria2) — Demar VPN (Apple)
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
 
@@ -7,6 +7,7 @@
 Документация Sing-box:
 
 - [Naive outbound](https://sing-box.sagernet.org/configuration/outbound/naive/)
+- [Hysteria2 outbound](https://sing-box.sagernet.org/configuration/outbound/hysteria2/)
 - [TUN inbound](https://sing-box.sagernet.org/configuration/inbound/tun/)
 - [TLS outbound](https://sing-box.sagernet.org/configuration/shared/tls/)
 - [UDP over TCP](https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/)
@@ -52,6 +53,7 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 | `password` | `password` | no |
 | `tlsServerName` | `tls.server_name` | yes (TLS обязателен для naive) |
 | `displayName` | — | UI only |
+| `city` | — | UI subtitle only |
 
 ### Hardcoded defaults (Demar builder)
 
@@ -99,12 +101,26 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 
 **Platform:** Naive outbound доступен на Apple platforms; iOS Libbox собирается с `with_naive_outbound` — см. [`ios/Frameworks/README.md`](ios/Frameworks/README.md).
 
+### Hysteria2: профиль и outbound
+
+[`Hysteria2Profile`](DemarVPN/Core/Vpn/Hysteria2Profile.swift) → `SingBoxConnectPlan.hysteria2(_:)`:
+
+| App field | sing-box key |
+|-----------|--------------|
+| `server` | `server` |
+| `port` | `server_port` |
+| `password` | `password` |
+| `tlsServerName` | `tls.server_name` |
+
+Hardcoded: `type: hysteria2`, `tag: proxy`, `tls.enabled: true`, `tls.alpn: ["h3"]`, `domain_resolver` → `dns-direct`. TUN/DNS/route — те же overrides, что у Naive (DoH remote, SNI bootstrap, `strict_route`, reject app QUIC `:443` — uplink hy2 на другом порту не затрагивается). Libbox Apple уже с `with_quic`; отдельный build tag не нужен.
+
 ### Default interface monitor (NE, iOS + macOS)
 
 Libbox закрывает **все** соединения, как только платформа сообщает пустой default interface (`updateDefaultInterface("", -1)`) — для naive это рвёт HTTP/2-туннель (каскад `stream failed: aborted`, `dial: operation was canceled`). Внутри NE `NWPathMonitor` кратковременно флапает в `.unsatisfied` (применение routes/DNS, Wi-Fi-скан, sleep/wake), поэтому сырые апдейты в ядро не передаются:
 
 - `DefaultInterfaceReportFilter` (`ios/Shared/DefaultInterfaceReporter.swift`) — дедуп одинаковых апдейтов; потеря интерфейса репортится только если держится ≥3 c (debounce), восстановление отменяет потерю.
-- Интерфейс выбирается по фактически используемому типу `NWPath.usesInterfaceType` (`wifi`/`cellular`/`wiredEthernet`) из non-tunnel `path.availableInterfaces`, поэтому Wi‑Fi → LTE сразу репортит `pdp_ip*`, даже если `en0` ещё остаётся в списке. На macOS NE transient `.unsatisfied` не считается потерей, пока `availableInterfaces` содержит физический интерфейс (`en0`/Ethernet/etc.); иначе Libbox закрывает naive HTTP/2 и DNS падает с `use of closed network connection`.
+- `DefaultInterfaceResolver` — **sticky**: пока last-known uplink (`en0`/`pdp_ip*`/Ethernet) ещё в `availableInterfaces`, смена `usesInterfaceType` (Wi‑Fi↔LTE) **не** меняет репорт в libbox — иначе naive HTTP/2 рвётся на rebind. Новый iface берётся только когда sticky ушёл из candidates. Если path **satisfied**, но phys скрыт за TUN (типично iOS NE: в списке только `utun*`), репортится last-known uplink.
+- На macOS NE transient `.unsatisfied` не считается потерей, пока `availableInterfaces` содержит физический интерфейс; `getInterfaces()` при `.unsatisfied` возвращает last-known snapshot.
 - `TunnelLifecycle` (path monitor, sleep/wake, heartbeat) работает на обеих платформах; короткие `.unsatisfied` флапы при handoff не перезапускают core, софт-рестарт ядра — только после подтверждённой потери пути (`pathRecoveredAfterLoss`) или смены excluded-маршрутов, wake (каждая разблокировка) здоровый туннель не перезапускает.
 
 ---
@@ -155,6 +171,7 @@ Connect: `NativeVpnService` → `VpnTunnelController` → extension → Libbox (
 
 - [x] `DemarPacketTunnel` + `NativeVpnService`
 - [x] NaiveProxy → config (`SingBoxConnectPlan`, `SingBoxConfigBuilder`)
+- [x] Hysteria2 → config (`Hysteria2Profile`, `SingBoxConnectPlan.hysteria2`)
 - [x] Geo в bundle iOS / macOS
 - [x] `AppState` + `VpnStatusMonitor` (iOS + macOS)
 - [x] macOS Network Extension + Libbox in-process

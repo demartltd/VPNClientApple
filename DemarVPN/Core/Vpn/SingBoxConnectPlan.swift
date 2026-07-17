@@ -32,15 +32,35 @@ struct SingBoxConnectPlan {
         ]
         if !profile.username.isEmpty { outbound["username"] = profile.username }
         if !profile.password.isEmpty { outbound["password"] = profile.password }
+        return plan(uplink: profile.server, outbound: outbound, tlsServerName: profile.tlsServerName)
+    }
 
-        return SingBoxConnectPlan(
-            uplinkHost: profile.server,
+    static func hysteria2(_ profile: Hysteria2Profile) -> SingBoxConnectPlan {
+        let outbound: [String: Any] = [
+            "type": "hysteria2",
+            "tag": SingBoxConfigConstants.proxyTag,
+            "server": profile.server,
+            "server_port": profile.port,
+            "password": profile.password,
+            "domain_resolver": SingBoxDnsBuilder.domainResolver(server: SingBoxConfigConstants.dnsDirectTag),
+            "tls": [
+                "enabled": true,
+                "server_name": profile.tlsServerName,
+                "alpn": ["h3"],
+            ],
+        ]
+        return plan(uplink: profile.server, outbound: outbound, tlsServerName: profile.tlsServerName)
+    }
+
+    private static func plan(uplink: String, outbound: [String: Any], tlsServerName: String) -> SingBoxConnectPlan {
+        SingBoxConnectPlan(
+            uplinkHost: uplink,
             proxyOutbound: outbound,
-            directIPs: directIPs(forHost: profile.server),
+            directIPs: directIPs(forHost: uplink),
             tun: SingBoxTunOptions(
                 dnsFinal: SingBoxConfigConstants.dnsRemoteTag,
-                dnsBootstrapDomains: [profile.tlsServerName],
-                directDomains: [profile.tlsServerName],
+                dnsBootstrapDomains: [tlsServerName],
+                directDomains: [tlsServerName],
                 strictRoute: true
             )
         )

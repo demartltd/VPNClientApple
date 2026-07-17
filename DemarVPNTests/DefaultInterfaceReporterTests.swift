@@ -70,4 +70,94 @@ final class DefaultInterfaceReporterTests: XCTestCase {
         XCTAssertTrue(PhysicalInterfaceSelector.isTunnelInterface("lo0"))
         XCTAssertFalse(PhysicalInterfaceSelector.isTunnelInterface("pdp_ip0"))
     }
+
+    func testResolverFallsBackToLastGoodWhenPhysHiddenBehindTunnel() {
+        let lastGood = DefaultInterfaceUpdate(name: "en0", index: 14, isExpensive: false, isConstrained: false)
+        let path = DefaultInterfaceResolver.PathContext(
+            isSatisfied: true,
+            usesWifi: false,
+            usesCellular: false,
+            usesEthernet: false,
+            isExpensive: false,
+            isConstrained: false
+        )
+        let update = DefaultInterfaceResolver.resolve(candidates: [], path: path, lastGood: lastGood)
+        XCTAssertEqual(update.name, "en0")
+        XCTAssertEqual(update.index, 14)
+        XCTAssertFalse(DefaultInterfaceResolver.isLiveCandidate(update, candidates: []))
+    }
+
+    func testResolverReportsLiveIfaceDuringTransientUnsatisfied() {
+        let path = DefaultInterfaceResolver.PathContext(
+            isSatisfied: false,
+            usesWifi: true,
+            usesCellular: false,
+            usesEthernet: false,
+            isExpensive: false,
+            isConstrained: false
+        )
+        let update = DefaultInterfaceResolver.resolve(candidates: [wifi], path: path, lastGood: nil)
+        XCTAssertEqual(update.name, "en0")
+        XCTAssertTrue(DefaultInterfaceResolver.isLiveCandidate(update, candidates: [wifi]))
+    }
+
+    func testResolverReportsLossWhenUnsatisfiedWithoutCandidatesOrLastGood() {
+        let path = DefaultInterfaceResolver.PathContext(
+            isSatisfied: false,
+            usesWifi: false,
+            usesCellular: false,
+            usesEthernet: false,
+            isExpensive: false,
+            isConstrained: false
+        )
+        XCTAssertEqual(DefaultInterfaceResolver.resolve(candidates: [], path: path, lastGood: nil), .lost)
+    }
+
+    func testResolverSticksThroughWifiCellularHandoff() {
+        let path = DefaultInterfaceResolver.PathContext(
+            isSatisfied: true,
+            usesWifi: false,
+            usesCellular: true,
+            usesEthernet: false,
+            isExpensive: true,
+            isConstrained: true
+        )
+        let update = DefaultInterfaceResolver.resolve(candidates: [wifi, cellular], path: path, lastGood: en0)
+        XCTAssertEqual(update.name, "en0")
+        XCTAssertEqual(update.index, 14)
+        XCTAssertTrue(update.isExpensive)
+        XCTAssertTrue(update.isConstrained)
+        XCTAssertTrue(DefaultInterfaceResolver.isLiveCandidate(update, candidates: [wifi, cellular]))
+    }
+
+    func testResolverSwitchesWhenStickyIfaceLeavesCandidates() {
+        let path = DefaultInterfaceResolver.PathContext(
+            isSatisfied: true,
+            usesWifi: false,
+            usesCellular: true,
+            usesEthernet: false,
+            isExpensive: true,
+            isConstrained: false
+        )
+        let update = DefaultInterfaceResolver.resolve(candidates: [cellular], path: path, lastGood: en0)
+        XCTAssertEqual(update.name, "pdp_ip0")
+        XCTAssertTrue(update.isExpensive)
+        XCTAssertTrue(DefaultInterfaceResolver.isLiveCandidate(update, candidates: [cellular]))
+    }
+
+    func testResolverKeepsLastGoodWhenPhysHiddenBehindTunnelWithSticky() {
+        let lastGood = DefaultInterfaceUpdate(name: "en0", index: 14, isExpensive: false, isConstrained: false)
+        let path = DefaultInterfaceResolver.PathContext(
+            isSatisfied: true,
+            usesWifi: false,
+            usesCellular: true,
+            usesEthernet: false,
+            isExpensive: true,
+            isConstrained: false
+        )
+        let update = DefaultInterfaceResolver.resolve(candidates: [], path: path, lastGood: lastGood)
+        XCTAssertEqual(update.name, "en0")
+        XCTAssertTrue(update.isExpensive)
+        XCTAssertFalse(DefaultInterfaceResolver.isLiveCandidate(update, candidates: []))
+    }
 }

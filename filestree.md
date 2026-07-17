@@ -26,6 +26,7 @@ DemarVPN/                              # SwiftUI target
 │   │   └── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
 │   ├── Vpn/
 │   │   ├── NaiveProfile.swift         # NaiveProxy профиль
+│   │   ├── Hysteria2Profile.swift     # Hysteria2 профиль
 │   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun options
 │   │   └── SingBoxConfigBuilder.swift # Sing-box JSON TUN
 │   ├── Services/
@@ -92,7 +93,7 @@ ios/
 │   ├── VpnAppGroup.swift              # App Group paths
 │   ├── DemarLogTime.swift             # journal stamp yyyy-MM-dd-HH-mm-ss (UTC)
 │   ├── VpnSharedStore.swift           # journal, payload, state
-│   ├── DefaultInterfaceReporter.swift # дедуп/debounce default interface для libbox
+│   ├── DefaultInterfaceReporter.swift # sticky default iface + debounce для libbox
 │   ├── VpnTunnelController.swift      # NETunnelProviderManager
 │   ├── VpnControlConstants.swift      # kind CC widget
 │   ├── VpnControlIntent.swift         # CC toggle intent

@@ -630,10 +630,9 @@ enum VpnSharedLineFile {
 
 enum VpnReconfigurePolicy {
   /// With unchanged routes, only a confirmed restored path soft-restarts the core.
-  /// Routine Wi-Fi/cellular changes are handled by sing-box `auto_detect_interface`,
-  /// and wake (fired on every screen unlock) must not restart a healthy tunnel —
-  /// a full service reload re-runs openTun/setTunnelNetworkSettings, which itself
-  /// flaps the network path and aborts every naive stream.
+  /// Routine Wi-Fi/cellular flips stay sticky in the platform interface monitor;
+  /// wake (every screen unlock) must not restart a healthy tunnel — a full service
+  /// reload re-runs openTun/setTunnelNetworkSettings and aborts every naive stream.
   static func shouldSoftRestartWhenRoutesUnchanged(reason: String) -> Bool {
     reason == "pathRecoveredAfterLoss"
   }

@@ -121,8 +121,8 @@ final class TunnelLifecycle {
         self.pendingRecoveryAfterUnsatisfied = true
         return
       }
-      // sing-box `auto_detect_interface` rebinds across Wi-Fi/cellular changes on its own;
-      // only force recovery when path loss lasted long enough to reach libbox.
+      // Sticky default-interface reporting keeps naive HTTP/2 on the same uplink across
+      // Wi-Fi/cellular flips; only soft-restart after a confirmed path outage.
       guard self.pendingRecoveryAfterUnsatisfied else { return }
       self.pendingRecoveryAfterUnsatisfied = false
       let outage = self.unsatisfiedSince.map { Date().timeIntervalSince($0) } ?? 0

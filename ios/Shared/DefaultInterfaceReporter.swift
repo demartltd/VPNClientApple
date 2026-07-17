@@ -44,6 +44,66 @@ enum PhysicalInterfaceSelector {
   }
 }
 
+/// Sticky default-interface pick: keep lastGood while listed, else preferred / TUN fallback.
+enum DefaultInterfaceResolver {
+  struct PathContext: Equatable {
+    var isSatisfied: Bool
+    var usesWifi: Bool
+    var usesCellular: Bool
+    var usesEthernet: Bool
+    var isExpensive: Bool
+    var isConstrained: Bool
+  }
+
+  static func resolve(
+    candidates: [PhysicalInterfaceCandidate],
+    path: PathContext,
+    lastGood: DefaultInterfaceUpdate?
+  ) -> DefaultInterfaceUpdate {
+    // Stick to lastGood while it is still listed — Wi-Fi↔LTE type flips must not
+    // rebind libbox (naive HTTP/2 dies on updateDefaultInterface name change).
+    if let last = lastGood, !last.isLost,
+       candidates.contains(where: { $0.name == last.name && $0.index == last.index }) {
+      return DefaultInterfaceUpdate(
+        name: last.name,
+        index: last.index,
+        isExpensive: path.isExpensive,
+        isConstrained: path.isConstrained
+      )
+    }
+    if let iface = PhysicalInterfaceSelector.preferred(
+      from: candidates,
+      usesWifi: path.usesWifi,
+      usesCellular: path.usesCellular,
+      usesEthernet: path.usesEthernet
+    ) {
+      return DefaultInterfaceUpdate(
+        name: iface.name,
+        index: iface.index,
+        isExpensive: path.isExpensive,
+        isConstrained: path.isConstrained
+      )
+    }
+    if path.isSatisfied, let last = lastGood, !last.isLost {
+      return DefaultInterfaceUpdate(
+        name: last.name,
+        index: last.index,
+        isExpensive: path.isExpensive,
+        isConstrained: path.isConstrained
+      )
+    }
+    return .lost
+  }
+
+  static func isLiveCandidate(
+    _ update: DefaultInterfaceUpdate,
+    candidates: [PhysicalInterfaceCandidate]
+  ) -> Bool {
+    guard !update.isLost else { return false }
+    return candidates.contains { $0.name == update.name && $0.index == update.index }
+  }
+}
+
 /// Filters default-interface updates before they reach libbox: duplicates are
 /// dropped and interface loss is debounced. Libbox v1.13.14 closes every
 /// connection as soon as it sees an empty default interface, so the transient
