@@ -2,7 +2,7 @@
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
 
-Целевая версия core: **latest sing-box release** (`scripts/libbox-build.py`, `scripts/singbox-download-auto.py`). Фактическая версия — в UI (`bundled_version.txt` в bundle).
+Целевая версия core: **sing-box 1.13.14**, зафиксированная в [`singbox-version.txt`](singbox-version.txt). Оба build-скрипта и `bundled_version.txt` обязаны использовать эту версию.
 
 Документация Sing-box:
 
@@ -31,7 +31,7 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 | `inet4_address` | `address` |
 | `inbound.sniff` | `route.rules` → `action: sniff` |
 | `outbound: block` | `action: reject` |
-| DNS `address: 1.1.1.1` | DNS `type: udp`, `server: 1.1.1.1` |
+| DNS `address: local` | DNS `type: local` |
 | `domain_strategy` на outbound | `domain_resolver: { server, strategy }` |
 | — | `route.default_domain_resolver` (обязателен с 1.12) |
 
@@ -74,7 +74,7 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 |----------|----------|--------|
 | `dns.final` | `dns-remote` | DNS через proxy |
 | `dns-remote` тип | `https` (DoH, `detour: proxy`) | одно мультиплексированное соединение через прокси вместо потока на каждый запрос (raw tcp/udp) — без лавины `stream failed: aborted` |
-| `dns-direct` тип | `udp` 1.1.1.1 | bootstrap/SNI напрямую |
+| `dns-direct` тип | `local` | системный Darwin resolver до захвата маршрутов |
 | PTR (reverse) запросы | `action: reject` (`drop`) | локальные `*.in-addr.arpa` / `_dns-sd._udp` отбрасываются: прямой резолвер недоступен внутри macOS NE и перегружал единственное соединение naive |
 | `experimental.cache_file` | `enabled: true` | кэш DNS/rule-set переживает рестарты |
 | route resolve | нет | данные не зависят от прямого DNS: домены идут в прокси, резолв на стороне сервера |
@@ -83,6 +83,8 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 | `strict_route` | `true` | |
 | direct domain | `[tlsServerName]` | SNI → direct outbound |
 | `directIPs` | IPv4 literal `server` или runtime merge hostname → IPv4 | exclude/route bypass |
+
+На Apple endpoint IP сначала исключается из `NEPacketTunnelNetworkSettings`, затем применяется новый config. При смене A-record kernel routes переустанавливаются до reload; неудачный reload приводит к одному hard restart, затем к остановке туннеля с ошибкой.
 
 ### sing-box: поля Naive (не экспонированы в app)
 
@@ -112,7 +114,7 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 | `password` | `password` |
 | `tlsServerName` | `tls.server_name` |
 
-Hardcoded: `type: hysteria2`, `tag: proxy`, `tls.enabled: true`, `tls.alpn: ["h3"]`, `domain_resolver` → `dns-direct`. TUN/DNS/route — те же overrides, что у Naive (DoH remote, SNI bootstrap, `strict_route`, reject app QUIC `:443` — uplink hy2 на другом порту не затрагивается). Libbox Apple уже с `with_quic`; отдельный build tag не нужен.
+Hardcoded: `type: hysteria2`, `tag: proxy`, `tls.enabled: true`, `tls.alpn: ["h3"]`, `domain_resolver` → `dns-direct`. TUN/DNS/route — те же overrides, что у Naive, но UDP/443 для Hysteria2 не блокируется. Libbox Apple уже с `with_quic`; отдельный build tag не нужен.
 
 ### Default interface monitor (NE, iOS + macOS)
 
@@ -122,6 +124,10 @@ Libbox закрывает **все** соединения, как только �
 - `DefaultInterfaceResolver` — **sticky**: пока last-known uplink (`en0`/`pdp_ip*`/Ethernet) ещё в `availableInterfaces`, смена `usesInterfaceType` (Wi‑Fi↔LTE) **не** меняет репорт в libbox — иначе naive HTTP/2 рвётся на rebind. Новый iface берётся только когда sticky ушёл из candidates. Если path **satisfied**, но phys скрыт за TUN (типично iOS NE: в списке только `utun*`), репортится last-known uplink.
 - На macOS NE transient `.unsatisfied` не считается потерей, пока `availableInterfaces` содержит физический интерфейс; `getInterfaces()` при `.unsatisfied` возвращает last-known snapshot.
 - `TunnelLifecycle` (path monitor, sleep/wake, heartbeat) работает на обеих платформах; короткие `.unsatisfied` флапы при handoff не перезапускают core, софт-рестарт ядра — только после подтверждённой потери пути (`pathRecoveredAfterLoss`) или смены excluded-маршрутов, wake (каждая разблокировка) здоровый туннель не перезапускает.
+- `NEVPNProtocol.includeAllNetworks` и Libbox platform interface согласованно выключены: Apple игнорирует endpoint `excludedRoutes`, когда этот флаг включён. Full tunnel задаётся двумя `/1` routes, proxy endpoint — `/32` exclusion.
+- Endpoint резолвится до старта NE и подставляется IP-адресом в outbound; TLS SNI остаётся доменным именем.
+- `dns-direct: local` использует Darwin transport (`getaddrinfo`), а не DHCP/UDP из уже захваченного туннеля.
+- Extension сначала проверяет локальный mixed proxy без default routes, затем включает DNS + full-tunnel routes и повторяет proxy probe. Lifecycle heartbeat сам по себе не является readiness.
 
 ---
 

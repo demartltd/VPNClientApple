@@ -9,15 +9,15 @@
 - **Xcode 15+**
 - Deployment: **iOS 18+**, **macOS 14+** (VPN на Mac — **Apple Silicon arm64**)
 - Bundle ID: `com.demar.vpn`
-- **iOS:** SwiftUI + Network Extension (`DemarPacketTunnel`) + App Group + Sing-box config pipeline
+- **iOS:** SwiftUI + Network Extension (`DemarPacketTunnel`) + App Group + sing-box **1.13.14**
 - **macOS:** Network Extension + Libbox in-process (как iOS)
 - См. [`readme-core.md`](readme-core.md)
 
 Один раз перед сборкой (скрипт только для разработчиков, в runtime не вызывается):
 
 ```bash
-python3 scripts/singbox-download-auto.py   # → geo db: ios/Shared/singbox/, macos/singbox_macos/
-python3 scripts/libbox-build.py           # → ios/Frameworks/Libbox.xcframework (iOS + macOS)
+python3 scripts/singbox-download-auto.py   # pinned by singbox-version.txt
+python3 scripts/libbox-build.py           # same pinned core → Libbox.xcframework
 ```
 
 Xcode копирует geo assets в host app и в `DemarPacketTunnel.appex` (iOS: `singbox/`, macOS: `singbox_macos/`). Dev binary `sing-box` в runtime bundle не включается.
@@ -68,7 +68,7 @@ UI («Настройки → Настройки приложения») и CLI �
 ```bash
 ./scripts/journal.sh                 # auto: macos → sim → device
 ./scripts/journal.sh -o journal.txt  # сохранить в файл
-./scripts/journal.sh --core          # core.log (macos/sim; iOS — если есть Documents mirror)
+./scripts/journal.sh --core          # ограниченный хвост core.log, включая physical iOS mirror
 ./scripts/journal.sh -p ios          # физическое устройство
 ./scripts/journal.sh -d "iPhone Rem" # имя / UDID для devicectl
 ```

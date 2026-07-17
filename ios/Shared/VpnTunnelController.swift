@@ -1,5 +1,6 @@
 import Foundation
 import NetworkExtension
+import Darwin
 
 enum VpnTunnelError: LocalizedError {
   case missingPayload
@@ -27,6 +28,55 @@ enum VpnTunnelError: LocalizedError {
     case .appexBundleMismatch:
       return "Встроенное расширение DemarPacketTunnel повреждено или отсутствует. Переустановите приложение."
     }
+  }
+}
+
+enum UplinkIPv4Resolver {
+  static func resolve(_ host: String?) throws -> [String] {
+    let clean = host?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    guard !clean.isEmpty else { return [] }
+    var literal = in_addr()
+    if clean.withCString({ inet_pton(AF_INET, $0, &literal) }) == 1 { return [clean] }
+
+    var hints = addrinfo(
+      ai_flags: AI_DEFAULT,
+      ai_family: AF_INET,
+      ai_socktype: SOCK_STREAM,
+      ai_protocol: 0,
+      ai_addrlen: 0,
+      ai_canonname: nil,
+      ai_addr: nil,
+      ai_next: nil
+    )
+    var result: UnsafeMutablePointer<addrinfo>?
+    let code = getaddrinfo(clean, nil, &hints, &result)
+    guard code == 0 else {
+      throw NSError(domain: "DemarVpn", code: 10, userInfo: [
+        NSLocalizedDescriptionKey: "DNS lookup failed for \(clean): \(String(cString: gai_strerror(code)))",
+      ])
+    }
+    defer { if let result { freeaddrinfo(result) } }
+
+    var addresses = Set<String>()
+    var cursor = result
+    while let info = cursor?.pointee {
+      if info.ai_family == AF_INET,
+         let socketAddress = info.ai_addr?.withMemoryRebound(to: sockaddr_in.self, capacity: 1, { $0 })
+      {
+        var address = socketAddress.pointee.sin_addr
+        var buffer = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+        if inet_ntop(AF_INET, &address, &buffer, socklen_t(INET_ADDRSTRLEN)) != nil {
+          addresses.insert(String(cString: buffer))
+        }
+      }
+      cursor = info.ai_next
+    }
+    guard !addresses.isEmpty else {
+      throw NSError(domain: "DemarVpn", code: 10, userInfo: [
+        NSLocalizedDescriptionKey: "DNS lookup returned no IPv4 for \(clean).",
+      ])
+    }
+    return addresses.sorted()
   }
 }
 
@@ -673,7 +723,7 @@ final class VpnTunnelController {
       )
       #endif
       Self.setControlState("connecting")
-      completion(.success(()))
+      waitForTunnelReadiness(manager: manager, deadline: Date().addingTimeInterval(70), completion: completion)
       return
     } catch {
       // NE preference propagation can lag; retry a few times after stopping our stale session.
@@ -728,7 +778,11 @@ final class VpnTunnelController {
           try refreshedSession.startTunnel(options: options)
           self.diag("startTunnel retry succeeded (attemptsLeft=\(attemptsRemaining))")
           Self.setControlState("connecting")
-          completion(.success(()))
+          self.waitForTunnelReadiness(
+            manager: manager,
+            deadline: Date().addingTimeInterval(70),
+            completion: completion
+          )
         } catch {
           guard attemptsRemaining > 1 else {
             self.diag("startTunnel retry failed: \(error.localizedDescription)")
@@ -747,6 +801,40 @@ final class VpnTunnelController {
           )
         }
       }
+    }
+  }
+
+  private func waitForTunnelReadiness(
+    manager: NETunnelProviderManager,
+    deadline: Date,
+    completion: @escaping (Result<Void, Error>) -> Void
+  ) {
+    let status = manager.connection.status
+    let heartbeat = VpnSharedStore.extensionHeartbeatPhase() ?? ""
+    if status == .connected, heartbeat == "running" || heartbeat == "core-started" {
+      Self.setControlState("connected")
+      completion(.success(()))
+      return
+    }
+    if let message = VpnSharedStore.readTunnelStartFailureSnapshot() {
+      Self.setControlState("error")
+      completion(.failure(NSError(domain: "DemarVpn", code: 44, userInfo: [
+        NSLocalizedDescriptionKey: message,
+      ])))
+      return
+    }
+    if Date() >= deadline || status == .invalid {
+      let message = "VPN data path did not become ready within 70 seconds."
+      diag("readiness failed: status=\(Self.statusLabel(status)) heartbeat=\(heartbeat.isEmpty ? "none" : heartbeat)")
+      manager.connection.stopVPNTunnel()
+      Self.setControlState("error")
+      completion(.failure(NSError(domain: "DemarVpn", code: 45, userInfo: [
+        NSLocalizedDescriptionKey: message,
+      ])))
+      return
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+      self?.waitForTunnelReadiness(manager: manager, deadline: deadline, completion: completion)
     }
   }
 
@@ -793,15 +881,13 @@ final class VpnTunnelController {
   ) {
     let proto = (manager.protocolConfiguration as? NETunnelProviderProtocol) ?? NETunnelProviderProtocol()
     proto.providerBundleIdentifier = packetTunnelBundleId
-    #if os(macOS)
-    proto.serverAddress = macOSServerAddress(uplinkHost: uplinkHost)
-    #else
-    proto.serverAddress = "Demar VPN"
-    #endif
+    proto.serverAddress = Self.normalizedServerAddress(uplinkHost)
     proto.disconnectOnSleep = false
-    #if os(iOS)
     proto.includeAllNetworks = false
-    #endif
+    proto.excludeAPNs = true
+    proto.excludeCellularServices = true
+    proto.excludeLocalNetworks = false
+    proto.enforceRoutes = false
     proto.providerConfiguration = mergedProviderConfiguration(
       current: proto.providerConfiguration,
       uplinkHost: uplinkHost,
@@ -873,6 +959,11 @@ final class VpnTunnelController {
     }
   }
 
+  private static func normalizedServerAddress(_ uplinkHost: String?) -> String {
+    let host = uplinkHost?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    return host.isEmpty ? "Demar VPN" : host
+  }
+
   #if os(macOS)
   private func scheduleMacOSPostStartProbes(
     manager: NETunnelProviderManager,
@@ -908,11 +999,6 @@ final class VpnTunnelController {
         }
       }
     }
-  }
-
-  private static func macOSServerAddress(uplinkHost: String?) -> String {
-    let host = uplinkHost?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    return host.isEmpty ? "Demar VPN" : host
   }
 
   private static func embeddedAppexBundleMismatchDiag() -> String? {

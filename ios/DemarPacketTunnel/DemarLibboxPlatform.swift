@@ -3,10 +3,38 @@ import Libbox
 import Network
 import NetworkExtension
 
+private final class DarwinLocalDNSTransport: NSObject, LibboxLocalDNSTransportProtocol {
+    func raw() -> Bool { false }
+
+    func exchange(_: LibboxExchangeContext?, message _: Data?) throws {
+        throw NSError(domain: "DemarLibbox", code: 9, userInfo: [
+            NSLocalizedDescriptionKey: "Raw local DNS exchange is unavailable.",
+        ])
+    }
+
+    func lookup(_ ctx: LibboxExchangeContext?, network: String?, domain: String?) throws {
+        guard let domain, !domain.isEmpty else {
+            ctx?.errorCode(3)
+            return
+        }
+        guard network?.hasSuffix("6") != true else {
+            ctx?.errorCode(3)
+            return
+        }
+        let addresses = try UplinkIPv4Resolver.resolve(domain)
+        ctx?.success(addresses.joined(separator: "\n"))
+    }
+}
+
 final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, LibboxCommandServerHandlerProtocol {
     private weak var provider: NEPacketTunnelProvider?
     private var excludedIPv4: [String] = []
+    private var configuredExcludedIPv4Routes: [NEIPv4Route] = []
+    private var configuredIncludedIPv4Routes: [NEIPv4Route] = []
+    private var configuredDNSSettings: NEDNSSettings?
+    private var configuredIPv6Settings: NEIPv6Settings?
     private var networkSettings: NEPacketTunnelNetworkSettings?
+    private let dnsTransport = DarwinLocalDNSTransport()
     private var nwMonitor: NWPathMonitor?
     private let monitorQueue = DispatchQueue(label: "vpn.demar.iface-monitor", qos: .utility)
     private let reportFilter = DefaultInterfaceReportFilter()
@@ -21,13 +49,41 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         self.excludedIPv4 = excludedIPv4
     }
 
-    func updateExcludedIPv4(_ addresses: [String]) {
+    func reapplyExcludedIPv4(_ addresses: [String]) throws {
         excludedIPv4 = addresses
+        try libboxRunBlocking { [self] in
+            guard let provider, let settings = networkSettings, let ipv4 = settings.ipv4Settings else {
+                throw NSError(domain: "DemarLibbox", code: 6, userInfo: [
+                    NSLocalizedDescriptionKey: "TUN network settings are not active.",
+                ])
+            }
+            ipv4.excludedRoutes = Self.mergedIPv4Exclusions(
+                configured: configuredExcludedIPv4Routes,
+                runtimeAddresses: addresses
+            )
+            try await provider.setTunnelNetworkSettings(settings)
+            Self.diag("reapplied endpoint bypass: \(addresses.joined(separator: ","))")
+        }
     }
 
     func openTun(_ options: LibboxTunOptionsProtocol?, ret0_: UnsafeMutablePointer<Int32>?) throws {
         try libboxRunBlocking { [self] in
             try await openTun0(options, ret0_)
+        }
+    }
+
+    func activateTrafficCapture() throws {
+        try libboxRunBlocking { [self] in
+            guard let provider, let settings = networkSettings, let ipv4 = settings.ipv4Settings else {
+                throw NSError(domain: "DemarLibbox", code: 6, userInfo: [
+                    NSLocalizedDescriptionKey: "TUN network settings are not active.",
+                ])
+            }
+            ipv4.includedRoutes = configuredIncludedIPv4Routes
+            settings.dnsSettings = configuredDNSSettings
+            settings.ipv6Settings = configuredIPv6Settings
+            try await provider.setTunnelNetworkSettings(settings)
+            Self.diag("traffic capture activated routes=\(configuredIncludedIPv4Routes.count)")
         }
     }
 
@@ -49,10 +105,8 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
 
         var dnsSettings: NEDNSSettings?
         let dnsServer = try options.getDNSServerAddress()
-        let dns = NEDNSSettings(servers: [Self.effectiveIPv4DNS(dnsServer.value)])
-        settings.dnsSettings = dns
+        let dns = NEDNSSettings(servers: [try Self.validatedIPv4DNS(dnsServer.value)])
         dnsSettings = dns
-        settings.ipv6Settings = Self.ipv6DisabledSettings()
 
         var ipv4Addresses: [String] = []
         var ipv4Masks: [String] = []
@@ -66,33 +120,46 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         let ipv4Settings = NEIPv4Settings(addresses: ipv4Addresses, subnetMasks: ipv4Masks)
         var ipv4Routes = Self.collectIPv4Routes(from: options)
         if ipv4Routes.isEmpty {
-            ipv4Routes = Self.splitIPv4IncludedRoutes
+            ipv4Routes = [
+                NEIPv4Route(destinationAddress: "0.0.0.0", subnetMask: "128.0.0.0"),
+                NEIPv4Route(destinationAddress: "128.0.0.0", subnetMask: "128.0.0.0"),
+            ]
         }
 
-        var ipv4ExcludedRoutes = excludedIPv4.map {
-            NEIPv4Route(destinationAddress: $0, subnetMask: "255.255.255.255")
-        }
+        var configuredExcludedRoutes: [NEIPv4Route] = []
         let ipv4ExcludeIterator = options.getInet4RouteExcludeAddress()!
         while ipv4ExcludeIterator.hasNext() {
             let prefix = ipv4ExcludeIterator.next()!
-            ipv4ExcludedRoutes.append(NEIPv4Route(destinationAddress: prefix.address(), subnetMask: prefix.mask()))
+            configuredExcludedRoutes.append(NEIPv4Route(destinationAddress: prefix.address(), subnetMask: prefix.mask()))
         }
+        configuredExcludedIPv4Routes = configuredExcludedRoutes
+        let ipv4ExcludedRoutes = Self.mergedIPv4Exclusions(
+            configured: configuredExcludedRoutes,
+            runtimeAddresses: excludedIPv4
+        )
 
-        ipv4Settings.includedRoutes = ipv4Routes
+        configuredIncludedIPv4Routes = ipv4Routes
+        ipv4Settings.includedRoutes = []
         ipv4Settings.excludedRoutes = ipv4ExcludedRoutes
         settings.ipv4Settings = ipv4Settings
+        configuredIPv6Settings = Self.makeIPv6Settings(from: options)
 
         if !Self.hasDefaultIPv4Route(ipv4Routes) {
             dnsSettings?.matchDomains = [""]
             dnsSettings?.matchDomainsNoSearch = true
-            settings.dnsSettings = dnsSettings
         }
+        configuredDNSSettings = dnsSettings
 
         networkSettings = settings
         try await provider.setTunnelNetworkSettings(settings)
+        Self.diag(
+            "openTun mtu=\(options.getMTU()) dns=\(dns.servers.joined(separator: ",")) "
+                + "routes=\(ipv4Routes.count) excluded=\(ipv4ExcludedRoutes.count) capture=deferred"
+        )
 
         if let tunFd = provider.packetFlow.value(forKeyPath: "socket.fileDescriptor") as? Int32 {
             ret0_.pointee = tunFd
+            Self.diag("openTun fd source=packetFlow")
             return
         }
         let tunFd = LibboxGetTunnelFileDescriptor()
@@ -102,6 +169,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             ])
         }
         ret0_.pointee = tunFd
+        Self.diag("openTun fd source=libbox")
     }
 
     private static func collectIPv4Routes(from options: LibboxTunOptionsProtocol) -> [NEIPv4Route] {
@@ -128,29 +196,65 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         routes.contains { $0.destinationAddress == "0.0.0.0" && $0.destinationSubnetMask == "0.0.0.0" }
     }
 
-    private static func effectiveIPv4DNS(_ value: String) -> String {
+    private static func validatedIPv4DNS(_ value: String) throws -> String {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !trimmed.contains(":") else { return "1.1.1.1" }
+        guard !trimmed.isEmpty, !trimmed.contains(":") else {
+            throw NSError(domain: "DemarLibbox", code: 7, userInfo: [
+                NSLocalizedDescriptionKey: "Invalid synthetic IPv4 DNS address: \(value)",
+            ])
+        }
         return trimmed
     }
 
-    private static func ipv6DisabledSettings() -> NEIPv6Settings {
-        let settings = NEIPv6Settings(addresses: ["fdde:de4a:100::2"], networkPrefixLengths: [64])
-        settings.includedRoutes = []
-        settings.excludedRoutes = [NEIPv6Route.default()]
-        return settings
+    private static func mergedIPv4Exclusions(
+        configured: [NEIPv4Route],
+        runtimeAddresses: [String]
+    ) -> [NEIPv4Route] {
+        var routes = configured
+        var keys = Set(routes.map { "\($0.destinationAddress)/\($0.destinationSubnetMask)" })
+        for address in runtimeAddresses {
+            let key = "\(address)/255.255.255.255"
+            guard keys.insert(key).inserted else { continue }
+            routes.append(NEIPv4Route(destinationAddress: address, subnetMask: "255.255.255.255"))
+        }
+        return routes
     }
 
-    private static let splitIPv4IncludedRoutes: [NEIPv4Route] = [
-        NEIPv4Route(destinationAddress: "1.0.0.0", subnetMask: "255.0.0.0"),
-        NEIPv4Route(destinationAddress: "2.0.0.0", subnetMask: "254.0.0.0"),
-        NEIPv4Route(destinationAddress: "4.0.0.0", subnetMask: "252.0.0.0"),
-        NEIPv4Route(destinationAddress: "8.0.0.0", subnetMask: "248.0.0.0"),
-        NEIPv4Route(destinationAddress: "16.0.0.0", subnetMask: "240.0.0.0"),
-        NEIPv4Route(destinationAddress: "32.0.0.0", subnetMask: "224.0.0.0"),
-        NEIPv4Route(destinationAddress: "64.0.0.0", subnetMask: "192.0.0.0"),
-        NEIPv4Route(destinationAddress: "128.0.0.0", subnetMask: "128.0.0.0"),
-    ]
+    private static func makeIPv6Settings(from options: LibboxTunOptionsProtocol) -> NEIPv6Settings? {
+        var addresses: [String] = []
+        var prefixes: [NSNumber] = []
+        let addressIterator = options.getInet6Address()!
+        while addressIterator.hasNext() {
+            let prefix = addressIterator.next()!
+            addresses.append(prefix.address())
+            prefixes.append(NSNumber(value: prefix.prefix()))
+        }
+        guard !addresses.isEmpty else { return nil }
+
+        let settings = NEIPv6Settings(addresses: addresses, networkPrefixLengths: prefixes)
+        var included: [NEIPv6Route] = []
+        let routeIterator = options.getInet6RouteAddress()!
+        while routeIterator.hasNext() {
+            let prefix = routeIterator.next()!
+            included.append(NEIPv6Route(
+                destinationAddress: prefix.address(),
+                networkPrefixLength: NSNumber(value: prefix.prefix())
+            ))
+        }
+        settings.includedRoutes = included.isEmpty ? [NEIPv6Route.default()] : included
+
+        var excluded: [NEIPv6Route] = []
+        let excludeIterator = options.getInet6RouteExcludeAddress()!
+        while excludeIterator.hasNext() {
+            let prefix = excludeIterator.next()!
+            excluded.append(NEIPv6Route(
+                destinationAddress: prefix.address(),
+                networkPrefixLength: NSNumber(value: prefix.prefix())
+            ))
+        }
+        settings.excludedRoutes = excluded
+        return settings
+    }
 
     func usePlatformAutoDetectControl() -> Bool { false }
 
@@ -310,7 +414,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     func clearDNSCache() {}
     func readWIFIState() -> LibboxWIFIState? { nil }
     func send(_: LibboxNotification?) throws {}
-    func localDNSTransport() -> (any LibboxLocalDNSTransportProtocol)? { nil }
+    func localDNSTransport() -> (any LibboxLocalDNSTransportProtocol)? { dnsTransport }
     func systemCertificates() -> (any LibboxStringIteratorProtocol)? { nil }
 
     func getSystemProxyStatus() throws -> LibboxSystemProxyStatus { LibboxSystemProxyStatus() }
@@ -330,8 +434,16 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         nwMonitor?.cancel()
         nwMonitor = nil
         networkSettings = nil
+        configuredExcludedIPv4Routes = []
+        configuredIncludedIPv4Routes = []
+        configuredDNSSettings = nil
+        configuredIPv6Settings = nil
         lastGoodInterface = nil
         lastKnownPhysicalInterfaces = []
+    }
+
+    private static func diag(_ message: String) {
+        VpnSharedStore.appendPendingUiDiagLine("[tun] \(message)")
     }
 }
 

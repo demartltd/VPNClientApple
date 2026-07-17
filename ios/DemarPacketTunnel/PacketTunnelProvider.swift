@@ -9,6 +9,71 @@ private func logLine(_ message: String) {
   NSLog("[DemarPacketTunnel] %@", message)
 }
 
+private enum TunnelDataProbe {
+  struct Result {
+    let ok: Bool
+    let detail: String
+  }
+
+  static func run() -> Result {
+    let connect = request(
+      "CONNECT www.cloudflare.com:443 HTTP/1.1\r\nHost: www.cloudflare.com:443\r\nConnection: close\r\n\r\n",
+      expectedStatus: 200
+    )
+    guard connect.ok else { return connect }
+    return request(
+      "GET http://cp.cloudflare.com/generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nConnection: close\r\n\r\n",
+      expectedStatus: 204
+    )
+  }
+
+  private static func request(_ request: String, expectedStatus: Int) -> Result {
+    let descriptor = socket(AF_INET, SOCK_STREAM, 0)
+    guard descriptor >= 0 else { return Result(ok: false, detail: "proxy socket: \(String(cString: strerror(errno)))") }
+    defer { close(descriptor) }
+
+    var noSignal: Int32 = 1
+    setsockopt(descriptor, SOL_SOCKET, SO_NOSIGPIPE, &noSignal, socklen_t(MemoryLayout.size(ofValue: noSignal)))
+    var timeout = timeval(tv_sec: 15, tv_usec: 0)
+    setsockopt(descriptor, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout.size(ofValue: timeout)))
+    setsockopt(descriptor, SOL_SOCKET, SO_SNDTIMEO, &timeout, socklen_t(MemoryLayout.size(ofValue: timeout)))
+
+    var address = sockaddr_in()
+    address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+    address.sin_family = sa_family_t(AF_INET)
+    address.sin_port = in_port_t(UInt16(SingBoxConfigConstants.diagnosticPort).bigEndian)
+    _ = SingBoxConfigConstants.diagnosticHost.withCString {
+      inet_pton(AF_INET, $0, &address.sin_addr)
+    }
+    let connected = withUnsafePointer(to: &address) {
+      $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+        connect(descriptor, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+      }
+    }
+    guard connected == 0 else {
+      return Result(ok: false, detail: "diagnostic proxy connect: \(String(cString: strerror(errno)))")
+    }
+
+    let sent = request.utf8CString.withUnsafeBytes {
+      send(descriptor, $0.baseAddress, $0.count - 1, 0)
+    }
+    guard sent > 0 else {
+      return Result(ok: false, detail: "diagnostic proxy send: \(String(cString: strerror(errno)))")
+    }
+    var buffer = [UInt8](repeating: 0, count: 4096)
+    let count = recv(descriptor, &buffer, buffer.count, 0)
+    guard count > 0 else {
+      return Result(ok: false, detail: "diagnostic proxy receive: \(String(cString: strerror(errno)))")
+    }
+    let response = String(decoding: buffer.prefix(count), as: UTF8.self)
+    let status = Int(response.split(separator: " ").dropFirst().first ?? "") ?? 0
+    return Result(
+      ok: status == expectedStatus,
+      detail: "diagnostic proxy HTTP \(status), expected \(expectedStatus)"
+    )
+  }
+}
+
 private func appendDiagLine(_ message: String) {
   #if os(macOS)
   VpnSharedStore.appendPendingUiDiagLine("[mac] \(message)")
@@ -90,8 +155,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     startTunnelLock.lock()
     if startTunnelInFlight {
       startTunnelLock.unlock()
-      Self.diag("startTunnel ignored: already in flight")
-      completionHandler(nil)
+      let error = NSError(domain: "DemarVpn", code: 43, userInfo: [
+        NSLocalizedDescriptionKey: "Tunnel start is already in progress.",
+      ])
+      Self.diag("startTunnel rejected: already in flight")
+      completionHandler(error)
       return
     }
     startTunnelInFlight = true
@@ -120,6 +188,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       let sessionId = startContext.sessionId
       let connectSource = startContext.connectSource
       let uplinkHost = startContext.uplinkHost
+      guard uplinkHost?.isEmpty == false else {
+        clearStartTunnelInFlight()
+        fail("Missing uplink host; refusing unsafe full-tunnel start", code: 11, completionHandler: completionHandler)
+        return
+      }
       activeUplinkHost = uplinkHost
       tunnelTeardownInFlight = false
       lastAppliedExcludedIPv4 = []
@@ -138,7 +211,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         currentSessionId = sessionId
         VpnSharedStore.saveActiveSession(sessionId: sessionId, triggerSource: connectSource)
       }
-      let excludedIPv4 = try Self.resolveIPv4Addresses(host: uplinkHost)
+      let excludedIPv4 = try UplinkIPv4Resolver.resolve(uplinkHost)
       Self.diag(
         "start tunnel: uplinkHost=\(uplinkHost ?? "<none>") "
           + "excludedIPv4=\(excludedIPv4.isEmpty ? "<empty>" : excludedIPv4.joined(separator: ",")) "
@@ -198,13 +271,39 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     coreQueue.async {
       VpnSharedStore.saveExtensionHeartbeat(phase: "core-starting")
       do {
-        try IOSLibboxCore.start(
-          provider: self,
-          configJSON: configJSON,
-          excludedIPv4: excludedIPv4,
-          assetDir: assetDir
-        )
-        Self.diag("libbox service started")
+        var probeResult = TunnelDataProbe.Result(ok: false, detail: "not-run")
+        for attempt in 1 ... 2 {
+          if attempt > 1 {
+            IOSLibboxCore.stop()
+            Thread.sleep(forTimeInterval: 1)
+          }
+          try IOSLibboxCore.start(
+            provider: self,
+            configJSON: configJSON,
+            excludedIPv4: excludedIPv4,
+            assetDir: assetDir
+          )
+          let snapshot = Self.coreSnapshot(configJSON)
+          IOSLibboxCore.markSession(
+            id: self.currentSessionId ?? "unknown",
+            protocolName: snapshot.protocolName,
+            endpoint: snapshot.endpoint
+          )
+          probeResult = TunnelDataProbe.run()
+          Self.diag("data probe pre-capture attempt=\(attempt) ok=\(probeResult.ok) detail=\(probeResult.detail)")
+          if probeResult.ok {
+            try IOSLibboxCore.activateTrafficCapture()
+            probeResult = TunnelDataProbe.run()
+            Self.diag("data probe captured attempt=\(attempt) ok=\(probeResult.ok) detail=\(probeResult.detail)")
+          }
+          if probeResult.ok { break }
+        }
+        guard probeResult.ok else {
+          throw NSError(domain: "DemarVpn", code: 46, userInfo: [
+            NSLocalizedDescriptionKey: "VPN proxy data path failed: \(probeResult.detail)",
+          ])
+        }
+        Self.diag("libbox service started and data path verified")
         VpnSharedStore.saveExtensionHeartbeat(phase: "core-started")
         self.tunnelStartedAt = Date()
         self.applyCoreStartedState(
@@ -270,7 +369,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     let excluded: [String]
     do {
       cfgPath = try VpnAppGroup.configURL().path
-      excluded = try Self.resolveIPv4Addresses(host: uplink).sorted()
+      excluded = try UplinkIPv4Resolver.resolve(uplink)
     } catch {
       Self.diag("reconfigure(\(reason)) prep failed: \(error.localizedDescription)")
       finishReconfigureCoalesced()
@@ -318,8 +417,45 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     } else {
       let msg = err?.localizedDescription ?? "unknown"
       Self.diag("reconfigure(\(reason)) libbox reload failed: \(msg)")
+      recoverAfterReloadFailure(
+        reason: reason,
+        configJSON: configJSON,
+        excluded: excluded,
+        assetDir: assetDir
+      )
     }
     finishReconfigureCoalesced()
+  }
+
+  private func recoverAfterReloadFailure(
+    reason: String,
+    configJSON: String,
+    excluded: [String],
+    assetDir: String
+  ) {
+    IOSLibboxCore.stop()
+    do {
+      try IOSLibboxCore.start(
+        provider: self,
+        configJSON: configJSON,
+        excludedIPv4: excluded,
+        assetDir: URL(fileURLWithPath: assetDir, isDirectory: true)
+      )
+      applyCoreStartedState(
+        excludedIPv4: excluded,
+        assetDirPath: assetDir,
+        uplinkHost: activeUplinkHost
+      )
+      VpnSharedStore.saveExtensionHeartbeat(phase: "running")
+      Self.diag("reconfigure(\(reason)) recovered with hard restart")
+    } catch {
+      let message = "reconfigure(\(reason)) recovery failed: \(error.localizedDescription)"
+      VpnSharedStore.saveControlState("error")
+      VpnSharedStore.saveTunnelStartFailure(message)
+      VpnSharedStore.saveExtensionHeartbeat(phase: "failed-reconfigure")
+      Self.diag(message)
+      DispatchQueue.main.async { self.cancelTunnelWithError(error) }
+    }
   }
 
   private func finishReconfigureCoalesced() {
@@ -430,7 +566,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     do {
       let cfgURL = try VpnAppGroup.configURL()
       let raw = try String(contentsOf: cfgURL, encoding: .utf8)
-      let excluded = try Self.resolveIPv4Addresses(host: activeUplinkHost).sorted()
+      let excluded = try UplinkIPv4Resolver.resolve(activeUplinkHost)
       let configJSON = try Self.configWithMergedUplinkIPs(raw, excludedIPv4: excluded)
       let assetDir = try VpnAppGroup.assetDirectoryURL()
       try IOSLibboxCore.start(
@@ -531,58 +667,13 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     try SingBoxConfigBuilder.mergeDirectIPs(excludedIPv4, into: configJSON)
   }
 
-  private static func resolveIPv4Addresses(host: String?) throws -> [String] {
-    let clean = host?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    if clean.isEmpty { return [] }
-    if isIPv4(clean) { return [clean] }
-
-    var hints = addrinfo(
-      ai_flags: AI_DEFAULT,
-      ai_family: AF_INET,
-      ai_socktype: SOCK_STREAM,
-      ai_protocol: 0,
-      ai_addrlen: 0,
-      ai_canonname: nil,
-      ai_addr: nil,
-      ai_next: nil
-    )
-    var resultPtr: UnsafeMutablePointer<addrinfo>?
-    let rc = getaddrinfo(clean, nil, &hints, &resultPtr)
-    guard rc == 0 else {
-      throw NSError(
-        domain: "DemarVpn",
-        code: 10,
-        userInfo: [NSLocalizedDescriptionKey: "DNS lookup failed for \(clean): \(String(cString: gai_strerror(rc)))"]
-      )
-    }
-    defer { if let resultPtr { freeaddrinfo(resultPtr) } }
-
-    var out: [String] = []
-    var ptr = resultPtr
-    while let info = ptr?.pointee {
-      if info.ai_family == AF_INET, let sa = info.ai_addr?.withMemoryRebound(to: sockaddr_in.self, capacity: 1, { $0 }) {
-        var addr = sa.pointee.sin_addr
-        var buf = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
-        if inet_ntop(AF_INET, &addr, &buf, socklen_t(INET_ADDRSTRLEN)) != nil {
-          out.append(String(cString: buf))
-        }
-      }
-      ptr = info.ai_next
-    }
-    out = Array(Set(out)).sorted()
-    if out.isEmpty {
-      throw NSError(
-        domain: "DemarVpn",
-        code: 10,
-        userInfo: [NSLocalizedDescriptionKey: "DNS lookup returned no IPv4 for \(clean)"]
-      )
-    }
-    return out
-  }
-
-  private static func isIPv4(_ s: String) -> Bool {
-    var a = in_addr()
-    return s.withCString { inet_pton(AF_INET, $0, &a) } == 1
+  private static func coreSnapshot(_ configJSON: String) -> (protocolName: String, endpoint: String) {
+    guard let data = configJSON.data(using: .utf8),
+          let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+          let outbounds = root["outbounds"] as? [[String: Any]],
+          let proxy = outbounds.first(where: { ($0["tag"] as? String) == SingBoxConfigConstants.proxyTag })
+    else { return ("unknown", "unknown") }
+    return (proxy["type"] as? String ?? "unknown", proxy["server"] as? String ?? "unknown")
   }
 
   private static func assetFileDescription(named name: String, in dir: URL) -> String {

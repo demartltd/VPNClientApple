@@ -25,6 +25,7 @@ enum VpnSharedStore {
   private static let coreJournalImportQueue = DispatchQueue(label: "com.demar.vpn.coreJournalImport")
   private static let journalOffsetCore = "demar_journal_core_bytes"
   private static let firstImportTailBytes: Int64 = 64 * 1024
+  private static let coreMirrorTailBytes: Int64 = 256 * 1024
 
   static func vpnDirectoryURL() throws -> URL {
     let vpnDir = try VpnAppGroup.sharedDirectoryURL().appendingPathComponent("demar_vpn", isDirectory: true)
@@ -445,9 +446,28 @@ enum VpnSharedStore {
       let dst = dir.appendingPathComponent("demar_app.log")
       if fm.fileExists(atPath: dst.path) { try fm.removeItem(at: dst) }
       try fm.copyItem(at: src, to: dst)
+      let core = try VpnAppGroup.coreLogFileURL()
+      let coreMirror = dir.appendingPathComponent("core.log")
+      if fm.fileExists(atPath: core.path) {
+        try mirrorTail(from: core, to: coreMirror, maxBytes: coreMirrorTailBytes)
+      } else if fm.fileExists(atPath: coreMirror.path) {
+        try fm.removeItem(at: coreMirror)
+      }
     } catch {
       NSLog("[DemarVpn] syncExportMirror failed: %@", String(describing: error))
     }
+  }
+
+  private static func mirrorTail(from source: URL, to destination: URL, maxBytes: Int64) throws {
+    let sourceHandle = try FileHandle(forReadingFrom: source)
+    defer { try? sourceHandle.close() }
+    let size = (try FileManager.default.attributesOfItem(atPath: source.path)[.size] as? NSNumber)?.int64Value ?? 0
+    try sourceHandle.seek(toOffset: UInt64(max(0, size - maxBytes)))
+    let data = try sourceHandle.readToEnd() ?? Data()
+    let text = String(decoding: data, as: UTF8.self)
+    let sessionText = text.range(of: "[demar-session]", options: .backwards)
+      .map { String(text[$0.lowerBound...]) } ?? text
+    try Data(sessionText.utf8).write(to: destination, options: [.atomic])
   }
 
   /// New journal lines since the previous import (byte offset in App Group UserDefaults).

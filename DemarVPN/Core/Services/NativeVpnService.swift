@@ -7,7 +7,14 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
     func connect(server: ServerProfile) async throws {
         let tunName = "utun0"
 
-        let plan = server.connectPlan
+        let basePlan = server.connectPlan
+        let endpointAddresses = try UplinkIPv4Resolver.resolve(basePlan.uplinkHost)
+        guard !endpointAddresses.isEmpty else {
+            throw NSError(domain: "DemarVpn", code: 10, userInfo: [
+                NSLocalizedDescriptionKey: "VPN endpoint has no IPv4 address.",
+            ])
+        }
+        let plan = basePlan.pinEndpoint(to: endpointAddresses)
         let configJson = try SingBoxConfigBuilder.buildTunConfigJson(plan: plan, tunName: tunName)
         let sessionId = Self.newSessionId()
 

@@ -39,6 +39,9 @@ final class SingBoxConfigTests: XCTestCase {
 
         let dns = try XCTUnwrap(root["dns"] as? [String: Any])
         let dnsServers = try XCTUnwrap(dns["servers"] as? [[String: Any]])
+        let directServer = try XCTUnwrap(dnsServers.first { ($0["tag"] as? String) == "dns-direct" })
+        XCTAssertEqual(directServer["type"] as? String, "local")
+        XCTAssertNil(directServer["server"])
         let remoteServer = try XCTUnwrap(dnsServers.first { ($0["tag"] as? String) == "dns-remote" })
         XCTAssertEqual(remoteServer["type"] as? String, "https")
         XCTAssertEqual(remoteServer["detour"] as? String, "proxy")
@@ -58,6 +61,9 @@ final class SingBoxConfigTests: XCTestCase {
         let tunInbound = try XCTUnwrap(inbounds.first { ($0["type"] as? String) == "tun" })
         XCTAssertEqual(tunInbound["strict_route"] as? Bool, true)
         XCTAssertEqual(tunInbound["address"] as? [String], ["172.19.0.1/30"])
+        let diagnosticInbound = try XCTUnwrap(inbounds.first { ($0["tag"] as? String) == "diag-in" })
+        XCTAssertEqual(diagnosticInbound["listen"] as? String, "127.0.0.1")
+        XCTAssertEqual(diagnosticInbound["listen_port"] as? Int, 10808)
 
         let route = try XCTUnwrap(root["route"] as? [String: Any])
         XCTAssertEqual(route["auto_detect_interface"] as? Bool, true)
@@ -88,7 +94,67 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertEqual(tls["enabled"] as? Bool, true)
         XCTAssertEqual(tls["server_name"] as? String, profile.tlsServerName)
         XCTAssertEqual(tls["alpn"] as? [String], ["h3"])
+        let route = try XCTUnwrap(root["route"] as? [String: Any])
+        let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
+        XCTAssertFalse(rules.contains { rule in
+            (rule["network"] as? [String]) == ["udp"]
+                && (rule["port"] as? [Int]) == [443]
+                && (rule["action"] as? String) == "reject"
+        })
         try assertSingBoxCheckPasses(json: json)
+    }
+
+    func testNaiveBlocksAppQUIC() throws {
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .naive(TestServers.naive[0]))
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
+        let route = try XCTUnwrap(root["route"] as? [String: Any])
+        let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
+        XCTAssertTrue(rules.contains { rule in
+            (rule["network"] as? [String]) == ["udp"]
+                && (rule["port"] as? [Int]) == [443]
+                && (rule["action"] as? String) == "reject"
+        })
+    }
+
+    func testHysteria2OnPort443DoesNotRejectQUIC() throws {
+        let source = TestServers.hysteria2[0]
+        let profile = Hysteria2Profile(
+            displayName: source.displayName,
+            city: source.city,
+            server: source.server,
+            port: 443,
+            password: source.password,
+            tlsServerName: source.tlsServerName
+        )
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(profile))
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
+        let route = try XCTUnwrap(root["route"] as? [String: Any])
+        let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
+        XCTAssertFalse(rules.contains {
+            ($0["network"] as? [String]) == ["udp"] && ($0["port"] as? [Int]) == [443]
+        })
+        try assertSingBoxCheckPasses(json: json)
+    }
+
+    func testCoreVersionIsPinnedToValidatedRelease() throws {
+        let repoRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let version = try String(
+            contentsOf: repoRoot.appendingPathComponent("singbox-version.txt"),
+            encoding: .utf8
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
+        XCTAssertEqual(version, "v1.13.14")
+        for relativePath in [
+            "ios/Shared/singbox/bundled_version.txt",
+            "macos/singbox_macos/bundled_version.txt",
+        ] {
+            let bundled = try String(
+                contentsOf: repoRoot.appendingPathComponent(relativePath),
+                encoding: .utf8
+            ).trimmingCharacters(in: .whitespacesAndNewlines)
+            XCTAssertEqual(bundled, version)
+        }
     }
 
     func testNaiveHostnameServerDirectDomainRouting() throws {
@@ -108,8 +174,16 @@ final class SingBoxConfigTests: XCTestCase {
         let mergedRules = try XCTUnwrap(mergedRoute["rules"] as? [[String: Any]])
         let mergedCIDRs = mergedRules.compactMap { $0["ip_cidr"] as? [String] }.flatMap { $0 }
         XCTAssertTrue(mergedCIDRs.contains("203.0.113.10/32"))
+        let bypassIndex = try XCTUnwrap(mergedRules.firstIndex {
+            ($0["ip_cidr"] as? [String]) == ["203.0.113.10/32"]
+        })
+        let ipv6RejectIndex = try XCTUnwrap(mergedRules.firstIndex { ($0["ip_version"] as? Int) == 6 })
+        XCTAssertLessThan(bypassIndex, ipv6RejectIndex)
         let tunInbound = try XCTUnwrap((mergedRoot["inbounds"] as? [[String: Any]])?.first { ($0["type"] as? String) == "tun" })
         XCTAssertTrue((tunInbound["route_exclude_address"] as? [String])?.contains("203.0.113.10/32") == true)
+        let mergedOutbounds = try XCTUnwrap(mergedRoot["outbounds"] as? [[String: Any]])
+        let mergedProxy = try XCTUnwrap(mergedOutbounds.first { ($0["tag"] as? String) == "proxy" })
+        XCTAssertEqual(mergedProxy["server"] as? String, "203.0.113.10")
 
         let outbounds = try XCTUnwrap(root["outbounds"] as? [[String: Any]])
         let proxy = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
@@ -131,6 +205,7 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertTrue(json.contains("\"action\" : \"sniff\"") || json.contains("\"action\": \"sniff\""))
         XCTAssertFalse(json.contains("\"evaluate\""))
         XCTAssertFalse(json.contains("\"disable_optimistic_cache\""))
+        try assertSingBoxCheckPasses(json: json)
     }
 
     func testJournalTimeFormat() {

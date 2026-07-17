@@ -19,6 +19,7 @@ scripts/*
 !scripts/increment_version_common.ps1
 !scripts/ios-export-options.plist
 !scripts/macos-export-options.plist
+!scripts/journal.sh
 scripts/.env
 scripts/AuthKey_*.p8
 

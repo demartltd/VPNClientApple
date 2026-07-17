@@ -36,6 +36,7 @@ enum VpnAppGroup {
 enum CoreBundleAssets {
   static let subdirectories = ["singbox", "singbox_macos"]
   static let geoFiles = ["geoip.db", "geosite.db"]
+  static let runtimeFiles = geoFiles + ["bundled_version.txt"]
 
   static func bundledURL(for filename: String) -> URL? {
     let base = (filename as NSString).deletingPathExtension
@@ -53,7 +54,7 @@ enum CoreBundleAssets {
 
   static func copyGeoIfPresent(to destinationDir: URL) throws {
     let fm = FileManager.default
-    for name in geoFiles {
+    for name in runtimeFiles {
       guard let src = bundledURL(for: name) else { continue }
       let dst = destinationDir.appendingPathComponent(name)
       if fm.fileExists(atPath: dst.path) { try fm.removeItem(at: dst) }

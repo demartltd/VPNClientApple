@@ -74,6 +74,7 @@ DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка
 readme-core.md                         # ядро VPN/Sing-box
+singbox-version.txt                    # единая закреплённая версия core
 
 scripts/
 ├── journal.sh                         # pull vpn_journal.log (macos/sim/ios)

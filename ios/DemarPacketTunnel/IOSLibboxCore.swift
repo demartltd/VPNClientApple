@@ -15,6 +15,7 @@ enum IOSLibboxCore {
         excludedIPv4: [String],
         assetDir: URL
     ) throws {
+        try verifyCoreVersion(assetDir: assetDir)
         try ensureSetup(assetDir: assetDir)
         if commandServer == nil {
             let platformInterface = DemarLibboxPlatform(provider: provider, excludedIPv4: excludedIPv4)
@@ -32,11 +33,28 @@ enum IOSLibboxCore {
             try server.start()
             commandServer = server
         } else {
-            platform?.updateExcludedIPv4(excludedIPv4)
+            try platform?.reapplyExcludedIPv4(excludedIPv4)
         }
         LibboxSetMemoryLimit(true)
         let options = LibboxOverrideOptions()
+        try commandServer?.checkConfig(configJSON)
         try commandServer?.startOrReloadService(configJSON, options: options)
+        VpnSharedStore.appendPendingUiDiagLine("[core] started version=\(LibboxVersion())")
+    }
+
+    private static func verifyCoreVersion(assetDir: URL) throws {
+        let expectedTag = try String(
+            contentsOf: assetDir.appendingPathComponent("bundled_version.txt"),
+            encoding: .utf8
+        )
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+        let expected = expectedTag.hasPrefix("v") ? String(expectedTag.dropFirst()) : expectedTag
+        let actual = LibboxVersion().trimmingCharacters(in: .whitespacesAndNewlines)
+        guard actual == expected else {
+            throw NSError(domain: "DemarLibbox", code: 8, userInfo: [
+                NSLocalizedDescriptionKey: "Libbox version mismatch: expected \(expected), loaded \(actual).",
+            ])
+        }
     }
 
     static func reload(configJSON: String, excludedIPv4: [String]) throws {
@@ -45,9 +63,20 @@ enum IOSLibboxCore {
                 NSLocalizedDescriptionKey: "Libbox is not running.",
             ])
         }
-        platform?.updateExcludedIPv4(excludedIPv4)
+        try platform?.reapplyExcludedIPv4(excludedIPv4)
         let options = LibboxOverrideOptions()
+        try commandServer?.checkConfig(configJSON)
         try commandServer?.startOrReloadService(configJSON, options: options)
+    }
+
+    static func markSession(id: String, protocolName: String, endpoint: String) {
+        let message = "[demar-session] id=\(id) core=\(LibboxVersion()) protocol=\(protocolName) endpoint=\(endpoint)"
+        commandServer?.writeMessage(2, message: message)
+        VpnSharedStore.appendPendingUiDiagLine("[core] \(message)")
+    }
+
+    static func activateTrafficCapture() throws {
+        try platform?.activateTrafficCapture()
     }
 
     static func stop() {
