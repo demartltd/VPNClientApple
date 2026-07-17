@@ -151,7 +151,8 @@ Config builder, tunnel и NE менять не нужно — они protocol-ag
 | Packet tunnel | `ios/DemarPacketTunnel/PacketTunnelProvider.swift` |
 
 **App Group:** `group.com.demar.vpn`  
-**Bundle tunnel:** `com.demar.vpn.packet-tunnel`
+**Bundle tunnel:** `com.demar.vpn.packet-tunnel`  
+**Журнал (dev):** `./scripts/journal.sh` — см. [`readme.md`](readme.md) § Журнал.
 
 Assets: `python3 scripts/singbox-download-auto.py` → `sing-box` из release + `geoip.db`/`geosite.db` из [sing-geoip](https://github.com/SagerNet/sing-geoip) и [sing-geosite](https://github.com/SagerNet/sing-geosite).
 

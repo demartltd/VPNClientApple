@@ -421,6 +421,7 @@ enum VpnSharedStore {
     do {
       let url = try journalURL()
       try VpnSharedLineFile.appendLine(stamped, to: url, maxLines: journalMaxLines)
+      syncExportMirror()
     } catch {
       NSLog("[DemarVpn] appendJournal failed: %@", String(describing: error))
     }
@@ -430,10 +431,30 @@ enum VpnSharedStore {
     try vpnDirectoryURL().appendingPathComponent(journalFile, isDirectory: false)
   }
 
+  /// Host Documents mirror — `devicectl` cannot pull `demar_vpn/` from App Group (CoreDevice).
+  static func syncExportMirror() {
+    guard Bundle.main.bundleIdentifier == VpnAppGroup.hostBundleId,
+          let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+    else { return }
+    let dir = docs.appendingPathComponent("demar", isDirectory: true)
+    let fm = FileManager.default
+    do {
+      try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+      let src = try journalURL()
+      guard fm.fileExists(atPath: src.path) else { return }
+      let dst = dir.appendingPathComponent("demar_app.log")
+      if fm.fileExists(atPath: dst.path) { try fm.removeItem(at: dst) }
+      try fm.copyItem(at: src, to: dst)
+    } catch {
+      NSLog("[DemarVpn] syncExportMirror failed: %@", String(describing: error))
+    }
+  }
+
   /// New journal lines since the previous import (byte offset in App Group UserDefaults).
   static func readIncrementalJournalLines() -> [String] {
     coreJournalImportQueue.sync {
       guard let ud = UserDefaults(suiteName: VpnAppGroup.id) else { return [] }
+      defer { syncExportMirror() }
       do {
         return newUtf8LinesSinceLastImport(
           url: try journalURL(),

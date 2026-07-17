@@ -59,6 +59,22 @@ pwsh ./scripts/upload-testflight.ps1 -Platform macOS
 
 Структура кода: [`filestree.md`](filestree.md) — обновляй при изменениях в проекте.
 
+### Журнал
+
+UI («Настройки → Настройки приложения») и CLI — один журнал (до 512 строк).  
+**macOS / Simulator:** App Group `demar_vpn/vpn_journal.log`.  
+**Physical iOS:** host зеркалит в `Documents/demar/demar_app.log` (CoreDevice не отдаёт App Group `demar_vpn/`); скрипт тянет через `devicectl` `appDataContainer`.
+
+```bash
+./scripts/journal.sh                 # auto: macos → sim → device
+./scripts/journal.sh -o journal.txt  # сохранить в файл
+./scripts/journal.sh --core          # core.log (macos/sim; iOS — если есть Documents mirror)
+./scripts/journal.sh -p ios          # физическое устройство
+./scripts/journal.sh -d "iPhone Rem" # имя / UDID для devicectl
+```
+
+На device открой app (чтобы зеркало обновилось) или connect VPN. Fallback: Share в UI.
+
 ## Навигация
 
 Три раздела: **Подключение**, **Сервера**, **Настройки**, **Аккаунт**. **iOS** — нижние вкладки (`TabView`); **Аккаунт** — отдельная круглая кнопка справа (`Tab(role: .search)`). **macOS** — боковая панель слева (`NavigationSplitView`), аккаунт внизу sidebar.

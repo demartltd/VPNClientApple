@@ -76,6 +76,7 @@ readme.md                              # сборка
 readme-core.md                         # ядро VPN/Sing-box
 
 scripts/
+├── journal.sh                         # pull vpn_journal.log (macos/sim/ios)
 ├── singbox-download-auto.py           # latest sing-box + geo db
 ├── libbox-build.py                    # Libbox.xcframework (latest)
 ├── upload-testflight.ps1              # App Store archive/upload
