@@ -1,9 +1,6 @@
 #if os(iOS) || os(macOS)
 import Foundation
 import NetworkExtension
-#if os(iOS)
-import WidgetKit
-#endif
 
 /// Observes the app's packet-tunnel `NEVPNConnection` and maps status into UI state.
 
@@ -25,13 +22,19 @@ final class VpnStatusMonitor {
     private var lastTrackedNeStatus: NEVPNStatus?
     private var disconnectFlickerGraceUntil: Date?
     private var refreshGeneration = 0
+    private var refreshInFlight = false
+    private var pendingRefresh: (reason: String, force: Bool, reloadPreferences: Bool)?
+    private var diagnosticsImportInFlight = false
+    private var lastControlReloadAt: Date?
     private static let connectTimeout: TimeInterval = 45
     private static let disconnectFlickerGrace: TimeInterval = 2
     private static let connectedHoldHeartbeatMaxAge: TimeInterval = 10
     private static let connectStallTimeout: TimeInterval = 10
     private static let extensionLaunchTimeout: TimeInterval = 3
-    private static let connectProbeIntervalNs: UInt64 = 400_000_000
-    private static let connectProbeAttempts = 30
+    private static let connectProbeIntervalNs: UInt64 = 1_000_000_000
+    private static let connectProbeAttempts = 70
+    private static let idlePollInterval: TimeInterval = 5
+    private static let activePollInterval: TimeInterval = 1
     func start() {
         VpnSharedStore.clearStaleControlState()
         #if os(iOS)
@@ -52,7 +55,7 @@ final class VpnStatusMonitor {
                 guard !self.connectAttemptActive, !self.controller.isConnectInFlight else { return }
                 self.refreshStatus(reason: "app-group", force: true, reloadPreferences: false)
                 #if os(iOS)
-                self.reloadVpnControls()
+                self.reloadVpnControlsDebounced()
                 #endif
             }
         }
@@ -65,14 +68,14 @@ final class VpnStatusMonitor {
         connectingSince = Date()
         lastDeliveredState = nil
         startConnectProbe()
+        startPolling()
     }
     private func startConnectProbe() {
         connectFailureGraceTask = Task { @MainActor in
             for attempt in 0..<Self.connectProbeAttempts {
                 try? await Task.sleep(nanoseconds: Self.connectProbeIntervalNs)
                 guard !Task.isCancelled, self.connectAttemptActive else { return }
-                self.logConnectTrace("probe-\(attempt)")
-                Self.importPendingDiagLines()
+                if attempt.isMultiple(of: 5) { self.logConnectTrace("probe-\(attempt)") }
                 if let failure = Self.resolveFailureState() {
                     self.finishConnectAttempt(failure, logReason: "connect-probe-\(attempt)")
                     return
@@ -149,6 +152,7 @@ final class VpnStatusMonitor {
         connectFailureGraceTask = nil
         connectAttemptActive = false
         connectingSince = nil
+        startPolling()
     }
     func stop() {
         connectFailureGraceTask?.cancel()
@@ -169,9 +173,8 @@ final class VpnStatusMonitor {
     }
     /// Imports extension journal, stop-reason history, and core log tail (e.g. when app becomes active).
     func importForegroundDiagnostics() {
-        AppLog.shared.importSharedJournal()
-        Self.importPendingDiagLines()
-        importCoreTailIfNeeded()
+        importDiagnostics()
+        VpnSharedStore.scheduleExportMirror()
         for line in VpnSharedStore.drainTunnelStopReasonHistoryAndClear() where !line.isEmpty {
             AppLog.shared.append(line)
         }
@@ -184,6 +187,11 @@ final class VpnStatusMonitor {
     }
 
     func refreshStatus(reason: String, force: Bool = false, reloadPreferences: Bool = true) {
+        if refreshInFlight {
+            pendingRefresh = (reason, force || pendingRefresh?.force == true, reloadPreferences || pendingRefresh?.reloadPreferences == true)
+            return
+        }
+        refreshInFlight = true
         refreshGeneration += 1
         let generation = refreshGeneration
         if force {
@@ -192,7 +200,11 @@ final class VpnStatusMonitor {
         controller.refreshDemarStatus(reloadPreferences: reloadPreferences) { [weak self] result in
             Task { @MainActor in
                 guard let self else { return }
-                guard self.refreshGeneration == generation else { return }
+                self.refreshInFlight = false
+                guard self.refreshGeneration == generation else {
+                    self.runPendingRefresh()
+                    return
+                }
                 switch result {
                 case let .failure(error):
                     self.retargetObserver(connection: nil)
@@ -206,10 +218,21 @@ final class VpnStatusMonitor {
                     }
                     self.publishResolvedStatus(neStatus: status, reason: reason)
                 }
+                self.runPendingRefresh()
             }
         }
     }
+    private func runPendingRefresh() {
+        guard let pending = pendingRefresh else { return }
+        pendingRefresh = nil
+        refreshStatus(
+            reason: pending.reason,
+            force: pending.force,
+            reloadPreferences: pending.reloadPreferences
+        )
+    }
     private func retargetObserver(connection: NEVPNConnection?) {
+        if trackedConnection === connection { return }
         if let connectionObserver {
             NotificationCenter.default.removeObserver(connectionObserver)
             self.connectionObserver = nil
@@ -228,8 +251,11 @@ final class VpnStatusMonitor {
     }
 
     #if os(iOS)
-    private func reloadVpnControls() {
-        ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
+    private func reloadVpnControlsDebounced() {
+        let now = Date()
+        if let last = lastControlReloadAt, now.timeIntervalSince(last) < 0.8 { return }
+        lastControlReloadAt = now
+        VpnControlReloader.reloadControls()
     }
     #endif
 
@@ -269,7 +295,9 @@ final class VpnStatusMonitor {
             sharedControlState: VpnSharedStore.loadControlState(),
             connectGrace: connectAttemptActive
         )
-        if let failure = Self.resolveFailureState() {
+        if (connectAttemptActive || neStatus == .disconnecting || neStatus == .invalid),
+           let failure = Self.resolveFailureState()
+        {
             if connectAttemptActive {
                 if neStatus == .disconnecting || Self.matchesError(resolved) {
                     finishConnectAttempt(failure, logReason: "\(reason)-failure")
@@ -369,24 +397,47 @@ final class VpnStatusMonitor {
     }
     private func startPolling() {
         pollTimer?.invalidate()
-        pollTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        let busy = connectAttemptActive || controller.isConnectInFlight
+            || lastDeliveredState == .connecting
+            || lastDeliveredState == .disconnecting
+        let interval = busy ? Self.activePollInterval : Self.idlePollInterval
+        pollTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
-                if self.connectAttemptActive || self.controller.isConnectInFlight {
-                    if let connection = self.trackedConnection {
-                        self.publishResolvedStatus(neStatus: connection.status, reason: "poll-connect")
-                    } else {
-                        self.refreshStatus(reason: "poll-connect", reloadPreferences: false)
-                    }
-                } else {
+                let stillBusy = self.connectAttemptActive || self.controller.isConnectInFlight
+                    || self.lastDeliveredState == .connecting
+                    || self.lastDeliveredState == .disconnecting
+                let expected = stillBusy ? Self.activePollInterval : Self.idlePollInterval
+                if abs((self.pollTimer?.timeInterval ?? expected) - expected) > 0.01 {
+                    self.startPolling()
+                    return
+                }
+                if let connection = self.trackedConnection {
+                    self.publishResolvedStatus(neStatus: connection.status, reason: "poll")
+                } else if stillBusy {
                     self.refreshStatus(reason: "poll", reloadPreferences: false)
                 }
-                AppLog.shared.importSharedJournal()
-                if self.connectAttemptActive {
-                    Self.importPendingDiagLines()
+                if stillBusy {
+                    self.importDiagnostics()
                 }
-                self.importCoreTailIfNeeded()
             }
+        }
+    }
+
+    private func importDiagnostics() {
+        guard !diagnosticsImportInFlight else { return }
+        diagnosticsImportInFlight = true
+        Task { @MainActor in
+            let batch = await Task.detached(priority: .utility) {
+                let journal = VpnSharedStore.readIncrementalJournalLines()
+                let pending = VpnSharedStore.drainPendingUiDiagLinesAndClear()
+                let core = VpnSharedStore.readIncrementalSharedCoreLogLines()
+                    .prefix(64)
+                    .map { "[core] \($0)" }
+                return Array(journal.prefix(64) + pending.prefix(64) + core)
+            }.value
+            AppLog.shared.append(contentsOf: batch)
+            diagnosticsImportInFlight = false
         }
     }
     private static func importPendingDiagLines() {
@@ -425,10 +476,6 @@ final class VpnStatusMonitor {
 
     /// Drains extension diagnostics and returns a user-facing error, if any.
     private static func resolveFailureState() -> VpnConnectionState? {
-        AppLog.shared.importSharedJournal()
-        for line in VpnSharedStore.drainPendingUiDiagLinesAndClear() where !line.isEmpty {
-            AppLog.shared.append(line)
-        }
         if let startError = VpnSharedStore.drainTunnelStartFailureAndClear() {
             return .error(message: startError)
         }

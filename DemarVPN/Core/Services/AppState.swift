@@ -61,12 +61,42 @@ final class AppState {
     }
 
     var canToggleVpn: Bool {
-        !vpnState.isBusy && (vpnState.isConnected || selectedServer != nil)
+        if case .disconnecting = vpnState { return false }
+        return vpnState.isConnected || vpnState == .connecting || selectedServer != nil
     }
 
     func selectServer(_ server: ServerProfile) {
         selectedServer = server
         AppLog.shared.append("[ui] server selected: \(server.displayName)")
+    }
+
+    func switchServer(to server: ServerProfile) async {
+        guard selectedServer?.id != server.id else { return }
+        let shouldReconnect = vpnState.isConnected || vpnState.isBusy
+        selectServer(server)
+        guard shouldReconnect else { return }
+
+        statusMonitor?.endConnectAttempt()
+        vpnState = .disconnecting
+        resetThroughput()
+        do {
+            try await vpn.disconnect()
+            for _ in 0..<40 {
+                let status = await withCheckedContinuation { continuation in
+                    VpnTunnelController.shared.currentStatus { continuation.resume(returning: $0) }
+                }
+                if status == .disconnected || status == .invalid { break }
+                try await Task.sleep(for: .milliseconds(100))
+            }
+            vpnState = .disconnected
+            await connect()
+        } catch is CancellationError {
+            return
+        } catch {
+            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            vpnState = .error(message: message)
+            AppLog.shared.append("[vpn] server switch failed: \(message)")
+        }
     }
 
     @discardableResult
@@ -135,6 +165,9 @@ final class AppState {
                 AppLog.shared.append(line)
             }
             statusMonitor?.refreshStatus(reason: "connect", force: true, reloadPreferences: false)
+        } catch is CancellationError {
+            statusMonitor?.endConnectAttempt()
+            return
         } catch {
             statusMonitor?.endConnectAttempt()
             if Task.isCancelled { return }
@@ -145,9 +178,9 @@ final class AppState {
     }
 
     func disconnect() async {
-        guard !vpnState.isBusy else { return }
+        if case .disconnecting = vpnState { return }
 
-        if vpnState.isConnected {
+        if vpnState.isConnected || vpnState == .connecting {
             vpnState = .disconnecting
             resetThroughput()
         }
@@ -166,7 +199,7 @@ final class AppState {
     }
 
     func toggleVpn() async {
-        if vpnState.isConnected {
+        if vpnState.isConnected || vpnState == .connecting {
             await disconnect()
         } else {
             await connect()

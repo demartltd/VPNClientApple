@@ -149,6 +149,27 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   private var tunnelLifecycle: TunnelLifecycle?
   private let startTunnelLock = NSLock()
   private var startTunnelInFlight = false
+  private let sessionGenerationLock = NSLock()
+  private var sessionGeneration: UInt64 = 0
+
+  private func beginSessionGeneration() -> UInt64 {
+    sessionGenerationLock.lock()
+    defer { sessionGenerationLock.unlock() }
+    sessionGeneration &+= 1
+    return sessionGeneration
+  }
+
+  private func invalidateSessionGeneration() {
+    sessionGenerationLock.lock()
+    sessionGeneration &+= 1
+    sessionGenerationLock.unlock()
+  }
+
+  private func isCurrentSessionGeneration(_ generation: UInt64) -> Bool {
+    sessionGenerationLock.lock()
+    defer { sessionGenerationLock.unlock() }
+    return sessionGeneration == generation
+  }
 
   override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
     _ = TunnelBootstrap.once
@@ -164,6 +185,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
     startTunnelInFlight = true
     startTunnelLock.unlock()
+    let generation = beginSessionGeneration()
     logLine("startTunnel invoked")
     VpnSharedStore.clearTunnelStartFailure()
     VpnSharedStore.saveExtensionHeartbeat(phase: "startTunnel")
@@ -176,8 +198,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     do {
       let cfgURL = try VpnAppGroup.configURL()
       guard FileManager.default.fileExists(atPath: cfgURL.path) else {
-        clearStartTunnelInFlight()
-        fail("Missing shared config.json", code: 2, completionHandler: completionHandler)
+        fail("Missing shared config.json", code: 2, generation: generation, completionHandler: completionHandler)
         return
       }
 
@@ -189,12 +210,15 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       let connectSource = startContext.connectSource
       let uplinkHost = startContext.uplinkHost
       guard uplinkHost?.isEmpty == false else {
-        clearStartTunnelInFlight()
-        fail("Missing uplink host; refusing unsafe full-tunnel start", code: 11, completionHandler: completionHandler)
+        fail(
+          "Missing uplink host; refusing unsafe full-tunnel start",
+          code: 11,
+          generation: generation,
+          completionHandler: completionHandler
+        )
         return
       }
       activeUplinkHost = uplinkHost
-      tunnelTeardownInFlight = false
       lastAppliedExcludedIPv4 = []
       reconfigureInFlight = false
       reconfigurePendingReason = nil
@@ -221,11 +245,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         cfgURL: cfgURL,
         excludedIPv4: excludedIPv4,
         uplinkHost: uplinkHost,
+        generation: generation,
         completionHandler: completionHandler
       )
     } catch {
-      clearStartTunnelInFlight()
-      fail(error.localizedDescription, code: 1, completionHandler: completionHandler)
+      fail(error.localizedDescription, code: 1, generation: generation, completionHandler: completionHandler)
     }
   }
 
@@ -239,6 +263,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     cfgURL: URL,
     excludedIPv4: [String],
     uplinkHost: String?,
+    generation: UInt64,
     completionHandler: @escaping (Error?) -> Void
   ) {
     let configJSON: String
@@ -246,8 +271,12 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       let raw = try String(contentsOf: cfgURL, encoding: .utf8)
       configJSON = try Self.configWithMergedUplinkIPs(raw, excludedIPv4: excludedIPv4)
     } catch {
-      clearStartTunnelInFlight()
-      fail("read config failed: \(error.localizedDescription)", code: 13, completionHandler: completionHandler)
+      fail(
+        "read config failed: \(error.localizedDescription)",
+        code: 13,
+        generation: generation,
+        completionHandler: completionHandler
+      )
       return
     }
 
@@ -259,23 +288,32 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           + "\(Self.assetFileDescription(named: "geosite.db", in: assetDir))"
       )
     } catch {
-      clearStartTunnelInFlight()
       fail(
         "asset directory lookup failed: \(error.localizedDescription)",
         code: 12,
+        generation: generation,
         completionHandler: completionHandler
       )
       return
     }
 
     coreQueue.async {
+      if self.tunnelTeardownInFlight {
+        IOSLibboxCore.stop()
+        self.tunnelTeardownInFlight = false
+      }
+      guard self.isCurrentSessionGeneration(generation) else {
+        self.clearStartTunnelInFlight()
+        DispatchQueue.main.async { completionHandler(CancellationError()) }
+        return
+      }
       VpnSharedStore.saveExtensionHeartbeat(phase: "core-starting")
       do {
         var probeResult = TunnelDataProbe.Result(ok: false, detail: "not-run")
         for attempt in 1 ... 2 {
+          guard self.isCurrentSessionGeneration(generation) else { throw CancellationError() }
           if attempt > 1 {
             IOSLibboxCore.stop()
-            Thread.sleep(forTimeInterval: 1)
           }
           try IOSLibboxCore.start(
             provider: self,
@@ -290,6 +328,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             endpoint: snapshot.endpoint
           )
           probeResult = TunnelDataProbe.run()
+          guard self.isCurrentSessionGeneration(generation) else { throw CancellationError() }
           Self.diag("data probe pre-capture attempt=\(attempt) ok=\(probeResult.ok) detail=\(probeResult.detail)")
           if probeResult.ok {
             try IOSLibboxCore.activateTrafficCapture()
@@ -298,6 +337,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           }
           if probeResult.ok { break }
         }
+        guard self.isCurrentSessionGeneration(generation) else { throw CancellationError() }
         guard probeResult.ok else {
           throw NSError(domain: "DemarVpn", code: 46, userInfo: [
             NSLocalizedDescriptionKey: "VPN proxy data path failed: \(probeResult.detail)",
@@ -317,11 +357,17 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         self.clearStartTunnelInFlight()
         DispatchQueue.main.async { completionHandler(nil) }
       } catch {
+        guard self.isCurrentSessionGeneration(generation) else {
+          IOSLibboxCore.stop()
+          self.clearStartTunnelInFlight()
+          DispatchQueue.main.async { completionHandler(CancellationError()) }
+          return
+        }
         VpnSharedStore.saveExtensionHeartbeat(phase: "core-failed")
-        self.clearStartTunnelInFlight()
         self.fail(
           "core start error: \(error.localizedDescription)",
           code: 22,
+          generation: generation,
           completionHandler: completionHandler
         )
       }
@@ -468,6 +514,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   }
 
   override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
+    invalidateSessionGeneration()
     tunnelTeardownInFlight = true
     reconfigureInFlight = false
     reconfigurePendingReason = nil
@@ -512,7 +559,6 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     if reason == .providerFailed, let lastCore = VpnSharedStore.readLastCoreErrorLineSnapshot() {
       appendDiagLine("tunnel stop providerFailed: core_last_error=\(lastCore)")
     }
-    clearStartTunnelInFlight()
     coreQueue.async {
       IOSLibboxCore.stop()
       self.clearStartTunnelInFlight()
@@ -530,6 +576,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       VpnSharedStore.clearActiveSession()
       VpnSharedStore.saveControlState("disconnected")
       Self.reloadControls()
+      self.tunnelTeardownInFlight = false
       completionHandler()
     }
   }
@@ -695,8 +742,14 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   private func fail(
     _ message: String,
     code: Int,
+    generation: UInt64? = nil,
     completionHandler: @escaping (Error?) -> Void
   ) {
+    if let generation, !isCurrentSessionGeneration(generation) {
+      clearStartTunnelInFlight()
+      DispatchQueue.main.async { completionHandler(CancellationError()) }
+      return
+    }
     clearStartTunnelInFlight()
     VpnSharedStore.saveControlState("error")
     VpnSharedStore.saveExtensionHeartbeat(phase: "failed-\(code)")

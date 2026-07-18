@@ -44,12 +44,10 @@ struct ContentView: View {
             }
         }
         .tint(Color.demarPrimary)
-        .onChange(of: scenePhase) { _, phase in
-            guard phase == .active else { return }
-            appState.syncVpnStatusFromSystem()
-        }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled, scenePhase == .active else { return }
             appState.syncVpnStatusFromSystem()
             await IDFATracking.promptIfNeeded()
         }

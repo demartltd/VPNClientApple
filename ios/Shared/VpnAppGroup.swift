@@ -57,7 +57,17 @@ enum CoreBundleAssets {
     for name in runtimeFiles {
       guard let src = bundledURL(for: name) else { continue }
       let dst = destinationDir.appendingPathComponent(name)
-      if fm.fileExists(atPath: dst.path) { try fm.removeItem(at: dst) }
+      if fm.fileExists(atPath: dst.path) {
+        if name == "bundled_version.txt",
+           (try? Data(contentsOf: src)) == (try? Data(contentsOf: dst))
+        {
+          continue
+        }
+        let sourceSize = (try? fm.attributesOfItem(atPath: src.path)[.size] as? NSNumber)?.int64Value
+        let destinationSize = (try? fm.attributesOfItem(atPath: dst.path)[.size] as? NSNumber)?.int64Value
+        if name != "bundled_version.txt", sourceSize == destinationSize { continue }
+        try fm.removeItem(at: dst)
+      }
       try fm.copyItem(at: src, to: dst)
     }
   }

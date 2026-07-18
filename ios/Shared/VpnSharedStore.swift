@@ -23,9 +23,15 @@ enum VpnSharedStore {
   private static let stopReasonHistoryLimit = 32
 
   private static let coreJournalImportQueue = DispatchQueue(label: "com.demar.vpn.coreJournalImport")
+  private static let journalAppendQueue = DispatchQueue(label: "com.demar.vpn.journalAppend", qos: .utility)
+  private static let exportMirrorQueue = DispatchQueue(label: "com.demar.vpn.exportMirror", qos: .utility)
+  private static let exportMirrorLock = NSLock()
+  private static var exportMirrorWork: DispatchWorkItem?
   private static let journalOffsetCore = "demar_journal_core_bytes"
   private static let firstImportTailBytes: Int64 = 64 * 1024
   private static let coreMirrorTailBytes: Int64 = 256 * 1024
+  private static let incrementalImportMaxBytes = 64 * 1024
+  private static let incrementalImportMaxLines = 64
 
   static func vpnDirectoryURL() throws -> URL {
     let vpnDir = try VpnAppGroup.sharedDirectoryURL().appendingPathComponent("demar_vpn", isDirectory: true)
@@ -73,6 +79,7 @@ enum VpnSharedStore {
   static func saveExtensionHeartbeat(phase: String) {
     let trimmed = phase.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
+    let phaseChanged = extensionHeartbeatPhase() != trimmed
     do {
       let body: [String: Any] = [
         "phase": trimmed,
@@ -80,7 +87,7 @@ enum VpnSharedStore {
       ]
       let data = try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
       try data.write(to: try extensionHeartbeatURL(), options: [.atomic])
-      VpnStatusSignal.post()
+      if phaseChanged { VpnStatusSignal.post() }
     } catch {
       NSLog("[DemarVpn] saveExtensionHeartbeat failed: %@", String(describing: error))
     }
@@ -202,6 +209,7 @@ enum VpnSharedStore {
 
   /// - Parameter notify: Post Darwin signal for cross-process UI sync (extension only; host uses `false`).
   static func saveControlState(_ state: String, notify: Bool = true) {
+    if loadControlState() == state { return }
     do {
       let body = ["state": state, "updatedAt": ISO8601DateFormatter().string(from: Date())]
       let data = try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
@@ -419,12 +427,13 @@ enum VpnSharedStore {
   }
 
   private static func appendJournalLineRaw(_ stamped: String) {
-    do {
-      let url = try journalURL()
-      try VpnSharedLineFile.appendLine(stamped, to: url, maxLines: journalMaxLines)
-      syncExportMirror()
-    } catch {
-      NSLog("[DemarVpn] appendJournal failed: %@", String(describing: error))
+    journalAppendQueue.async {
+      do {
+        let url = try journalURL()
+        try VpnSharedLineFile.appendLine(stamped, to: url, maxLines: journalMaxLines)
+      } catch {
+        NSLog("[DemarVpn] appendJournal failed: %@", String(describing: error))
+      }
     }
   }
 
@@ -458,6 +467,16 @@ enum VpnSharedStore {
     }
   }
 
+  static func scheduleExportMirror() {
+    guard Bundle.main.bundleIdentifier == VpnAppGroup.hostBundleId else { return }
+    exportMirrorLock.lock()
+    exportMirrorWork?.cancel()
+    let work = DispatchWorkItem { syncExportMirror() }
+    exportMirrorWork = work
+    exportMirrorLock.unlock()
+    exportMirrorQueue.asyncAfter(deadline: .now() + 1, execute: work)
+  }
+
   private static func mirrorTail(from source: URL, to destination: URL, maxBytes: Int64) throws {
     let sourceHandle = try FileHandle(forReadingFrom: source)
     defer { try? sourceHandle.close() }
@@ -474,7 +493,6 @@ enum VpnSharedStore {
   static func readIncrementalJournalLines() -> [String] {
     coreJournalImportQueue.sync {
       guard let ud = UserDefaults(suiteName: VpnAppGroup.id) else { return [] }
-      defer { syncExportMirror() }
       do {
         return newUtf8LinesSinceLastImport(
           url: try journalURL(),
@@ -503,17 +521,9 @@ enum VpnSharedStore {
     appendJournalLine(line)
     let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
     if trimmed.isEmpty { return }
-    guard let data = (trimmed + "\n").data(using: .utf8) else { return }
     do {
       let url = try vpnDirectoryURL().appendingPathComponent(pendingUiDiagFile, isDirectory: false)
-      if FileManager.default.fileExists(atPath: url.path) {
-        let handle = try FileHandle(forWritingTo: url)
-        defer { try? handle.close() }
-        try handle.seekToEnd()
-        try handle.write(contentsOf: data)
-      } else {
-        try data.write(to: url, options: [.atomic])
-      }
+      try VpnSharedLineFile.appendLine(trimmed, to: url, maxLines: 256)
     } catch {
       NSLog("[DemarVpn] appendPendingUiDiag failed: %@", String(describing: error))
     }
@@ -560,7 +570,11 @@ enum VpnSharedStore {
       let url = try VpnAppGroup.coreLogFileURL()
       let path = url.path
       guard FileManager.default.fileExists(atPath: path) else { return nil }
-      let text = try String(contentsOf: url, encoding: .utf8)
+      let handle = try FileHandle(forReadingFrom: url)
+      defer { try? handle.close() }
+      let size = try handle.seekToEnd()
+      try handle.seek(toOffset: size > 64 * 1024 ? size - 64 * 1024 : 0)
+      let text = String(decoding: try handle.readToEnd() ?? Data(), as: UTF8.self)
       let line = text
         .split(separator: "\n", omittingEmptySubsequences: true)
         .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -601,10 +615,12 @@ enum VpnSharedStore {
     }
     defer { try? handle.close() }
 
+    let remaining = Int(fileSize - offset)
+    let readLimit = min(remaining, incrementalImportMaxBytes)
     let chunk: Data
     do {
       try handle.seek(toOffset: UInt64(offset))
-      guard let c = try handle.read(upToCount: Int(fileSize - offset)), !c.isEmpty else { return [] }
+      guard let c = try handle.read(upToCount: readLimit), !c.isEmpty else { return [] }
       chunk = c
     } catch {
       return []
@@ -614,9 +630,12 @@ enum VpnSharedStore {
     let complete = chunk[..<chunk.index(after: nlIdx)]
     guard let text = String(data: Data(complete), encoding: .utf8) else { return [] }
 
-    let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+    var lines = text.split(separator: "\n", omittingEmptySubsequences: false)
       .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
       .filter { !$0.isEmpty }
+    if lines.count > incrementalImportMaxLines {
+      lines = Array(lines.suffix(incrementalImportMaxLines))
+    }
 
     ud.set(NSNumber(value: offset + Int64(complete.count)), forKey: offsetKey)
     return lines
@@ -651,14 +670,24 @@ enum VpnSharedLineFile {
   ) throws {
     let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
     if trimmed.isEmpty { return }
+    let data = Data((trimmed + "\n").utf8)
+    if FileManager.default.fileExists(atPath: url.path) {
+      let handle = try FileHandle(forWritingTo: url)
+      defer { try? handle.close() }
+      try handle.seekToEnd()
+      try handle.write(contentsOf: data)
+    } else {
+      try data.write(to: url, options: [.atomic])
+    }
+
+    let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.intValue ?? 0
+    guard size > max(16 * 1024, maxLines * 256) else { return }
     var lines = try readTrimmedLines(from: url)
-    lines.append(trimmed)
     if lines.count > maxLines {
-      lines.removeFirst(lines.count - maxLines)
+      lines = Array(lines.suffix(maxLines))
     }
     let out = (lines + [""]).joined(separator: "\n")
-    guard let data = out.data(using: .utf8) else { return }
-    try data.write(to: url, options: [.atomic])
+    try Data(out.utf8).write(to: url, options: [.atomic])
   }
 
   static func drainLinesAndDelete(from url: URL) throws -> [String] {

@@ -97,13 +97,10 @@ final class TunnelLifecycle {
       guard let self, !self.isStopped else { return }
       let allIfaces = path.availableInterfaces.map(\.name).joined(separator: ",")
       let signature = TunnelPathSignature.from(path: path)
+      if self.lastPathSignature == signature { return }
       let note: String
       if let previous = self.lastPathSignature {
-        if signature == previous {
-          note = "unchanged"
-        } else {
-          note = "changed \(previous.logLabel) -> \(signature.logLabel)"
-        }
+        note = "changed \(previous.logLabel) -> \(signature.logLabel)"
       } else {
         note = "initial \(signature.logLabel)"
       }

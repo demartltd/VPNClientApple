@@ -7,6 +7,9 @@ struct SettingsView: View {
 
     @State private var showAppSettings = false
     @State private var showServiceMenu = false
+    @State private var showDocumentsMenu = false
+    @State private var pendingDocument: LegalDocument?
+    @State private var openedDocument: LegalDocument?
     @State private var serviceMenuTapCount = 0
     @State private var serviceMenuTapResetTask: Task<Void, Never>?
 
@@ -43,11 +46,22 @@ struct SettingsView: View {
                 .navigationDestination(isPresented: $showServiceMenu) {
                     ServiceMenuView(appState: appState, snackBar: snackBar)
                 }
+                .navigationDestination(item: $openedDocument) { LegalDocumentView(document: $0) }
             } else {
                 Color.clear
             }
         }
         .background(Color.demarSurface)
+        .sheet(isPresented: $showDocumentsMenu, onDismiss: {
+            guard let pendingDocument else { return }
+            openedDocument = pendingDocument
+            self.pendingDocument = nil
+        }) {
+            DocumentsMenuSheet { doc in
+                pendingDocument = doc
+                showDocumentsMenu = false
+            }
+        }
         #if os(iOS)
         .demarNavigationRoot(backHistoryLabel: "Настройки")
         #endif
@@ -56,8 +70,9 @@ struct SettingsView: View {
     private func perform(_ item: SettingsMenuItem) {
         switch item {
         case .appSettings: showAppSettings = true
+        case .documents: showDocumentsMenu = true
         case .invite: snackBar.showInfo("Demar VPN — клиент NaiveProxy / Sing-box.")
-        case .feedback, .terms, .privacy: snackBar.showInfo("Скоро")
+        case .feedback: snackBar.showInfo("Скоро")
         }
     }
 
@@ -109,7 +124,7 @@ struct SettingsView: View {
 }
 
 private enum SettingsMenuItem: String, CaseIterable, Identifiable {
-    case appSettings, feedback, invite, terms, privacy
+    case appSettings, feedback, invite, documents
 
     var id: String { rawValue }
 
@@ -118,8 +133,7 @@ private enum SettingsMenuItem: String, CaseIterable, Identifiable {
         case .appSettings: "gearshape.2"
         case .feedback: "star.bubble"
         case .invite: "square.and.arrow.up"
-        case .terms: "doc.text"
-        case .privacy: "hand.raised"
+        case .documents: "doc.on.doc"
         }
     }
 
@@ -128,8 +142,7 @@ private enum SettingsMenuItem: String, CaseIterable, Identifiable {
         case .appSettings: "Настройки приложения"
         case .feedback: "Обратная связь"
         case .invite: "Пригласите друзей по ссылке"
-        case .terms: "Условия использования"
-        case .privacy: "Конфиденциальность"
+        case .documents: "Документы"
         }
     }
 
@@ -138,8 +151,7 @@ private enum SettingsMenuItem: String, CaseIterable, Identifiable {
         case .appSettings: "Подключение, журнал диагностики и статус функций"
         case .feedback: "Отправить ошибку или предложение"
         case .invite: "Получите бесплатный премиум"
-        case .terms: "Правила использования сервиса"
-        case .privacy: "Как обрабатываются данные"
+        case .documents: "Условия использования и конфиденциальность"
         }
     }
 

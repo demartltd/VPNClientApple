@@ -6,20 +6,29 @@ struct JournalLine: Identifiable, Equatable {
     let text: String
 }
 
+@MainActor
 @Observable
 final class AppLog {
     static let shared = AppLog()
 
     private(set) var lines: [JournalLine] = []
+    private var cachedPanelText = ""
+    private var panelTextValid = true
+    private var equivalenceKeys: Set<String> = []
 
     var isEmpty: Bool { lines.isEmpty }
 
-    /// Newest-first, for the on-screen journal panel.
+    /// Cached journal snapshot for the expanded diagnostics panel.
     var panelText: String {
-        lines.map(\.text).joined(separator: "\n")
+        if !panelTextValid {
+            cachedPanelText = lines.map(\.text).joined(separator: "\n")
+            panelTextValid = true
+        }
+        return cachedPanelText
     }
 
-    private init() {
+    init(includeStartupLine: Bool = true) {
+        guard includeStartupLine else { return }
         #if os(macOS)
         append("[app] Demar VPN macOS (SwiftUI) started")
         #else
@@ -28,37 +37,40 @@ final class AppLog {
     }
 
     func append(_ line: String) {
-        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !Self.isCoreTrafficAccessNoise(trimmed) else { return }
-        let sanitized = Self.redactIPAddresses(in: trimmed)
-        guard !containsEquivalentLine(sanitized) else { return }
+        append(contentsOf: [line])
+    }
 
-        let text: String
-        text = DemarLogTime.looksPreStamped(sanitized)
-            ? sanitized
-            : DemarLogTime.journalLine(sanitized)
-        lines.insert(JournalLine(id: UUID(), text: text), at: 0)
+    func append(contentsOf incoming: [String]) {
+        var additions: [JournalLine] = []
+        var keys = equivalenceKeys
+        for line in incoming {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty, !Self.isCoreTrafficAccessNoise(trimmed) else { continue }
+            let sanitized = Self.redactIPAddresses(in: trimmed)
+            let key = Self.lineEquivalenceKey(sanitized)
+            guard key.isEmpty || keys.insert(key).inserted else { continue }
+            let text = DemarLogTime.looksPreStamped(sanitized)
+                ? sanitized
+                : DemarLogTime.journalLine(sanitized)
+            additions.append(JournalLine(id: UUID(), text: text))
+        }
+        guard !additions.isEmpty else { return }
+        lines.insert(contentsOf: additions.reversed(), at: 0)
         if lines.count > VpnSharedStore.journalMaxLines {
             lines.removeLast(lines.count - VpnSharedStore.journalMaxLines)
         }
+        equivalenceKeys = Set(lines.map { Self.lineEquivalenceKey($0.text) }.filter { !$0.isEmpty })
+        panelTextValid = false
     }
 
     /// Skips duplicate journal lines (pending drain mirrors the same text into the journal).
-    private func containsEquivalentLine(_ line: String) -> Bool {
-        let key = Self.lineEquivalenceKey(line)
-        guard !key.isEmpty else { return false }
-        return lines.contains { Self.lineEquivalenceKey($0.text) == key }
-    }
-
     private static func lineEquivalenceKey(_ line: String) -> String {
         DemarLogTime.messageBody(in: line)
     }
 
     /// Imports new lines from the App Group VPN journal (extension + host).
     func importSharedJournal() {
-        for line in VpnSharedStore.readIncrementalJournalLines() where !line.isEmpty {
-            append(line)
-        }
+        append(contentsOf: VpnSharedStore.readIncrementalJournalLines())
     }
 
     /// Masks IP addresses for the UI journal (IPv4: `***.***.111.111`; IPv6: `***::tail`).
@@ -164,6 +176,9 @@ final class AppLog {
 
     func clear() {
         lines.removeAll()
+        equivalenceKeys.removeAll()
+        cachedPanelText = ""
+        panelTextValid = true
         append("[app] journal cleared")
     }
 

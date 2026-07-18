@@ -81,6 +81,7 @@ private struct DiagnosticsLogCard: View {
                 .foregroundStyle(Color.demarOnSurfaceVariant)
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
         } else {
+            // panelText is rebuilt lazily; UITextView skips identical replacements.
             DiagnosticsJournalTextView(text: log.panelText)
                 .frame(maxWidth: .infinity)
                 .frame(height: maxLogPanelHeight)

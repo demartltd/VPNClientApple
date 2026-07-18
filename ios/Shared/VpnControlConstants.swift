@@ -37,11 +37,19 @@ enum VpnControlOperationGate {
 }
 
 enum VpnControlReloader {
+  private static let lock = NSLock()
+  private static var pendingWork: DispatchWorkItem?
+
   static func reloadControls() {
 #if canImport(WidgetKit) && os(iOS)
-    DispatchQueue.main.async {
+    lock.lock()
+    pendingWork?.cancel()
+    let work = DispatchWorkItem {
       ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
     }
+    pendingWork = work
+    lock.unlock()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
 #endif
   }
 }

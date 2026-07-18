@@ -23,7 +23,8 @@ DemarVPN/                              # SwiftUI target
 │   │   └── TestServers.swift          # тестовые профили
 │   ├── Network/
 │   │   ├── DeviceTrafficTotals.swift  # RX/TX getifaddrs
-│   │   └── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
+│   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
+│   │   └── LegalDocuments.swift       # ToS/PP raw GitHub Markdown fetch
 │   ├── Vpn/
 │   │   ├── NaiveProfile.swift         # NaiveProxy профиль
 │   │   ├── Hysteria2Profile.swift     # Hysteria2 профиль
@@ -64,12 +65,14 @@ DemarVPN/                              # SwiftUI target
     ├── Servers/ServersView.swift      # выбор сервера
     ├── Account/AccountView.swift      # вход MVP
     └── Settings/
-        ├── SettingsView.swift         # настройки, 7 тапов → service
+        ├── SettingsView.swift         # настройки, 3 тапа → service
         ├── AppSettingsView.swift      # журнал
         ├── ServiceMenuView.swift      # служебное меню
+        ├── DocumentsMenuSheet.swift   # bottom sheet ToS / PP
+        ├── LegalDocumentView.swift    # MarkdownUI viewer
         └── CustomEgressProbes.swift   # свои хосты зондов
 
-DemarVPNTests/                         # unit tests (Sing-box config, interface reporter)
+DemarVPNTests/                         # unit tests (Sing-box, interface, legal docs)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка

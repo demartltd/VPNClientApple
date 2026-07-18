@@ -11,7 +11,7 @@ struct ServersView: View {
                 List {
                     ForEach(appState.servers) { server in
                         Button {
-                            appState.selectServer(server)
+                            Task { await appState.switchServer(to: server) }
                             snackBar.showSuccess("Сервер выбран")
                         } label: {
                             DemarCardRow(
