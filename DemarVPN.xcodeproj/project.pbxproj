@@ -22,6 +22,7 @@
 		B1000001000000000000000E /* SettingsActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000E /* SettingsActionButton.swift */; };
 		B1000001000000000000000F /* SettingsLinksStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000F /* SettingsLinksStrip.swift */; };
 		B10000010000000000000010 /* DemarSnackBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000010 /* DemarSnackBar.swift */; };
+		B10000010000000000000047 /* ServersRefreshBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000047 /* ServersRefreshBanner.swift */; platformFilter = ios; };
 		B10000010000000000000011 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000011 /* HomeView.swift */; };
 		B10000010000000000000012 /* ServersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000012 /* ServersView.swift */; };
 		B10000010000000000000013 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000013 /* SettingsView.swift */; };
@@ -177,6 +178,7 @@
 		F1000001000000000000000E /* SettingsActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsActionButton.swift; sourceTree = "<group>"; };
 		F1000001000000000000000F /* SettingsLinksStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsLinksStrip.swift; sourceTree = "<group>"; };
 		F10000010000000000000010 /* DemarSnackBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarSnackBar.swift; sourceTree = "<group>"; };
+		F10000010000000000000047 /* ServersRefreshBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersRefreshBanner.swift; sourceTree = "<group>"; };
 		F10000010000000000000011 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		F10000010000000000000012 /* ServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersView.swift; sourceTree = "<group>"; };
 		F10000010000000000000013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -322,6 +324,7 @@
 				F1000001000000000000000E /* SettingsActionButton.swift */,
 				F1000001000000000000000F /* SettingsLinksStrip.swift */,
 				F10000010000000000000010 /* DemarSnackBar.swift */,
+				F10000010000000000000047 /* ServersRefreshBanner.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -752,6 +755,7 @@
 				B1000001000000000000000E /* SettingsActionButton.swift in Sources */,
 				B1000001000000000000000F /* SettingsLinksStrip.swift in Sources */,
 				B10000010000000000000010 /* DemarSnackBar.swift in Sources */,
+				B10000010000000000000047 /* ServersRefreshBanner.swift in Sources */,
 				B10000010000000000000011 /* HomeView.swift in Sources */,
 				B10000010000000000000012 /* ServersView.swift in Sources */,
 				B10000010000000000000013 /* SettingsView.swift in Sources */,

@@ -19,7 +19,7 @@ DemarVPN/                              # SwiftUI target
 │   │   └── FontAwesomeBrands.swift    # FA brands, соцссылки
 │   ├── Models/
 │   │   ├── VpnConnectionState.swift   # enum статуса VPN
-│   │   ├── ServerProfile.swift        # профиль сервера в UI
+│   │   ├── ServerProfile.swift        # профиль сервера + UI metadata/filters
 │   │   └── TestServers.swift          # тестовые профили
 │   ├── Network/
 │   │   ├── DeviceTrafficTotals.swift  # RX/TX getifaddrs
@@ -48,12 +48,13 @@ DemarVPN/                              # SwiftUI target
 │
 ├── Components/
 │   ├── SectionCard.swift              # карточка-секция
-│   ├── DemarCardRow.swift             # строка списка
+│   ├── DemarCardRow.swift             # demarScrollScreen + top curtain
 │   ├── DemarKvRow.swift               # key / value
 │   ├── VpnMainToggle.swift            # кнопка VPN
 │   ├── SettingsActionButton.swift     # кнопка в настройках
 │   ├── SettingsLinksStrip.swift       # соцссылки
 │   ├── DemarSnackBar.swift            # тосты
+│   ├── ServersRefreshBanner.swift     # top banner при pull-refresh серверов
 │   └── DiagnosticsJournalTextView.swift # текстовый лог
 │
 ├── Resources/Fonts/

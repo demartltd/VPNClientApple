@@ -37,10 +37,10 @@ final class AppLog {
     }
 
     func append(_ line: String) {
-        append(contentsOf: [line])
+        append(contentsOf: [line], persist: true)
     }
 
-    func append(contentsOf incoming: [String]) {
+    func append(contentsOf incoming: [String], persist: Bool = true) {
         var additions: [JournalLine] = []
         var keys = equivalenceKeys
         for line in incoming {
@@ -61,16 +61,21 @@ final class AppLog {
         }
         equivalenceKeys = Set(lines.map { Self.lineEquivalenceKey($0.text) }.filter { !$0.isEmpty })
         panelTextValid = false
+        guard persist else { return }
+        for item in additions {
+            VpnSharedStore.appendJournalLine(DemarLogTime.messageBody(in: item.text))
+        }
+        VpnSharedStore.scheduleExportMirror()
+    }
+
+    /// Imports new lines from the App Group VPN journal (extension + host).
+    func importSharedJournal() {
+        append(contentsOf: VpnSharedStore.readIncrementalJournalLines(), persist: false)
     }
 
     /// Skips duplicate journal lines (pending drain mirrors the same text into the journal).
     private static func lineEquivalenceKey(_ line: String) -> String {
         DemarLogTime.messageBody(in: line)
-    }
-
-    /// Imports new lines from the App Group VPN journal (extension + host).
-    func importSharedJournal() {
-        append(contentsOf: VpnSharedStore.readIncrementalJournalLines())
     }
 
     /// Masks IP addresses for the UI journal (IPv4: `***.***.111.111`; IPv6: `***::tail`).

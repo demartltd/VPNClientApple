@@ -44,6 +44,14 @@ struct ContentView: View {
             }
         }
         .tint(Color.demarPrimary)
+        .overlay(alignment: .top) {
+            if appState.isRefreshingServers {
+                ServersRefreshBanner()
+                    .safeAreaPadding(.top, 8)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .animation(.smooth(duration: 0.28), value: appState.isRefreshingServers)
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
             try? await Task.sleep(for: .milliseconds(250))

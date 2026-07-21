@@ -38,7 +38,7 @@ struct HomeView: View {
 
             Spacer().frame(height: 20)
 
-            Text(appState.selectedServer?.displayName ?? "Не выбран")
+            Text(appState.selectedServer?.listTitle ?? "Не выбран")
                 .font(.demarTitleMediumBold)
                 .foregroundStyle(Color.demarOnSurface)
                 .multilineTextAlignment(.center)

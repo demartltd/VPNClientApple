@@ -10,8 +10,13 @@ import WidgetKit
 @MainActor
 @Observable
 final class AppState {
+    private enum StorageKey {
+        static let selectedServerId = "selected_server_id"
+    }
+
     let servers: [ServerProfile]
     var selectedServer: ServerProfile?
+    var isRefreshingServers = false
     var vpnState: VpnConnectionState = .disconnected
     var downloadBps: Double = 0
     var uploadBps: Double = 0
@@ -27,15 +32,13 @@ final class AppState {
 
     #if os(iOS) || os(macOS)
     private var statusMonitor: VpnStatusMonitor?
-    #endif
-    #if os(iOS) || os(macOS)
     private var throughputBaseline: (rx: UInt64, tx: UInt64, at: Date)?
     private var throughputSampling = false
     #endif
 
     init(vpn: VpnControlling? = nil) {
         servers = TestServers.profiles
-        selectedServer = servers.first
+        selectedServer = Self.restoreSelectedServer(from: servers)
         if let bundleVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
             appVersionLabel = bundleVersion
         }
@@ -67,6 +70,7 @@ final class AppState {
 
     func selectServer(_ server: ServerProfile) {
         selectedServer = server
+        Self.persistSelectedServerId(server.id)
         AppLog.shared.append("[ui] server selected: \(server.displayName)")
     }
 
@@ -206,6 +210,22 @@ final class AppState {
         }
     }
 
+    /// Claims the refresh lock. Returns false if a refresh is already running.
+    func beginServersRefresh() -> Bool {
+        guard !isRefreshingServers else { return false }
+        isRefreshingServers = true
+        return true
+    }
+
+    /// Finishes a refresh started with `beginServersRefresh()`.
+    func endServersRefresh(minimumVisibleDuration: Duration = .zero) async -> Bool {
+        defer { isRefreshingServers = false }
+        if minimumVisibleDuration > .zero {
+            try? await Task.sleep(for: minimumVisibleDuration)
+        }
+        return !Task.isCancelled
+    }
+
     #if os(macOS)
     private func resetDemarVPNProfileForNewHostBundle() async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
@@ -236,6 +256,17 @@ final class AppState {
         #endif
         downloadBps = 0
         uploadBps = 0
+    }
+
+    private static func restoreSelectedServer(from servers: [ServerProfile]) -> ServerProfile? {
+        guard let savedId = UserDefaults.standard.string(forKey: StorageKey.selectedServerId) else {
+            return servers.first
+        }
+        return servers.first(where: { $0.id == savedId }) ?? servers.first
+    }
+
+    private static func persistSelectedServerId(_ id: String) {
+        UserDefaults.standard.set(id, forKey: StorageKey.selectedServerId)
     }
 
     #if os(iOS) || os(macOS)
