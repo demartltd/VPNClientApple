@@ -36,6 +36,7 @@ enum IOSLibboxCore {
             try platform?.reapplyExcludedIPv4(excludedIPv4)
         }
         LibboxSetMemoryLimit(true)
+        truncateCoreLog()
         let options = LibboxOverrideOptions()
         try commandServer?.checkConfig(configJSON)
         try commandServer?.startOrReloadService(configJSON, options: options)
@@ -75,6 +76,12 @@ enum IOSLibboxCore {
         VpnSharedStore.appendPendingUiDiagLine("[core] \(message)")
     }
 
+    /// Fresh core.log per connect so journal.sh --core/--tg is not drowned in weeks of noise.
+    private static func truncateCoreLog() {
+        guard let url = try? VpnAppGroup.coreLogFileURL() else { return }
+        try? Data().write(to: url, options: .atomic)
+    }
+
     static func activateTrafficCapture() throws {
         try platform?.activateTrafficCapture()
     }
@@ -103,7 +110,7 @@ enum IOSLibboxCore {
         options.basePath = sharedDir.path
         options.workingPath = workingDir.path
         options.tempPath = tempDir.path
-        options.logMaxLines = 1000
+        options.logMaxLines = 20_000
         options.debug = false
 
         var setupError: NSError?

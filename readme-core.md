@@ -73,25 +73,64 @@ Pin endpoint / `mergeDirectIPs` целят **`proxy`**.
 | `experimental.cache_file` | `enabled: true` | кэш DNS/rule-set |
 | DNS bootstrap | `[tlsServerName, server]` → direct DNS | SNI + uplink host |
 | `strict_route` | `false` (NE) | не конфликтует с excludedRoutes на iOS 26 |
-| `stack` | `system` | Apple NE TUN |
+| `stack` | `gvisor` | как первый Hysteria2 (`9f0c3cc`) |
+| `endpoint_independent_nat` | `false` | как первый H2 |
+| `address` | IPv4 `/30` only | IPv4-only TUN |
+| `route_address` | v4 `/1` + `/1` | полный IPv4 tunnel |
+| AAAA DNS | нет отдельного reject | `strategy: ipv4_only` |
+| IPv6 route | late `reject` | как `9f0c3cc` (v6 не в TUN) |
+| UDP/443 | `reject` | блок QUIC (как первый H2) |
+| Hysteria2 `udp_fragment` | `true` | QUIC/MTU на Apple NE |
 | `directDomains` | `[tlsServerName, server]` | SNI / uplink → direct |
 | `directIPs` | IPv4 literal или runtime merge | exclude/route bypass |
 
 На Apple endpoint IP сначала исключается из `NEPacketTunnelNetworkSettings`, затем применяется новый config. Hysteria2 (UDP/QUIC) dial'ит uplink напрямую — без TCP hairpin/relay. Libbox Apple уже с `with_quic`.
 
-Старт туннеля: deferred capture (routes пустые) → `waitForSatisfiedPath` → `activateTrafficCapture` → settle → `resumeDefaultInterfaceAfterCapture`. На iOS 26 pre-capture BSD `connect` к diagnostic mixed inbound даёт `EADDRNOTAVAIL`, поэтому старт **не** гейтится TCP data probe.
+Старт туннеля: deferred capture (routes пустые) → короткий path wait → `activateTrafficCapture` → `resumeDefaultInterfaceAfterCapture`. После full routes NE path часто остаётся `.unsatisfied` при живом `en0` — **не** ждать satisfied (раньше это давало ~15 с на каждый connect). На iOS 26 pre-capture BSD `connect` к diagnostic mixed inbound даёт `EADDRNOTAVAIL`, поэтому старт **не** гейтится TCP data probe.
 
 ### Default interface monitor (NE, iOS + macOS)
 
-Libbox закрывает **все** соединения при пустом default interface (`updateDefaultInterface("", -1)`). Внутри NE `NWPathMonitor` кратковременно флапает в `.unsatisfied`, поэтому сырые апдейты в ядро не передаются:
+Libbox закрывает **все** соединения при пустом default interface (`updateDefaultInterface("", -1)`). Hysteria2 uplink (QUIC/UDP) и long-lived TCP (в т.ч. Telegram MTProto на DC IP literals) умирают с `broken pipe` / `no recent network activity`. Поэтому:
 
-- `DefaultInterfaceReportFilter` — дедуп; потеря интерфейса только если держится ≥3 c.
+- `activateTrafficCapture` **не** шлёт `.lost` — только hold reports, пока path flapping после full routes.
+- После capture **не** `reportFilter.reset()`; `resumeDefaultInterfaceAfterCapture` разрешает first-report при `.unsatisfied` (steady state на iOS после full routes) — live `en0` всегда уходит в libbox, `.lost` — нет.
+- Потеря iface **никогда** не форвардится в libbox, пока туннель жив (иначе Hysteria2 + Telegram MTProto → `broken pipe`).
+- `DefaultInterfaceReportFilter` — дедуп; pending loss abort'ится.
 - `DefaultInterfaceResolver` — **sticky**: пока last-known uplink ещё в candidates, Wi‑Fi↔LTE не rebind'ит libbox. Новый iface — когда sticky ушёл. Если path satisfied, но phys скрыт за TUN — last-known uplink.
 - macOS: transient `.unsatisfied` не потеря, пока в `availableInterfaces` есть phys iface.
-- `TunnelLifecycle`: soft-restart только после `pathRecoveredAfterLoss` или смены excluded-маршрутов; wake здоровый туннель не перезапускает.
-- `includeAllNetworks` выключен; full tunnel — routes + `/32` exclusion endpoint.
-- Endpoint резолвится до старта NE и пинится в dial-outbound; TLS SNI остаётся доменным.
-- `dns-direct: local` — Darwin `getaddrinfo`.
+- `TunnelLifecycle`: soft-restart только после реального empty-phys outage → `pathRecoveredAfterLoss` (≥3s) или смены excluded-маршрутов; `.unsatisfied` при живом `en0` **не** arm'ит recovery (иначе reload убивает MTProto). Wake здоровый туннель не перезапускает.
+- `includeAllNetworks` выключен; IPv4-only TUN (`ipv6=off`) — как первый Hysteria2 `9f0c3cc`.
+- Endpoint резолвится до старта NE и пинится в dial-outbound; TLS SNI остаётся доменным; `udp_fragment: true` на Hysteria2.
+- `dns-direct: local` — Darwin `getaddrinfo` (ipv4_only). PTR → drop; UDP/443 + IPv6 → reject.
+- Core log: `log.level=info` + timestamp; `./scripts/journal.sh -p ios --core --tg`.
+
+Проверка (только iOS): `./scripts/journal.sh -p ios | rg 'ipv6=off'`; VPN connected без `includeAll` / system-stack errors.
+
+### Postmortem: Telegram iOS infinite refresh (2026-07-21)
+
+Сайт `telegram.org` через VPN работал, приложение — бесконечное обновление. Hysteria2 outbound (server/password/tls/`alpn: h3`) **не** был причиной: он почти не менялся с первого H2 (`9f0c3cc`).
+
+**Симптом в логах (только iOS):** при живом web через `outbound/hysteria2` — **ноль** dials на DC `149.154.*` / `91.108.*` / `2001:b28:*` в `core.log`. Telegram не доходил до IPv4 MTProto через TUN.
+
+**Корневая причина:** Telegram iOS предпочитает **hardcoded DC IPv6**. Web идёт hostname → A → TCP/443 через proxy. Любая поломка IPv6-пути (blackhole / кривой RST / asymmetric NE routes) вешает приложение, пока IPv4 DC даже не пробуется — в core.log тишина по Telegram при работающих сайтах.
+
+| Эксперимент | Результат |
+|-------------|-----------|
+| ULA + `::/1` + IPv6 **RST** before sniff + AAAA `reject method drop` | Hang. Silent DNS drop → retry ~1s; RST/HE на Apple NE/gvisor не спасал |
+| IPv4-only TUN + AAAA REFUSED (`ipv6=off`) | Hang остался — v6 DC на physical (цензура/blackhole), IPv4 DC не dial'ились |
+| Dual-stack + **proxy** IPv6 + снятие UDP/443 reject | Hang; DC в логах всё ещё не было |
+| `includeAllNetworks=true` + `stack: system` | **Connect fail**: `system`/`mixed` запрещены с includeAll ([sing-tun#25](https://github.com/SagerNet/sing-tun/issues/25)) |
+| Откат TUN/route к первому H2 `9f0c3cc` | **Telegram работает** |
+
+**Рабочая формула (зафиксирована):**
+
+- IPv4-only TUN: `172.19.0.1/30`, `route_address` v4 `/1`, `stack: gvisor`, `ipv6=off` в NE
+- `includeAllNetworks=false`, `enforceRoutes=false`
+- Route: sniff → hijack-dns → reject UDP/443 → private/direct → reject `ip_version: 6` → proxy
+- DNS: `strategy: ipv4_only`, PTR drop; **без** AAAA drop/REFUSED-экспериментов
+- H2: `udp_fragment: true`, pin endpoint; протокол не трогать ради Telegram
+
+**Не повторять:** тянуть IPv6 в TUN «чтобы RST → Happy Eyeballs»; AAAA `method: drop`; `includeAllNetworks` без обязательного `gvisor`; считать багом поля Hysteria2 outbound.
 
 ---
 
@@ -120,6 +159,8 @@ Assets: `python3 scripts/singbox-download-auto.py` → `sing-box` из release +
 | Libbox in-process | `ios/Frameworks/Libbox.xcframework` |
 | Platform interface | `ios/DemarPacketTunnel/DemarLibboxPlatform.swift` |
 | Запуск core | `ios/DemarPacketTunnel/IOSLibboxCore.swift` |
+
+Libbox: stock Apple `build_libbox` tags минус `with_naive_outbound` (см. `scripts/libbox-build.py`).
 
 Connect: `NativeVpnService` → `VpnTunnelController` → extension → Libbox (тот же путь, что iOS).
 

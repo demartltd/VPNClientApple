@@ -14,6 +14,34 @@ final class DefaultInterfaceReporterTests: XCTestCase {
         XCTAssertEqual(filter.decide(en1), .report(en1))
     }
 
+    /// Simulates post-capture resume without filter.reset(): identical en0 must stay .ignore
+    /// (reset+resend would make libbox kill Hysteria2 QUIC → Telegram broken pipe).
+    func testPostCaptureResumeWithoutResetDedupesIdenticalIface() {
+        let filter = DefaultInterfaceReportFilter()
+        XCTAssertEqual(filter.decide(en0), .report(en0))
+        // resumeDefaultInterfaceAfterCapture calls update again without reset:
+        XCTAssertEqual(filter.decide(en0), .ignore)
+        XCTAssertEqual(filter.decide(en0), .ignore)
+    }
+
+    /// Live en0 while path is unsatisfied must still be reportable (iOS steady state
+    /// after full routes). Loss-only stays gated; resolver already returns en0.
+    func testUnsatisfiedPathStillResolvesLivePhysIface() {
+        let path = DefaultInterfaceResolver.PathContext(
+            isSatisfied: false,
+            usesWifi: true,
+            usesCellular: false,
+            usesEthernet: false,
+            isExpensive: false,
+            isConstrained: false
+        )
+        let update = DefaultInterfaceResolver.resolve(candidates: [wifi], path: path, lastGood: nil)
+        XCTAssertFalse(update.isLost)
+        XCTAssertEqual(update.name, "en0")
+        let filter = DefaultInterfaceReportFilter()
+        XCTAssertEqual(filter.decide(update), .report(update))
+    }
+
     func testReportsExpensiveChangeOnSameInterface() {
         let filter = DefaultInterfaceReportFilter()
         XCTAssertEqual(filter.decide(en0), .report(en0))
@@ -29,6 +57,15 @@ final class DefaultInterfaceReporterTests: XCTestCase {
         XCTAssertEqual(filter.decide(.lost), .ignore)
         XCTAssertEqual(filter.confirmLoss(), .lost)
         XCTAssertEqual(filter.decide(.lost), .ignore)
+    }
+
+    func testConfirmLossAbortsWhenCandidatesPresent() {
+        let filter = DefaultInterfaceReportFilter()
+        XCTAssertEqual(filter.decide(en0), .report(en0))
+        XCTAssertEqual(filter.decide(.lost), .scheduleLoss)
+        XCTAssertNil(filter.confirmLoss(candidatesPresent: true))
+        XCTAssertEqual(filter.decide(.lost), .scheduleLoss)
+        XCTAssertEqual(filter.confirmLoss(candidatesPresent: false), .lost)
     }
 
     func testRecoveryCancelsPendingLoss() {

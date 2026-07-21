@@ -17,8 +17,10 @@ private final class DarwinLocalDNSTransport: NSObject, LibboxLocalDNSTransportPr
             ctx?.errorCode(3)
             return
         }
-        guard network?.hasSuffix("6") != true else {
-            ctx?.errorCode(3)
+        // IPv4-only uplink resolver: AAAA asked via local transport → empty (NXDOMAIN-ish).
+        // Dual-stack TUN still proxies hardcoded Telegram DC IPv6 literals via Hysteria2.
+        if network?.hasSuffix("6") == true {
+            ctx?.success("")
             return
         }
         let addresses = try UplinkIPv4Resolver.resolve(domain)
@@ -44,8 +46,6 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     private var allowUnsatisfiedDefaultReport = false
     private var holdDefaultReportUntilSatisfied = false
     private weak var interfaceListener: LibboxInterfaceUpdateListenerProtocol?
-
-    private static let lossDebounceInterval: TimeInterval = 3
 
     init(provider: NEPacketTunnelProvider, excludedIPv4: [String]) {
         self.provider = provider
@@ -82,15 +82,12 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
                     NSLocalizedDescriptionKey: "TUN network settings are not active.",
                 ])
             }
-            // Full routes make NE path flap unsatisfied; clear en0 so libbox drops IP_BOUND_IF.
+            // Full routes flap NE path unsatisfied — hold reports but keep en0 bound.
+            // Libbox closes every conn on empty default iface (kills Hysteria2 QUIC).
             holdDefaultReportUntilSatisfied = true
             allowUnsatisfiedDefaultReport = false
-            if let listener = interfaceListener {
-                lossDebounceWork?.cancel()
-                lossDebounceWork = nil
-                reportFilter.reset()
-                send(.lost, to: listener)
-            }
+            lossDebounceWork?.cancel()
+            lossDebounceWork = nil
             ipv4.includedRoutes = configuredIncludedIPv4Routes
             settings.dnsSettings = configuredDNSSettings
             settings.ipv6Settings = configuredIPv6Settings
@@ -99,12 +96,14 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         }
     }
 
-    /// Re-push physical default iface into libbox after capture path is satisfied.
+    /// Re-push physical default iface into libbox after capture path is settled.
+    /// Do NOT reset the report filter — that re-sends identical en0 and libbox
+    /// closes every conn (Hysteria2 QUIC → Telegram broken pipe).
     func resumeDefaultInterfaceAfterCapture() {
         holdDefaultReportUntilSatisfied = false
-        allowUnsatisfiedDefaultReport = false
+        // Full routes leave NE path .unsatisfied with en0 still listed — allow first report.
+        allowUnsatisfiedDefaultReport = true
         guard let listener = interfaceListener, let path = nwMonitor?.currentPath else { return }
-        reportFilter.reset()
         updateDefaultInterface(listener, path: path)
     }
 
@@ -163,7 +162,9 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         ipv4Settings.includedRoutes = []
         ipv4Settings.excludedRoutes = ipv4ExcludedRoutes
         settings.ipv4Settings = ipv4Settings
+        // IPv4-only TUN (first Hysteria2): no inet6 in config → ipv6=off.
         configuredIPv6Settings = Self.makeIPv6Settings(from: options)
+        settings.ipv6Settings = configuredIPv6Settings
 
         if !Self.hasDefaultIPv4Route(ipv4Routes) {
             dnsSettings?.matchDomains = [""]
@@ -175,7 +176,8 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         try await provider.setTunnelNetworkSettings(settings)
         Self.diag(
             "openTun mtu=\(options.getMTU()) dns=\(dns.servers.joined(separator: ",")) "
-                + "routes=\(ipv4Routes.count) excluded=\(ipv4ExcludedRoutes.count) capture=deferred"
+                + "routes=\(ipv4Routes.count) excluded=\(ipv4ExcludedRoutes.count) "
+                + "ipv6=\(configuredIPv6Settings == nil ? "off" : "on") capture=deferred"
         )
 
         if let tunFd = provider.packetFlow.value(forKeyPath: "socket.fileDescriptor") as? Int32 {
@@ -312,11 +314,15 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         }
         monitor.pathUpdateHandler = { [weak self] path in
             self?.updateDefaultInterface(listener, path: path)
-            if path.status == .satisfied { signalOnce() }
+            // NE path is often .unsatisfied with en0 still listed — don't block on satisfied.
+            if path.status == .satisfied
+                || path.availableInterfaces.contains(where: { !PhysicalInterfaceSelector.isTunnelInterface($0.name) }) {
+                signalOnce()
+            }
         }
         monitor.start(queue: monitorQueue)
-        // Prefer a real satisfied path before first en0 report (avoids EADDRNOTAVAIL binds).
-        if semaphore.wait(timeout: .now() + 8) == .timedOut {
+        // Prefer a real iface before first en0 report (avoids EADDRNOTAVAIL binds).
+        if semaphore.wait(timeout: .now() + 2) == .timedOut {
             signalOnce()
             allowUnsatisfiedDefaultReport = true
             if let path = nwMonitor?.currentPath {
@@ -341,15 +347,10 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             lastKnownPhysicalInterfaces = physicalLibboxInterfaces(from: candidates)
         }
 
-        // Hold reports while NE path is unsatisfied (initial start or post-capture flap).
-        if path.status == .unsatisfied {
-            if holdDefaultReportUntilSatisfied { return }
-            if reportFilter.lastReported == nil, !allowUnsatisfiedDefaultReport { return }
-        } else if holdDefaultReportUntilSatisfied {
-            holdDefaultReportUntilSatisfied = false
-            reportFilter.reset()
-            Self.diag("path satisfied after capture; resuming defaultIface reports")
-        }
+        // Hold only during setTunnelNetworkSettings. Live phys iface must reach libbox
+        // even when NE path stays .unsatisfied (steady state after full routes on iOS).
+        if holdDefaultReportUntilSatisfied { return }
+        if path.status == .unsatisfied, update.isLost, !allowUnsatisfiedDefaultReport { return }
 
         switch reportFilter.decide(update) {
         case let .report(update):
@@ -357,23 +358,18 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             lossDebounceWork = nil
             send(update, to: listener)
         case .scheduleLoss:
-            scheduleLossReport(listener)
+            // Never forward .lost while the tunnel is up — libbox closes Hysteria2 +
+            // Telegram MTProto. Keep last-reported phys iface until teardown.
+            lossDebounceWork?.cancel()
+            lossDebounceWork = nil
+            _ = reportFilter.confirmLoss(candidatesPresent: true)
         case .ignore:
             break
         }
     }
 
-    private func scheduleLossReport(_ listener: LibboxInterfaceUpdateListenerProtocol) {
-        lossDebounceWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            guard let self, let confirmed = self.reportFilter.confirmLoss() else { return }
-            self.send(confirmed, to: listener)
-        }
-        lossDebounceWork = work
-        monitorQueue.asyncAfter(deadline: .now() + Self.lossDebounceInterval, execute: work)
-    }
-
     private func send(_ update: DefaultInterfaceUpdate, to listener: LibboxInterfaceUpdateListenerProtocol) {
+        Self.diag("defaultIface name=\(update.name.isEmpty ? "<lost>" : update.name) idx=\(update.index)")
         listener.updateDefaultInterface(
             update.name,
             interfaceIndex: update.index,

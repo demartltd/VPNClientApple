@@ -20,6 +20,7 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertEqual(proxy["server"] as? String, profile.server)
         XCTAssertEqual(proxy["server_port"] as? Int, profile.port)
         XCTAssertEqual(proxy["password"] as? String, profile.password)
+        XCTAssertEqual(proxy["udp_fragment"] as? Bool, true)
         XCTAssertNil(proxy["udp_over_tcp"])
         XCTAssertNotNil(proxy["domain_resolver"])
         let tls = try XCTUnwrap(proxy["tls"] as? [String: Any])
@@ -29,6 +30,9 @@ final class SingBoxConfigTests: XCTestCase {
 
         let dns = try XCTUnwrap(root["dns"] as? [String: Any])
         XCTAssertEqual(dns["final"] as? String, "dns-remote")
+        let log = try XCTUnwrap(root["log"] as? [String: Any])
+        XCTAssertEqual(log["level"] as? String, "info")
+        XCTAssertEqual(log["timestamp"] as? Bool, true)
         let dnsServers = try XCTUnwrap(dns["servers"] as? [[String: Any]])
         let remoteServer = try XCTUnwrap(dnsServers.first { ($0["tag"] as? String) == "dns-remote" })
         XCTAssertEqual(remoteServer["type"] as? String, "https")
@@ -45,6 +49,25 @@ final class SingBoxConfigTests: XCTestCase {
                 && (rule["server"] as? String) == "dns-direct"
         })
         XCTAssertNotNil(outbounds.first { ($0["tag"] as? String) == "direct" })
+
+        let tun = try XCTUnwrap((root["inbounds"] as? [[String: Any]])?.first { ($0["type"] as? String) == "tun" })
+        XCTAssertEqual(tun["stack"] as? String, "gvisor")
+        XCTAssertEqual(tun["strict_route"] as? Bool, false)
+        XCTAssertEqual(tun["endpoint_independent_nat"] as? Bool, false)
+        XCTAssertEqual(tun["address"] as? [String], ["172.19.0.1/30"])
+        XCTAssertEqual(tun["route_address"] as? [String], ["0.0.0.0/1", "128.0.0.0/1"])
+
+        let route = try XCTUnwrap(root["route"] as? [String: Any])
+        let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
+        XCTAssertEqual(rules.first?["action"] as? String, "sniff")
+        XCTAssertTrue(rules.contains {
+            ($0["network"] as? [String]) == ["udp"]
+                && ($0["port"] as? [Int]) == [443]
+                && ($0["action"] as? String) == "reject"
+        })
+        XCTAssertTrue(rules.contains {
+            ($0["ip_version"] as? Int) == 6 && ($0["action"] as? String) == "reject"
+        })
 
         try assertSingBoxCheckPasses(json: json)
     }

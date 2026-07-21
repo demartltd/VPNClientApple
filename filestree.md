@@ -115,7 +115,6 @@ ios/
 │   ├── IOSLibboxCore.swift            # Libbox in-process (iOS + macOS)
 │   ├── DemarLibboxPlatform.swift      # NE platform interface
 │   ├── LibboxRunBlocking.swift        # async bridge for openTun
-│   ├── FlutterExtension.xcconfig      # legacy paths
 │   ├── Info.plist
 │   └── DemarPacketTunnel.entitlements
 └── Frameworks/

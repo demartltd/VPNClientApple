@@ -39,6 +39,15 @@ final class VpnStabilityTests: XCTestCase {
         )
     }
 
+    func testPathLossPolicyIgnoresUnsatisfiedWhenPhysPresent() {
+        XCTAssertFalse(
+            TunnelPathLossPolicy.shouldArmRecoveryAfterUnsatisfied(physicalInterfacesEmpty: false)
+        )
+        XCTAssertTrue(
+            TunnelPathLossPolicy.shouldArmRecoveryAfterUnsatisfied(physicalInterfacesEmpty: true)
+        )
+    }
+
     func testReadinessFailsOnFailedHeartbeat() {
         XCTAssertEqual(
             VpnTunnelReadiness.failureMessage(heartbeat: "failed-22", startFailure: nil),

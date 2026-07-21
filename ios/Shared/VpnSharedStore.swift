@@ -29,7 +29,7 @@ enum VpnSharedStore {
   private static var exportMirrorWork: DispatchWorkItem?
   private static let journalOffsetCore = "demar_journal_core_bytes"
   private static let firstImportTailBytes: Int64 = 64 * 1024
-  private static let coreMirrorTailBytes: Int64 = 256 * 1024
+  private static let coreMirrorTailBytes: Int64 = 1024 * 1024
   private static let incrementalImportMaxBytes = 64 * 1024
   private static let incrementalImportMaxLines = 64
 
@@ -705,6 +705,15 @@ enum VpnReconfigurePolicy {
   /// reload re-runs openTun/setTunnelNetworkSettings and aborts every active stream.
   static func shouldSoftRestartWhenRoutesUnchanged(reason: String) -> Bool {
     reason == "pathRecoveredAfterLoss"
+  }
+}
+
+/// Path-loss arming for TunnelLifecycle: NE often reports `.unsatisfied` after full
+/// routes while phys ifaces (en0) remain listed — that must not trigger soft-restart
+/// (kills Hysteria2 + Telegram MTProto).
+enum TunnelPathLossPolicy {
+  static func shouldArmRecoveryAfterUnsatisfied(physicalInterfacesEmpty: Bool) -> Bool {
+    physicalInterfacesEmpty
   }
 }
 

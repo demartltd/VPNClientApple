@@ -8,7 +8,7 @@ enum SingBoxConfigBuilder {
         plan: SingBoxConnectPlan,
         tunName: String = "utun0",
         mtu: Int = 1492,
-        logLevel: String = "warning"
+        logLevel: String = "info"
     ) throws -> String {
         let config = buildTunConfig(
             proxyOutbound: plan.proxyOutbound,
@@ -104,7 +104,7 @@ enum SingBoxConfigBuilder {
         directDomains: [String]
     ) -> [String: Any] {
         [
-            "log": ["level": logLevel, "timestamp": false],
+            "log": ["level": logLevel, "timestamp": true],
             "dns": SingBoxDnsBuilder.makeDns(final: dnsFinal, bootstrapDomains: dnsBootstrapDomains),
             "inbounds": [SingBoxTunInboundBuilder.makeTunInbound(
                 tunName: tunName,
@@ -159,8 +159,6 @@ enum SingBoxDnsBuilder {
     }
 
     static func makeDns(final dnsFinal: String, bootstrapDomains: [String] = []) -> [String: Any] {
-        // Drop local reverse lookups (*.in-addr.arpa / _dns-sd._udp floods) instead of
-        // dialing a direct resolver that is unreachable inside the macOS Network Extension.
         var rules: [[String: Any]] = [
             ["query_type": ["PTR"], "action": "reject", "method": "drop"],
         ]
@@ -190,25 +188,22 @@ enum SingBoxDnsBuilder {
 }
 
 enum SingBoxRouteBuilder {
+    /// First Hysteria2 route shape (`9f0c3cc`): sniff → DNS → block QUIC → private/direct → reject v6 → proxy.
     static func makeRoute(
         inboundTag: String,
         directIPs: [String],
         directDomains: [String] = []
     ) -> [String: Any] {
-        // No per-connection direct resolve: domains route to the proxy, which resolves
-        // them server-side, so the data path never depends on direct DNS.
-        var rules: [[String: Any]] = [[
-            "inbound": [inboundTag],
-            "action": "sniff",
-        ], [
-            "protocol": "dns",
-            "action": "hijack-dns",
-        ], [
-            "ip_is_private": true,
-            "action": "route",
-            "outbound": SingBoxConfigConstants.directTag,
-        ]]
-
+        var rules: [[String: Any]] = [
+            ["inbound": [inboundTag], "action": "sniff"],
+            ["protocol": "dns", "action": "hijack-dns"],
+            ["network": ["udp"], "port": [443], "action": "reject"],
+            [
+                "ip_is_private": true,
+                "action": "route",
+                "outbound": SingBoxConfigConstants.directTag,
+            ],
+        ]
         for ip in directIPs {
             rules.append([
                 "ip_cidr": ["\(ip)/32"],
@@ -224,7 +219,6 @@ enum SingBoxRouteBuilder {
                 "outbound": SingBoxConfigConstants.directTag,
             ])
         }
-
         rules.append(["ip_version": 6, "action": "reject"])
         rules.append([
             "inbound": [SingBoxConfigConstants.diagnosticInboundTag],
@@ -246,6 +240,7 @@ enum SingBoxRouteBuilder {
 }
 
 enum SingBoxTunInboundBuilder {
+    /// First Hysteria2 TUN (`9f0c3cc`): IPv4-only, gvisor. `strict_route: false` kept for iOS 26 NE.
     static func makeTunInbound(
         tunName: String,
         mtu: Int,
@@ -259,15 +254,14 @@ enum SingBoxTunInboundBuilder {
             "interface_name": tunName,
             "mtu": effectiveMtu,
             "auto_route": true,
-            // false: strict_route fights NE excludedRoutes on iOS 26 (EADDRNOTAVAIL on en0).
             "strict_route": false,
             "address": ["172.19.0.1/30"],
-            "stack": "system",
+            "stack": "gvisor",
             "udp_timeout": "5m",
             "endpoint_independent_nat": false,
+            "route_address": ["0.0.0.0/1", "128.0.0.0/1"],
         ]
         if !directIPs.isEmpty {
-            tunInbound["route_address"] = ["0.0.0.0/0"]
             tunInbound["route_exclude_address"] = directIPs.map { "\($0)/32" }
         }
         return tunInbound

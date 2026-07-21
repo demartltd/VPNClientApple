@@ -557,15 +557,13 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
   }
 
-  /// Deferred TUN → wait for satisfied path → install full routes → settle.
+  /// Deferred TUN → install full routes → resume sticky default iface.
+  /// Do not wait for NWPath `.satisfied` after capture: on iOS the NE path often
+  /// stays `.unsatisfied` with phys ifaces still listed (was costing ~15s every connect).
   private func bringUpTrafficCapture() throws {
-    Self.waitForSatisfiedPath(timeoutSeconds: 5)
+    Self.waitForSatisfiedPath(timeoutSeconds: 2)
     VpnSharedStore.saveExtensionHeartbeat(phase: "core-settling")
     try IOSLibboxCore.activateTrafficCapture()
-    usleep(400_000)
-    Self.waitForSatisfiedPath(timeoutSeconds: 15) {
-      VpnSharedStore.saveExtensionHeartbeat(phase: "core-settling")
-    }
     IOSLibboxCore.resumeDefaultInterfaceAfterCapture()
   }
 

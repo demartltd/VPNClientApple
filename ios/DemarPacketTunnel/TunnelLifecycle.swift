@@ -112,6 +112,10 @@ final class TunnelLifecycle {
       self.lastPathSignature = signature
 
       guard path.status == .satisfied else {
+        // NE often stays unsatisfied after full routes while en0 is listed — not a real loss.
+        guard TunnelPathLossPolicy.shouldArmRecoveryAfterUnsatisfied(
+          physicalInterfacesEmpty: signature.physicalInterfaces.isEmpty
+        ) else { return }
         if self.unsatisfiedSince == nil {
           self.unsatisfiedSince = Date()
         }

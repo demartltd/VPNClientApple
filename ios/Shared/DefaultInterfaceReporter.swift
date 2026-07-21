@@ -132,8 +132,13 @@ final class DefaultInterfaceReportFilter {
   }
 
   /// Called when the loss debounce fires; returns the loss to report unless the path recovered meanwhile.
-  func confirmLoss() -> DefaultInterfaceUpdate? {
+  /// Pass `candidatesPresent: true` to abort (phys iface still listed — do not kill Hysteria2).
+  func confirmLoss(candidatesPresent: Bool = false) -> DefaultInterfaceUpdate? {
     guard lossPending else { return nil }
+    if candidatesPresent {
+      lossPending = false
+      return nil
+    }
     lossPending = false
     lastReported = .lost
     return .lost

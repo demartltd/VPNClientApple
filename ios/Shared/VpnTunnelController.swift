@@ -1008,7 +1008,9 @@ final class VpnTunnelController {
     else { return configJson }
     var root = rootRaw
     var logObj = (root["log"] as? [String: Any]) ?? [:]
-    if logObj["loglevel"] == nil, logObj["level"] == nil { logObj["level"] = "info" }
+    // Force info so reconnect / stale warning configs still log every dial (Telegram DC).
+    logObj["level"] = "info"
+    logObj["timestamp"] = true
     logObj["output"] = output.path
     root["log"] = logObj
     let out = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted])

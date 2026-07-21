@@ -35,6 +35,7 @@ struct SingBoxConnectPlan {
             "server": profile.server,
             "server_port": profile.port,
             "password": profile.password,
+            "udp_fragment": true,
             "domain_resolver": SingBoxDnsBuilder.domainResolver(server: SingBoxConfigConstants.dnsDirectTag),
             "tls": [
                 "enabled": true,

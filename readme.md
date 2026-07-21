@@ -68,12 +68,14 @@ UI («Настройки → Настройки приложения») и CLI �
 ```bash
 ./scripts/journal.sh                 # auto: macos → sim → device
 ./scripts/journal.sh -o journal.txt  # сохранить в файл
-./scripts/journal.sh --core          # ограниченный хвост core.log, включая physical iOS mirror
-./scripts/journal.sh -p ios          # физическое устройство
-./scripts/journal.sh -d "iPhone Rem" # имя / UDID для devicectl
+./scripts/journal.sh --core          # core.log (info: каждое dial destination→outbound)
+./scripts/journal.sh --core --tg     # только Telegram DC / домены
+./scripts/journal.sh -p ios             # физическое устройство
+./scripts/journal.sh -p ios --core --tg # Telegram DC / domains in core.log
+./scripts/journal.sh -d "iPhone Rem"    # имя / UDID для devicectl
 ```
 
-На device открой app (чтобы зеркало обновилось) или connect VPN. Fallback: Share в UI.
+Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На device открой app (чтобы зеркало обновилось) или connect VPN. Fallback: Share в UI.
 
 ## Навигация
 
