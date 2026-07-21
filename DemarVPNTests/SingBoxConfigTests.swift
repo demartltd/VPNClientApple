@@ -64,9 +64,12 @@ final class SingBoxConfigTests: XCTestCase {
             ($0["network"] as? [String]) == ["udp"]
                 && ($0["port"] as? [Int]) == [443]
                 && ($0["action"] as? String) == "reject"
+                && ($0["method"] as? String) == "default"
         })
         XCTAssertTrue(rules.contains {
-            ($0["ip_version"] as? Int) == 6 && ($0["action"] as? String) == "reject"
+            ($0["ip_version"] as? Int) == 6
+                && ($0["action"] as? String) == "reject"
+                && ($0["method"] as? String) == "default"
         })
 
         try assertSingBoxCheckPasses(json: json)

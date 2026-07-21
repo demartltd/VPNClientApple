@@ -79,7 +79,7 @@ Pin endpoint / `mergeDirectIPs` целят **`proxy`**.
 | `route_address` | v4 `/1` + `/1` | полный IPv4 tunnel |
 | AAAA DNS | нет отдельного reject | `strategy: ipv4_only` |
 | IPv6 route | late `reject` | как `9f0c3cc` (v6 не в TUN) |
-| UDP/443 | `reject` | блок QUIC (как первый H2) |
+| UDP/443 | `reject` + `method: default` | форс TCP: QUIC-in-QUIC над H2 вешает App Store; bare reject = blackhole |
 | Hysteria2 `udp_fragment` | `true` | QUIC/MTU на Apple NE |
 | `directDomains` | `[tlsServerName, server]` | SNI / uplink → direct |
 | `directIPs` | IPv4 literal или runtime merge | exclude/route bypass |
@@ -101,10 +101,10 @@ Libbox закрывает **все** соединения при пустом de
 - `TunnelLifecycle`: soft-restart только после реального empty-phys outage → `pathRecoveredAfterLoss` (≥3s) или смены excluded-маршрутов; `.unsatisfied` при живом `en0` **не** arm'ит recovery (иначе reload убивает MTProto). Wake здоровый туннель не перезапускает.
 - `includeAllNetworks` выключен; IPv4-only TUN (`ipv6=off`) — как первый Hysteria2 `9f0c3cc`.
 - Endpoint резолвится до старта NE и пинится в dial-outbound; TLS SNI остаётся доменным; `udp_fragment: true` на Hysteria2.
-- `dns-direct: local` — Darwin `getaddrinfo` (ipv4_only). PTR → drop; UDP/443 + IPv6 → reject.
+- `dns-direct: local` — Darwin `getaddrinfo` (ipv4_only). PTR → drop; IPv6 / UDP/443 → reject `method: default` (ICMP/RST → App Store TCP fallback).
 - Core log: `log.level=info` + timestamp; `./scripts/journal.sh -p ios --core --tg`.
 
-Проверка (только iOS): `./scripts/journal.sh -p ios | rg 'ipv6=off'`; VPN connected без `includeAll` / system-stack errors.
+Проверка (только iOS): `./scripts/journal.sh -p ios | rg 'ipv6=off'`; App Store без `outbound packet …:443` на apple CDN (только TCP); Telegram ок.
 
 ### Postmortem: Telegram iOS infinite refresh (2026-07-21)
 
@@ -126,11 +126,11 @@ Libbox закрывает **все** соединения при пустом de
 
 - IPv4-only TUN: `172.19.0.1/30`, `route_address` v4 `/1`, `stack: gvisor`, `ipv6=off` в NE
 - `includeAllNetworks=false`, `enforceRoutes=false`
-- Route: sniff → hijack-dns → reject UDP/443 → private/direct → reject `ip_version: 6` → proxy
+- Route: sniff → hijack-dns → UDP/443 reject **`method: default`** → private/direct → reject IPv6 `method: default` → proxy
 - DNS: `strategy: ipv4_only`, PTR drop; **без** AAAA drop/REFUSED-экспериментов
 - H2: `udp_fragment: true`, pin endpoint; протокол не трогать ради Telegram
 
-**Не повторять:** тянуть IPv6 в TUN «чтобы RST → Happy Eyeballs»; AAAA `method: drop`; `includeAllNetworks` без обязательного `gvisor`; считать багом поля Hysteria2 outbound.
+**Не повторять:** тянуть IPv6 в TUN «чтобы RST → Happy Eyeballs»; AAAA `method: drop`; `includeAllNetworks` без обязательного `gvisor`; bare UDP/443 `reject` без `method: default` (blackhole → App Store hang); пускать QUIC в H2 (QUIC-in-QUIC → App Store hang); считать багом поля Hysteria2 outbound.
 
 ---
 

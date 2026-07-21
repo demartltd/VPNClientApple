@@ -188,7 +188,15 @@ enum SingBoxDnsBuilder {
 }
 
 enum SingBoxRouteBuilder {
-    /// First Hysteria2 route shape (`9f0c3cc`): sniff → DNS → block QUIC → private/direct → reject v6 → proxy.
+    /// IPv4-only TUN (Telegram). Reject UDP/443 with method default — App Store prefers
+    /// HTTP/3; QUIC-in-QUIC over Hysteria2 hangs, and bare `reject` blackholes without fallback.
+    private static func rejectDefault(_ match: [String: Any]) -> [String: Any] {
+        var rule = match
+        rule["action"] = "reject"
+        rule["method"] = "default"
+        return rule
+    }
+
     static func makeRoute(
         inboundTag: String,
         directIPs: [String],
@@ -197,7 +205,7 @@ enum SingBoxRouteBuilder {
         var rules: [[String: Any]] = [
             ["inbound": [inboundTag], "action": "sniff"],
             ["protocol": "dns", "action": "hijack-dns"],
-            ["network": ["udp"], "port": [443], "action": "reject"],
+            rejectDefault(["network": ["udp"], "port": [443]]),
             [
                 "ip_is_private": true,
                 "action": "route",
@@ -219,7 +227,7 @@ enum SingBoxRouteBuilder {
                 "outbound": SingBoxConfigConstants.directTag,
             ])
         }
-        rules.append(["ip_version": 6, "action": "reject"])
+        rules.append(rejectDefault(["ip_version": 6]))
         rules.append([
             "inbound": [SingBoxConfigConstants.diagnosticInboundTag],
             "action": "route",
