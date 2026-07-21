@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#endif
 
 enum SingBoxConfigBuilder {
     static func buildTunConfigJson(
@@ -16,8 +19,7 @@ enum SingBoxConfigBuilder {
             dnsFinal: plan.tun.dnsFinal,
             dnsBootstrapDomains: plan.tun.dnsBootstrapDomains,
             strictRoute: plan.tun.strictRoute,
-            directDomains: plan.tun.directDomains,
-            blockQUIC: plan.tun.blockQUIC
+            directDomains: plan.tun.directDomains
         )
         return try SingBoxConfigEncoding.encodeConfigToJson(
             config,
@@ -27,7 +29,11 @@ enum SingBoxConfigBuilder {
     }
 
     /// Injects runtime-resolved uplink IPv4 into route bypass and TUN exclude rules.
-    static func mergeDirectIPs(_ ips: [String], into configJson: String) throws -> String {
+    static func mergeDirectIPs(
+        _ ips: [String],
+        into configJson: String,
+        dialTag: String = SingBoxConfigConstants.proxyTag
+    ) throws -> String {
         let merged = Array(Set(ips.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty })).sorted()
         guard !merged.isEmpty else { return configJson }
         guard let data = configJson.data(using: .utf8),
@@ -66,10 +72,17 @@ enum SingBoxConfigBuilder {
             root["route"] = route
         }
         if var outbounds = root["outbounds"] as? [[String: Any]],
-           let proxyIndex = outbounds.firstIndex(where: { ($0["tag"] as? String) == SingBoxConfigConstants.proxyTag })
+           let dialIndex = outbounds.firstIndex(where: { ($0["tag"] as? String) == dialTag })
         {
-            outbounds[proxyIndex]["server"] = merged[0]
-            root["outbounds"] = outbounds
+            let current = (outbounds[dialIndex]["server"] as? String)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            var literal = in_addr()
+            let alreadyPinned = !current.isEmpty
+                && current.withCString({ inet_pton(AF_INET, $0, &literal) }) == 1
+            if !alreadyPinned {
+                outbounds[dialIndex]["server"] = merged[0]
+                root["outbounds"] = outbounds
+            }
         }
 
         return try SingBoxConfigEncoding.encodeConfigToJson(
@@ -88,8 +101,7 @@ enum SingBoxConfigBuilder {
         dnsFinal: String,
         dnsBootstrapDomains: [String],
         strictRoute: Bool,
-        directDomains: [String],
-        blockQUIC: Bool
+        directDomains: [String]
     ) -> [String: Any] {
         [
             "log": ["level": logLevel, "timestamp": false],
@@ -108,13 +120,9 @@ enum SingBoxConfigBuilder {
             "route": SingBoxRouteBuilder.makeRoute(
                 inboundTag: SingBoxConfigConstants.tunInboundTag,
                 directIPs: directIPs,
-                directDomains: directDomains,
-                blockQUIC: blockQUIC
+                directDomains: directDomains
             ),
-            "outbounds": [
-                proxyOutbound,
-                ["type": "direct", "tag": SingBoxConfigConstants.directTag],
-            ],
+            "outbounds": [proxyOutbound, ["type": "direct", "tag": SingBoxConfigConstants.directTag]],
             "experimental": ["cache_file": ["enabled": true]],
         ]
     }
@@ -167,8 +175,6 @@ enum SingBoxDnsBuilder {
         return [
             "servers": [
                 ["type": "local", "tag": SingBoxConfigConstants.dnsDirectTag],
-                // DoH keeps one multiplexed connection through the proxy instead of a
-                // new stream per query (raw tcp/udp), which avoids the abort cascade.
                 [
                     "type": "https",
                     "tag": SingBoxConfigConstants.dnsRemoteTag,
@@ -187,8 +193,7 @@ enum SingBoxRouteBuilder {
     static func makeRoute(
         inboundTag: String,
         directIPs: [String],
-        directDomains: [String] = [],
-        blockQUIC: Bool
+        directDomains: [String] = []
     ) -> [String: Any] {
         // No per-connection direct resolve: domains route to the proxy, which resolves
         // them server-side, so the data path never depends on direct DNS.
@@ -203,14 +208,6 @@ enum SingBoxRouteBuilder {
             "action": "route",
             "outbound": SingBoxConfigConstants.directTag,
         ]]
-        if blockQUIC {
-            // Naive uses one HTTP/2 transport; force apps to TCP instead of tunneling QUIC over UoT.
-            rules.insert([
-                "network": ["udp"],
-                "port": [443],
-                "action": "reject",
-            ], at: 2)
-        }
 
         for ip in directIPs {
             rules.append([
@@ -262,14 +259,15 @@ enum SingBoxTunInboundBuilder {
             "interface_name": tunName,
             "mtu": effectiveMtu,
             "auto_route": true,
-            "strict_route": strictRoute,
+            // false: strict_route fights NE excludedRoutes on iOS 26 (EADDRNOTAVAIL on en0).
+            "strict_route": false,
             "address": ["172.19.0.1/30"],
-            "stack": "gvisor",
+            "stack": "system",
             "udp_timeout": "5m",
             "endpoint_independent_nat": false,
         ]
         if !directIPs.isEmpty {
-            tunInbound["route_address"] = ["0.0.0.0/1", "128.0.0.0/1"]
+            tunInbound["route_address"] = ["0.0.0.0/0"]
             tunInbound["route_exclude_address"] = directIPs.map { "\($0)/32" }
         }
         return tunInbound

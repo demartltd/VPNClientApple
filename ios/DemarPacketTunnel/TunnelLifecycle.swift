@@ -118,7 +118,7 @@ final class TunnelLifecycle {
         self.pendingRecoveryAfterUnsatisfied = true
         return
       }
-      // Sticky default-interface reporting keeps naive HTTP/2 on the same uplink across
+      // Sticky default-interface reporting keeps long-lived TCP uplinks on the same iface across
       // Wi-Fi/cellular flips; only soft-restart after a confirmed path outage.
       guard self.pendingRecoveryAfterUnsatisfied else { return }
       self.pendingRecoveryAfterUnsatisfied = false

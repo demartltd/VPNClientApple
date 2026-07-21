@@ -24,33 +24,17 @@ enum ServerTier: String, CaseIterable, Equatable, Hashable, Sendable {
 }
 
 enum ServerProtocol: String, CaseIterable, Equatable, Hashable, Sendable {
-    case naive = "Naive"
     case hysteria2 = "Hysteria2"
 }
 
 struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
-    enum Kind: Equatable, Hashable, Sendable {
-        case naive(NaiveProfile)
-        case hysteria2(Hysteria2Profile)
-    }
-
     let id: String
     let displayName: String
-    let kind: Kind
+    let profile: Hysteria2Profile
 
-    var connectPlan: SingBoxConnectPlan {
-        switch kind {
-        case let .naive(profile): .naive(profile)
-        case let .hysteria2(profile): .hysteria2(profile)
-        }
-    }
+    var connectPlan: SingBoxConnectPlan { .hysteria2(profile) }
 
-    var serverProtocol: ServerProtocol {
-        switch kind {
-        case .naive: .naive
-        case .hysteria2: .hysteria2
-        }
-    }
+    var serverProtocol: ServerProtocol { .hysteria2 }
 
     var tier: ServerTier { .fromTag(displayName) }
 
@@ -68,12 +52,7 @@ struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
         return Locale.current.localizedString(forRegionCode: countryCode)
     }
 
-    var city: String? {
-        switch kind {
-        case let .naive(profile): profile.city
-        case let .hysteria2(profile): profile.city
-        }
-    }
+    var city: String? { profile.city }
 
     var listTitle: String {
         guard let countryName, !countryName.isEmpty else { return displayName }
@@ -95,14 +74,8 @@ struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
         return String(scalars)
     }
 
-    init(naive profile: NaiveProfile) {
-        kind = .naive(profile)
-        id = "naive:\(profile.displayName)"
-        displayName = profile.displayName
-    }
-
     init(hysteria2 profile: Hysteria2Profile) {
-        kind = .hysteria2(profile)
+        self.profile = profile
         id = "hysteria2:\(profile.displayName)"
         displayName = profile.displayName
     }

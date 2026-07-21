@@ -1,4 +1,4 @@
-# Ядро VPN: Sing-box (NaiveProxy + Hysteria2) — Demar VPN (Apple)
+# Ядро VPN: Sing-box (Hysteria2) — Demar VPN (Apple)
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
 
@@ -6,11 +6,9 @@
 
 Документация Sing-box:
 
-- [Naive outbound](https://sing-box.sagernet.org/configuration/outbound/naive/)
 - [Hysteria2 outbound](https://sing-box.sagernet.org/configuration/outbound/hysteria2/)
 - [TUN inbound](https://sing-box.sagernet.org/configuration/inbound/tun/)
 - [TLS outbound](https://sing-box.sagernet.org/configuration/shared/tls/)
-- [UDP over TCP](https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/)
 - [Dial fields](https://sing-box.sagernet.org/configuration/shared/dial/)
 - [DNS rule action](https://sing-box.sagernet.org/configuration/dns/rule_action/)
 - [CLI](https://sing-box.sagernet.org/command/)
@@ -19,7 +17,7 @@
 
 ## Идея
 
-Sing-box используется как proxy-core. **Device-wide VPN** строится через **TUN inbound** в `config.json`; маршруты и utun создаёт **Network Extension** (`NEPacketTunnelProvider`), extension запускает `sing-box run -c`.
+Sing-box используется как proxy-core. **Device-wide VPN** строится через **TUN inbound** в `config.json`; маршруты и utun создаёт **Network Extension** (`NEPacketTunnelProvider`), extension запускает Libbox in-process.
 
 Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxConnectPlan.swift) → [`SingBoxConfigBuilder`](DemarVPN/Core/Vpn/SingBoxConfigBuilder.swift) → `config.json`. Extension мержит runtime-resolved uplink IPv4 в bypass rules перед стартом Libbox; TUN fd создаёт NE platform interface.
 
@@ -39,108 +37,61 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 
 ---
 
-## NaiveProxy: профиль и config.json
+## Hysteria2: профиль и config.json
 
-### App model — `NaiveProfile`
+### App model — `Hysteria2Profile`
 
-[`NaiveProfile`](DemarVPN/Core/Vpn/NaiveProfile.swift) — структурированный профиль (без URI-парсера). Тестовые значения: [`TestServers.swift`](DemarVPN/Core/Models/TestServers.swift).
+[`Hysteria2Profile`](DemarVPN/Core/Vpn/Hysteria2Profile.swift) — структурированный профиль (без URI-парсера). Тестовые значения: [`TestServers.swift`](DemarVPN/Core/Models/TestServers.swift).
 
-| App field | sing-box key | Required |
-|-----------|--------------|----------|
+| App field | sing-box | Required |
+|-----------|----------|----------|
 | `server` | `server` | yes |
 | `port` | `server_port` | yes |
-| `username` | `username` | no |
-| `password` | `password` | no |
-| `tlsServerName` | `tls.server_name` | yes (TLS обязателен для naive) |
-| `displayName` | — | UI only |
-| `city` | — | UI subtitle only |
+| `password` | `password` | yes |
+| `tlsServerName` | `tls.server_name` | yes |
+| `displayName` / `city` | — | UI only |
 
-### Hardcoded defaults (Demar builder)
+### Outbound (`SingBoxConnectPlan.hysteria2`)
 
-Задаются в `SingBoxConnectPlan.naive(_:)`:
+Один outbound + `direct`:
 
-| sing-box key | Значение | Зачем |
-|--------------|----------|-------|
-| `type` | `"naive"` | |
-| `tag` | `"proxy"` | route final |
-| `tls.enabled` | `true` | naive требует TLS |
-| `domain_resolver` | `{ server: "dns-direct", strategy: "ipv4_only" }` | sing-box 1.12+ |
-| `udp_over_tcp` | `{ enabled: true, version: 2 }` | UDP через TCP |
-| `quic` | `false` | HTTP/2, не QUIC |
+| Outbound | tag | Role |
+|----------|-----|------|
+| hysteria2 | `proxy` | route final / DoH detour; dial host/port; `tls` + `alpn: ["h3"]`; `domain_resolver` → `dns-direct` |
+| direct | `direct` | bypass |
 
-### TUN / DNS / route overrides (Naive)
+Pin endpoint / `mergeDirectIPs` целят **`proxy`**.
+
+### TUN / DNS / route
 
 | Параметр | Значение | Эффект |
 |----------|----------|--------|
 | `dns.final` | `dns-remote` | DNS через proxy |
-| `dns-remote` тип | `https` (DoH, `detour: proxy`) | одно мультиплексированное соединение через прокси вместо потока на каждый запрос (raw tcp/udp) — без лавины `stream failed: aborted` |
-| `dns-direct` тип | `local` | системный Darwin resolver до захвата маршрутов |
-| PTR (reverse) запросы | `action: reject` (`drop`) | локальные `*.in-addr.arpa` / `_dns-sd._udp` отбрасываются: прямой резолвер недоступен внутри macOS NE и перегружал единственное соединение naive |
-| `experimental.cache_file` | `enabled: true` | кэш DNS/rule-set переживает рестарты |
-| route resolve | нет | данные не зависят от прямого DNS: домены идут в прокси, резолв на стороне сервера |
-| QUIC (`udp` :443) | `action: reject` | apps падают на TCP — без утечек IPv6/UDP и без нагрузки на единственное соединение naive |
-| DNS bootstrap | `[tlsServerName]` через `action: route` | SNI → direct DNS |
-| `strict_route` | `true` | |
-| direct domain | `[tlsServerName]` | SNI → direct outbound |
-| `directIPs` | IPv4 literal `server` или runtime merge hostname → IPv4 | exclude/route bypass |
+| `dns-remote` | `https` DoH, `detour: proxy` | DNS через proxy |
+| `dns-direct` | `local` | системный Darwin resolver |
+| PTR | `action: reject` (`drop`) | отсев локальных reverse/DNS-SD floods в NE |
+| `experimental.cache_file` | `enabled: true` | кэш DNS/rule-set |
+| DNS bootstrap | `[tlsServerName, server]` → direct DNS | SNI + uplink host |
+| `strict_route` | `false` (NE) | не конфликтует с excludedRoutes на iOS 26 |
+| `stack` | `system` | Apple NE TUN |
+| `directDomains` | `[tlsServerName, server]` | SNI / uplink → direct |
+| `directIPs` | IPv4 literal или runtime merge | exclude/route bypass |
 
-На Apple endpoint IP сначала исключается из `NEPacketTunnelNetworkSettings`, затем применяется новый config. При смене A-record kernel routes переустанавливаются до reload; неудачный reload приводит к одному hard restart, затем к остановке туннеля с ошибкой.
+На Apple endpoint IP сначала исключается из `NEPacketTunnelNetworkSettings`, затем применяется новый config. Hysteria2 (UDP/QUIC) dial'ит uplink напрямую — без TCP hairpin/relay. Libbox Apple уже с `with_quic`.
 
-### sing-box: поля Naive (не экспонированы в app)
-
-Из [upstream docs](https://sing-box.sagernet.org/configuration/outbound/naive/) — для будущего расширения:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `extra_headers` | object | Доп. HTTP-заголовки |
-| `udp_over_tcp.enabled` | bool | Включение UDP-over-TCP (сейчас hardcoded `true`) |
-| `quic` | bool | QUIC вместо HTTP/2 (сейчас `false`) |
-| `quic_congestion_control` | string | `bbr` (default), `bbr2`, `cubic`, `reno` |
-| `tls.certificate` | string[] | Self-signed (не для production) |
-| `tls.certificate_path` | string | Путь к сертификату |
-| `tls.ech` | object | ECH |
-| Dial fields | — | `detour`, `bind_interface`, `inet4_bind_address`, … см. [Dial Fields](https://sing-box.sagernet.org/configuration/shared/dial/) |
-
-**Platform:** Naive outbound доступен на Apple platforms; iOS Libbox собирается с `with_naive_outbound` — см. [`ios/Frameworks/README.md`](ios/Frameworks/README.md).
-
-### Hysteria2: профиль и outbound
-
-[`Hysteria2Profile`](DemarVPN/Core/Vpn/Hysteria2Profile.swift) → `SingBoxConnectPlan.hysteria2(_:)`:
-
-| App field | sing-box key |
-|-----------|--------------|
-| `server` | `server` |
-| `port` | `server_port` |
-| `password` | `password` |
-| `tlsServerName` | `tls.server_name` |
-
-Hardcoded: `type: hysteria2`, `tag: proxy`, `tls.enabled: true`, `tls.alpn: ["h3"]`, `domain_resolver` → `dns-direct`. TUN/DNS/route — те же overrides, что у Naive, но UDP/443 для Hysteria2 не блокируется. Libbox Apple уже с `with_quic`; отдельный build tag не нужен.
+Старт туннеля: deferred capture (routes пустые) → `waitForSatisfiedPath` → `activateTrafficCapture` → settle → `resumeDefaultInterfaceAfterCapture`. На iOS 26 pre-capture BSD `connect` к diagnostic mixed inbound даёт `EADDRNOTAVAIL`, поэтому старт **не** гейтится TCP data probe.
 
 ### Default interface monitor (NE, iOS + macOS)
 
-Libbox закрывает **все** соединения, как только платформа сообщает пустой default interface (`updateDefaultInterface("", -1)`) — для naive это рвёт HTTP/2-туннель (каскад `stream failed: aborted`, `dial: operation was canceled`). Внутри NE `NWPathMonitor` кратковременно флапает в `.unsatisfied` (применение routes/DNS, Wi-Fi-скан, sleep/wake), поэтому сырые апдейты в ядро не передаются:
+Libbox закрывает **все** соединения при пустом default interface (`updateDefaultInterface("", -1)`). Внутри NE `NWPathMonitor` кратковременно флапает в `.unsatisfied`, поэтому сырые апдейты в ядро не передаются:
 
-- `DefaultInterfaceReportFilter` (`ios/Shared/DefaultInterfaceReporter.swift`) — дедуп одинаковых апдейтов; потеря интерфейса репортится только если держится ≥3 c (debounce), восстановление отменяет потерю.
-- `DefaultInterfaceResolver` — **sticky**: пока last-known uplink (`en0`/`pdp_ip*`/Ethernet) ещё в `availableInterfaces`, смена `usesInterfaceType` (Wi‑Fi↔LTE) **не** меняет репорт в libbox — иначе naive HTTP/2 рвётся на rebind. Новый iface берётся только когда sticky ушёл из candidates. Если path **satisfied**, но phys скрыт за TUN (типично iOS NE: в списке только `utun*`), репортится last-known uplink.
-- На macOS NE transient `.unsatisfied` не считается потерей, пока `availableInterfaces` содержит физический интерфейс; `getInterfaces()` при `.unsatisfied` возвращает last-known snapshot.
-- `TunnelLifecycle` (path monitor, sleep/wake, heartbeat) работает на обеих платформах; короткие `.unsatisfied` флапы при handoff не перезапускают core, софт-рестарт ядра — только после подтверждённой потери пути (`pathRecoveredAfterLoss`) или смены excluded-маршрутов, wake (каждая разблокировка) здоровый туннель не перезапускает.
-- `NEVPNProtocol.includeAllNetworks` и Libbox platform interface согласованно выключены: Apple игнорирует endpoint `excludedRoutes`, когда этот флаг включён. Full tunnel задаётся двумя `/1` routes, proxy endpoint — `/32` exclusion.
-- Endpoint резолвится до старта NE и подставляется IP-адресом в outbound; TLS SNI остаётся доменным именем.
-- `dns-direct: local` использует Darwin transport (`getaddrinfo`), а не DHCP/UDP из уже захваченного туннеля.
-- Extension сначала проверяет локальный mixed proxy без default routes, затем включает DNS + full-tunnel routes и повторяет proxy probe. Lifecycle heartbeat сам по себе не является readiness.
-
----
-
-## Добавление протокола
-
-1. **Profile** — struct с полями сервера (или URI parser → struct).
-2. **`SingBoxConnectPlan`** — factory `static func yourProtocol(_:)` с `proxyOutbound`, `directIPs`, `tun`.
-3. **`ServerProfile.Kind`** — новый case + `connectPlan` switch.
-4. **`TestServers`** — seed для dev.
-5. **`SingBoxConfigTests`** — `sing-box check` на сгенерированный JSON.
-6. **Libbox** — при необходимости обновить build tags в `scripts/libbox-build.py`.
-
-Config builder, tunnel и NE менять не нужно — они protocol-agnostic.
+- `DefaultInterfaceReportFilter` — дедуп; потеря интерфейса только если держится ≥3 c.
+- `DefaultInterfaceResolver` — **sticky**: пока last-known uplink ещё в candidates, Wi‑Fi↔LTE не rebind'ит libbox. Новый iface — когда sticky ушёл. Если path satisfied, но phys скрыт за TUN — last-known uplink.
+- macOS: transient `.unsatisfied` не потеря, пока в `availableInterfaces` есть phys iface.
+- `TunnelLifecycle`: soft-restart только после `pathRecoveredAfterLoss` или смены excluded-маршрутов; wake здоровый туннель не перезапускает.
+- `includeAllNetworks` выключен; full tunnel — routes + `/32` exclusion endpoint.
+- Endpoint резолвится до старта NE и пинится в dial-outbound; TLS SNI остаётся доменным.
+- `dns-direct: local` — Darwin `getaddrinfo`.
 
 ---
 
@@ -177,7 +128,6 @@ Connect: `NativeVpnService` → `VpnTunnelController` → extension → Libbox (
 ## Чеклист интеграции
 
 - [x] `DemarPacketTunnel` + `NativeVpnService`
-- [x] NaiveProxy → config (`SingBoxConnectPlan`, `SingBoxConfigBuilder`)
 - [x] Hysteria2 → config (`Hysteria2Profile`, `SingBoxConnectPlan.hysteria2`)
 - [x] Geo в bundle iOS / macOS
 - [x] `AppState` + `VpnStatusMonitor` (iOS + macOS)

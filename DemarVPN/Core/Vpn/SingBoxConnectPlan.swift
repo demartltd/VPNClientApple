@@ -8,7 +8,6 @@ struct SingBoxTunOptions {
     var dnsBootstrapDomains: [String]
     var directDomains: [String]
     var strictRoute: Bool
-    var blockQUIC: Bool
 }
 
 struct SingBoxConnectPlan {
@@ -22,35 +21,10 @@ struct SingBoxConnectPlan {
         var outbound = proxyOutbound
         outbound["server"] = selected
         return SingBoxConnectPlan(
-            uplinkHost: uplinkHost,
+            uplinkHost: selected,
             proxyOutbound: outbound,
             directIPs: Array(Set(directIPs + addresses)).sorted(),
             tun: tun
-        )
-    }
-
-    static func naive(_ profile: NaiveProfile) -> SingBoxConnectPlan {
-        var outbound: [String: Any] = [
-            "type": "naive",
-            "tag": SingBoxConfigConstants.proxyTag,
-            "server": profile.server,
-            "server_port": profile.port,
-            "connect_timeout": "10s",
-            "domain_resolver": SingBoxDnsBuilder.domainResolver(server: SingBoxConfigConstants.dnsDirectTag),
-            "udp_over_tcp": ["enabled": true, "version": 2],
-            "quic": false,
-            "tls": [
-                "enabled": true,
-                "server_name": profile.tlsServerName,
-            ],
-        ]
-        if !profile.username.isEmpty { outbound["username"] = profile.username }
-        if !profile.password.isEmpty { outbound["password"] = profile.password }
-        return plan(
-            uplink: profile.server,
-            outbound: outbound,
-            tlsServerName: profile.tlsServerName,
-            blockQUIC: true
         )
     }
 
@@ -68,30 +42,15 @@ struct SingBoxConnectPlan {
                 "alpn": ["h3"],
             ],
         ]
-        return plan(
-            uplink: profile.server,
-            outbound: outbound,
-            tlsServerName: profile.tlsServerName,
-            blockQUIC: false
-        )
-    }
-
-    private static func plan(
-        uplink: String,
-        outbound: [String: Any],
-        tlsServerName: String,
-        blockQUIC: Bool
-    ) -> SingBoxConnectPlan {
-        SingBoxConnectPlan(
-            uplinkHost: uplink,
+        return SingBoxConnectPlan(
+            uplinkHost: profile.server,
             proxyOutbound: outbound,
-            directIPs: directIPs(forHost: uplink),
+            directIPs: directIPs(forHost: profile.server),
             tun: SingBoxTunOptions(
                 dnsFinal: SingBoxConfigConstants.dnsRemoteTag,
-                dnsBootstrapDomains: Array(Set([tlsServerName, uplink])).sorted(),
-                directDomains: Array(Set([tlsServerName, uplink])).sorted(),
-                strictRoute: true,
-                blockQUIC: blockQUIC
+                dnsBootstrapDomains: Array(Set([profile.tlsServerName, profile.server])).sorted(),
+                directDomains: Array(Set([profile.tlsServerName, profile.server])).sorted(),
+                strictRoute: false
             )
         )
     }

@@ -29,6 +29,7 @@ final class AppState {
     var accountUser: AccountUser?
 
     private let vpn: VpnControlling
+    private var vpnOperationGeneration: UInt64 = 0
 
     #if os(iOS) || os(macOS)
     private var statusMonitor: VpnStatusMonitor?
@@ -68,6 +69,19 @@ final class AppState {
         return vpnState.isConnected || vpnState == .connecting || selectedServer != nil
     }
 
+    @discardableResult
+    private func beginVpnOperation() -> UInt64 {
+        vpnOperationGeneration &+= 1
+        #if os(iOS) || os(macOS)
+        VpnTunnelController.shared.cancelConnectOperation()
+        #endif
+        return vpnOperationGeneration
+    }
+
+    private func isCurrentVpnOperation(_ generation: UInt64) -> Bool {
+        generation == vpnOperationGeneration && !Task.isCancelled
+    }
+
     func selectServer(_ server: ServerProfile) {
         selectedServer = server
         Self.persistSelectedServerId(server.id)
@@ -76,27 +90,35 @@ final class AppState {
 
     func switchServer(to server: ServerProfile) async {
         guard selectedServer?.id != server.id else { return }
-        let shouldReconnect = vpnState.isConnected || vpnState.isBusy
+        #if os(iOS) || os(macOS)
+        let neStatus = await withCheckedContinuation { (continuation: CheckedContinuation<NEVPNStatus, Never>) in
+            VpnTunnelController.shared.currentStatus { continuation.resume(returning: $0) }
+        }
+        let neActive = neStatus == .connected || neStatus == .connecting || neStatus == .reasserting
+        #else
+        let neActive = false
+        #endif
+        let shouldReconnect = vpnState.isConnected || vpnState.isBusy || vpnState.hasError || neActive
         selectServer(server)
         guard shouldReconnect else { return }
 
+        let generation = beginVpnOperation()
         statusMonitor?.endConnectAttempt()
         vpnState = .disconnecting
         resetThroughput()
         do {
             try await vpn.disconnect()
-            for _ in 0..<40 {
-                let status = await withCheckedContinuation { continuation in
-                    VpnTunnelController.shared.currentStatus { continuation.resume(returning: $0) }
-                }
-                if status == .disconnected || status == .invalid { break }
-                try await Task.sleep(for: .milliseconds(100))
+            let idle = await waitUntilSystemDisconnected(timeoutSeconds: 10)
+            guard isCurrentVpnOperation(generation) else { return }
+            if !idle {
+                AppLog.shared.append("[vpn] switch: NE still busy after disconnect wait")
             }
             vpnState = .disconnected
-            await connect()
+            await connect(force: true, operationGeneration: generation)
         } catch is CancellationError {
             return
         } catch {
+            guard isCurrentVpnOperation(generation) else { return }
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             vpnState = .error(message: message)
             AppLog.shared.append("[vpn] server switch failed: \(message)")
@@ -120,6 +142,14 @@ final class AppState {
     }
 
     func connect() async {
+        let generation = beginVpnOperation()
+        let force: Bool
+        if case .error = vpnState { force = true }
+        else { force = false }
+        await connect(force: force, operationGeneration: generation)
+    }
+
+    private func connect(force: Bool, operationGeneration: UInt64) async {
         guard let server = selectedServer else { return }
         #if os(iOS) || os(macOS)
         let systemStatus = await withCheckedContinuation { (continuation: CheckedContinuation<NEVPNStatus, Never>) in
@@ -127,21 +157,31 @@ final class AppState {
                 continuation.resume(returning: status)
             }
         }
-        if systemStatus == .connected || systemStatus == .connecting || systemStatus == .reasserting {
+        guard isCurrentVpnOperation(operationGeneration) else { return }
+        if !force, systemStatus == .connected || systemStatus == .connecting || systemStatus == .reasserting {
             AppLog.shared.append("[ui] connect ignored: system tunnel already active (\(systemStatus.rawValue))")
             statusMonitor?.refreshStatus(reason: "connect-noop", force: true, reloadPreferences: false)
             return
         }
+        if force, systemStatus == .connected || systemStatus == .connecting || systemStatus == .reasserting {
+            AppLog.shared.append("[ui] connect force: stopping leftover NE status=\(systemStatus.rawValue)")
+            try? await vpn.disconnect()
+            _ = await waitUntilSystemDisconnected(timeoutSeconds: 8)
+            guard isCurrentVpnOperation(operationGeneration) else { return }
+        }
         #endif
-        if vpnState.isConnected {
+        if !force, vpnState.isConnected {
             AppLog.shared.append("[ui] connect ignored: already connected")
             statusMonitor?.refreshStatus(reason: "connect-noop-ui", force: true, reloadPreferences: false)
             return
         }
-        if case .connecting = vpnState { return }
-        guard !vpnState.isBusy else { return }
+        if case .connecting = vpnState, !force { return }
+        guard force || !vpnState.isBusy else { return }
 
         if case .disconnected = vpnState {
+            vpnState = .connecting
+            resetThroughput()
+        } else if force {
             vpnState = .connecting
             resetThroughput()
         }
@@ -165,6 +205,7 @@ final class AppState {
         statusMonitor?.beginConnectAttempt()
         do {
             try await vpn.connect(server: server)
+            guard isCurrentVpnOperation(operationGeneration) else { return }
             for line in VpnSharedStore.drainPendingUiDiagLinesAndClear() where !line.isEmpty {
                 AppLog.shared.append(line)
             }
@@ -174,7 +215,7 @@ final class AppState {
             return
         } catch {
             statusMonitor?.endConnectAttempt()
-            if Task.isCancelled { return }
+            guard isCurrentVpnOperation(operationGeneration) else { return }
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             vpnState = .error(message: message)
             AppLog.shared.append("[vpn] connect failed: \(message)")
@@ -182,6 +223,7 @@ final class AppState {
     }
 
     func disconnect() async {
+        let generation = beginVpnOperation()
         if case .disconnecting = vpnState { return }
 
         if vpnState.isConnected || vpnState == .connecting {
@@ -193,9 +235,11 @@ final class AppState {
 
         do {
             try await vpn.disconnect()
+            _ = await waitUntilSystemDisconnected(timeoutSeconds: 8)
+            guard isCurrentVpnOperation(generation) else { return }
             statusMonitor?.refreshStatus(reason: "disconnect", force: true)
         } catch {
-            if Task.isCancelled { return }
+            guard isCurrentVpnOperation(generation) else { return }
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             vpnState = .error(message: message)
             AppLog.shared.append("[vpn] disconnect failed: \(message)")
@@ -209,6 +253,16 @@ final class AppState {
             await connect()
         }
     }
+
+    #if os(iOS) || os(macOS)
+    private func waitUntilSystemDisconnected(timeoutSeconds: TimeInterval) async -> Bool {
+        await withCheckedContinuation { continuation in
+            VpnTunnelController.shared.waitUntilDisconnected(timeout: timeoutSeconds) { idle in
+                continuation.resume(returning: idle)
+            }
+        }
+    }
+    #endif
 
     /// Claims the refresh lock. Returns false if a refresh is already running.
     func beginServersRefresh() -> Bool {

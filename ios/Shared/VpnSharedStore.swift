@@ -702,8 +702,20 @@ enum VpnReconfigurePolicy {
   /// With unchanged routes, only a confirmed restored path soft-restarts the core.
   /// Routine Wi-Fi/cellular flips stay sticky in the platform interface monitor;
   /// wake (every screen unlock) must not restart a healthy tunnel — a full service
-  /// reload re-runs openTun/setTunnelNetworkSettings and aborts every naive stream.
+  /// reload re-runs openTun/setTunnelNetworkSettings and aborts every active stream.
   static func shouldSoftRestartWhenRoutesUnchanged(reason: String) -> Bool {
     reason == "pathRecoveredAfterLoss"
+  }
+}
+
+/// Pure readiness helper (host + tests): start-failure file or extension `failed-*` heartbeat.
+enum VpnTunnelReadiness {
+  static func failureMessage(heartbeat: String, startFailure: String?) -> String? {
+    if let startFailure, !startFailure.isEmpty { return startFailure }
+    let phase = heartbeat.trimmingCharacters(in: .whitespacesAndNewlines)
+    if phase.hasPrefix("failed") {
+      return "VPN tunnel start failed (\(phase))."
+    }
+    return nil
   }
 }

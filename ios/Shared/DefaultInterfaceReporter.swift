@@ -61,7 +61,7 @@ enum DefaultInterfaceResolver {
     lastGood: DefaultInterfaceUpdate?
   ) -> DefaultInterfaceUpdate {
     // Stick to lastGood while it is still listed — Wi-Fi↔LTE type flips must not
-    // rebind libbox (naive HTTP/2 dies on updateDefaultInterface name change).
+    // rebind libbox (long-lived TCP uplinks die on updateDefaultInterface name change).
     if let last = lastGood, !last.isLost,
        candidates.contains(where: { $0.name == last.name && $0.index == last.index }) {
       return DefaultInterfaceUpdate(

@@ -29,7 +29,7 @@ final class VpnStatusMonitor {
     private static let connectTimeout: TimeInterval = 45
     private static let disconnectFlickerGrace: TimeInterval = 2
     private static let connectedHoldHeartbeatMaxAge: TimeInterval = 10
-    private static let connectStallTimeout: TimeInterval = 10
+    private static let connectStallTimeout: TimeInterval = 30
     private static let extensionLaunchTimeout: TimeInterval = 3
     private static let connectProbeIntervalNs: UInt64 = 1_000_000_000
     private static let connectProbeAttempts = 70
@@ -98,6 +98,13 @@ final class VpnStatusMonitor {
         connectFailureGraceTask = nil
         connectAttemptActive = false
         connectingSince = nil
+        if case .error = state {
+            if controller.isConnectInFlight {
+                controller.cancelConnectOperation()
+            }
+            // Tear down leftover NE .connecting so the next toggle/switch is not a noop.
+            controller.disconnect(triggerSource: "connectAttemptFailed") { _ in }
+        }
         publish(state, neStatus: trackedConnection?.status ?? .disconnected, logReason: logReason)
     }
     private func logConnectTrace(_ tag: String) {
@@ -457,8 +464,24 @@ final class VpnStatusMonitor {
         }
         return false
         #else
-        return elapsed >= connectStallTimeout
+        // Extension may spend ~10–15s settling NE path after capture before core-started.
+        if elapsed < connectStallTimeout { return false }
+        let phase = VpnSharedStore.extensionHeartbeatPhase() ?? ""
+        if phase == "core-starting" || phase == "core-settling" || phase == "startTunnel" {
+            guard let snapshot = VpnSharedStore.extensionHeartbeatSnapshot(),
+                  let raw = snapshot["updatedAt"], !raw.isEmpty,
+                  let date = Self.heartbeatDate(from: raw)
+            else { return false }
+            return Date().timeIntervalSince(date) > 20
+        }
+        return true
         #endif
+    }
+
+    private static func heartbeatDate(from raw: String) -> Date? {
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: raw) ?? ISO8601DateFormatter().date(from: raw)
     }
     private static func activeSessionStartedAt() -> Date? {
         guard let raw = VpnSharedStore.loadActiveSession()?["startedAt"], !raw.isEmpty else { return nil }
@@ -476,8 +499,13 @@ final class VpnStatusMonitor {
 
     /// Drains extension diagnostics and returns a user-facing error, if any.
     private static func resolveFailureState() -> VpnConnectionState? {
-        if let startError = VpnSharedStore.drainTunnelStartFailureAndClear() {
+        if let startError = VpnSharedStore.readTunnelStartFailureSnapshot(), !startError.isEmpty {
             return .error(message: startError)
+        }
+        if let phase = VpnSharedStore.extensionHeartbeatPhase(),
+           let message = VpnTunnelReadiness.failureMessage(heartbeat: phase, startFailure: nil)
+        {
+            return .error(message: message)
         }
         if VpnSharedStore.extensionHeartbeatIsFresh(maxAge: 45) {
             return nil
@@ -533,11 +561,21 @@ final class VpnStatusMonitor {
     private static func isFailureDiagLine(_ line: String) -> Bool {
         let msg = diagLineMessage(line).lowercased()
         if line.contains("[core]") {
+            // Transient dial/stream noise while the tunnel is still coming up.
+            if msg.contains("stream failed")
+                || msg.contains("connection download closed")
+                || msg.contains("connection failed")
+                || msg.contains("can't assign requested address")
+                || msg.contains("no route to host")
+                || msg.contains("context deadline exceeded")
+            {
+                return false
+            }
             if msg.contains("connection was refused"), VpnSharedStore.extensionSignalsAlive() {
                 return false
             }
-            return msg.contains("failed to start") || msg.contains(" failed")
-                || msg.contains("error:") || msg.contains("fatal")
+            return msg.contains("failed to start") || msg.contains(" fatal")
+                || msg.contains("error: failed") || msg.contains("fatal")
         }
         guard line.contains("[mac]") || line.contains("[ios]") else { return false }
         if msg.hasPrefix("post-start probe ") { return false }

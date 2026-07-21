@@ -4,7 +4,7 @@ struct ServersView: View {
     @Bindable var appState: AppState
     let isActive: Bool
     var snackBar: SnackBarController
-    @State private var selectedProtocol: ServerProtocol = .naive
+    @State private var selectedProtocol: ServerProtocol = .hysteria2
     @State private var selectedTier: ServerTier?
     @State private var pullArmed = false
 
@@ -16,7 +16,7 @@ struct ServersView: View {
         }
         .task(id: isActive) {
             guard isActive else { return }
-            selectedProtocol = appState.selectedServer?.serverProtocol ?? .naive
+            selectedProtocol = appState.selectedServer?.serverProtocol ?? .hysteria2
         }
         .onChange(of: appState.selectedServer?.id) { _, _ in
             selectedProtocol = appState.selectedServer?.serverProtocol ?? selectedProtocol
@@ -60,8 +60,10 @@ struct ServersView: View {
                             profile: server,
                             selected: appState.selectedServer?.id == server.id
                         ) {
-                            Task { await appState.switchServer(to: server) }
-                            snackBar.showSuccess("Сервер выбран")
+                            Task {
+                                await appState.switchServer(to: server)
+                                snackBar.showSuccess("Сервер выбран")
+                            }
                         }
                     }
                 }
@@ -71,11 +73,7 @@ struct ServersView: View {
             }
             .contentMargins(0)
             .scrollBounceBehavior(.always)
-            .onScrollGeometryChange(for: CGFloat.self) { geo in
-                max(0, -geo.contentOffset.y)
-            } action: { _, pull in
-                handlePull(pull)
-            }
+            .demarScrollPullDistance { handlePull($0) }
             .demarScrollScreen()
         }
         .background(Color.demarSurface)
@@ -214,5 +212,20 @@ private struct CountryFlag: View {
             }
         }
         .frame(width: 36, height: 36)
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func demarScrollPullDistance(_ onPull: @escaping (CGFloat) -> Void) -> some View {
+        if #available(macOS 15.0, iOS 18.0, *) {
+            onScrollGeometryChange(for: CGFloat.self) { geo in
+                max(0, -geo.contentOffset.y)
+            } action: { _, pull in
+                onPull(pull)
+            }
+        } else {
+            self
+        }
     }
 }

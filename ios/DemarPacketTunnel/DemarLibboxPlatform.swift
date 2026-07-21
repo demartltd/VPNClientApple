@@ -41,6 +41,9 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     private var lossDebounceWork: DispatchWorkItem?
     private var lastKnownPhysicalInterfaces: [LibboxNetworkInterface] = []
     private var lastGoodInterface: DefaultInterfaceUpdate?
+    private var allowUnsatisfiedDefaultReport = false
+    private var holdDefaultReportUntilSatisfied = false
+    private weak var interfaceListener: LibboxInterfaceUpdateListenerProtocol?
 
     private static let lossDebounceInterval: TimeInterval = 3
 
@@ -79,12 +82,30 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
                     NSLocalizedDescriptionKey: "TUN network settings are not active.",
                 ])
             }
+            // Full routes make NE path flap unsatisfied; clear en0 so libbox drops IP_BOUND_IF.
+            holdDefaultReportUntilSatisfied = true
+            allowUnsatisfiedDefaultReport = false
+            if let listener = interfaceListener {
+                lossDebounceWork?.cancel()
+                lossDebounceWork = nil
+                reportFilter.reset()
+                send(.lost, to: listener)
+            }
             ipv4.includedRoutes = configuredIncludedIPv4Routes
             settings.dnsSettings = configuredDNSSettings
             settings.ipv6Settings = configuredIPv6Settings
             try await provider.setTunnelNetworkSettings(settings)
             Self.diag("traffic capture activated routes=\(configuredIncludedIPv4Routes.count)")
         }
+    }
+
+    /// Re-push physical default iface into libbox after capture path is satisfied.
+    func resumeDefaultInterfaceAfterCapture() {
+        holdDefaultReportUntilSatisfied = false
+        allowUnsatisfiedDefaultReport = false
+        guard let listener = interfaceListener, let path = nwMonitor?.currentPath else { return }
+        reportFilter.reset()
+        updateDefaultInterface(listener, path: path)
     }
 
     private func openTun0(_ options: LibboxTunOptionsProtocol?, _ ret0_: UnsafeMutablePointer<Int32>?) async throws {
@@ -276,18 +297,35 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
 
     func startDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListenerProtocol?) throws {
         guard let listener else { return }
+        interfaceListener = listener
         let monitor = NWPathMonitor()
         nwMonitor = monitor
         let semaphore = DispatchSemaphore(value: 0)
+        let lock = NSLock()
+        var signaled = false
+        let signalOnce = {
+            lock.lock()
+            defer { lock.unlock() }
+            guard !signaled else { return }
+            signaled = true
+            semaphore.signal()
+        }
         monitor.pathUpdateHandler = { [weak self] path in
             self?.updateDefaultInterface(listener, path: path)
-            semaphore.signal()
-            monitor.pathUpdateHandler = { [weak self] path in
-                self?.updateDefaultInterface(listener, path: path)
-            }
+            if path.status == .satisfied { signalOnce() }
         }
         monitor.start(queue: monitorQueue)
-        semaphore.wait()
+        // Prefer a real satisfied path before first en0 report (avoids EADDRNOTAVAIL binds).
+        if semaphore.wait(timeout: .now() + 8) == .timedOut {
+            signalOnce()
+            allowUnsatisfiedDefaultReport = true
+            if let path = nwMonitor?.currentPath {
+                updateDefaultInterface(listener, path: path)
+            }
+        }
+        monitor.pathUpdateHandler = { [weak self] path in
+            self?.updateDefaultInterface(listener, path: path)
+        }
     }
 
     private func updateDefaultInterface(_ listener: LibboxInterfaceUpdateListenerProtocol, path: Network.NWPath) {
@@ -301,6 +339,16 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         if DefaultInterfaceResolver.isLiveCandidate(update, candidates: candidates) {
             lastGoodInterface = update
             lastKnownPhysicalInterfaces = physicalLibboxInterfaces(from: candidates)
+        }
+
+        // Hold reports while NE path is unsatisfied (initial start or post-capture flap).
+        if path.status == .unsatisfied {
+            if holdDefaultReportUntilSatisfied { return }
+            if reportFilter.lastReported == nil, !allowUnsatisfiedDefaultReport { return }
+        } else if holdDefaultReportUntilSatisfied {
+            holdDefaultReportUntilSatisfied = false
+            reportFilter.reset()
+            Self.diag("path satisfied after capture; resuming defaultIface reports")
         }
 
         switch reportFilter.decide(update) {
@@ -389,6 +437,9 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         lossDebounceWork?.cancel()
         lossDebounceWork = nil
         reportFilter.reset()
+        interfaceListener = nil
+        allowUnsatisfiedDefaultReport = false
+        holdDefaultReportUntilSatisfied = false
         nwMonitor?.cancel()
         nwMonitor = nil
     }
@@ -431,6 +482,9 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         lossDebounceWork?.cancel()
         lossDebounceWork = nil
         reportFilter.reset()
+        interfaceListener = nil
+        allowUnsatisfiedDefaultReport = false
+        holdDefaultReportUntilSatisfied = false
         nwMonitor?.cancel()
         nwMonitor = nil
         networkSettings = nil

@@ -143,6 +143,7 @@ final class VpnTunnelController {
     connectCancellation = nil
     readinessWorkItem?.cancel()
     readinessWorkItem = nil
+    VpnSharedStore.clearTunnelStartFailure()
     return true
   }
 
@@ -154,15 +155,18 @@ final class VpnTunnelController {
     connectStateLock.unlock()
   }
 
-  private func cancelConnectOperation() {
+  /// Cancels an in-flight connect (UI error path / disconnect). Safe if idle.
+  func cancelConnectOperation() {
     connectStateLock.lock()
     let cancellation = connectCancellation
+    let wasInFlight = connectInFlight
     connectGeneration &+= 1
     connectInFlight = false
     connectCancellation = nil
     readinessWorkItem?.cancel()
     readinessWorkItem = nil
     connectStateLock.unlock()
+    if wasInFlight { VpnSharedStore.clearTunnelStartFailure() }
     cancellation?()
   }
 
@@ -935,7 +939,11 @@ final class VpnTunnelController {
       completion(.success(()))
       return
     }
-    if let message = VpnSharedStore.readTunnelStartFailureSnapshot() {
+    if let message = VpnTunnelReadiness.failureMessage(
+      heartbeat: heartbeat,
+      startFailure: VpnSharedStore.readTunnelStartFailureSnapshot()
+    ) {
+      diag("readiness failed early: status=\(Self.statusLabel(status)) heartbeat=\(heartbeat.isEmpty ? "none" : heartbeat)")
       Self.setControlState("error")
       completion(.failure(NSError(domain: "DemarVpn", code: 44, userInfo: [
         NSLocalizedDescriptionKey: message,
@@ -965,6 +973,25 @@ final class VpnTunnelController {
     readinessWorkItem = work
     connectStateLock.unlock()
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
+  }
+
+  /// Waits until NE is idle after `stopVPNTunnel` (Apple: stop returns immediately).
+  func waitUntilDisconnected(timeout: TimeInterval = 10, completion: @escaping (Bool) -> Void) {
+    let deadline = Date().addingTimeInterval(timeout)
+    func poll() {
+      currentStatus { status in
+        if status == .disconnected || status == .invalid {
+          completion(true)
+          return
+        }
+        if Date() >= deadline {
+          completion(false)
+          return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { poll() }
+      }
+    }
+    poll()
   }
 
   private static func readExistingSharedConfigJson() throws -> String? {

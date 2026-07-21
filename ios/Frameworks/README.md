@@ -18,4 +18,4 @@ Network Extension **нельзя** запускать `sing-box` через `pos
 python3 scripts/libbox-build.py   # → ios/Frameworks/Libbox.xcframework
 ```
 
-Сборка включает `with_naive_outbound` (Naive proxy). Требуется Go и Xcode. Версия берётся из корневого `singbox-version.txt` и сейчас закреплена на **v1.13.14**.
+Сборка через upstream `build_libbox` (Apple). Hysteria2 входит в дефолтный набор (`with_quic`). Требуется Go и Xcode. Версия берётся из корневого `singbox-version.txt` и сейчас закреплена на **v1.13.14**.

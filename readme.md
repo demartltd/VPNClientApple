@@ -1,8 +1,8 @@
-**Demar VPN (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **latest sing-box** (NaiveProxy + Hysteria2 через Libbox).
+**Demar VPN (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **latest sing-box** (Hysteria2 через Libbox).
 
 Поддерживаются **iOS 18+** и **macOS 14+** (нативное приложение, один target).
 
-Все доступные сервера и их конфиги планируется получать удалённо; в MVP — тестовые NaiveProxy / Hysteria2 профили (см. `DemarVPN/Core/Models/TestServers.swift`).
+Все доступные сервера и их конфиги планируется получать удалённо; в MVP — тестовые Hysteria2 профили (см. `DemarVPN/Core/Models/TestServers.swift`).
 
 ## Сборка
 

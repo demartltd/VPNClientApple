@@ -79,6 +79,10 @@ enum IOSLibboxCore {
         try platform?.activateTrafficCapture()
     }
 
+    static func resumeDefaultInterfaceAfterCapture() {
+        platform?.resumeDefaultInterfaceAfterCapture()
+    }
+
     static func stop() {
         try? commandServer?.closeService()
         commandServer?.close()

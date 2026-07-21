@@ -10,74 +10,6 @@ final class SingBoxConfigTests: XCTestCase {
         }
     }
 
-    func testNaiveOutboundMatchesServerReference() throws {
-        let profile = TestServers.naive[0]
-        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .naive(profile))
-        XCTAssertTrue(
-            json.contains("\"server\" : \"\(profile.server)\"") ||
-            json.contains("\"server\": \"\(profile.server)\"")
-        )
-        XCTAssertTrue(
-            json.contains("\"server_port\" : \(profile.port)") ||
-            json.contains("\"server_port\": \(profile.port)")
-        )
-        XCTAssertTrue(
-            json.contains("\"server_name\" : \"\(profile.tlsServerName)\"") ||
-            json.contains("\"server_name\": \"\(profile.tlsServerName)\"")
-        )
-        XCTAssertTrue(json.contains("\"version\" : 2") || json.contains("\"version\": 2"))
-        XCTAssertFalse(json.contains("\"predefined\""))
-        XCTAssertTrue(json.contains("\"quic\" : false") || json.contains("\"quic\": false"))
-        XCTAssertTrue(json.contains("\"final\" : \"dns-remote\"") || json.contains("\"final\": \"dns-remote\""))
-
-        let data = try XCTUnwrap(json.data(using: .utf8))
-        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let outbounds = try XCTUnwrap(root["outbounds"] as? [[String: Any]])
-        let proxyOutbound = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
-        XCTAssertEqual(proxyOutbound["type"] as? String, "naive")
-        XCTAssertNotNil(proxyOutbound["domain_resolver"])
-
-        let dns = try XCTUnwrap(root["dns"] as? [String: Any])
-        let dnsServers = try XCTUnwrap(dns["servers"] as? [[String: Any]])
-        let directServer = try XCTUnwrap(dnsServers.first { ($0["tag"] as? String) == "dns-direct" })
-        XCTAssertEqual(directServer["type"] as? String, "local")
-        XCTAssertNil(directServer["server"])
-        let remoteServer = try XCTUnwrap(dnsServers.first { ($0["tag"] as? String) == "dns-remote" })
-        XCTAssertEqual(remoteServer["type"] as? String, "https")
-        XCTAssertEqual(remoteServer["detour"] as? String, "proxy")
-        let dnsRules = try XCTUnwrap(dns["rules"] as? [[String: Any]])
-        XCTAssertTrue(dnsRules.contains { rule in
-            (rule["query_type"] as? [String]) == ["PTR"]
-                && (rule["action"] as? String) == "reject"
-                && (rule["method"] as? String) == "drop"
-        })
-        XCTAssertTrue(dnsRules.contains { rule in
-            ((rule["domain"] as? [String])?.contains(profile.tlsServerName) == true)
-                && (rule["action"] as? String) == "route"
-                && (rule["server"] as? String) == "dns-direct"
-        })
-
-        let inbounds = try XCTUnwrap(root["inbounds"] as? [[String: Any]])
-        let tunInbound = try XCTUnwrap(inbounds.first { ($0["type"] as? String) == "tun" })
-        XCTAssertEqual(tunInbound["strict_route"] as? Bool, true)
-        XCTAssertEqual(tunInbound["address"] as? [String], ["172.19.0.1/30"])
-        let diagnosticInbound = try XCTUnwrap(inbounds.first { ($0["tag"] as? String) == "diag-in" })
-        XCTAssertEqual(diagnosticInbound["listen"] as? String, "127.0.0.1")
-        XCTAssertEqual(diagnosticInbound["listen_port"] as? Int, 10808)
-
-        let route = try XCTUnwrap(root["route"] as? [String: Any])
-        XCTAssertEqual(route["auto_detect_interface"] as? Bool, true)
-        let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
-        let allCIDRs = rules
-            .compactMap { $0["ip_cidr"] as? [String] }
-            .flatMap { $0 }
-        XCTAssertTrue(allCIDRs.isEmpty, "hostname uplink has no build-time IPv4 bypass")
-        XCTAssertFalse(allCIDRs.contains("2001:4860:4860::8888/128"))
-        XCTAssertFalse(allCIDRs.contains("2606:4700:4700::1111/128"))
-
-        try assertSingBoxCheckPasses(json: json)
-    }
-
     func testHysteria2OutboundMatchesServerReference() throws {
         let profile = TestServers.hysteria2[0]
         let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(profile))
@@ -94,45 +26,26 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertEqual(tls["enabled"] as? Bool, true)
         XCTAssertEqual(tls["server_name"] as? String, profile.tlsServerName)
         XCTAssertEqual(tls["alpn"] as? [String], ["h3"])
-        let route = try XCTUnwrap(root["route"] as? [String: Any])
-        let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
-        XCTAssertFalse(rules.contains { rule in
-            (rule["network"] as? [String]) == ["udp"]
-                && (rule["port"] as? [Int]) == [443]
-                && (rule["action"] as? String) == "reject"
-        })
-        try assertSingBoxCheckPasses(json: json)
-    }
 
-    func testNaiveBlocksAppQUIC() throws {
-        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .naive(TestServers.naive[0]))
-        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
-        let route = try XCTUnwrap(root["route"] as? [String: Any])
-        let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
-        XCTAssertTrue(rules.contains { rule in
-            (rule["network"] as? [String]) == ["udp"]
-                && (rule["port"] as? [Int]) == [443]
+        let dns = try XCTUnwrap(root["dns"] as? [String: Any])
+        XCTAssertEqual(dns["final"] as? String, "dns-remote")
+        let dnsServers = try XCTUnwrap(dns["servers"] as? [[String: Any]])
+        let remoteServer = try XCTUnwrap(dnsServers.first { ($0["tag"] as? String) == "dns-remote" })
+        XCTAssertEqual(remoteServer["type"] as? String, "https")
+        XCTAssertEqual(remoteServer["detour"] as? String, "proxy")
+        let dnsRules = try XCTUnwrap(dns["rules"] as? [[String: Any]])
+        XCTAssertTrue(dnsRules.contains { rule in
+            (rule["query_type"] as? [String]) == ["PTR"]
                 && (rule["action"] as? String) == "reject"
+                && (rule["method"] as? String) == "drop"
         })
-    }
+        XCTAssertTrue(dnsRules.contains { rule in
+            ((rule["domain"] as? [String])?.contains(profile.tlsServerName) == true)
+                && (rule["action"] as? String) == "route"
+                && (rule["server"] as? String) == "dns-direct"
+        })
+        XCTAssertNotNil(outbounds.first { ($0["tag"] as? String) == "direct" })
 
-    func testHysteria2OnPort443DoesNotRejectQUIC() throws {
-        let source = TestServers.hysteria2[0]
-        let profile = Hysteria2Profile(
-            displayName: source.displayName,
-            city: source.city,
-            server: source.server,
-            port: 443,
-            password: source.password,
-            tlsServerName: source.tlsServerName
-        )
-        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(profile))
-        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
-        let route = try XCTUnwrap(root["route"] as? [String: Any])
-        let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
-        XCTAssertFalse(rules.contains {
-            ($0["network"] as? [String]) == ["udp"] && ($0["port"] as? [Int]) == [443]
-        })
         try assertSingBoxCheckPasses(json: json)
     }
 
@@ -157,18 +70,23 @@ final class SingBoxConfigTests: XCTestCase {
         }
     }
 
-    func testNaiveHostnameServerDirectDomainRouting() throws {
-        let profile = TestServers.naive[1]
-        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .naive(profile))
+    func testHysteria2HostnamePinAndDirectDomainRouting() throws {
+        let profile = TestServers.hysteria2[0]
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(profile))
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
         let route = try XCTUnwrap(root["route"] as? [String: Any])
         let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
         let domainRules = rules.compactMap { $0["domain"] as? [String] }
         XCTAssertTrue(domainRules.contains { $0.contains(profile.tlsServerName) })
+        XCTAssertTrue(domainRules.contains { $0.contains(profile.server) })
         let allCIDRs = rules.compactMap { $0["ip_cidr"] as? [String] }.flatMap { $0 }
         XCTAssertTrue(allCIDRs.isEmpty, "hostname uplink has no build-time IPv4 bypass")
 
-        let merged = try SingBoxConfigBuilder.mergeDirectIPs(["203.0.113.10"], into: json)
+        let merged = try SingBoxConfigBuilder.mergeDirectIPs(
+            ["203.0.113.10"],
+            into: json,
+            dialTag: SingBoxConfigConstants.proxyTag
+        )
         let mergedRoot = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(merged.data(using: .utf8))) as? [String: Any])
         let mergedRoute = try XCTUnwrap(mergedRoot["route"] as? [String: Any])
         let mergedRules = try XCTUnwrap(mergedRoute["rules"] as? [[String: Any]])
@@ -183,17 +101,14 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertTrue((tunInbound["route_exclude_address"] as? [String])?.contains("203.0.113.10/32") == true)
         let mergedOutbounds = try XCTUnwrap(mergedRoot["outbounds"] as? [[String: Any]])
         let mergedProxy = try XCTUnwrap(mergedOutbounds.first { ($0["tag"] as? String) == "proxy" })
+        XCTAssertEqual(mergedProxy["type"] as? String, "hysteria2")
         XCTAssertEqual(mergedProxy["server"] as? String, "203.0.113.10")
 
-        let outbounds = try XCTUnwrap(root["outbounds"] as? [[String: Any]])
-        let proxy = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
-        let uot = try XCTUnwrap(proxy["udp_over_tcp"] as? [String: Any])
-        XCTAssertEqual(uot["version"] as? Int, 2)
         try assertSingBoxCheckPasses(json: merged)
     }
 
     func testSingBoxConfigUsesModernFormat() throws {
-        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .naive(TestServers.naive[0]))
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(TestServers.hysteria2[0]))
         XCTAssertTrue(json.contains("\"route\""))
         XCTAssertFalse(json.contains("\"routing\""))
         XCTAssertFalse(json.contains("inet4_address"))

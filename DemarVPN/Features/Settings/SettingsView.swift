@@ -71,7 +71,7 @@ struct SettingsView: View {
         switch item {
         case .appSettings: showAppSettings = true
         case .documents: showDocumentsMenu = true
-        case .invite: snackBar.showInfo("Demar VPN — клиент NaiveProxy / Sing-box.")
+        case .invite: snackBar.showInfo("Demar VPN — клиент Hysteria2 / Sing-box.")
         case .feedback: snackBar.showInfo("Скоро")
         }
     }

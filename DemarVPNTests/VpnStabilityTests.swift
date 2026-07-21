@@ -39,6 +39,38 @@ final class VpnStabilityTests: XCTestCase {
         )
     }
 
+    func testReadinessFailsOnFailedHeartbeat() {
+        XCTAssertEqual(
+            VpnTunnelReadiness.failureMessage(heartbeat: "failed-22", startFailure: nil),
+            "VPN tunnel start failed (failed-22)."
+        )
+        XCTAssertEqual(
+            VpnTunnelReadiness.failureMessage(heartbeat: "core-started", startFailure: "boom"),
+            "boom"
+        )
+        XCTAssertNil(VpnTunnelReadiness.failureMessage(heartbeat: "core-started", startFailure: nil))
+        XCTAssertNil(VpnTunnelReadiness.failureMessage(heartbeat: "running", startFailure: ""))
+    }
+
+    func testMergeDirectIPsKeepsPinnedLiteralServer() throws {
+        let plan = SingBoxConnectPlan.hysteria2(TestServers.hysteria2[0]).pinEndpoint(to: ["203.0.113.10"])
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: plan)
+        let merged = try SingBoxConfigBuilder.mergeDirectIPs(
+            ["198.51.100.7", "203.0.113.10"],
+            into: json,
+            dialTag: SingBoxConfigConstants.proxyTag
+        )
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(merged.data(using: .utf8))) as? [String: Any])
+        let outbounds = try XCTUnwrap(root["outbounds"] as? [[String: Any]])
+        let proxy = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
+        XCTAssertEqual(proxy["type"] as? String, "hysteria2")
+        XCTAssertEqual(proxy["server"] as? String, "203.0.113.10")
+        let tun = try XCTUnwrap((root["inbounds"] as? [[String: Any]])?.first { ($0["type"] as? String) == "tun" })
+        let excludes = try XCTUnwrap(tun["route_exclude_address"] as? [String])
+        XCTAssertTrue(excludes.contains("198.51.100.7/32"))
+        XCTAssertTrue(excludes.contains("203.0.113.10/32"))
+    }
+
     func testControlStateSkipIdenticalWrite() throws {
         // Best-effort: App Group may be unavailable in some CI simulators.
         guard (try? VpnSharedStore.vpnDirectoryURL()) != nil else {

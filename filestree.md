@@ -26,7 +26,6 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
 │   │   └── LegalDocuments.swift       # ToS/PP raw GitHub Markdown fetch
 │   ├── Vpn/
-│   │   ├── NaiveProfile.swift         # NaiveProxy профиль
 │   │   ├── Hysteria2Profile.swift     # Hysteria2 профиль
 │   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun options
 │   │   └── SingBoxConfigBuilder.swift # Sing-box JSON TUN

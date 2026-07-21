@@ -1,5 +1,6 @@
 import Darwin
 import Foundation
+import Network
 import NetworkExtension
 #if canImport(WidgetKit)
 import WidgetKit
@@ -7,71 +8,6 @@ import WidgetKit
 
 private func logLine(_ message: String) {
   NSLog("[DemarPacketTunnel] %@", message)
-}
-
-private enum TunnelDataProbe {
-  struct Result {
-    let ok: Bool
-    let detail: String
-  }
-
-  static func run() -> Result {
-    let connect = request(
-      "CONNECT www.cloudflare.com:443 HTTP/1.1\r\nHost: www.cloudflare.com:443\r\nConnection: close\r\n\r\n",
-      expectedStatus: 200
-    )
-    guard connect.ok else { return connect }
-    return request(
-      "GET http://cp.cloudflare.com/generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nConnection: close\r\n\r\n",
-      expectedStatus: 204
-    )
-  }
-
-  private static func request(_ request: String, expectedStatus: Int) -> Result {
-    let descriptor = socket(AF_INET, SOCK_STREAM, 0)
-    guard descriptor >= 0 else { return Result(ok: false, detail: "proxy socket: \(String(cString: strerror(errno)))") }
-    defer { close(descriptor) }
-
-    var noSignal: Int32 = 1
-    setsockopt(descriptor, SOL_SOCKET, SO_NOSIGPIPE, &noSignal, socklen_t(MemoryLayout.size(ofValue: noSignal)))
-    var timeout = timeval(tv_sec: 15, tv_usec: 0)
-    setsockopt(descriptor, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout.size(ofValue: timeout)))
-    setsockopt(descriptor, SOL_SOCKET, SO_SNDTIMEO, &timeout, socklen_t(MemoryLayout.size(ofValue: timeout)))
-
-    var address = sockaddr_in()
-    address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
-    address.sin_family = sa_family_t(AF_INET)
-    address.sin_port = in_port_t(UInt16(SingBoxConfigConstants.diagnosticPort).bigEndian)
-    _ = SingBoxConfigConstants.diagnosticHost.withCString {
-      inet_pton(AF_INET, $0, &address.sin_addr)
-    }
-    let connected = withUnsafePointer(to: &address) {
-      $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
-        connect(descriptor, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
-      }
-    }
-    guard connected == 0 else {
-      return Result(ok: false, detail: "diagnostic proxy connect: \(String(cString: strerror(errno)))")
-    }
-
-    let sent = request.utf8CString.withUnsafeBytes {
-      send(descriptor, $0.baseAddress, $0.count - 1, 0)
-    }
-    guard sent > 0 else {
-      return Result(ok: false, detail: "diagnostic proxy send: \(String(cString: strerror(errno)))")
-    }
-    var buffer = [UInt8](repeating: 0, count: 4096)
-    let count = recv(descriptor, &buffer, buffer.count, 0)
-    guard count > 0 else {
-      return Result(ok: false, detail: "diagnostic proxy receive: \(String(cString: strerror(errno)))")
-    }
-    let response = String(decoding: buffer.prefix(count), as: UTF8.self)
-    let status = Int(response.split(separator: " ").dropFirst().first ?? "") ?? 0
-    return Result(
-      ok: status == expectedStatus,
-      detail: "diagnostic proxy HTTP \(status), expected \(expectedStatus)"
-    )
-  }
 }
 
 private func appendDiagLine(_ message: String) {
@@ -309,41 +245,24 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       }
       VpnSharedStore.saveExtensionHeartbeat(phase: "core-starting")
       do {
-        var probeResult = TunnelDataProbe.Result(ok: false, detail: "not-run")
-        for attempt in 1 ... 2 {
-          guard self.isCurrentSessionGeneration(generation) else { throw CancellationError() }
-          if attempt > 1 {
-            IOSLibboxCore.stop()
-          }
-          try IOSLibboxCore.start(
-            provider: self,
-            configJSON: configJSON,
-            excludedIPv4: excludedIPv4,
-            assetDir: assetDir
-          )
-          let snapshot = Self.coreSnapshot(configJSON)
-          IOSLibboxCore.markSession(
-            id: self.currentSessionId ?? "unknown",
-            protocolName: snapshot.protocolName,
-            endpoint: snapshot.endpoint
-          )
-          probeResult = TunnelDataProbe.run()
-          guard self.isCurrentSessionGeneration(generation) else { throw CancellationError() }
-          Self.diag("data probe pre-capture attempt=\(attempt) ok=\(probeResult.ok) detail=\(probeResult.detail)")
-          if probeResult.ok {
-            try IOSLibboxCore.activateTrafficCapture()
-            probeResult = TunnelDataProbe.run()
-            Self.diag("data probe captured attempt=\(attempt) ok=\(probeResult.ok) detail=\(probeResult.detail)")
-          }
-          if probeResult.ok { break }
-        }
+        try IOSLibboxCore.start(
+          provider: self,
+          configJSON: configJSON,
+          excludedIPv4: excludedIPv4,
+          assetDir: assetDir
+        )
+        let snapshot = Self.coreSnapshot(configJSON)
+        IOSLibboxCore.markSession(
+          id: self.currentSessionId ?? "unknown",
+          protocolName: snapshot.protocolName,
+          endpoint: snapshot.endpoint
+        )
         guard self.isCurrentSessionGeneration(generation) else { throw CancellationError() }
-        guard probeResult.ok else {
-          throw NSError(domain: "DemarVpn", code: 46, userInfo: [
-            NSLocalizedDescriptionKey: "VPN proxy data path failed: \(probeResult.detail)",
-          ])
-        }
-        Self.diag("libbox service started and data path verified")
+        // iOS 26 NE: pre-capture BSD connect to mixed inbound → EADDRNOTAVAIL.
+        // Gate start on path settle + deferred route install, not a TCP data probe.
+        try self.bringUpTrafficCapture()
+        guard self.isCurrentSessionGeneration(generation) else { throw CancellationError() }
+        Self.diag("libbox service started (capture active, path settled)")
         VpnSharedStore.saveExtensionHeartbeat(phase: "core-started")
         self.tunnelStartedAt = Date()
         self.applyCoreStartedState(
@@ -487,6 +406,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         excludedIPv4: excluded,
         assetDir: URL(fileURLWithPath: assetDir, isDirectory: true)
       )
+      try bringUpTrafficCapture()
       applyCoreStartedState(
         excludedIPv4: excluded,
         assetDirPath: assetDir,
@@ -622,6 +542,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         excludedIPv4: excluded,
         assetDir: assetDir
       )
+      try bringUpTrafficCapture()
       applyCoreStartedState(
         excludedIPv4: excluded,
         assetDirPath: assetDir.path,
@@ -634,6 +555,18 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       Self.diag("hardRestartCore failed: \(error.localizedDescription)")
       DispatchQueue.main.async { completion(error) }
     }
+  }
+
+  /// Deferred TUN → wait for satisfied path → install full routes → settle.
+  private func bringUpTrafficCapture() throws {
+    Self.waitForSatisfiedPath(timeoutSeconds: 5)
+    VpnSharedStore.saveExtensionHeartbeat(phase: "core-settling")
+    try IOSLibboxCore.activateTrafficCapture()
+    usleep(400_000)
+    Self.waitForSatisfiedPath(timeoutSeconds: 15) {
+      VpnSharedStore.saveExtensionHeartbeat(phase: "core-settling")
+    }
+    IOSLibboxCore.resumeDefaultInterfaceAfterCapture()
   }
 
   private func applyCoreStartedState(
@@ -721,6 +654,37 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           let proxy = outbounds.first(where: { ($0["tag"] as? String) == SingBoxConfigConstants.proxyTag })
     else { return ("unknown", "unknown") }
     return (proxy["type"] as? String ?? "unknown", proxy["server"] as? String ?? "unknown")
+  }
+
+  /// Blocks until NWPath is satisfied or timeout. Used before installing full routes.
+  private static func waitForSatisfiedPath(
+    timeoutSeconds: TimeInterval,
+    onTick: (() -> Void)? = nil
+  ) {
+    let monitor = NWPathMonitor()
+    let queue = DispatchQueue(label: "vpn.demar.path-wait")
+    let semaphore = DispatchSemaphore(value: 0)
+    monitor.pathUpdateHandler = { path in
+      if path.status == .satisfied {
+        semaphore.signal()
+      }
+    }
+    monitor.start(queue: queue)
+    let deadline = Date().addingTimeInterval(timeoutSeconds)
+    var timedOut = true
+    while Date() < deadline {
+      onTick?()
+      if semaphore.wait(timeout: .now() + 2) == .success {
+        timedOut = false
+        break
+      }
+    }
+    monitor.cancel()
+    if timedOut {
+      diag("path wait timed out after \(Int(timeoutSeconds))s; activating capture anyway")
+    } else {
+      diag("path satisfied; activating capture")
+    }
   }
 
   private static func assetFileDescription(named name: String, in dir: URL) -> String {
