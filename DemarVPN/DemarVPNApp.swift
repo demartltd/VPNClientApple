@@ -15,6 +15,9 @@ struct DemarVPNApp: App {
             ContentView(appState: appState, snackBar: snackBar)
                 .preferredColorScheme(.dark)
                 .demarSnackBar(snackBar)
+                #if os(iOS)
+                .demarDynamicIslandBadge()
+                #endif
         }
         #if os(macOS)
         Window("Свои проверки", id: CustomEgressProbesWindow.id) {

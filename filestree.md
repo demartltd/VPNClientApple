@@ -54,6 +54,7 @@ DemarVPN/                              # SwiftUI target
 │   ├── SettingsLinksStrip.swift       # соцссылки
 │   ├── DemarSnackBar.swift            # тосты
 │   ├── ServersRefreshBanner.swift     # top banner при pull-refresh серверов
+│   ├── DynamicIslandBadge.swift       # marketing badge на DI (iOS only)
 │   └── DiagnosticsJournalTextView.swift # текстовый лог
 │
 ├── Resources/Fonts/
