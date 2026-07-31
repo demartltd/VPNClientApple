@@ -20,7 +20,13 @@ enum VpnSharedStore {
   private static let pendingStopContextFile = "pending_stop_context.json"
   private static let tunnelStartErrorFile = "last_tunnel_start_error.json"
   private static let extensionHeartbeatFile = "extension_heartbeat.json"
+  private static let throughputFile = "throughput.json"
   private static let stopReasonHistoryLimit = 32
+  private static let throughputISO8601: ISO8601DateFormatter = {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return f
+  }()
 
   private static let coreJournalImportQueue = DispatchQueue(label: "com.demar.vpn.coreJournalImport")
   private static let journalAppendQueue = DispatchQueue(label: "com.demar.vpn.journalAppend", qos: .utility)
@@ -74,6 +80,41 @@ enum VpnSharedStore {
       let data = try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
       try data.write(to: try tunnelStartErrorURL(), options: [.atomic])
     } catch {}
+  }
+
+  static func throughputURL() throws -> URL {
+    try vpnDirectoryURL().appendingPathComponent(throughputFile, isDirectory: false)
+  }
+
+  static func saveThroughput(up: Int64, down: Int64) {
+    do {
+      let body: [String: Any] = [
+        "up": up,
+        "down": down,
+        "updatedAt": throughputISO8601.string(from: Date()),
+      ]
+      try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
+        .write(to: try throughputURL(), options: [.atomic])
+    } catch {}
+  }
+
+  /// Instantaneous Clash `/traffic` rates (B/s). Nil when missing or older than `maxAge`.
+  static func readThroughput(maxAge: TimeInterval = 3) -> (up: Int64, down: Int64)? {
+    guard let data = try? Data(contentsOf: throughputURL()),
+          let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    else { return nil }
+    let up: Int64? = (obj["up"] as? NSNumber)?.int64Value ?? (obj["up"] as? Int).map(Int64.init)
+    let down: Int64? = (obj["down"] as? NSNumber)?.int64Value ?? (obj["down"] as? Int).map(Int64.init)
+    guard let up, let down else { return nil }
+    if let raw = obj["updatedAt"] as? String, !raw.isEmpty {
+      let date = throughputISO8601.date(from: raw) ?? ISO8601DateFormatter().date(from: raw)
+      if let date, Date().timeIntervalSince(date) > maxAge { return nil }
+    }
+    return (up, down)
+  }
+
+  static func clearThroughput() {
+    try? FileManager.default.removeItem(at: throughputURL())
   }
 
   static func saveExtensionHeartbeat(phase: String) {

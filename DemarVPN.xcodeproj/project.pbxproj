@@ -52,7 +52,6 @@
 		B10000010000000000000032 /* DiagnosticsJournalTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000032 /* DiagnosticsJournalTextView.swift */; };
 		B10000010000000000000034 /* NativeVpnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000034 /* NativeVpnService.swift */; };
 		B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000035 /* PublicEgressDiagnostics.swift */; };
-		B10000010000000000000036 /* DeviceTrafficTotals.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000036 /* DeviceTrafficTotals.swift */; };
 		B10000010000000000000037 /* ios/Shared/VpnControlIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */; platformFilter = ios; };
 		B10000010000000000000038 /* ios/Shared/VpnStatusSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */; };
 		B10000010000000000000039 /* CustomEgressProbes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000039 /* CustomEgressProbes.swift */; };
@@ -80,6 +79,9 @@
 		E20000181CF9000F007C117D /* ios/DemarPacketTunnel/IOSLibboxCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000191CF9000F007C117D /* ios/DemarPacketTunnel/IOSLibboxCore.swift */; };
 		E200001A1CF9000F007C117D /* ios/DemarPacketTunnel/DemarLibboxPlatform.swift in Sources */ = {isa = PBXBuildFile; fileRef = E200001B1CF9000F007C117D /* ios/DemarPacketTunnel/DemarLibboxPlatform.swift */; };
 		E200001C1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift in Sources */ = {isa = PBXBuildFile; fileRef = E200001D1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift */; };
+		E20000A11CF9000F007C117D /* ios/DemarPacketTunnel/ClashTrafficMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000A21CF9000F007C117D /* ios/DemarPacketTunnel/ClashTrafficMonitor.swift */; };
+		E20000A31CF9000F007C117D /* ios/Shared/ClashTraffic.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000A41CF9000F007C117D /* ios/Shared/ClashTraffic.swift */; };
+		B100000100000000000000CF /* ios/Shared/ClashTraffic.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000A41CF9000F007C117D /* ios/Shared/ClashTraffic.swift */; };
 		E200001E1CF9000F007C117D /* geoip.db in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000041 /* geoip.db */; };
 		E200001F1CF9000F007C117D /* geosite.db in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000042 /* geosite.db */; };
 		E20000211CF9000F007C117D /* bundled_version.txt in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000040 /* bundled_version.txt */; };
@@ -147,6 +149,8 @@
 		E20000191CF9000F007C117D /* ios/DemarPacketTunnel/IOSLibboxCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/IOSLibboxCore.swift; sourceTree = SOURCE_ROOT; };
 		E200001B1CF9000F007C117D /* ios/DemarPacketTunnel/DemarLibboxPlatform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/DemarLibboxPlatform.swift; sourceTree = SOURCE_ROOT; };
 		E200001D1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/LibboxRunBlocking.swift; sourceTree = SOURCE_ROOT; };
+		E20000A21CF9000F007C117D /* ios/DemarPacketTunnel/ClashTrafficMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/ClashTrafficMonitor.swift; sourceTree = SOURCE_ROOT; };
+		E20000A41CF9000F007C117D /* ios/Shared/ClashTraffic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/ClashTraffic.swift; sourceTree = SOURCE_ROOT; };
 		E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnAppGroup.swift; sourceTree = SOURCE_ROOT; };
 		E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnSharedStore.swift; sourceTree = SOURCE_ROOT; };
 		E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnTunnelController.swift; sourceTree = SOURCE_ROOT; };
@@ -207,7 +211,6 @@
 		F10000010000000000000032 /* DiagnosticsJournalTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsJournalTextView.swift; sourceTree = "<group>"; };
 		F10000010000000000000034 /* NativeVpnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVpnService.swift; sourceTree = "<group>"; };
 		F10000010000000000000035 /* PublicEgressDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicEgressDiagnostics.swift; sourceTree = "<group>"; };
-		F10000010000000000000036 /* DeviceTrafficTotals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceTrafficTotals.swift; sourceTree = "<group>"; };
 		F10000010000000000000039 /* CustomEgressProbes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomEgressProbes.swift; sourceTree = "<group>"; };
 		F1000001000000000000003D /* SingBoxConnectPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConnectPlan.swift; sourceTree = "<group>"; };
 		F1000001000000000000003E /* Hysteria2Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hysteria2Profile.swift; sourceTree = "<group>"; };
@@ -464,7 +467,6 @@
 			isa = PBXGroup;
 			children = (
 				F10000010000000000000035 /* PublicEgressDiagnostics.swift */,
-				F10000010000000000000036 /* DeviceTrafficTotals.swift */,
 				F10000010000000000000043 /* LegalDocuments.swift */,
 			);
 			path = Network;
@@ -496,6 +498,7 @@
 				E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */,
 				E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */,
 				E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */,
+				E20000A41CF9000F007C117D /* ios/Shared/ClashTraffic.swift */,
 				E20001DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift */,
 				E20001DF1CF9000F007C117D /* ios/Shared/DemarLogTime.swift */,
 				E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */,
@@ -514,6 +517,7 @@
 				E20000191CF9000F007C117D /* ios/DemarPacketTunnel/IOSLibboxCore.swift */,
 				E200001B1CF9000F007C117D /* ios/DemarPacketTunnel/DemarLibboxPlatform.swift */,
 				E200001D1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift */,
+				E20000A21CF9000F007C117D /* ios/DemarPacketTunnel/ClashTrafficMonitor.swift */,
 				E20000161CF9000F007C117D /* ios/DemarPacketTunnel/TunnelLifecycle.swift */,
 			);
 			path = DemarPacketTunnel;
@@ -783,10 +787,10 @@
 				B1000001000000000000002C /* VpnStatusMonitor.swift in Sources */,
 				B1000001000000000000002E /* BundledCoreVersion.swift in Sources */,
 				B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */,
-				B10000010000000000000036 /* DeviceTrafficTotals.swift in Sources */,
 				B10000010000000000000043 /* LegalDocuments.swift in Sources */,
 				B10000010000000000000044 /* DocumentsMenuSheet.swift in Sources */,
 				B10000010000000000000045 /* LegalDocumentView.swift in Sources */,
+				B100000100000000000000CF /* ios/Shared/ClashTraffic.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -799,11 +803,13 @@
 				E20000181CF9000F007C117D /* ios/DemarPacketTunnel/IOSLibboxCore.swift in Sources */,
 				E200001A1CF9000F007C117D /* ios/DemarPacketTunnel/DemarLibboxPlatform.swift in Sources */,
 				E200001C1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift in Sources */,
+				E20000A11CF9000F007C117D /* ios/DemarPacketTunnel/ClashTrafficMonitor.swift in Sources */,
 				E20000251CF9000F007C117D /* Hysteria2Profile.swift in Sources */,
 				E20000231CF9000F007C117D /* SingBoxConnectPlan.swift in Sources */,
 				E20000221CF9000F007C117D /* SingBoxConfigBuilder.swift in Sources */,
 				E20000051CF9000F007C117D /* ios/Shared/VpnAppGroup.swift in Sources */,
 				E20000061CF9000F007C117D /* ios/Shared/VpnSharedStore.swift in Sources */,
+				E20000A31CF9000F007C117D /* ios/Shared/ClashTraffic.swift in Sources */,
 				E20000DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift in Sources */,
 				E20000DF1CF9000F007C117D /* ios/Shared/DemarLogTime.swift in Sources */,
 				E20000071CF9000F007C117D /* ios/Shared/VpnTunnelController.swift in Sources */,

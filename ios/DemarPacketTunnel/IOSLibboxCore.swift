@@ -40,6 +40,7 @@ enum IOSLibboxCore {
         let options = LibboxOverrideOptions()
         try commandServer?.checkConfig(configJSON)
         try commandServer?.startOrReloadService(configJSON, options: options)
+        ClashTrafficMonitor.start()
         VpnSharedStore.appendPendingUiDiagLine("[core] started version=\(LibboxVersion())")
     }
 
@@ -68,6 +69,7 @@ enum IOSLibboxCore {
         let options = LibboxOverrideOptions()
         try commandServer?.checkConfig(configJSON)
         try commandServer?.startOrReloadService(configJSON, options: options)
+        ClashTrafficMonitor.start()
     }
 
     static func markSession(id: String, protocolName: String, endpoint: String) {
@@ -91,6 +93,7 @@ enum IOSLibboxCore {
     }
 
     static func stop() {
+        ClashTrafficMonitor.stop()
         try? commandServer?.closeService()
         commandServer?.close()
         commandServer = nil

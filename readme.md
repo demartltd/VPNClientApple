@@ -83,7 +83,7 @@ Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На devi
 
 ### Подключение
 
-Вкл/выкл VPN, статус, имя сервера, скорость RX/TX при подключении (дельта `getifaddrs`, 1 с; macOS — `utun*`). **iOS:** control «Demar VPN» в Control Center; UI синхронизируется с `NEVPNConnection` при любом переключении Demar (приложение, control, Настройки → VPN, системная кнопка VPN в CC).
+Вкл/выкл VPN, статус, имя сервера, скорость RX/TX при подключении (Clash API `GET /traffic` в extension → App Group; Home читает ↓/↑ KB/s). **iOS:** control «Demar VPN» в Control Center; UI синхронизируется с `NEVPNConnection` при любом переключении Demar (приложение, control, Настройки → VPN, системная кнопка VPN в CC).
 
 ### Сервера
 

@@ -22,7 +22,6 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── ServerProfile.swift        # профиль сервера + UI metadata/filters
 │   │   └── TestServers.swift          # тестовые профили
 │   ├── Network/
-│   │   ├── DeviceTrafficTotals.swift  # RX/TX getifaddrs
 │   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
 │   │   └── LegalDocuments.swift       # ToS/PP raw GitHub Markdown fetch
 │   ├── Vpn/
@@ -98,7 +97,8 @@ ios/
 ├── Shared/
 │   ├── VpnAppGroup.swift              # App Group paths
 │   ├── DemarLogTime.swift             # journal stamp yyyy-MM-dd-HH-mm-ss (UTC)
-│   ├── VpnSharedStore.swift           # journal, payload, state
+│   ├── VpnSharedStore.swift           # journal, payload, state, Clash throughput
+│   ├── ClashTraffic.swift             # parse Clash /traffic NDJSON sample
 │   ├── DefaultInterfaceReporter.swift # sticky default iface + debounce для libbox
 │   ├── VpnTunnelController.swift      # NETunnelProviderManager
 │   ├── VpnControlConstants.swift      # kind CC widget
@@ -115,6 +115,7 @@ ios/
 │   ├── TunnelLifecycle.swift          # path monitor (iOS + macOS)
 │   ├── IOSLibboxCore.swift            # Libbox in-process (iOS + macOS)
 │   ├── DemarLibboxPlatform.swift      # NE platform interface
+│   ├── ClashTrafficMonitor.swift      # stream Clash /traffic → App Group
 │   ├── LibboxRunBlocking.swift        # async bridge for openTun
 │   ├── Info.plist
 │   └── DemarPacketTunnel.entitlements

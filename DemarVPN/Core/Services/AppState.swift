@@ -33,8 +33,6 @@ final class AppState {
 
     #if os(iOS) || os(macOS)
     private var statusMonitor: VpnStatusMonitor?
-    private var throughputBaseline: (rx: UInt64, tx: UInt64, at: Date)?
-    private var throughputSampling = false
     #endif
 
     init(vpn: VpnControlling? = nil) {
@@ -305,9 +303,6 @@ final class AppState {
     }
 
     private func resetThroughput() {
-        #if os(iOS) || os(macOS)
-        throughputBaseline = nil
-        #endif
         downloadBps = 0
         uploadBps = 0
     }
@@ -325,47 +320,15 @@ final class AppState {
 
     #if os(iOS) || os(macOS)
     func runHomeThroughputSampling() async {
-        throughputBaseline = nil
         while !Task.isCancelled {
-            await sampleThroughputIfConnected()
+            if vpnState.isConnected, let t = VpnSharedStore.readThroughput() {
+                downloadBps = Double(t.down)
+                uploadBps = Double(t.up)
+            } else {
+                resetThroughput()
+            }
             try? await Task.sleep(for: .seconds(1))
         }
-    }
-
-    private func sampleThroughputIfConnected() async {
-        guard vpnState.isConnected else {
-            resetThroughput()
-            return
-        }
-        guard !throughputSampling else { return }
-        throughputSampling = true
-        defer { throughputSampling = false }
-
-        let tunnelOnly = true
-        let totals = await Task.detached(priority: .utility) {
-            DeviceTrafficTotals.cumulativeRXTXBytes(vpnTunnelOnly: tunnelOnly)
-        }.value
-        guard let totals else {
-            resetThroughput()
-            return
-        }
-
-        let now = Date()
-        if let base = throughputBaseline {
-            let dt = now.timeIntervalSince(base.at)
-            if dt > 0 {
-                let drx = Int64(totals.rx) - Int64(base.rx)
-                let dtx = Int64(totals.tx) - Int64(base.tx)
-                if drx >= 0, dtx >= 0 {
-                    downloadBps = Double(drx) / dt
-                    uploadBps = Double(dtx) / dt
-                } else {
-                    downloadBps = 0
-                    uploadBps = 0
-                }
-            }
-        }
-        throughputBaseline = (totals.rx, totals.tx, now)
     }
     #endif
     #endif

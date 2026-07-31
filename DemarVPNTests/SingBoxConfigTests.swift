@@ -149,6 +149,23 @@ final class SingBoxConfigTests: XCTestCase {
         try assertSingBoxCheckPasses(json: json)
     }
 
+    func testClashApiExternalController() throws {
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(TestServers.hysteria2[0]))
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
+        let experimental = try XCTUnwrap(root["experimental"] as? [String: Any])
+        let clash = try XCTUnwrap(experimental["clash_api"] as? [String: Any])
+        XCTAssertEqual(clash["external_controller"] as? String, "127.0.0.1:19090")
+        XCTAssertEqual((experimental["cache_file"] as? [String: Any])?["enabled"] as? Bool, true)
+    }
+
+    func testClashTrafficParse() {
+        let sample = ClashTraffic.parse("{\"up\":1024,\"down\":2048}")
+        XCTAssertEqual(sample?.up, 1024)
+        XCTAssertEqual(sample?.down, 2048)
+        XCTAssertNil(ClashTraffic.parse("not-json"))
+        XCTAssertNil(ClashTraffic.parse("{}"))
+    }
+
     func testJournalTimeFormat() {
         var c = Calendar(identifier: .gregorian)
         c.timeZone = TimeZone(secondsFromGMT: 0)!

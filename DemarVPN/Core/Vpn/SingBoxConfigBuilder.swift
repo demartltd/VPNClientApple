@@ -123,7 +123,13 @@ enum SingBoxConfigBuilder {
                 directDomains: directDomains
             ),
             "outbounds": [proxyOutbound, ["type": "direct", "tag": SingBoxConfigConstants.directTag]],
-            "experimental": ["cache_file": ["enabled": true]],
+            "experimental": [
+                "cache_file": ["enabled": true],
+                "clash_api": [
+                    "external_controller":
+                        "\(SingBoxConfigConstants.clashApiHost):\(SingBoxConfigConstants.clashApiPort)",
+                ],
+            ],
         ]
     }
 }
@@ -137,6 +143,8 @@ enum SingBoxConfigConstants {
     static let diagnosticInboundTag = "diag-in"
     static let diagnosticHost = "127.0.0.1"
     static let diagnosticPort = 10808
+    static let clashApiHost = "127.0.0.1"
+    static let clashApiPort = 19090
 }
 
 enum SingBoxConfigEncoding {

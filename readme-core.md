@@ -146,6 +146,8 @@ Libbox закрывает **все** соединения при пустом de
 | Статус NE | `DemarVPN/Core/Services/VpnStatusMonitor.swift` |
 | Packet tunnel | `ios/DemarPacketTunnel/PacketTunnelProvider.swift` |
 
+Clash API `127.0.0.1:19090` (`experimental.clash_api`) — Home throughput via extension stream `GET /traffic` → App Group (host не видит localhost Packet Tunnel).
+
 **App Group:** `group.com.demar.vpn`  
 **Bundle tunnel:** `com.demar.vpn.packet-tunnel`  
 **Журнал (dev):** `./scripts/journal.sh` — см. [`readme.md`](readme.md) § Журнал.
