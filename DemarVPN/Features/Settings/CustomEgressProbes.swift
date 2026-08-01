@@ -146,6 +146,9 @@ struct CustomEgressProbesPanel: View {
                             systemImage: "list.bullet.rectangle",
                             description: Text("Сайт или IP")
                         )
+                        #if os(iOS)
+                        .demarDetailNavigationTitle("Свои проверки")
+                        #endif
                     } else {
                         ScrollView {
                             LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
@@ -153,6 +156,9 @@ struct CustomEgressProbesPanel: View {
                             }
                             .padding(16)
                         }
+                        #if os(iOS)
+                        .demarDetailNavigationTitle("Свои проверки")
+                        #endif
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -181,9 +187,8 @@ struct CustomEgressProbesPanel: View {
                 .background(Color.demarSurface)
             }
             .background(Color.demarSurface.ignoresSafeArea())
-            .navigationTitle("Свои проверки")
-            .demarInlineNavigationTitle()
             #if os(macOS)
+            .navigationTitle("Свои проверки")
             .focusable()
             .focusEffectDisabled()
             .onKeyPress(.escape) {

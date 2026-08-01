@@ -82,9 +82,12 @@ struct ServiceMenuView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
         }
+        #if os(iOS)
+        .demarDetailNavigationTitle("Служебное меню")
+        #else
         .background(Color.demarSurface)
         .navigationTitle("Служебное меню")
-        .demarInlineNavigationTitle()
+        #endif
         .task { await reloadDevice() }
         #if os(iOS)
         .onChange(of: scenePhase) { _, phase in

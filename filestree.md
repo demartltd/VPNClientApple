@@ -42,11 +42,11 @@ DemarVPN/                              # SwiftUI target
 │       ├── MacVpnDiag.swift            # pluginkit, NE preflight
 │       ├── AppPlatform.swift          # «iOS» / «macOS»
 │       ├── BundledCoreVersion.swift    # версия core из bundle
-│       └── DemarNavigation.swift      # секции навигации
+│       └── DemarNavigation.swift      # секции + demarDetailNavigationTitle (iOS scroll title)
 │
 ├── Components/
 │   ├── SectionCard.swift              # карточка-секция
-│   ├── DemarCardRow.swift             # demarScrollScreen + top curtain
+│   ├── DemarCardRow.swift             # demarScrollScreen
 │   ├── DemarKvRow.swift               # key / value
 │   ├── VpnMainToggle.swift            # кнопка VPN
 │   ├── SettingsActionButton.swift     # кнопка в настройках

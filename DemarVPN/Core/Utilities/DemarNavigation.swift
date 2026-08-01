@@ -42,12 +42,13 @@ extension View {
     }
     #endif
 
-    @ViewBuilder
-    func demarInlineNavigationTitle() -> some View {
+    /// iOS: title after scroll, no blur, soft top gradient. macOS: plain `navigationTitle` (as before).
+    /// Apply on the `ScrollView` so scroll tracking works.
+    func demarDetailNavigationTitle(_ title: String) -> some View {
         #if os(iOS)
-        navigationBarTitleDisplayMode(.inline)
+        modifier(DemarDetailNavTitle(title: title))
         #else
-        self
+        navigationTitle(title)
         #endif
     }
 
@@ -60,3 +61,45 @@ extension View {
     }
     #endif
 }
+
+#if os(iOS)
+private struct DemarDetailNavTitle: ViewModifier {
+    let title: String
+    @State private var showTitle = false
+
+    func body(content: Content) -> some View {
+        content
+            .scrollIndicators(.hidden)
+            .scrollContentBackground(.hidden)
+            .background(Color.demarSurface)
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text(title)
+                        .font(.headline)
+                        .opacity(showTitle ? 1 : 0)
+                }
+            }
+            .overlay(alignment: .top) {
+                LinearGradient(
+                    colors: [Color.black.opacity(0.10), .clear],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 88)
+                .ignoresSafeArea(edges: .top)
+                .allowsHitTesting(false)
+            }
+            .onScrollGeometryChange(for: CGFloat.self) { geo in
+                geo.contentOffset.y + geo.contentInsets.top
+            } action: { _, y in
+                let show = y > 16
+                guard showTitle != show else { return }
+                showTitle = show
+            }
+            .animation(.easeInOut(duration: 0.18), value: showTitle)
+    }
+}
+#endif

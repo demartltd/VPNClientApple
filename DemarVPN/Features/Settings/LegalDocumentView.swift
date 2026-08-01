@@ -16,15 +16,14 @@ struct LegalDocumentView: View {
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .demarScrollScreen()
+                .demarDetailNavigationTitle(document.title)
             } else {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .demarDetailNavigationTitle(document.title)
             }
         }
         .background(Color.demarSurface)
-        .navigationTitle(document.title)
-        .demarInlineNavigationTitle()
         .task {
             markdown = try? await document.fetchMarkdown()
         }

@@ -4,6 +4,20 @@ struct AppSettingsView: View {
     @State private var logExpanded = false
 
     var body: some View {
+        #if os(iOS)
+        GeometryReader { geo in
+            ScrollView {
+                DiagnosticsLogCard(
+                    expanded: $logExpanded,
+                    maxLogPanelHeight: Self.maxLogPanelHeight(in: geo)
+                )
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 16)
+            }
+            .demarDetailNavigationTitle("Настройки приложения")
+        }
+        #else
         GeometryReader { geo in
             VStack(spacing: 0) {
                 DiagnosticsLogCard(
@@ -19,7 +33,7 @@ struct AppSettingsView: View {
         .padding(.bottom, 16)
         .background(Color.demarSurface)
         .navigationTitle("Настройки приложения")
-        .demarInlineNavigationTitle()
+        #endif
     }
 
     /// Header, toolbar, card chrome, and nav bar — remainder goes to the log scroll area.
