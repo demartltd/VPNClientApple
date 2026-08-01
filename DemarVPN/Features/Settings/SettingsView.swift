@@ -52,16 +52,15 @@ struct SettingsView: View {
             }
         }
         .background(Color.demarSurface)
-        .sheet(isPresented: $showDocumentsMenu, onDismiss: {
-            guard let pendingDocument else { return }
-            openedDocument = pendingDocument
-            self.pendingDocument = nil
-        }) {
-            DocumentsMenuSheet { doc in
-                pendingDocument = doc
-                showDocumentsMenu = false
+        .documentsMenu(
+            isPresented: $showDocumentsMenu,
+            onSelect: { pendingDocument = $0 },
+            onDismiss: {
+                guard let pendingDocument else { return }
+                openedDocument = pendingDocument
+                self.pendingDocument = nil
             }
-        }
+        )
         #if os(iOS)
         .demarNavigationRoot(backHistoryLabel: "Настройки")
         #endif

@@ -33,8 +33,13 @@ struct SettingsActionButton: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(Color.demarOutline.opacity(0.20), lineWidth: 1)
+                    .fill(Color.demarSurface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(Color.demarOutline.opacity(0.20), lineWidth: 1)
+                    )
             )
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
     }
