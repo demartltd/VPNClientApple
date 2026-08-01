@@ -68,7 +68,7 @@ DemarVPN/                              # SwiftUI target
         ├── SettingsView.swift         # настройки, 3 тапа → service
         ├── AppSettingsView.swift      # журнал
         ├── ServiceMenuView.swift      # служебное меню
-        ├── DocumentsMenuSheet.swift   # bottom sheet ToS / PP
+        ├── DocumentsMenuSheet.swift   # ToS/PP: iOS sheet, macOS overlay
         ├── LegalDocumentView.swift    # MarkdownUI viewer
         └── CustomEgressProbes.swift   # свои хосты зондов
 

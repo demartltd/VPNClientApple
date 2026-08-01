@@ -27,7 +27,11 @@ struct DocumentsMenuSheet: View {
         .padding(.top, 16)
         #endif
         .padding(.bottom, 12)
+        #if os(iOS)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        #else
         .frame(maxWidth: .infinity, alignment: .top)
+        #endif
         .background(Color.demarSurface)
         #if os(iOS)
         .presentationDetents([.height(220)])
