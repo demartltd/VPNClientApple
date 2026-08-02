@@ -6,6 +6,16 @@ struct AuthSession: Equatable, Sendable {
     let username: String
     let vpnSubscription: String?
     let vpnExpiresAt: String?
+    let isLocalDemo: Bool
+}
+
+enum LocalDemoAccount {
+    static let email = "test@test.com"
+    static let userId = "demo"
+    static let loginAt = "2020-01-01T00:00:00.000Z"
+    static let username = "App Store Review"
+    static let vpnSubscription = "FREE"
+    static let vpnExpiresAt = "2099-12-31T23:59:59.000Z"
 }
 
 @MainActor
@@ -16,32 +26,42 @@ enum AuthSessionStore {
         static let username = "demar_auth_username"
         static let vpnSub = "demar_auth_vpn_subscription"
         static let vpnExpires = "demar_auth_vpn_expires_at"
+        static let isLocalDemo = "demar_auth_is_local_demo"
     }
 
     private(set) static var session: AuthSession? = load()
 
     static var isSignedIn: Bool { session != nil }
 
-    static func save(_ exchange: SessionExchange) {
+    static func save(_ exchange: SessionExchange, isLocalDemo: Bool = false) {
         let s = AuthSession(
             userId: exchange.userId,
             loginAt: exchange.loginAt,
             username: exchange.username?.nilIfBlank ?? exchange.userId,
             vpnSubscription: exchange.vpnSubscription,
-            vpnExpiresAt: exchange.vpnExpiresAt
+            vpnExpiresAt: exchange.vpnExpiresAt,
+            isLocalDemo: isLocalDemo
         )
-        let d = UserDefaults.standard
-        d.set(s.userId, forKey: Key.userId)
-        d.set(s.loginAt, forKey: Key.loginAt)
-        d.set(s.username, forKey: Key.username)
-        d.set(s.vpnSubscription, forKey: Key.vpnSub)
-        d.set(s.vpnExpiresAt, forKey: Key.vpnExpires)
-        session = s
+        persist(s)
+    }
+
+    static func signInLocalDemo() {
+        let s = AuthSession(
+            userId: LocalDemoAccount.userId,
+            loginAt: LocalDemoAccount.loginAt,
+            username: LocalDemoAccount.username,
+            vpnSubscription: LocalDemoAccount.vpnSubscription,
+            vpnExpiresAt: LocalDemoAccount.vpnExpiresAt,
+            isLocalDemo: true
+        )
+        persist(s)
+        AppLog.shared.append("[auth] signed in as local demo")
     }
 
     static func clearLocal() {
         let d = UserDefaults.standard
-        [Key.userId, Key.loginAt, Key.username, Key.vpnSub, Key.vpnExpires].forEach { d.removeObject(forKey: $0) }
+        [Key.userId, Key.loginAt, Key.username, Key.vpnSub, Key.vpnExpires, Key.isLocalDemo]
+            .forEach { d.removeObject(forKey: $0) }
         session = nil
         AppLog.shared.append("[auth] signed out")
     }
@@ -50,6 +70,7 @@ enum AuthSessionStore {
     @discardableResult
     static func refreshSession() async -> Bool {
         guard let current = session else { return false }
+        if current.isLocalDemo { return true }
         do {
             save(try await AuthApi.checkSession(userId: current.userId, loginAt: current.loginAt))
             return true
@@ -100,9 +121,13 @@ enum AuthSessionStore {
     }
 
     /// Clears local session only after successful logout (2xx) or 404 (already gone / user missing).
-    /// Network / other errors keep the session and rethrow.
+    /// Network / other errors keep the session and rethrow. Local demo skips the API.
     static func signOut() async throws {
         guard let current = session else {
+            clearLocal()
+            return
+        }
+        if current.isLocalDemo {
             clearLocal()
             return
         }
@@ -118,6 +143,17 @@ enum AuthSessionStore {
         }
     }
 
+    private static func persist(_ s: AuthSession) {
+        let d = UserDefaults.standard
+        d.set(s.userId, forKey: Key.userId)
+        d.set(s.loginAt, forKey: Key.loginAt)
+        d.set(s.username, forKey: Key.username)
+        d.set(s.vpnSubscription, forKey: Key.vpnSub)
+        d.set(s.vpnExpiresAt, forKey: Key.vpnExpires)
+        d.set(s.isLocalDemo, forKey: Key.isLocalDemo)
+        session = s
+    }
+
     private static func load() -> AuthSession? {
         let d = UserDefaults.standard
         guard let userId = d.string(forKey: Key.userId)?.nilIfBlank,
@@ -128,7 +164,8 @@ enum AuthSessionStore {
             loginAt: loginAt,
             username: d.string(forKey: Key.username)?.nilIfBlank ?? userId,
             vpnSubscription: d.string(forKey: Key.vpnSub)?.nilIfBlank,
-            vpnExpiresAt: d.string(forKey: Key.vpnExpires)?.nilIfBlank
+            vpnExpiresAt: d.string(forKey: Key.vpnExpires)?.nilIfBlank,
+            isLocalDemo: d.bool(forKey: Key.isLocalDemo)
         )
     }
 }

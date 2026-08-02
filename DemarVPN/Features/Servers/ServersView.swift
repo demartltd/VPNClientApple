@@ -135,8 +135,16 @@ struct ServersView: View {
                                 selected: appState.selectedServer?.id == server.id
                             ) {
                                 Task {
+                                    let wouldReconnect =
+                                        appState.vpnState.isConnected
+                                        || appState.vpnState.isBusy
+                                        || appState.vpnState.hasError
                                     await appState.switchServer(to: server)
-                                    snackBar.showSuccess("Сервер выбран")
+                                    if !server.canConnect, wouldReconnect {
+                                        snackBar.showWarning("Подключение недоступно для Review аккаунта")
+                                    } else {
+                                        snackBar.showSuccess("Сервер выбран")
+                                    }
                                 }
                             }
                         }

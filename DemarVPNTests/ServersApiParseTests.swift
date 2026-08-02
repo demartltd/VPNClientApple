@@ -77,6 +77,46 @@ final class ServersApiParseTests: XCTestCase {
         XCTAssertEqual(profile.city, "Amsterdam")
     }
 
+    func testParseHysteria2WithoutPassword() throws {
+        let config: [String: Any] = [
+            "outbounds": [
+                [
+                    "type": "hysteria2",
+                    "server": "de.example.com",
+                    "server_port": 443,
+                    "tls": ["server_name": "de.example.com"],
+                ] as [String: Any],
+            ],
+        ]
+        let configJSON = String(data: try JSONSerialization.data(withJSONObject: config), encoding: .utf8)!
+        let item: [String: Any] = [
+            "id": "srv-demo",
+            "name": "DE-FREE-1",
+            "city": "Berlin",
+            "protocol": "hysteria2",
+            "clientConfigJson": configJSON,
+        ]
+        let profile = try XCTUnwrap(ServersApi.parseServerItem(item))
+        XCTAssertEqual(profile.profile.password, "")
+        XCTAssertFalse(profile.canConnect)
+        XCTAssertEqual(profile.tier, .free)
+    }
+
+    func testParsePreviewServerWithoutConfig() throws {
+        let item: [String: Any] = [
+            "id": "6a3eeae01afeb82f6b1cddb7",
+            "name": "DE-FREE-93",
+            "status": "free",
+            "protocol": "hysteria2",
+            "city": "Frankfurt am Main",
+        ]
+        let profile = try XCTUnwrap(ServersApi.parseServerItem(item))
+        XCTAssertEqual(profile.id, "6a3eeae01afeb82f6b1cddb7")
+        XCTAssertEqual(profile.displayName, "DE-FREE-93")
+        XCTAssertEqual(profile.city, "Frankfurt am Main")
+        XCTAssertFalse(profile.canConnect)
+    }
+
     func testTesterTierVisible() {
         let tester = ServerProfile(
             hysteria2: Hysteria2Profile(

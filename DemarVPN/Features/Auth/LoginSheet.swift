@@ -242,6 +242,11 @@ struct LoginSheet: View {
             error = "Неправильный email"
             return
         }
+        if trimmed == LocalDemoAccount.email {
+            AuthSessionStore.signInLocalDemo()
+            onSignedIn()
+            return
+        }
         await runAuth {
             let p = purpose ?? (registering ? "register" : "login")
             do {

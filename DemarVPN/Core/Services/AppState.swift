@@ -131,10 +131,15 @@ final class AppState {
             applyServerList(result.servers)
             AppLog.shared.append("[servers] loaded \(result.servers.count) (sub=\(result.vpnSubscription ?? "—"))")
         } catch let e as DemarAPIError where e.statusCode == 401 {
-            AuthSessionStore.clearLocal()
-            authSession = nil
-            clearServers()
-            AppLog.shared.append("[servers] session revoked")
+            if session.isLocalDemo {
+                serversError = e.message.nilIfBlank ?? "Не удалось загрузить серверы"
+                AppLog.shared.append("[servers] demo fetch unauthorized — keeping session")
+            } else {
+                AuthSessionStore.clearLocal()
+                authSession = nil
+                clearServers()
+                AppLog.shared.append("[servers] session revoked")
+            }
         } catch {
             serversError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             AppLog.shared.append("[servers] fetch failed — \(serversError ?? "")")
@@ -194,7 +199,7 @@ final class AppState {
         #endif
         let shouldReconnect = vpnState.isConnected || vpnState.isBusy || vpnState.hasError || neActive
         selectServer(server)
-        guard shouldReconnect else { return }
+        guard shouldReconnect, server.canConnect else { return }
 
         let generation = beginVpnOperation()
         statusMonitor?.endConnectAttempt()
@@ -228,7 +233,7 @@ final class AppState {
     }
 
     private func connect(force: Bool, operationGeneration: UInt64) async {
-        guard let server = selectedServer else { return }
+        guard let server = selectedServer, server.canConnect else { return }
         #if os(iOS) || os(macOS)
         let systemStatus = await withCheckedContinuation { (continuation: CheckedContinuation<NEVPNStatus, Never>) in
             VpnTunnelController.shared.currentStatus { status in

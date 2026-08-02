@@ -35,6 +35,7 @@ struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
     let profile: Hysteria2Profile
 
     var connectPlan: SingBoxConnectPlan { .hysteria2(profile) }
+    var canConnect: Bool { profile.canConnect }
 
     var serverProtocol: ServerProtocol { .hysteria2 }
 

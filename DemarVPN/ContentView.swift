@@ -140,7 +140,7 @@ struct ContentView: View {
         Group {
             switch section {
             case .home:
-                HomeView(appState: appState, isActive: active) {
+                HomeView(appState: appState, isActive: active, snackBar: snackBar) {
                     openLogin(returnTo: .servers)
                 }
             case .servers:

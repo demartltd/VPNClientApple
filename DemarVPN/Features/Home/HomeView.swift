@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @Bindable var appState: AppState
     let isActive: Bool
+    var snackBar: SnackBarController
     var onNeedSignIn: (() -> Void)?
 
     var body: some View {
@@ -69,6 +70,10 @@ struct HomeView: View {
             if !appState.isSignedIn {
                 onNeedSignIn?()
             }
+            return
+        }
+        guard appState.selectedServer?.canConnect == true else {
+            snackBar.showWarning("Подключение недоступно для Review аккаунта")
             return
         }
         await appState.toggleVpn()

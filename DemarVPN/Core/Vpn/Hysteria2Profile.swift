@@ -10,6 +10,8 @@ struct Hysteria2Profile: Equatable, Hashable, Sendable {
     let alpn: [String]
     let obfsPassword: String?
 
+    var canConnect: Bool { !password.isEmpty }
+
     init(
         displayName: String,
         city: String? = nil,

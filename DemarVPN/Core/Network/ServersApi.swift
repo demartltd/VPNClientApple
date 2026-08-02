@@ -35,17 +35,32 @@ enum ServersApi {
     /// Pure helper for unit tests — no network.
     static func parseServerItem(_ item: [String: Any]) -> ServerProfile? {
         guard let id = (item["id"] as? String)?.nilIfBlank,
-              let name = (item["name"] as? String)?.nilIfBlank,
-              let configRaw = (item["clientConfigJson"] as? String)?.nilIfBlank,
-              let configData = configRaw.data(using: .utf8),
-              let config = try? JSONSerialization.jsonObject(with: configData) as? [String: Any]
+              let name = (item["name"] as? String)?.nilIfBlank
         else { return nil }
         let city = (item["city"] as? String)?.nilIfBlank
         let protocolName = ((item["protocol"] as? String) ?? "").lowercased()
-        switch protocolName {
-        case "hysteria2": return parseHysteria2(id: id, name: name, city: city, config: config)
-        default: return nil
+        guard protocolName == "hysteria2" || protocolName.isEmpty else { return nil }
+
+        if let configRaw = (item["clientConfigJson"] as? String)?.nilIfBlank,
+           let configData = configRaw.data(using: .utf8),
+           let config = try? JSONSerialization.jsonObject(with: configData) as? [String: Any],
+           let profile = parseHysteria2(id: id, name: name, city: city, config: config)
+        {
+            return profile
         }
+
+        // Preview / guest list: metadata only, no credentials — show in UI, block connect.
+        return ServerProfile(
+            hysteria2: Hysteria2Profile(
+                displayName: name,
+                city: city,
+                server: "preview",
+                port: 443,
+                password: "",
+                tlsServerName: "preview"
+            ),
+            id: id
+        )
     }
 
     private static func parseHysteria2(
@@ -57,9 +72,8 @@ enum ServersApi {
         guard let outbounds = config["outbounds"] as? [[String: Any]],
               let hy2 = outbounds.first(where: { ($0["type"] as? String) == "hysteria2" })
         else { return nil }
-        guard let server = (hy2["server"] as? String)?.nilIfBlank,
-              let password = (hy2["password"] as? String)?.nilIfBlank
-        else { return nil }
+        guard let server = (hy2["server"] as? String)?.nilIfBlank else { return nil }
+        let password = (hy2["password"] as? String) ?? ""
         let port: Int = {
             if let i = hy2["server_port"] as? Int { return i }
             if let n = hy2["server_port"] as? NSNumber { return n.intValue }
