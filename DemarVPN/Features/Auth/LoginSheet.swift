@@ -88,16 +88,16 @@ struct LoginSheet: View {
         #endif
         .background(Color.demarSurface)
         .disabled(busy)
-        .alert("Аккаунт не найден", isPresented: $showRegisterDialog) {
-            Button("Создать аккаунт") {
+        .alert(String(localized: "Account not found"), isPresented: $showRegisterDialog) {
+            Button(String(localized: "Create account")) {
                 registering = true
                 Task { await sendOtp(purpose: "register") }
             }
-            Button("Исправить почту", role: .cancel) {
+            Button(String(localized: "Fix email"), role: .cancel) {
                 registering = false
             }
         } message: {
-            Text("Создать новый аккаунт для \(email.trimmingCharacters(in: .whitespacesAndNewlines))?")
+            Text("Create a new account for \(email.trimmingCharacters(in: .whitespacesAndNewlines))?")
         }
         #if os(iOS)
         .presentationDetents([.height(sheetHeight)])
@@ -107,9 +107,9 @@ struct LoginSheet: View {
 
     private var title: String {
         switch step {
-        case .email: "Вход/Регистрация"
-        case .verify: "Отправлено на"
-        case .totp: "Код из аутентификатора"
+        case .email: String(localized: "Sign in / Register")
+        case .verify: String(localized: "Sent to")
+        case .totp: String(localized: "Authenticator code")
         }
     }
 
@@ -144,7 +144,7 @@ struct LoginSheet: View {
             } label: {
                 Group {
                     if busy { ProgressView() }
-                    else { Text("Продолжить").font(.demarTitleMediumBold) }
+                    else { Text("Continue").font(.demarTitleMediumBold) }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
@@ -182,7 +182,7 @@ struct LoginSheet: View {
             }
             if busy { ProgressView() }
             if step == .verify {
-                Button("Отправить код снова") {
+                Button("Resend code") {
                     Task { await sendOtp() }
                 }
                 .font(.demarBodyMedium)
@@ -239,7 +239,7 @@ struct LoginSheet: View {
     private func sendOtp(purpose: String? = nil) async {
         let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard trimmed.contains("@"), trimmed.contains(".") else {
-            error = "Неправильный email"
+            error = String(localized: "Invalid email")
             return
         }
         if trimmed == LocalDemoAccount.email {
@@ -274,7 +274,7 @@ struct LoginSheet: View {
                 }
             case .totp:
                 guard let token = challengeToken else {
-                    throw DemarAPIError(message: "Неверный код", statusCode: 0, retryAfterSeconds: nil, hint: nil)
+                    throw DemarAPIError(message: String(localized: "Invalid code"), statusCode: 0, retryAfterSeconds: nil, hint: nil)
                 }
                 try await AuthSessionStore.verifyTotp(challengeToken: token, code: code)
                 onSignedIn()
@@ -293,7 +293,7 @@ struct LoginSheet: View {
                     await handleCallback(url)
                 case .failure(let err):
                     if (err as NSError).code != ASWebAuthenticationSessionError.canceledLogin.rawValue {
-                        error = "Не удалось войти. Попробуйте ещё раз"
+                        error = String(localized: "Couldn’t sign in. Try again")
                     }
                 }
             }
@@ -310,7 +310,7 @@ struct LoginSheet: View {
             } else if let code = items.first(where: { $0.name == "code" })?.value?.nilIfBlank {
                 try await AuthSessionStore.completeExchange(code)
             } else {
-                throw DemarAPIError(message: "Не удалось войти. Попробуйте ещё раз", statusCode: 0, retryAfterSeconds: nil, hint: nil)
+                throw DemarAPIError(message: String(localized: "Couldn’t sign in. Try again"), statusCode: 0, retryAfterSeconds: nil, hint: nil)
             }
             onSignedIn()
         }
@@ -324,10 +324,10 @@ struct LoginSheet: View {
         do {
             try await block()
         } catch let e as DemarAPIError {
-            error = e.message.nilIfBlank ?? "Не удалось войти. Попробуйте ещё раз"
+            error = e.message.nilIfBlank ?? String(localized: "Couldn’t sign in. Try again")
             otp = ""
         } catch {
-            self.error = "Не удалось войти. Попробуйте ещё раз"
+            self.error = String(localized: "Couldn’t sign in. Try again")
             otp = ""
         }
     }

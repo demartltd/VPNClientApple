@@ -9,10 +9,10 @@ enum DemarSection: CaseIterable, Hashable, Identifiable {
 
     var title: String {
         switch self {
-        case .home: "Подключение"
-        case .servers: "Сервера"
-        case .settings: "Настройки"
-        case .account: "Аккаунт"
+        case .home: String(localized: "Connect")
+        case .servers: String(localized: "Servers")
+        case .settings: String(localized: "Settings")
+        case .account: String(localized: "Account")
         }
     }
 

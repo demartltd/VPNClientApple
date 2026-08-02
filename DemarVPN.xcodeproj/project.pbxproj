@@ -112,6 +112,10 @@
 		T40000061CF9000F007C117E /* VpnStabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000051CF9000F007C117E /* VpnStabilityTests.swift */; };
 		T40000071CF9000F007C117E /* LegalDocumentsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000061CF9000F007C117E /* LegalDocumentsTests.swift */; };
 		T40000081CF9000F007C117E /* ServersApiParseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000071CF9000F007C117E /* ServersApiParseTests.swift */; };
+		B100000100000000000000L1 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000L1 /* Localizable.strings */; };
+		B100000100000000000000L2 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000L2 /* InfoPlist.xcstrings */; };
+		B100000100000000000000L3 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000L3 /* AppLanguage.swift */; };
+		E300001B1CF9000F007C117D /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000L1 /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -238,6 +242,14 @@
 		F40000051CF9000F007C117E /* VpnStabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnStabilityTests.swift; sourceTree = "<group>"; };
 		F40000061CF9000F007C117E /* LegalDocumentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentsTests.swift; sourceTree = "<group>"; };
 		F40000071CF9000F007C117E /* ServersApiParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersApiParseTests.swift; sourceTree = "<group>"; };
+		F100000100000000000000L1 /* Localizable.strings */ = {isa = PBXVariantGroup; children = (
+			F10000010000000000000L1E /* en */,
+			F10000010000000000000L1R /* ru */,
+		); name = Localizable.strings; sourceTree = "<group>"; };
+		F10000010000000000000L1E /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F10000010000000000000L1R /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F100000100000000000000L2 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
+		F100000100000000000000L3 /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -379,6 +391,7 @@
 			isa = PBXGroup;
 			children = (
 				F10000010000000000000008 /* AppLog.swift */,
+				F100000100000000000000L3 /* AppLanguage.swift */,
 				F1000001000000000000000A /* AppState.swift */,
 				F10000010000000000000053 /* AuthSessionStore.swift */,
 				F10000010000000000000029 /* VpnControlling.swift */,
@@ -443,6 +456,8 @@
 		G1000001000000000000000F /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				F100000100000000000000L1 /* Localizable.strings */,
+				F100000100000000000000L2 /* InfoPlist.xcstrings */,
 				G10000010000000000000010 /* Fonts */,
 			);
 			path = Resources;
@@ -682,7 +697,7 @@
 			};
 			buildConfigurationList = X10000010000000000000001 /* Build configuration list for PBXProject "DemarVPN" */;
 			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = ru;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
@@ -716,6 +731,8 @@
 				B10000010000000000000040 /* bundled_version.txt in Resources */,
 				B10000010000000000000041 /* geoip.db in Resources */,
 				B10000010000000000000042 /* geosite.db in Resources */,
+				B100000100000000000000L1 /* Localizable.strings in Resources */,
+				B100000100000000000000L2 /* InfoPlist.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -734,6 +751,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E300001B1CF9000F007C117D /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -774,6 +792,7 @@
 				B10000010000000000000007 /* TestServers.swift in Sources */,
 				B10000010000000000000008 /* AppLog.swift in Sources */,
 				B1000001000000000000000A /* AppState.swift in Sources */,
+				B100000100000000000000L3 /* AppLanguage.swift in Sources */,
 				B1000001000000000000000B /* ThroughputFormatter.swift in Sources */,
 				B1000001000000000000001B /* PlatformServices.swift in Sources */,
 				B10000010000000000000031 /* MacVpnDiag.swift in Sources */,

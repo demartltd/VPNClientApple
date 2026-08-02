@@ -132,7 +132,7 @@ final class AppState {
             AppLog.shared.append("[servers] loaded \(result.servers.count) (sub=\(result.vpnSubscription ?? "—"))")
         } catch let e as DemarAPIError where e.statusCode == 401 {
             if session.isLocalDemo {
-                serversError = e.message.nilIfBlank ?? "Не удалось загрузить серверы"
+                serversError = e.message.nilIfBlank ?? String(localized: "Couldn’t load servers")
                 AppLog.shared.append("[servers] demo fetch unauthorized — keeping session")
             } else {
                 AuthSessionStore.clearLocal()

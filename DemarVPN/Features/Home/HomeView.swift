@@ -40,7 +40,7 @@ struct HomeView: View {
 
             Spacer().frame(height: 20)
 
-            Text(appState.selectedServer?.listTitle ?? "Не выбран")
+            Text(appState.selectedServer?.listTitle ?? String(localized: "Not selected"))
                 .font(.demarTitleMediumBold)
                 .foregroundStyle(Color.demarOnSurface)
                 .multilineTextAlignment(.center)
@@ -73,7 +73,7 @@ struct HomeView: View {
             return
         }
         guard appState.selectedServer?.canConnect == true else {
-            snackBar.showWarning("Подключение недоступно для Review аккаунта")
+            snackBar.showWarning(String(localized: "Connecting is unavailable for the Review account"))
             return
         }
         await appState.toggleVpn()

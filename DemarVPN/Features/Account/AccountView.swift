@@ -31,7 +31,7 @@ struct AccountView: View {
         }
         .background(Color.demarSurface)
         #if os(iOS)
-        .demarNavigationRoot(backHistoryLabel: "Аккаунт")
+        .demarNavigationRoot(backHistoryLabel: String(localized: "Account"))
         #endif
     }
 
@@ -40,10 +40,13 @@ struct AccountView: View {
             Image(systemName: appState.isSignedIn ? "person.crop.circle.fill" : "person.crop.circle")
                 .font(.system(size: 64))
                 .foregroundStyle(Color.demarPrimary)
-            Text(appState.authSession?.username ?? "Аккаунт")
+            Text(appState.authSession?.username ?? String(localized: "Account"))
                 .font(.demarHeadlineMedium)
                 .foregroundStyle(Color.demarOnSurface)
-            Text(appState.authSession.map { "ID: \($0.userId)" } ?? "Войдите, чтобы синхронизировать подписку и сервера")
+            Text(
+                appState.authSession.map { String(localized: "ID: \($0.userId)") }
+                    ?? String(localized: "Sign in to sync your subscription and servers")
+            )
                 .font(.demarBodyMedium)
                 .foregroundStyle(Color.demarOnSurfaceVariant)
                 .multilineTextAlignment(.center)
@@ -53,16 +56,16 @@ struct AccountView: View {
 
     private func signedIn(_ session: AuthSession) -> some View {
         VStack(spacing: 12) {
-            SectionCard(title: "Подписка", subtitle: nil) {
-                DemarKvRow(key: "План", value: session.vpnSubscription ?? "—")
+            SectionCard(title: String(localized: "Subscription"), subtitle: nil) {
+                DemarKvRow(key: String(localized: "Plan"), value: session.vpnSubscription ?? "—")
                 if let exp = formatExpiry(session.vpnExpiresAt) {
-                    DemarKvRow(key: "Срок", value: exp)
+                    DemarKvRow(key: String(localized: "Expires"), value: exp)
                 }
             }
             SettingsActionButton(
                 systemImage: "rectangle.portrait.and.arrow.right",
-                title: signingOut ? "Выход…" : "Выйти",
-                subtitle: "Завершить сеанс на этом устройстве",
+                title: signingOut ? String(localized: "Signing out…") : String(localized: "Sign out"),
+                subtitle: String(localized: "End session on this device"),
                 action: {
                     guard !signingOut else { return }
                     signingOut = true
@@ -70,9 +73,9 @@ struct AccountView: View {
                         defer { signingOut = false }
                         do {
                             try await appState.signOut()
-                            snackBar.showInfo("Вы вышли из аккаунта")
+                            snackBar.showInfo(String(localized: "You signed out"))
                         } catch {
-                            snackBar.showError("Не удалось выйти. Попробуйте ещё раз")
+                            snackBar.showError(String(localized: "Couldn’t sign out. Try again"))
                         }
                     }
                 }
@@ -85,8 +88,8 @@ struct AccountView: View {
     private var guestCTA: some View {
         SettingsActionButton(
             systemImage: "arrow.right.circle.fill",
-            title: "Войти",
-            subtitle: "Синхронизация подписки и серверов",
+            title: String(localized: "Sign in"),
+            subtitle: String(localized: "Sync subscription and servers"),
             action: { onNeedSignIn?() }
         )
     }
@@ -98,13 +101,13 @@ struct AccountView: View {
         let plain = ISO8601DateFormatter()
         plain.formatOptions = [.withInternetDateTime]
         guard let date = withFrac.date(from: raw) ?? plain.date(from: raw) else {
-            return "До \(raw)"
+            return String(localized: "Until \(raw)")
         }
         let f = DateFormatter()
-        f.locale = Locale(identifier: "ru_RU")
+        f.locale = .current
         f.dateStyle = .medium
         f.timeStyle = .none
         f.timeZone = TimeZone(secondsFromGMT: 0)
-        return "До \(f.string(from: date))"
+        return String(localized: "Until \(f.string(from: date))")
     }
 }

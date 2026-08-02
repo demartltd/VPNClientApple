@@ -11,8 +11,9 @@ enum MacVpnDiag {
     static let extensionPoint = "com.apple.networkextension.packet-tunnel"
 
     /// Shown only when pluginkit confirms the extension toggle is off.
-    static let enableExtensionMessage =
-        "Включите «Demar VPN» в System Settings → VPN (или в разделе Extensions/VPN, если он доступен в вашей версии macOS)."
+    static var enableExtensionMessage: String {
+        String(localized: "Enable “Demar VPN” in System Settings → VPN (or Extensions/VPN, if available on your macOS version).")
+    }
 
     enum PluginkitStatus: Equatable {
         case enabled(detail: String)
@@ -123,18 +124,17 @@ enum MacVpnDiag {
         return true
     }
 
-    static let extensionNotStartedMessage =
-        "Туннель DemarPacketTunnel не запустился. 1) Включите Demar VPN в System Settings → VPN (или Extensions/VPN). "
-        + "2) Удалите старый профиль «Demar VPN» в System Settings → VPN. "
-        + "3) Перезапустите приложение и подключитесь снова."
+    static var extensionNotStartedMessage: String {
+        String(localized: "DemarPacketTunnel did not start. 1) Enable Demar VPN in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar VPN” profile in System Settings → VPN. 3) Relaunch the app and connect again.")
+    }
 
     static func connectBlockReason() -> String? {
         if let gate = gatekeeperBlockReason() { return gate }
         if !codesignMatch() {
-            return "Подпись приложения и расширения не совпадают. \(codesignLine()). Переустановите приложение."
+            return String(localized: "App and extension signatures do not match. \(codesignLine()). Reinstall the app.")
         }
         if let installIssue = UserDefaults.standard.string(forKey: lastInstallBlockingIssueKey), !installIssue.isEmpty {
-            return "Расширение сети не зарегистрировалось (\(installIssue)). \(enableExtensionMessage) Затем удалите профиль «Demar VPN» в System Settings → VPN и подключитесь снова."
+            return String(localized: "Network extension did not register (\(installIssue)). \(enableExtensionMessage) Then remove the “Demar VPN” profile in System Settings → VPN and connect again.")
         }
         return nil
     }
@@ -154,7 +154,7 @@ enum MacVpnDiag {
     private static func gatekeeperBlockReason() -> String? {
         let url = Bundle.main.bundleURL
         if (try? url.resourceValues(forKeys: [.quarantinePropertiesKey]))?.quarantineProperties != nil {
-            return "macOS заблокировал приложение (quarantine). ПКМ по Demar VPN → Open, или установите подписанную нотаризованную сборку."
+            return String(localized: "macOS blocked the app (quarantine). Right-click Demar VPN → Open, or install a signed notarized build.")
         }
         var staticCode: SecStaticCode?
         guard SecStaticCodeCreateWithPath(url as CFURL, [], &staticCode) == errSecSuccess,
@@ -163,7 +163,7 @@ enum MacVpnDiag {
         guard SecStaticCodeCheckValidity(staticCode, SecCSFlags(rawValue: kSecCSStrictValidate), nil)
             != errSecSuccess
         else { return nil }
-        return "Подпись приложения не принята системой. Нужна нотаризованная сборка (Developer ID) или ПКМ → Open для dev-сборки."
+        return String(localized: "App signature was not accepted by the system. Use a notarized build (Developer ID) or right-click → Open for a dev build.")
     }
 
     private static func registerWithLaunchServices() -> String {

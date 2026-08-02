@@ -163,7 +163,7 @@ private struct DemarToast: View {
         .onTapGesture(perform: onCopy)
         .onChange(of: message) { _, _ in dragY = 0 }
         .accessibilityAddTraits(.isButton)
-        .accessibilityHint("Нажмите, чтобы скопировать. Смахните вниз, чтобы скрыть.")
+        .accessibilityHint(String(localized: "Tap to copy. Swipe down to dismiss."))
         .animation(nil, value: message)
     }
 }

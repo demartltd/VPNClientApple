@@ -15,14 +15,14 @@ struct ServiceMenuView: View {
         ScrollView {
             VStack(spacing: 12) {
                 SectionCard(
-                    title: "О приложении",
+                    title: String(localized: "About"),
                     leading: { icon("info.circle") }
                 ) {
                     VStack(alignment: .leading, spacing: 8) {
-                        DemarKvRow(key: "Имя", value: "Demar VPN")
-                        DemarKvRow(key: "Пакет", value: Bundle.main.bundleIdentifier ?? "—")
-                        DemarKvRow(key: "Версия", value: appState.appVersionDetailLabel)
-                        DemarKvRow(key: "Платформа", value: AppPlatform.label)
+                        DemarKvRow(key: String(localized: "Name"), value: "Demar VPN")
+                        DemarKvRow(key: String(localized: "Bundle"), value: Bundle.main.bundleIdentifier ?? "—")
+                        DemarKvRow(key: String(localized: "Version"), value: appState.appVersionDetailLabel)
+                        DemarKvRow(key: String(localized: "Platform"), value: AppPlatform.label)
                         DemarKvRow(
                             key: "Core",
                             value: appState.coreVersionToken.isEmpty ? "…" : appState.coreVersionToken
@@ -64,15 +64,15 @@ struct ServiceMenuView: View {
                 }
 
                 #if os(iOS) || os(macOS)
-                SectionCard(title: "Отладка", leading: { icon("wrench.and.screwdriver") }) {
+                SectionCard(title: String(localized: "Debug"), leading: { icon("wrench.and.screwdriver") }) {
                     VStack(spacing: 8) {
                         ServiceMenuOutlinedButton(
-                            title: "Перезапуск Sing-box",
+                            title: String(localized: "Restart Sing-box"),
                             busy: coreRestartBusy
                         ) {
                             Task { await restartSingBoxCore() }
                         }
-                        ServiceMenuOutlinedButton(title: "Краш приложения", destructive: true) {
+                        ServiceMenuOutlinedButton(title: String(localized: "Crash app"), destructive: true) {
                             fatalError("service menu crash")
                         }
                     }
@@ -83,10 +83,10 @@ struct ServiceMenuView: View {
             .padding(.vertical, 16)
         }
         #if os(iOS)
-        .demarDetailNavigationTitle("Служебное меню")
+        .demarDetailNavigationTitle(String(localized: "Service menu"))
         #else
         .background(Color.demarSurface)
-        .navigationTitle("Служебное меню")
+        .navigationTitle(String(localized: "Service menu"))
         #endif
         .task { await reloadDevice() }
         #if os(iOS)
@@ -115,7 +115,7 @@ struct ServiceMenuView: View {
         }
         switch result {
         case .success:
-            snackBar.showSuccess("Sing-box перезапущен")
+            snackBar.showSuccess(String(localized: "Sing-box restarted"))
             appState.syncVpnStatusFromSystem()
         case let .failure(error):
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -130,7 +130,7 @@ struct ServiceMenuView: View {
         defer { idfaBusy = false }
         let ok = await IDFATracking.requestPermission()
         await reloadDevice()
-        if ok { snackBar.showSuccess("IDFA разрешён") }
+        if ok { snackBar.showSuccess(String(localized: "IDFA allowed")) }
     }
     #endif
 }
@@ -162,13 +162,13 @@ private struct ServiceEgressDiagnosticsCard: View {
 
     var body: some View {
         SectionCard(
-            title: "Интернет",
+            title: String(localized: "Internet"),
             leading: { icon("cloud") },
             trailing: { headerActions }
         ) {
             VStack(alignment: .leading, spacing: 8) {
                 DemarKvRow(key: "IP", value: ipCell)
-                DemarKvRow(key: "Страна", value: countryCell)
+                DemarKvRow(key: String(localized: "Country"), value: countryCell)
                 if !userHosts.isEmpty {
                     ForEach(Array(userHosts.enumerated()), id: \.offset) { index, host in
                         DemarKvRow(
@@ -209,7 +209,7 @@ private struct ServiceEgressDiagnosticsCard: View {
                     .foregroundStyle(Color.demarPrimary)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Свои проверки")
+            .accessibilityLabel(String(localized: "Custom checks"))
             refreshButton
         }
     }
@@ -222,7 +222,7 @@ private struct ServiceEgressDiagnosticsCard: View {
         }
         .buttonStyle(.plain)
         .disabled(inFlight)
-        .accessibilityLabel("Обновить")
+        .accessibilityLabel(String(localized: "Refresh"))
     }
 
     private var ipCell: String {
@@ -355,7 +355,7 @@ private struct IDFAPermissionButton: View {
     let action: () -> Void
 
     var body: some View {
-        ServiceMenuOutlinedButton(title: "Включить IDFA", busy: busy, action: action)
+        ServiceMenuOutlinedButton(title: String(localized: "Enable IDFA"), busy: busy, action: action)
     }
 }
 #endif
@@ -373,7 +373,7 @@ private struct FlowChipRow: View {
     }
 
     private func chip(_ label: String, kind: DemarSnackKind) -> some View {
-        Button(label) { snackBar.show("Демо: \(label)", kind: kind) }
+        Button(label) { snackBar.show(String(localized: "Demo: \(label)"), kind: kind) }
             .font(.demarLabelLarge)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)

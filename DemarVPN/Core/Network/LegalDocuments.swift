@@ -8,15 +8,15 @@ enum LegalDocument: String, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .terms: "Условия использования"
-        case .privacy: "Конфиденциальность"
+        case .terms: String(localized: "Terms of use")
+        case .privacy: String(localized: "Privacy")
         }
     }
 
     var subtitle: String {
         switch self {
-        case .terms: "Правила использования сервиса"
-        case .privacy: "Как обрабатываются данные"
+        case .terms: String(localized: "Service usage rules")
+        case .privacy: String(localized: "How data is handled")
         }
     }
 
@@ -76,8 +76,8 @@ enum LegalDocumentError: Error, LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .badStatus: "Не удалось загрузить документ"
-        case .emptyOrInvalid: "Документ пуст или повреждён"
+        case .badStatus: String(localized: "Couldn’t load the document")
+        case .emptyOrInvalid: String(localized: "Document is empty or corrupted")
         }
     }
 }

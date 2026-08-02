@@ -35,7 +35,7 @@ struct VpnMainToggle: View {
             .disabled(onTap == nil)
 
             if state.isConnected {
-                Text("Подключено")
+                Text("Connected")
                     .font(.demarTitleMediumBold)
                     .foregroundStyle(Color.demarPrimary)
                     .padding(.top, 14)

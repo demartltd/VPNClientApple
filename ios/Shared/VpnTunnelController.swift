@@ -14,19 +14,19 @@ enum VpnTunnelError: LocalizedError {
   var errorDescription: String? {
     switch self {
     case .missingPayload:
-      return "Откройте приложение Demar VPN один раз для первичной инициализации."
+      return String(localized: "Open the Demar VPN app once for initial setup.")
     case .missingAssets:
-      return "Отсутствуют core assets. Выполните: python3 scripts/singbox-download-auto.py"
+      return String(localized: "Core assets are missing. Run: python3 scripts/singbox-download-auto.py")
     case .missingUplinkHost:
-      return "Не удалось определить uplinkHost для исключения маршрута VPN."
+      return String(localized: "Couldn’t resolve uplinkHost for the VPN route exclusion.")
     case .managerDisabled:
-      return "Профиль VPN отключён в системе. Включите Demar VPN в Системных настройках → VPN."
+      return String(localized: "VPN profile is disabled in the system. Enable Demar VPN in System Settings → VPN.")
     case .connectInProgress:
-      return "Подключение уже выполняется."
+      return String(localized: "A connection is already in progress.")
     case .noProviderSession:
-      return "Не удалось открыть VPN-сессию (NETunnelProviderSession). Переустановите профиль VPN в настройках системы."
+      return String(localized: "Couldn’t open a VPN session (NETunnelProviderSession). Reinstall the VPN profile in system settings.")
     case .appexBundleMismatch:
-      return "Встроенное расширение DemarPacketTunnel повреждено или отсутствует. Переустановите приложение."
+      return String(localized: "The embedded DemarPacketTunnel extension is damaged or missing. Reinstall the app.")
     }
   }
 }
@@ -535,7 +535,7 @@ final class VpnTunnelController {
   private func sendProviderCommand(_ command: String, completion: @escaping (Result<Void, Error>) -> Void) {
     guard let payload = command.data(using: .utf8) else {
       completion(.failure(NSError(domain: "DemarVpn", code: 39, userInfo: [
-        NSLocalizedDescriptionKey: "Некорректная команда.",
+        NSLocalizedDescriptionKey: String(localized: "Invalid command."),
       ])))
       return
     }
@@ -546,7 +546,7 @@ final class VpnTunnelController {
       case let .success((manager, status)):
         guard status == .connected || status == .reasserting else {
           completion(.failure(NSError(domain: "DemarVpn", code: 40, userInfo: [
-            NSLocalizedDescriptionKey: "VPN не подключён.",
+            NSLocalizedDescriptionKey: String(localized: "VPN is not connected."),
           ])))
           return
         }

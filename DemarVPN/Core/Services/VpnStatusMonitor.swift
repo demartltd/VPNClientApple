@@ -319,7 +319,7 @@ final class VpnStatusMonitor {
             let elapsed = Date().timeIntervalSince(since)
             if elapsed > Self.connectTimeout {
                 finishConnectAttempt(
-                    .error(message: "Таймаут подключения VPN. Откройте журнал ([mac]/[core]) или удалите профиль в Системных настройках → VPN."),
+                    .error(message: String(localized: "VPN connection timed out. Open the journal ([mac]/[core]) or remove the profile in System Settings → VPN.")),
                     logReason: "connect-timeout"
                 )
                 return
@@ -616,39 +616,39 @@ final class VpnStatusMonitor {
             .map { diagLineMessage($0) }
             .joined(separator: " | ")
         if !tail.isEmpty {
-            return "Туннель не подключился (heartbeat=\(hb)): \(tail)"
+            return String(localized: "Tunnel did not connect (heartbeat=\(hb)): \(tail)")
         }
-        return "Туннель не запустился (heartbeat=\(hb)). Проверьте Network Extensions/VPN в System Settings и откройте журнал ([mac]/[core])."
+        return String(localized: "Tunnel did not start (heartbeat=\(hb)). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core]).")
         #else
-        return "Не удалось подключить VPN. Откройте журнал или перезапустите приложение."
+        return String(localized: "Couldn’t connect VPN. Open the journal or relaunch the app.")
         #endif
     }
     private static func messageForStopLabel(_ label: String) -> String {
         switch label {
         case "configurationDisabled":
-            return "VPN-профиль отключен системой (configurationDisabled). Проверьте iOS Settings > VPN и включите Demar VPN снова."
+            return String(localized: "VPN profile disabled by the system (configurationDisabled). Check iOS Settings > VPN and enable Demar VPN again.")
         case "configurationFailed":
-            return "Ошибка конфигурации VPN. Проверьте профиль и разрешение в Системных настройках → VPN."
+            return String(localized: "VPN configuration error. Check the profile and permission in System Settings → VPN.")
         case "providerFailed":
             #if os(iOS)
-            return "Туннель остановлен (core). Откройте журнал — строки [ios] и [core]."
+            return String(localized: "Tunnel stopped (core). Open the journal — [ios] and [core] lines.")
             #else
-            return "Туннель остановлен (core). Откройте журнал — строки [mac] и [core]."
+            return String(localized: "Tunnel stopped (core). Open the journal — [mac] and [core] lines.")
             #endif
         case "connectionFailed":
-            return "Не удалось установить VPN-соединение. Проверьте сеть и доступность сервера."
+            return String(localized: "Couldn’t establish a VPN connection. Check the network and server availability.")
         case "unrecoverableNetworkChange":
-            return "VPN отключился из‑за смены сети (Wi‑Fi/LTE). Подключитесь снова."
+            return String(localized: "VPN disconnected due to a network change (Wi‑Fi/LTE). Connect again.")
         case "noNetworkAvailable":
-            return "VPN отключился: нет сети. Подключитесь снова, когда появится интернет."
+            return String(localized: "VPN disconnected: no network. Connect again when internet is available.")
         case "internalError":
-            return "VPN остановлен системой (internalError). Откройте журнал."
+            return String(localized: "VPN stopped by the system (internalError). Open the journal.")
         case "idleTimeout":
-            return "VPN отключился по таймауту бездействия (idleTimeout)."
+            return String(localized: "VPN disconnected due to idle timeout (idleTimeout).")
         case "sleep":
-            return "VPN отключился при переходе устройства в сон. Проверьте профиль VPN (disconnectOnSleep)."
+            return String(localized: "VPN disconnected when the device slept. Check the VPN profile (disconnectOnSleep).")
         default:
-            return "VPN tunnel error (\(label))."
+            return String(localized: "VPN tunnel error (\(label)).")
         }
     }
     private func importCoreTailIfNeeded() {

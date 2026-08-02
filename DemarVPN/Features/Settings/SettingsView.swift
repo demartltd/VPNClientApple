@@ -62,7 +62,7 @@ struct SettingsView: View {
             }
         )
         #if os(iOS)
-        .demarNavigationRoot(backHistoryLabel: "Настройки")
+        .demarNavigationRoot(backHistoryLabel: String(localized: "Settings"))
         #endif
     }
 
@@ -70,8 +70,7 @@ struct SettingsView: View {
         switch item {
         case .appSettings: showAppSettings = true
         case .documents: showDocumentsMenu = true
-        case .invite: snackBar.showInfo("Demar VPN — клиент Hysteria2 / Sing-box.")
-        case .feedback: snackBar.showInfo("Скоро")
+        case .invite, .feedback: snackBar.showInfo(String(localized: "Coming soon"))
         }
     }
 
@@ -83,7 +82,7 @@ struct SettingsView: View {
             Text("Demar VPN")
                 .font(.demarHeadlineMedium)
                 .foregroundStyle(Color.demarOnSurface)
-            Text("Настройки подключения и приложения")
+            Text("Connection and app settings")
                 .font(.demarBodyMedium)
                 .foregroundStyle(Color.demarOnSurfaceVariant)
                 .multilineTextAlignment(.center)
@@ -138,19 +137,19 @@ private enum SettingsMenuItem: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .appSettings: "Настройки приложения"
-        case .feedback: "Обратная связь"
-        case .invite: "Пригласите друзей по ссылке"
-        case .documents: "Документы"
+        case .appSettings: String(localized: "App settings")
+        case .feedback: String(localized: "Feedback")
+        case .invite: String(localized: "Invite friends")
+        case .documents: String(localized: "Documents")
         }
     }
 
     var subtitle: String {
         switch self {
-        case .appSettings: "Подключение, журнал диагностики и статус функций"
-        case .feedback: "Отправить ошибку или предложение"
-        case .invite: "Получите бесплатный премиум"
-        case .documents: "Условия использования и конфиденциальность"
+        case .appSettings: String(localized: "Connection, diagnostics journal, and feature status")
+        case .feedback: String(localized: "Send a bug report or suggestion")
+        case .invite: String(localized: "Get free premium")
+        case .documents: String(localized: "Terms of use and privacy")
         }
     }
 

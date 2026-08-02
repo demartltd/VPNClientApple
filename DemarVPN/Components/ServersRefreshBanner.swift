@@ -6,7 +6,7 @@ struct ServersRefreshBanner: View {
         HStack(spacing: 10) {
             ProgressView()
                 .controlSize(.small)
-            Text("Обновление")
+            Text(String(localized: "Updating"))
                 .font(.demarLabelLarge)
                 .foregroundStyle(Color.demarOnSurface)
         }
@@ -20,6 +20,6 @@ struct ServersRefreshBanner: View {
             Capsule(style: .continuous)
                 .stroke(Color.demarOutline.opacity(0.2), lineWidth: 1)
         )
-        .accessibilityLabel("Обновление серверов")
+        .accessibilityLabel(String(localized: "Updating servers"))
     }
 }

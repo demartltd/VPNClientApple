@@ -86,8 +86,8 @@ extension View {
     func demarConfirmAlert(
         _ title: String,
         isPresented: Binding<Bool>,
-        confirm: String = "Да",
-        cancel: String = "Нет",
+        confirm: String = String(localized: "Yes"),
+        cancel: String = String(localized: "No"),
         onConfirm: @escaping () -> Void
     ) -> some View {
         alert(title, isPresented: isPresented) {
@@ -98,7 +98,7 @@ extension View {
 
     func renameAlert(host: Binding<String?>, draft: Binding<String>, onSave: @escaping () -> Void) -> some View {
         alert(
-            "Переименовать",
+            String(localized: "Rename"),
             isPresented: Binding(
                 get: { host.wrappedValue != nil },
                 set: {
@@ -109,12 +109,12 @@ extension View {
             )
         ) {
             TextField("", text: draft)
-            Button("Готово") {
+            Button(String(localized: "Done")) {
                 guard PublicEgressDiagnostics.normalizeProbeHost(draft.wrappedValue) != nil else { return }
                 onSave()
                 host.wrappedValue = nil
             }
-            Button("Отмена", role: .cancel) {
+            Button(String(localized: "Cancel"), role: .cancel) {
                 host.wrappedValue = nil
                 draft.wrappedValue = ""
             }
@@ -142,12 +142,12 @@ struct CustomEgressProbesPanel: View {
                 Group {
                     if hosts.isEmpty {
                         ContentUnavailableView(
-                            "Список пуст",
+                            String(localized: "List is empty"),
                             systemImage: "list.bullet.rectangle",
-                            description: Text("Сайт или IP")
+                            description: Text("Host or IP")
                         )
                         #if os(iOS)
-                        .demarDetailNavigationTitle("Свои проверки")
+                        .demarDetailNavigationTitle(String(localized: "Custom checks"))
                         #endif
                     } else {
                         ScrollView {
@@ -157,7 +157,7 @@ struct CustomEgressProbesPanel: View {
                             .padding(16)
                         }
                         #if os(iOS)
-                        .demarDetailNavigationTitle("Свои проверки")
+                        .demarDetailNavigationTitle(String(localized: "Custom checks"))
                         #endif
                     }
                 }
@@ -165,7 +165,7 @@ struct CustomEgressProbesPanel: View {
                 .background(Color.demarSurface)
 
                 HStack(spacing: 8) {
-                    TextField("Сайт или IP", text: $draft)
+                    TextField(String(localized: "Host or IP"), text: $draft)
                         .textFieldStyle(.plain)
                         .font(.demarBodyMedium)
                         #if os(iOS)
@@ -188,7 +188,7 @@ struct CustomEgressProbesPanel: View {
             }
             .background(Color.demarSurface.ignoresSafeArea())
             #if os(macOS)
-            .navigationTitle("Свои проверки")
+            .navigationTitle(String(localized: "Custom checks"))
             .focusable()
             .focusEffectDisabled()
             .onKeyPress(.escape) {
@@ -204,7 +204,7 @@ struct CustomEgressProbesPanel: View {
             _ = CustomEgressProbeStore.update(old, raw: renameDraft)
             reload()
         }
-        .demarConfirmAlert("Удалить выбранные (\(picked.count))?", isPresented: $confirmDelete) {
+        .demarConfirmAlert(String(localized: "Delete selected (\(picked.count))?"), isPresented: $confirmDelete) {
             CustomEgressProbeStore.remove(picked)
             picked = []
             reload()
@@ -231,7 +231,7 @@ struct CustomEgressProbesPanel: View {
                     renameHost = host
                     renameDraft = host
                 } label: {
-                    Label("Переименовать", systemImage: "pencil")
+                    Label(String(localized: "Rename"), systemImage: "pencil")
                 }
             }
     }
@@ -262,7 +262,7 @@ struct CustomEgressProbesPanel: View {
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
-        .accessibilityLabel("Удалить выбранные")
+        .accessibilityLabel(String(localized: "Delete selected"))
     }
 
     private func reload() { hosts = CustomEgressProbeStore.hosts }

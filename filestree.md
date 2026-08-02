@@ -34,6 +34,7 @@ DemarVPN/                              # SwiftUI target
 │   ├── Services/
 │   │   ├── AppState.swift             # UI state, auth, servers, toggle VPN
 │   │   ├── AuthSessionStore.swift     # UserDefaults session + auth orchestration
+│   │   ├── AppLanguage.swift          # open system per-app language settings
 │   │   ├── VpnControlling.swift       # connect/disconnect API
 │   │   ├── NativeVpnService.swift     # → VpnTunnelController
 │   │   ├── VpnStatusMonitor.swift     # NEVPNStatus → UI
@@ -60,9 +61,13 @@ DemarVPN/                              # SwiftUI target
 │   ├── DynamicIslandBadge.swift       # marketing badge на DI (iOS only)
 │   └── DiagnosticsJournalTextView.swift # текстовый лог
 │
-├── Resources/Fonts/
-│   ├── fa-brands-400.ttf
-│   └── MaterialSymbolsOutlined.ttf    # резерв
+├── Resources/
+│   ├── en.lproj/Localizable.strings   # UI strings (en)
+│   ├── ru.lproj/Localizable.strings   # UI strings (ru)
+│   ├── InfoPlist.xcstrings            # privacy / NE usage ru/en
+│   └── Fonts/
+│       ├── fa-brands-400.ttf
+│       └── MaterialSymbolsOutlined.ttf  # резерв
 │
 └── Features/
     ├── Home/HomeView.swift            # toggle, скорость
@@ -71,7 +76,7 @@ DemarVPN/                              # SwiftUI target
     ├── Auth/LoginSheet.swift          # Email OTP + TOTP + Telegram OAuth
     └── Settings/
         ├── SettingsView.swift         # настройки, 3 тапа → service
-        ├── AppSettingsView.swift      # журнал
+        ├── AppSettingsView.swift      # Change language + журнал
         ├── ServiceMenuView.swift      # служебное меню
         ├── DocumentsMenuSheet.swift   # ToS/PP: iOS sheet, macOS overlay
         ├── LegalDocumentView.swift    # MarkdownUI viewer
@@ -112,7 +117,7 @@ ios/
 │   └── singbox/                       # geo db (gitignore bin)
 ├── DemarControls/                     # Control Center (iOS 18+)
 │   ├── DemarControlsBundle.swift
-│   ├── VpnToggleControl.swift         # CC toggle UI
+│   ├── VpnToggleControl.swift         # CC toggle UI (strings from app Localizable)
 │   ├── Info.plist
 │   └── DemarControls.entitlements
 ├── DemarPacketTunnel/

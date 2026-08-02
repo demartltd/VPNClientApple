@@ -23,7 +23,7 @@ struct DemarVPNApp: App {
                 }
         }
         #if os(macOS)
-        Window("Свои проверки", id: CustomEgressProbesWindow.id) {
+        Window(String(localized: "Custom checks"), id: CustomEgressProbesWindow.id) {
             CustomEgressProbesPanel()
                 .preferredColorScheme(.dark)
                 .customEgressProbesMacWindowFrame()

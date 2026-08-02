@@ -59,7 +59,7 @@ struct ServersView: View {
                         Image(systemName: "arrow.clockwise")
                     }
                 }
-                .help("Обновить серверы")
+                .help(String(localized: "Refresh servers"))
                 .disabled(!appState.isSignedIn || appState.isRefreshingServers || appState.serversLoading)
             }
         }
@@ -69,12 +69,12 @@ struct ServersView: View {
     private var guestState: some View {
         VStack(spacing: 16) {
             Spacer()
-            Text("Войдите, чтобы увидеть доступные серверы")
+            Text("Sign in to see available servers")
                 .font(.demarBodyMedium)
                 .foregroundStyle(Color.demarOnSurfaceVariant)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
-            Button("Войти") { onNeedSignIn?() }
+            Button("Sign in") { onNeedSignIn?() }
                 .buttonStyle(.borderedProminent)
                 .tint(Color.demarPrimary)
             Spacer()
@@ -109,11 +109,11 @@ struct ServersView: View {
                         ProgressView().padding(.top, 40)
                     } else if let err = appState.serversError, appState.servers.isEmpty {
                         VStack(spacing: 12) {
-                            Text(err.isEmpty ? "Не удалось загрузить серверы" : err)
+                            Text(err.isEmpty ? String(localized: "Couldn’t load servers") : err)
                                 .font(.demarBodyMedium)
                                 .foregroundStyle(Color.demarOnSurfaceVariant)
                                 .multilineTextAlignment(.center)
-                            Button("Повторить") {
+                            Button(String(localized: "Retry")) {
                                 Task { await appState.refreshServers() }
                             }
                             .buttonStyle(.borderedProminent)
@@ -122,7 +122,7 @@ struct ServersView: View {
                         .padding(.top, 40)
                         .padding(.horizontal, 24)
                     } else if filteredServers.isEmpty {
-                        Text("Нет доступных серверов для вашей подписки")
+                        Text("No servers available for your subscription")
                             .font(.demarBodyMedium)
                             .foregroundStyle(Color.demarOnSurfaceVariant)
                             .multilineTextAlignment(.center)
@@ -141,9 +141,9 @@ struct ServersView: View {
                                         || appState.vpnState.hasError
                                     await appState.switchServer(to: server)
                                     if !server.canConnect, wouldReconnect {
-                                        snackBar.showWarning("Подключение недоступно для Review аккаунта")
+                                        snackBar.showWarning(String(localized: "Connecting is unavailable for the Review account"))
                                     } else {
-                                        snackBar.showSuccess("Сервер выбран")
+                                        snackBar.showSuccess(String(localized: "Server selected"))
                                     }
                                 }
                             }
@@ -169,9 +169,9 @@ struct ServersView: View {
         AppLog.shared.append("[ui] servers toolbar refresh")
         let ok = await appState.pullRefreshServers()
         if ok {
-            snackBar.showSuccess("Серверы обновлены")
+            snackBar.showSuccess(String(localized: "Servers updated"))
         } else if appState.serversError != nil {
-            snackBar.showInfo(appState.serversError ?? "Не удалось обновить")
+            snackBar.showInfo(appState.serversError ?? String(localized: "Couldn’t refresh"))
         }
     }
     #endif
@@ -190,9 +190,9 @@ struct ServersView: View {
         AppLog.shared.append("[ui] servers pull-to-refresh")
         Task {
             let ok = await appState.pullRefreshServers()
-            if ok { snackBar.showSuccess("Серверы обновлены") }
+            if ok { snackBar.showSuccess(String(localized: "Servers updated")) }
             else if appState.serversError != nil {
-                snackBar.showInfo(appState.serversError ?? "Не удалось обновить")
+                snackBar.showInfo(appState.serversError ?? String(localized: "Couldn’t refresh"))
             }
         }
     }
