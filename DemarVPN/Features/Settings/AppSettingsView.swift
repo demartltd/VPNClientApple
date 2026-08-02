@@ -2,6 +2,10 @@ import SwiftUI
 
 struct AppSettingsView: View {
     @State private var logExpanded = false
+    @State private var language = AppLanguage.shared
+    #if os(macOS)
+    @State private var showLanguagePicker = false
+    #endif
 
     var body: some View {
         #if os(iOS)
@@ -21,16 +25,35 @@ struct AppSettingsView: View {
         .padding(.bottom, 16)
         .background(Color.demarSurface)
         .navigationTitle(String(localized: "App settings"))
+        .confirmationDialog(
+            String(localized: "Change language"),
+            isPresented: $showLanguagePicker,
+            titleVisibility: .visible
+        ) {
+            // Current language first — macOS focuses the first dialog action by default.
+            ForEach(languagePickerCodes, id: \.self) { code in
+                let name = AppLanguage.displayName(for: code)
+                Button(language.code == code ? "✓ \(name)" : name) {
+                    language.select(code)
+                }
+            }
+        }
         #endif
     }
+
+    #if os(macOS)
+    private var languagePickerCodes: [String] {
+        AppLanguage.supported.sorted { lhs, _ in lhs == language.code }
+    }
+    #endif
 
     private func settingsBody(maxLogPanelHeight: CGFloat) -> some View {
         VStack(spacing: 12) {
             SettingsActionButton(
                 systemImage: "globe",
                 title: String(localized: "Change language"),
-                subtitle: AppLanguage.currentDisplayName,
-                action: AppLanguage.openSystemLanguageSettings
+                subtitle: language.displayName,
+                action: changeLanguage
             )
 
             DiagnosticsLogCard(
@@ -41,6 +64,14 @@ struct AppSettingsView: View {
         .padding(.horizontal, 16)
         .padding(.top, 16)
         .padding(.bottom, 16)
+    }
+
+    private func changeLanguage() {
+        #if os(iOS)
+        AppLanguage.openSystemLanguageSettings()
+        #else
+        showLanguagePicker = true
+        #endif
     }
 
     /// Header, toolbar, card chrome, and nav bar — remainder goes to the log scroll area.
