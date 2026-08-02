@@ -7,6 +7,8 @@ struct Hysteria2Profile: Equatable, Hashable, Sendable {
     let port: Int
     let password: String
     let tlsServerName: String
+    let alpn: [String]
+    let obfsPassword: String?
 
     init(
         displayName: String,
@@ -14,7 +16,9 @@ struct Hysteria2Profile: Equatable, Hashable, Sendable {
         server: String,
         port: Int,
         password: String,
-        tlsServerName: String
+        tlsServerName: String,
+        alpn: [String] = ["h3"],
+        obfsPassword: String? = nil
     ) {
         self.displayName = displayName
         self.city = city
@@ -22,5 +26,7 @@ struct Hysteria2Profile: Equatable, Hashable, Sendable {
         self.port = port
         self.password = password
         self.tlsServerName = tlsServerName
+        self.alpn = alpn.isEmpty ? ["h3"] : alpn
+        self.obfsPassword = obfsPassword
     }
 }

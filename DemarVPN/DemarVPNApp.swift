@@ -18,6 +18,9 @@ struct DemarVPNApp: App {
                 #if os(iOS)
                 .demarDynamicIslandBadge()
                 #endif
+                .onOpenURL { url in
+                    Task { await appState.consumeAuthCallback(url) }
+                }
         }
         #if os(macOS)
         Window("Свои проверки", id: CustomEgressProbesWindow.id) {

@@ -35,6 +35,17 @@
 	</array>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>This identifier is used for analytics and app diagnostics.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.demar.vpn.auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>demar</string>
+			</array>
+		</dict>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

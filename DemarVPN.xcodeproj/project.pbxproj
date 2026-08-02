@@ -64,6 +64,11 @@
 		B10000010000000000000044 /* DocumentsMenuSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000044 /* DocumentsMenuSheet.swift */; };
 		B10000010000000000000045 /* LegalDocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000045 /* LegalDocumentView.swift */; };
 		B10000010000000000000046 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = P10000010000000000000046 /* MarkdownUI */; };
+		B10000010000000000000050 /* DemarHttp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000050 /* DemarHttp.swift */; };
+		B10000010000000000000051 /* AuthApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000051 /* AuthApi.swift */; };
+		B10000010000000000000052 /* ServersApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000052 /* ServersApi.swift */; };
+		B10000010000000000000053 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000053 /* AuthSessionStore.swift */; };
+		B10000010000000000000054 /* LoginSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000054 /* LoginSheet.swift */; };
 		B100000100000000000000DE /* ios/Shared/DefaultInterfaceReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift */; };
 		B100000100000000000000DF /* ios/Shared/DemarLogTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001DF1CF9000F007C117D /* ios/Shared/DemarLogTime.swift */; };
 		C30000001CF9000F007C117D /* DemarControls.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E30000011CF9000F007C117D /* DemarControls.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -106,6 +111,7 @@
 		T40000051CF9000F007C117E /* AppLogPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000041CF9000F007C117E /* AppLogPerformanceTests.swift */; };
 		T40000061CF9000F007C117E /* VpnStabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000051CF9000F007C117E /* VpnStabilityTests.swift */; };
 		T40000071CF9000F007C117E /* LegalDocumentsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000061CF9000F007C117E /* LegalDocumentsTests.swift */; };
+		T40000081CF9000F007C117E /* ServersApiParseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000071CF9000F007C117E /* ServersApiParseTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -220,12 +226,18 @@
 		F10000010000000000000043 /* LegalDocuments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocuments.swift; sourceTree = "<group>"; };
 		F10000010000000000000044 /* DocumentsMenuSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentsMenuSheet.swift; sourceTree = "<group>"; };
 		F10000010000000000000045 /* LegalDocumentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentView.swift; sourceTree = "<group>"; };
+		F10000010000000000000050 /* DemarHttp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarHttp.swift; sourceTree = "<group>"; };
+		F10000010000000000000051 /* AuthApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthApi.swift; sourceTree = "<group>"; };
+		F10000010000000000000052 /* ServersApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersApi.swift; sourceTree = "<group>"; };
+		F10000010000000000000053 /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
+		F10000010000000000000054 /* LoginSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginSheet.swift; sourceTree = "<group>"; };
 		F40000021CF9000F007C117D /* DemarVPNTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DemarVPNTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F40000021CF9000F007C117E /* SingBoxConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConfigTests.swift; sourceTree = "<group>"; };
 		F40000031CF9000F007C117E /* DefaultInterfaceReporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultInterfaceReporterTests.swift; sourceTree = "<group>"; };
 		F40000041CF9000F007C117E /* AppLogPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogPerformanceTests.swift; sourceTree = "<group>"; };
 		F40000051CF9000F007C117E /* VpnStabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnStabilityTests.swift; sourceTree = "<group>"; };
 		F40000061CF9000F007C117E /* LegalDocumentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentsTests.swift; sourceTree = "<group>"; };
+		F40000071CF9000F007C117E /* ServersApiParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersApiParseTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -339,6 +351,7 @@
 				G1000001000000000000000C /* Servers */,
 				G1000001000000000000000D /* Settings */,
 				G10000010000000000000014 /* Account */,
+				G10000010000000000000015 /* Auth */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -367,6 +380,7 @@
 			children = (
 				F10000010000000000000008 /* AppLog.swift */,
 				F1000001000000000000000A /* AppState.swift */,
+				F10000010000000000000053 /* AuthSessionStore.swift */,
 				F10000010000000000000029 /* VpnControlling.swift */,
 				F10000010000000000000034 /* NativeVpnService.swift */,
 				F1000001000000000000002B /* VpnStatusMonitor.swift */,
@@ -466,6 +480,9 @@
 		G10000010000000000000013 /* Network */ = {
 			isa = PBXGroup;
 			children = (
+				F10000010000000000000050 /* DemarHttp.swift */,
+				F10000010000000000000051 /* AuthApi.swift */,
+				F10000010000000000000052 /* ServersApi.swift */,
 				F10000010000000000000035 /* PublicEgressDiagnostics.swift */,
 				F10000010000000000000043 /* LegalDocuments.swift */,
 			);
@@ -478,6 +495,14 @@
 				E200010A1CF9000F007C117D /* DemarVPN/Features/Account/AccountView.swift */,
 			);
 			path = Account;
+			sourceTree = "<group>";
+		};
+		G10000010000000000000015 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				F10000010000000000000054 /* LoginSheet.swift */,
+			);
+			path = Auth;
 			sourceTree = "<group>";
 		};
 		G20000011CF9000F007C117D /* ios */ = {
@@ -550,6 +575,7 @@
 				F40000041CF9000F007C117E /* AppLogPerformanceTests.swift */,
 				F40000051CF9000F007C117E /* VpnStabilityTests.swift */,
 				F40000061CF9000F007C117E /* LegalDocumentsTests.swift */,
+				F40000071CF9000F007C117E /* ServersApiParseTests.swift */,
 			);
 			path = DemarVPNTests;
 			sourceTree = "<group>";
@@ -788,6 +814,11 @@
 				B1000001000000000000002E /* BundledCoreVersion.swift in Sources */,
 				B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */,
 				B10000010000000000000043 /* LegalDocuments.swift in Sources */,
+				B10000010000000000000050 /* DemarHttp.swift in Sources */,
+				B10000010000000000000051 /* AuthApi.swift in Sources */,
+				B10000010000000000000052 /* ServersApi.swift in Sources */,
+				B10000010000000000000053 /* AuthSessionStore.swift in Sources */,
+				B10000010000000000000054 /* LoginSheet.swift in Sources */,
 				B10000010000000000000044 /* DocumentsMenuSheet.swift in Sources */,
 				B10000010000000000000045 /* LegalDocumentView.swift in Sources */,
 				B100000100000000000000CF /* ios/Shared/ClashTraffic.swift in Sources */,
@@ -843,6 +874,7 @@
 				T40000051CF9000F007C117E /* AppLogPerformanceTests.swift in Sources */,
 				T40000061CF9000F007C117E /* VpnStabilityTests.swift in Sources */,
 				T40000071CF9000F007C117E /* LegalDocumentsTests.swift in Sources */,
+				T40000081CF9000F007C117E /* ServersApiParseTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1005,7 +1037,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -1040,7 +1072,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -1087,7 +1119,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -1134,7 +1166,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				"TARGETED_DEVICE_FAMILY[sdk=iphoneos*]" = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -1161,7 +1193,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -1188,7 +1220,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};

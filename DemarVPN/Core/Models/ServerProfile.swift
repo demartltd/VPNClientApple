@@ -3,6 +3,7 @@ import Foundation
 enum ServerTier: String, CaseIterable, Equatable, Hashable, Sendable {
     case free = "FREE"
     case dev = "DEV"
+    case tester = "TESTER"
     case plus = "PLUS"
     case vip = "VIP"
 
@@ -12,6 +13,7 @@ enum ServerTier: String, CaseIterable, Equatable, Hashable, Sendable {
         switch self {
         case .free: "Free"
         case .dev: "Dev"
+        case .tester: "Tester"
         case .plus: "Plus"
         case .vip: "Vip"
         }
@@ -74,16 +76,18 @@ struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
         return String(scalars)
     }
 
-    init(hysteria2 profile: Hysteria2Profile) {
+    init(hysteria2 profile: Hysteria2Profile, id: String? = nil) {
         self.profile = profile
-        id = "hysteria2:\(profile.displayName)"
+        self.id = id ?? "hysteria2:\(profile.displayName)"
         displayName = profile.displayName
     }
 }
 
 extension Array where Element == ServerProfile {
     func visibleTiers() -> [ServerTier] {
-        ServerTier.allCases.filter { $0 != .dev || contains { $0.tier == .dev } }
+        ServerTier.allCases.filter { tier in
+            (tier != .dev && tier != .tester) || contains { $0.tier == tier }
+        }
     }
 
     func filterServers(protocol: ServerProtocol, tier: ServerTier?) -> [ServerProfile] {

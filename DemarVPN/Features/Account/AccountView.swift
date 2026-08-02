@@ -1,17 +1,12 @@
 import SwiftUI
 
-struct AccountUser: Equatable {
-    let email: String
-    let displayName: String
-}
-
 struct AccountView: View {
     @Bindable var appState: AppState
     let isActive: Bool
     var snackBar: SnackBarController
+    var onNeedSignIn: (() -> Void)?
 
-    @State private var email = ""
-    @State private var password = ""
+    @State private var signingOut = false
 
     var body: some View {
         Group {
@@ -19,10 +14,10 @@ struct AccountView: View {
                 ScrollView {
                     VStack(spacing: 32) {
                         header
-                        if let user = appState.accountUser {
-                            signedIn(user)
+                        if let session = appState.authSession {
+                            signedIn(session)
                         } else {
-                            signInForm
+                            guestCTA
                         }
                     }
                     .padding(.horizontal, 16)
@@ -42,13 +37,13 @@ struct AccountView: View {
 
     private var header: some View {
         VStack(spacing: 16) {
-            Image(systemName: appState.accountUser == nil ? "person.crop.circle" : "person.crop.circle.fill")
+            Image(systemName: appState.isSignedIn ? "person.crop.circle.fill" : "person.crop.circle")
                 .font(.system(size: 64))
                 .foregroundStyle(Color.demarPrimary)
-            Text(appState.accountUser?.displayName ?? "Аккаунт")
+            Text(appState.authSession?.username ?? "Аккаунт")
                 .font(.demarHeadlineMedium)
                 .foregroundStyle(Color.demarOnSurface)
-            Text(appState.accountUser?.email ?? "Войдите, чтобы синхронизировать подписку и сервера")
+            Text(appState.authSession.map { "ID: \($0.userId)" } ?? "Войдите, чтобы синхронизировать подписку и сервера")
                 .font(.demarBodyMedium)
                 .foregroundStyle(Color.demarOnSurfaceVariant)
                 .multilineTextAlignment(.center)
@@ -56,72 +51,60 @@ struct AccountView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func signedIn(_ user: AccountUser) -> some View {
+    private func signedIn(_ session: AuthSession) -> some View {
         VStack(spacing: 12) {
-            SectionCard(title: "Подписка", subtitle: "MVP — данные появятся после подключения API") {
-                DemarKvRow(key: "Статус", value: "Активна")
+            SectionCard(title: "Подписка", subtitle: nil) {
+                DemarKvRow(key: "План", value: session.vpnSubscription ?? "—")
+                if let exp = formatExpiry(session.vpnExpiresAt) {
+                    DemarKvRow(key: "Срок", value: exp)
+                }
             }
             SettingsActionButton(
                 systemImage: "rectangle.portrait.and.arrow.right",
-                title: "Выйти",
+                title: signingOut ? "Выход…" : "Выйти",
                 subtitle: "Завершить сеанс на этом устройстве",
                 action: {
-                    email = user.email
-                    password = ""
-                    appState.signOut()
+                    guard !signingOut else { return }
+                    signingOut = true
+                    Task {
+                        defer { signingOut = false }
+                        do {
+                            try await appState.signOut()
+                            snackBar.showInfo("Вы вышли из аккаунта")
+                        } catch {
+                            snackBar.showError("Не удалось выйти. Попробуйте ещё раз")
+                        }
+                    }
                 }
             )
+            .disabled(signingOut)
+            .opacity(signingOut ? 0.55 : 1)
         }
     }
 
-    private var signInForm: some View {
-        VStack(spacing: 12) {
-            accountField("Email", text: $email, secure: false)
-            accountField("Пароль", text: $password, secure: true)
-            SettingsActionButton(
-                systemImage: "arrow.right.circle.fill",
-                title: "Войти",
-                subtitle: "Синхронизация подписки и серверов",
-                action: signIn
-            )
-            .disabled(email.isEmpty || password.isEmpty)
-            .opacity(email.isEmpty || password.isEmpty ? 0.55 : 1)
-            SettingsActionButton(
-                systemImage: "person.badge.plus",
-                title: "Создать аккаунт",
-                subtitle: "Регистрация нового пользователя",
-                action: { snackBar.showInfo("Регистрация скоро.") }
-            )
-        }
-    }
-
-    private func signIn() {
-        guard appState.signIn(email: email, password: password) else {
-            snackBar.showInfo("Введите email и пароль.")
-            return
-        }
-        password = ""
-    }
-
-    private func accountField(_ title: String, text: Binding<String>, secure: Bool) -> some View {
-        Group {
-            if secure {
-                SecureField(title, text: text)
-            } else {
-                TextField(title, text: text)
-                    #if os(iOS)
-                    .textInputAutocapitalization(.never)
-                    .keyboardType(.emailAddress)
-                    #endif
-            }
-        }
-        .textFieldStyle(.plain)
-        .font(.demarBodyMedium)
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.demarOutline.opacity(0.20), lineWidth: 1)
+    private var guestCTA: some View {
+        SettingsActionButton(
+            systemImage: "arrow.right.circle.fill",
+            title: "Войти",
+            subtitle: "Синхронизация подписки и серверов",
+            action: { onNeedSignIn?() }
         )
     }
 
+    private func formatExpiry(_ raw: String?) -> String? {
+        guard let raw, !raw.isEmpty else { return nil }
+        let withFrac = ISO8601DateFormatter()
+        withFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let plain = ISO8601DateFormatter()
+        plain.formatOptions = [.withInternetDateTime]
+        guard let date = withFrac.date(from: raw) ?? plain.date(from: raw) else {
+            return "До \(raw)"
+        }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ru_RU")
+        f.dateStyle = .medium
+        f.timeStyle = .none
+        f.timeZone = TimeZone(secondsFromGMT: 0)
+        return "До \(f.string(from: date))"
+    }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @Bindable var appState: AppState
     let isActive: Bool
+    var onNeedSignIn: (() -> Void)?
 
     var body: some View {
         Group {
@@ -31,9 +32,9 @@ struct HomeView: View {
             VpnMainToggle(
                 state: appState.vpnState,
                 hasError: hasError,
-                onTap: appState.canToggleVpn
-                    ? { Task { await appState.toggleVpn() } }
-                    : nil
+                onTap: {
+                    Task { await handleToggle() }
+                }
             )
 
             Spacer().frame(height: 20)
@@ -57,5 +58,19 @@ struct HomeView: View {
             guard isActive else { return }
             await appState.runHomeThroughputSampling()
         }
+    }
+
+    private func handleToggle() async {
+        if appState.vpnState.isConnected || appState.vpnState == .connecting {
+            await appState.toggleVpn()
+            return
+        }
+        if appState.selectedServer == nil {
+            if !appState.isSignedIn {
+                onNeedSignIn?()
+            }
+            return
+        }
+        await appState.toggleVpn()
     }
 }

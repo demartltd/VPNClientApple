@@ -22,14 +22,18 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── ServerProfile.swift        # профиль сервера + UI metadata/filters
 │   │   └── TestServers.swift          # тестовые профили
 │   ├── Network/
+│   │   ├── DemarHttp.swift            # URLSession, UA, X-Demar-Client, DemarAPIError
+│   │   ├── AuthApi.swift              # auth.example.invalid / account.example.invalid auth
+│   │   ├── ServersApi.swift           # POST vpn.example.invalid/vpn/servers → profiles
 │   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
 │   │   └── LegalDocuments.swift       # ToS/PP raw GitHub Markdown fetch
 │   ├── Vpn/
-│   │   ├── Hysteria2Profile.swift     # Hysteria2 профиль
+│   │   ├── Hysteria2Profile.swift     # Hysteria2 профиль (+ alpn/obfs)
 │   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun options
 │   │   └── SingBoxConfigBuilder.swift # Sing-box JSON TUN
 │   ├── Services/
-│   │   ├── AppState.swift             # UI state, toggle VPN
+│   │   ├── AppState.swift             # UI state, auth, servers, toggle VPN
+│   │   ├── AuthSessionStore.swift     # UserDefaults session + auth orchestration
 │   │   ├── VpnControlling.swift       # connect/disconnect API
 │   │   ├── NativeVpnService.swift     # → VpnTunnelController
 │   │   ├── VpnStatusMonitor.swift     # NEVPNStatus → UI
@@ -62,8 +66,9 @@ DemarVPN/                              # SwiftUI target
 │
 └── Features/
     ├── Home/HomeView.swift            # toggle, скорость
-    ├── Servers/ServersView.swift      # выбор сервера
-    ├── Account/AccountView.swift      # вход MVP
+    ├── Servers/ServersView.swift      # выбор сервера (API)
+    ├── Account/AccountView.swift      # сессия / подписка
+    ├── Auth/LoginSheet.swift          # Email OTP + TOTP + Telegram OAuth
     └── Settings/
         ├── SettingsView.swift         # настройки, 3 тапа → service
         ├── AppSettingsView.swift      # журнал
@@ -72,7 +77,7 @@ DemarVPN/                              # SwiftUI target
         ├── LegalDocumentView.swift    # MarkdownUI viewer
         └── CustomEgressProbes.swift   # свои хосты зондов
 
-DemarVPNTests/                         # unit tests (Sing-box, interface, legal docs)
+DemarVPNTests/                         # unit tests (Sing-box, servers parse, interface, legal docs)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка

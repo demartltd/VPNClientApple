@@ -29,7 +29,12 @@ struct SingBoxConnectPlan {
     }
 
     static func hysteria2(_ profile: Hysteria2Profile) -> SingBoxConnectPlan {
-        let outbound: [String: Any] = [
+        var tls: [String: Any] = [
+            "enabled": true,
+            "server_name": profile.tlsServerName,
+        ]
+        if !profile.alpn.isEmpty { tls["alpn"] = profile.alpn }
+        var outbound: [String: Any] = [
             "type": "hysteria2",
             "tag": SingBoxConfigConstants.proxyTag,
             "server": profile.server,
@@ -37,12 +42,11 @@ struct SingBoxConnectPlan {
             "password": profile.password,
             "udp_fragment": true,
             "domain_resolver": SingBoxDnsBuilder.domainResolver(server: SingBoxConfigConstants.dnsDirectTag),
-            "tls": [
-                "enabled": true,
-                "server_name": profile.tlsServerName,
-                "alpn": ["h3"],
-            ],
+            "tls": tls,
         ]
+        if let obfs = profile.obfsPassword, !obfs.isEmpty {
+            outbound["obfs"] = ["type": "salamander", "password": obfs]
+        }
         return SingBoxConnectPlan(
             uplinkHost: profile.server,
             proxyOutbound: outbound,

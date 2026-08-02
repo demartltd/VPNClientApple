@@ -4,11 +4,13 @@ struct ServersView: View {
     @Bindable var appState: AppState
     let isActive: Bool
     var snackBar: SnackBarController
+    var onNeedSignIn: (() -> Void)?
     @State private var selectedProtocol: ServerProtocol = .hysteria2
     @State private var selectedTier: ServerTier?
+    #if os(iOS)
     @State private var pullArmed = false
-
     private let refreshPullThreshold: CGFloat = 16
+    #endif
 
     var body: some View {
         Group {
@@ -17,6 +19,9 @@ struct ServersView: View {
         .task(id: isActive) {
             guard isActive else { return }
             selectedProtocol = appState.selectedServer?.serverProtocol ?? .hysteria2
+            if appState.isSignedIn, appState.servers.isEmpty, !appState.serversLoading {
+                await appState.refreshServers()
+            }
         }
         .onChange(of: appState.selectedServer?.id) { _, _ in
             selectedProtocol = appState.selectedServer?.serverProtocol ?? selectedProtocol
@@ -33,6 +38,51 @@ struct ServersView: View {
     }
 
     private var content: some View {
+        Group {
+            if !appState.isSignedIn {
+                guestState
+            } else {
+                signedInContent
+            }
+        }
+        .background(Color.demarSurface)
+        #if os(macOS)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    Task { await refreshServersFromToolbar() }
+                } label: {
+                    if appState.isRefreshingServers || (appState.serversLoading && appState.servers.isEmpty) {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                }
+                .help("Обновить серверы")
+                .disabled(!appState.isSignedIn || appState.isRefreshingServers || appState.serversLoading)
+            }
+        }
+        #endif
+    }
+
+    private var guestState: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Text("Войдите, чтобы увидеть доступные серверы")
+                .font(.demarBodyMedium)
+                .foregroundStyle(Color.demarOnSurfaceVariant)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+            Button("Войти") { onNeedSignIn?() }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.demarPrimary)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var signedInContent: some View {
         VStack(spacing: 0) {
             SegmentBar(
                 options: ServerProtocol.allCases.map { SegmentOption(id: $0.rawValue, title: $0.rawValue) },
@@ -55,14 +105,39 @@ struct ServersView: View {
 
             ScrollView {
                 LazyVStack(spacing: 10) {
-                    ForEach(filteredServers) { server in
-                        ServerRow(
-                            profile: server,
-                            selected: appState.selectedServer?.id == server.id
-                        ) {
-                            Task {
-                                await appState.switchServer(to: server)
-                                snackBar.showSuccess("Сервер выбран")
+                    if appState.serversLoading, appState.servers.isEmpty {
+                        ProgressView().padding(.top, 40)
+                    } else if let err = appState.serversError, appState.servers.isEmpty {
+                        VStack(spacing: 12) {
+                            Text(err.isEmpty ? "Не удалось загрузить серверы" : err)
+                                .font(.demarBodyMedium)
+                                .foregroundStyle(Color.demarOnSurfaceVariant)
+                                .multilineTextAlignment(.center)
+                            Button("Повторить") {
+                                Task { await appState.refreshServers() }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(Color.demarPrimary)
+                        }
+                        .padding(.top, 40)
+                        .padding(.horizontal, 24)
+                    } else if filteredServers.isEmpty {
+                        Text("Нет доступных серверов для вашей подписки")
+                            .font(.demarBodyMedium)
+                            .foregroundStyle(Color.demarOnSurfaceVariant)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 40)
+                            .padding(.horizontal, 24)
+                    } else {
+                        ForEach(filteredServers) { server in
+                            ServerRow(
+                                profile: server,
+                                selected: appState.selectedServer?.id == server.id
+                            ) {
+                                Task {
+                                    await appState.switchServer(to: server)
+                                    snackBar.showSuccess("Сервер выбран")
+                                }
                             }
                         }
                     }
@@ -73,28 +148,47 @@ struct ServersView: View {
             }
             .contentMargins(0)
             .scrollBounceBehavior(.always)
+            #if os(iOS)
             .demarScrollPullDistance { handlePull($0) }
+            #endif
             .demarScrollScreen()
         }
-        .background(Color.demarSurface)
     }
 
+    #if os(macOS)
+    private func refreshServersFromToolbar() async {
+        guard appState.isSignedIn else { return }
+        AppLog.shared.append("[ui] servers toolbar refresh")
+        let ok = await appState.pullRefreshServers()
+        if ok {
+            snackBar.showSuccess("Серверы обновлены")
+        } else if appState.serversError != nil {
+            snackBar.showInfo(appState.serversError ?? "Не удалось обновить")
+        }
+    }
+    #endif
+
+    #if os(iOS)
     private func handlePull(_ pull: CGFloat) {
         if pull < 8 {
             if !appState.isRefreshingServers { pullArmed = false }
             return
         }
+        guard appState.isSignedIn else { return }
         guard !appState.isRefreshingServers, !pullArmed else { return }
         guard pull >= refreshPullThreshold else { return }
-        guard appState.beginServersRefresh() else { return }
         pullArmed = true
         PlatformServices.lightImpact()
         AppLog.shared.append("[ui] servers pull-to-refresh")
         Task {
-            let ok = await appState.endServersRefresh(minimumVisibleDuration: .seconds(4))
+            let ok = await appState.pullRefreshServers()
             if ok { snackBar.showSuccess("Серверы обновлены") }
+            else if appState.serversError != nil {
+                snackBar.showInfo(appState.serversError ?? "Не удалось обновить")
+            }
         }
     }
+    #endif
 }
 
 private struct SegmentOption: Identifiable, Hashable {
@@ -216,9 +310,10 @@ private struct CountryFlag: View {
 }
 
 private extension View {
+    #if os(iOS)
     @ViewBuilder
     func demarScrollPullDistance(_ onPull: @escaping (CGFloat) -> Void) -> some View {
-        if #available(macOS 15.0, iOS 18.0, *) {
+        if #available(iOS 18.0, *) {
             onScrollGeometryChange(for: CGFloat.self) { geo in
                 max(0, -geo.contentOffset.y)
             } action: { _, pull in
@@ -228,4 +323,5 @@ private extension View {
             self
         }
     }
+    #endif
 }

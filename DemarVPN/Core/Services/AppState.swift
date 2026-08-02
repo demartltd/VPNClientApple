@@ -14,19 +14,24 @@ final class AppState {
         static let selectedServerId = "selected_server_id"
     }
 
-    let servers: [ServerProfile]
+    var servers: [ServerProfile] = []
     var selectedServer: ServerProfile?
     var isRefreshingServers = false
+    var serversLoading = false
+    var serversError: String?
     var vpnState: VpnConnectionState = .disconnected
     var downloadBps: Double = 0
     var uploadBps: Double = 0
+    var authSession: AuthSession?
+    /// Bumped after OAuth deep-link handoff so UI can navigate to return tab.
+    var authCallbackTick: Int = 0
 
     var appVersionLabel: String = "1.0.2"
     var appVersionDetailLabel: String {
         "\(appVersionLabel) (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"))"
     }
     var coreVersionToken: String = BundledCoreVersion.label
-    var accountUser: AccountUser?
+    var isSignedIn: Bool { authSession != nil }
 
     private let vpn: VpnControlling
     private var vpnOperationGeneration: UInt64 = 0
@@ -36,8 +41,8 @@ final class AppState {
     #endif
 
     init(vpn: VpnControlling? = nil) {
-        servers = TestServers.profiles
-        selectedServer = Self.restoreSelectedServer(from: servers)
+        authSession = AuthSessionStore.session
+        selectedServer = nil
         if let bundleVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
             appVersionLabel = bundleVersion
         }
@@ -59,12 +64,103 @@ final class AppState {
             AppLog.shared.append("[app] packet-tunnel: disabled — enable Demar VPN in System Settings → Login Items & Extensions → Network Extensions")
         }
         #endif
+        #else
+        self.vpn = vpn ?? NativeVpnService()
         #endif
     }
 
     var canToggleVpn: Bool {
         if case .disconnecting = vpnState { return false }
         return vpnState.isConnected || vpnState == .connecting || selectedServer != nil
+    }
+
+    func bootstrapAuth() async {
+        authSession = AuthSessionStore.session
+        _ = await AuthSessionStore.refreshSession()
+        authSession = AuthSessionStore.session
+        if isSignedIn {
+            await refreshServers()
+        } else {
+            clearServers()
+        }
+    }
+
+    func onAuthSuccess() async {
+        authSession = AuthSessionStore.session
+        await refreshServers()
+    }
+
+    func consumeAuthCallback(_ url: URL) async {
+        guard url.scheme == "demar", url.host == "auth" else { return }
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        do {
+            if let token = items.first(where: { $0.name == "token" })?.value?.nilIfBlank {
+                try await AuthSessionStore.completeClientToken(token)
+            } else if let code = items.first(where: { $0.name == "code" })?.value?.nilIfBlank {
+                try await AuthSessionStore.completeExchange(code)
+            } else {
+                return
+            }
+            await onAuthSuccess()
+            authCallbackTick &+= 1
+        } catch {
+            AppLog.shared.append("[auth] callback failed — \(error.localizedDescription)")
+        }
+    }
+
+    /// Stops VPN and clears local state only after server logout succeeds (or session already gone).
+    func signOut() async throws {
+        try await AuthSessionStore.signOut()
+        authSession = nil
+        clearServers()
+        if vpnState.isConnected || vpnState == .connecting {
+            await disconnect()
+        }
+    }
+
+    func refreshServers() async {
+        guard let session = AuthSessionStore.session else {
+            clearServers()
+            return
+        }
+        serversLoading = true
+        serversError = nil
+        defer { serversLoading = false }
+        do {
+            let result = try await ServersApi.fetchServers(userId: session.userId, loginAt: session.loginAt)
+            applyServerList(result.servers)
+            AppLog.shared.append("[servers] loaded \(result.servers.count) (sub=\(result.vpnSubscription ?? "—"))")
+        } catch let e as DemarAPIError where e.statusCode == 401 {
+            AuthSessionStore.clearLocal()
+            authSession = nil
+            clearServers()
+            AppLog.shared.append("[servers] session revoked")
+        } catch {
+            serversError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            AppLog.shared.append("[servers] fetch failed — \(serversError ?? "")")
+        }
+    }
+
+    /// Pull-to-refresh: banner + network fetch (min visible duration).
+    func pullRefreshServers(minimumVisibleDuration: Duration = .seconds(1.5)) async -> Bool {
+        guard beginServersRefresh() else { return false }
+        defer { isRefreshingServers = false }
+        async let sleep: Void = { try? await Task.sleep(for: minimumVisibleDuration) }()
+        await refreshServers()
+        await sleep
+        return !Task.isCancelled && serversError == nil
+    }
+
+    private func applyServerList(_ list: [ServerProfile]) {
+        servers = list
+        selectedServer = Self.restoreSelectedServer(from: list)
+    }
+
+    private func clearServers() {
+        servers = []
+        selectedServer = nil
+        serversError = nil
+        serversLoading = false
     }
 
     @discardableResult
@@ -121,22 +217,6 @@ final class AppState {
             vpnState = .error(message: message)
             AppLog.shared.append("[vpn] server switch failed: \(message)")
         }
-    }
-
-    @discardableResult
-    func signIn(email: String, password: String) -> Bool {
-        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.contains("@"), !password.isEmpty else { return false }
-        let name = trimmed.split(separator: "@").first.map(String.init) ?? trimmed
-        accountUser = AccountUser(email: trimmed, displayName: name.capitalized)
-        AppLog.shared.append("[ui] account sign-in: \(trimmed)")
-        return true
-    }
-
-    func signOut() {
-        guard let email = accountUser?.email else { return }
-        accountUser = nil
-        AppLog.shared.append("[ui] account sign-out: \(email)")
     }
 
     func connect() async {
@@ -262,20 +342,10 @@ final class AppState {
     }
     #endif
 
-    /// Claims the refresh lock. Returns false if a refresh is already running.
     func beginServersRefresh() -> Bool {
         guard !isRefreshingServers else { return false }
         isRefreshingServers = true
         return true
-    }
-
-    /// Finishes a refresh started with `beginServersRefresh()`.
-    func endServersRefresh(minimumVisibleDuration: Duration = .zero) async -> Bool {
-        defer { isRefreshingServers = false }
-        if minimumVisibleDuration > .zero {
-            try? await Task.sleep(for: minimumVisibleDuration)
-        }
-        return !Task.isCancelled
     }
 
     #if os(macOS)
@@ -308,6 +378,7 @@ final class AppState {
     }
 
     private static func restoreSelectedServer(from servers: [ServerProfile]) -> ServerProfile? {
+        guard !servers.isEmpty else { return nil }
         guard let savedId = UserDefaults.standard.string(forKey: StorageKey.selectedServerId) else {
             return servers.first
         }
@@ -318,7 +389,6 @@ final class AppState {
         UserDefaults.standard.set(id, forKey: StorageKey.selectedServerId)
     }
 
-    #if os(iOS) || os(macOS)
     func runHomeThroughputSampling() async {
         while !Task.isCancelled {
             if vpnState.isConnected, let t = VpnSharedStore.readThroughput() {
@@ -330,6 +400,5 @@ final class AppState {
             try? await Task.sleep(for: .seconds(1))
         }
     }
-    #endif
     #endif
 }

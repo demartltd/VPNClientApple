@@ -2,7 +2,7 @@
 
 Поддерживаются **iOS 18+** и **macOS 14+** (нативное приложение, один target).
 
-Все доступные сервера и их конфиги планируется получать удалённо; в MVP — тестовые Hysteria2 профили (см. `DemarVPN/Core/Models/TestServers.swift`).
+Все доступные сервера и их конфиги получаются удалённо после входа (`POST https://vpn.example.invalid/vpn/servers`). Без сессии вкладки **Сервера** и **Аккаунт** открывают login bottom sheet.
 
 ## Сборка
 
@@ -87,7 +87,7 @@ Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На devi
 
 ### Сервера
 
-Список профилей (MVP — тестовые URI), выбор активного сервера.
+Список профилей с API по подписке (после входа). SegmentBar: Hysteria2 + All/Free/Plus/Vip (+ Dev/Tester если есть). Pull-to-refresh обновляет список. Гость — CTA «Войти».
 
 ### Настройки
 
@@ -95,5 +95,5 @@ Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На devi
 
 ### Аккаунт
 
-Вход и выход (MVP — локальный stub до подключения API). **Гость:** email, пароль, «Войти», «Создать аккаунт». **Вошёл:** имя, email, статус подписки, «Выйти».
+Email OTP (+ optional TOTP) и Telegram OAuth → `auth.example.invalid` / `account.example.invalid`. Сессия: `userId`+`loginAt` в UserDefaults; при старте — `session/check`. **Гость:** вход через bottom sheet. **Вошёл:** username, план VPN, срок, «Выйти» (logout API + stop VPN + clear servers). Callback: `demar://auth/callback`.
 
