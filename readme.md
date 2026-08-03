@@ -50,8 +50,12 @@ xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17'
 Для App Store / TestFlight используйте:
 
 ```powershell
-pwsh ./scripts/upload-testflight.ps1 -Platform macOS
+pwsh ./scripts/upload-testflight.ps1 -Platform iOS   # или macOS / Both
 ```
+
+Нужны: Apple ID в **Xcode → Settings → Accounts**, **Apple Distribution** в Keychain, плюс `scripts/.env` + `AuthKey_*.p8` только для `altool` upload.
+
+`xcodebuild` не использует ASC API key: с ключом без Cloud Managed Distribution Xcode чинит профили через cloud cert → `403` / «profile doesn't include Apple Distribution». Profiles обновляет Apple ID из Accounts + локальный Distribution.
 
 Для проверки Packet Tunnel на macOS запускайте приложение через Xcode (**My Mac**) или установленную App Store/TestFlight сборку, затем включите `Demar VPN` в `System Settings → Login Items & Extensions → Network Extensions`.
 
