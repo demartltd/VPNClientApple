@@ -8,7 +8,7 @@ DemarVPN/                              # SwiftUI target
 ├── ContentView.swift                  # TabView / NavigationSplitView
 ├── Info.plist                         # iOS, ATT
 ├── Info-macOS.plist                   # macOS bundle
-├── DemarVPN.entitlements              # App Group
+├── DemarVPN.entitlements              # App Group + sandbox client (no server)
 ├── Assets.xcassets/                   # иконка, accent
 │
 ├── Core/
@@ -132,7 +132,7 @@ ios/
 │   ├── ClashTrafficMonitor.swift      # stream Clash /traffic → App Group
 │   ├── LibboxRunBlocking.swift        # async bridge for openTun
 │   ├── Info.plist
-│   └── DemarPacketTunnel.entitlements
+│   └── DemarPacketTunnel.entitlements # + network.server (Clash/diag listen)
 └── Frameworks/
     ├── README.md                      # Libbox build инструкции
     └── Libbox.xcframework/            # sing-box gomobile (gitignore; libbox-build.py)

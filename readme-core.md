@@ -162,7 +162,7 @@ Libbox закрывает **все** соединения при пустом de
 | Статус NE | `DemarVPN/Core/Services/VpnStatusMonitor.swift` |
 | Packet tunnel | `ios/DemarPacketTunnel/PacketTunnelProvider.swift` |
 
-Clash API `127.0.0.1:19090` (`experimental.clash_api`) — Home throughput via extension stream `GET /traffic` → App Group (host не видит localhost Packet Tunnel).
+Clash API `127.0.0.1:19090` (`experimental.clash_api`) — Home throughput via extension stream `GET /traffic` → App Group (host не видит localhost Packet Tunnel). На macOS App Sandbox bind этих listener'ов (Clash + diagnostic mixed) требует `com.apple.security.network.server` **только** в `DemarPacketTunnel.entitlements`; host остаётся client-only.
 
 **App Group:** `group.com.demar.vpn`  
 **Bundle tunnel:** `com.demar.vpn.packet-tunnel`  
