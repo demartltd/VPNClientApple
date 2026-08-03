@@ -19,7 +19,8 @@ enum SingBoxConfigBuilder {
             dnsFinal: plan.tun.dnsFinal,
             dnsBootstrapDomains: plan.tun.dnsBootstrapDomains,
             strictRoute: plan.tun.strictRoute,
-            directDomains: plan.tun.directDomains
+            directDomains: plan.tun.directDomains,
+            bypassRuleSets: plan.bypassRuleSets
         )
         return try SingBoxConfigEncoding.encodeConfigToJson(
             config,
@@ -101,16 +102,23 @@ enum SingBoxConfigBuilder {
         dnsFinal: String,
         dnsBootstrapDomains: [String],
         strictRoute: Bool,
-        directDomains: [String]
+        directDomains: [String],
+        bypassRuleSets: [ApiBypassRuleSet]
     ) -> [String: Any] {
-        [
+        let geosite = bypassRuleSets.filter(\.isGeosite)
+        return [
             "log": ["level": logLevel, "timestamp": true],
-            "dns": SingBoxDnsBuilder.makeDns(final: dnsFinal, bootstrapDomains: dnsBootstrapDomains),
+            "dns": SingBoxDnsBuilder.makeDns(
+                final: dnsFinal,
+                bootstrapDomains: dnsBootstrapDomains,
+                geositeRuleSets: geosite
+            ),
             "inbounds": [SingBoxTunInboundBuilder.makeTunInbound(
                 tunName: tunName,
                 mtu: mtu,
                 directIPs: directIPs,
-                strictRoute: strictRoute
+                strictRoute: strictRoute,
+                excludeDNSResolver: !geosite.isEmpty
             ), [
                 "type": "mixed",
                 "tag": SingBoxConfigConstants.diagnosticInboundTag,
@@ -120,7 +128,8 @@ enum SingBoxConfigBuilder {
             "route": SingBoxRouteBuilder.makeRoute(
                 inboundTag: SingBoxConfigConstants.tunInboundTag,
                 directIPs: directIPs,
-                directDomains: directDomains
+                directDomains: directDomains,
+                geositeRuleSets: geosite
             ),
             "outbounds": [proxyOutbound, ["type": "direct", "tag": SingBoxConfigConstants.directTag]],
             "experimental": [
@@ -145,6 +154,7 @@ enum SingBoxConfigConstants {
     static let diagnosticPort = 10808
     static let clashApiHost = "127.0.0.1"
     static let clashApiPort = 19090
+    static let dnsDirectResolver = "1.1.1.1"
 }
 
 enum SingBoxConfigEncoding {
@@ -166,7 +176,11 @@ enum SingBoxDnsBuilder {
         ["server": server, "strategy": "ipv4_only"]
     }
 
-    static func makeDns(final dnsFinal: String, bootstrapDomains: [String] = []) -> [String: Any] {
+    static func makeDns(
+        final dnsFinal: String,
+        bootstrapDomains: [String] = [],
+        geositeRuleSets: [ApiBypassRuleSet] = []
+    ) -> [String: Any] {
         var rules: [[String: Any]] = [
             ["query_type": ["PTR"], "action": "reject", "method": "drop"],
         ]
@@ -178,13 +192,27 @@ enum SingBoxDnsBuilder {
                 "server": SingBoxConfigConstants.dnsDirectTag,
             ])
         }
+        for rs in geositeRuleSets {
+            rules.append([
+                "rule_set": [rs.tag],
+                "action": "route",
+                "server": SingBoxConfigConstants.dnsDirectTag,
+            ])
+        }
+        let dnsDirect: [String: Any] = geositeRuleSets.isEmpty
+            ? ["type": "local", "tag": SingBoxConfigConstants.dnsDirectTag]
+            : [
+                "type": "udp",
+                "tag": SingBoxConfigConstants.dnsDirectTag,
+                "server": SingBoxConfigConstants.dnsDirectResolver,
+            ]
         return [
             "servers": [
-                ["type": "local", "tag": SingBoxConfigConstants.dnsDirectTag],
+                dnsDirect,
                 [
                     "type": "https",
                     "tag": SingBoxConfigConstants.dnsRemoteTag,
-                    "server": "1.1.1.1",
+                    "server": SingBoxConfigConstants.dnsDirectResolver,
                     "detour": SingBoxConfigConstants.proxyTag,
                 ],
             ],
@@ -208,7 +236,8 @@ enum SingBoxRouteBuilder {
     static func makeRoute(
         inboundTag: String,
         directIPs: [String],
-        directDomains: [String] = []
+        directDomains: [String] = [],
+        geositeRuleSets: [ApiBypassRuleSet] = []
     ) -> [String: Any] {
         var rules: [[String: Any]] = [
             ["inbound": [inboundTag], "action": "sniff"],
@@ -246,11 +275,25 @@ enum SingBoxRouteBuilder {
             "action": "route",
             "outbound": SingBoxConfigConstants.proxyTag,
         ])
-        return [
+        var route: [String: Any] = [
             "auto_detect_interface": true,
             "default_domain_resolver": SingBoxDnsBuilder.domainResolver(),
             "final": SingBoxConfigConstants.proxyTag,
             "rules": rules,
+        ]
+        if !geositeRuleSets.isEmpty {
+            route["rule_set"] = geositeRuleSets.map { remoteRuleSet($0) }
+        }
+        return route
+    }
+
+    private static func remoteRuleSet(_ rs: ApiBypassRuleSet) -> [String: Any] {
+        [
+            "tag": rs.tag,
+            "type": "remote",
+            "format": "binary",
+            "url": rs.url,
+            "download_detour": SingBoxConfigConstants.proxyTag,
         ]
     }
 }
@@ -261,7 +304,8 @@ enum SingBoxTunInboundBuilder {
         tunName: String,
         mtu: Int,
         directIPs: [String],
-        strictRoute: Bool
+        strictRoute: Bool,
+        excludeDNSResolver: Bool = false
     ) -> [String: Any] {
         let effectiveMtu = min(mtu, 1400)
         var tunInbound: [String: Any] = [
@@ -277,8 +321,12 @@ enum SingBoxTunInboundBuilder {
             "endpoint_independent_nat": false,
             "route_address": ["0.0.0.0/1", "128.0.0.0/1"],
         ]
-        if !directIPs.isEmpty {
-            tunInbound["route_exclude_address"] = directIPs.map { "\($0)/32" }
+        var exclude = Set(directIPs.map { "\($0)/32" })
+        if excludeDNSResolver {
+            exclude.insert("\(SingBoxConfigConstants.dnsDirectResolver)/32")
+        }
+        if !exclude.isEmpty {
+            tunInbound["route_exclude_address"] = exclude.sorted()
         }
         return tunInbound
     }

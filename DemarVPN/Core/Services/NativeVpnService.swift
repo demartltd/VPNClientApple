@@ -22,6 +22,7 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
         }.value
         let plan = prepared.0
         let configJson = prepared.1
+        try VpnSharedStore.saveBypassGeoipTags(plan.geoipBypassTags)
         let sessionId = Self.newSessionId()
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in

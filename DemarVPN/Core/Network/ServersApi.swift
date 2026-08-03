@@ -99,7 +99,30 @@ enum ServersApi {
                 alpn: alpn,
                 obfsPassword: obfs
             ),
-            id: id
+            id: id,
+            bypassRuleSets: parseBypassRuleSets(config)
         )
+    }
+
+    /// Remote rule-sets from API; ignores TUN `route_exclude_address_set` (no-op under Apple NE platformInterface).
+    static func parseBypassRuleSets(_ config: [String: Any]) -> [ApiBypassRuleSet] {
+        guard let route = config["route"] as? [String: Any],
+              let arr = route["rule_set"] as? [[String: Any]]
+        else { return [] }
+        var out: [String: ApiBypassRuleSet] = [:]
+        var order: [String] = []
+        for item in arr {
+            let tag = (item["tag"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let url = (item["url"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !tag.isEmpty, !url.isEmpty else { continue }
+            let type = ((item["type"] as? String) ?? "remote").trimmingCharacters(in: .whitespacesAndNewlines)
+            let format = ((item["format"] as? String) ?? "binary").trimmingCharacters(in: .whitespacesAndNewlines)
+            guard type == "remote", format == "binary" else { continue }
+            if out[tag] == nil {
+                order.append(tag)
+                out[tag] = ApiBypassRuleSet(tag: tag, url: url)
+            }
+        }
+        return order.compactMap { out[$0] }
     }
 }

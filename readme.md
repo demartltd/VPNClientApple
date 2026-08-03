@@ -77,6 +77,7 @@ UI («Настройки → Настройки приложения») и CLI �
 ./scripts/journal.sh -p ios             # физическое устройство
 ./scripts/journal.sh -p ios --core --tg # Telegram DC / domains in core.log
 ./scripts/journal.sh -d "iPhone Rem"    # имя / UDID для devicectl
+# geo-bypass: [tun] bypassCidrs=…; RU/IR/CN dials не в outbound/hysteria2
 ```
 
 Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На device открой app (чтобы зеркало обновилось) или connect VPN. Fallback: Share в UI.

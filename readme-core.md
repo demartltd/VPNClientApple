@@ -62,13 +62,28 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 
 Pin endpoint / `mergeDirectIPs` целят **`proxy`**.
 
+### API geo-bypass (из `clientConfigJson`)
+
+Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJson`. Клиент парсит tags/URLs в `ApiBypassRuleSet`.
+
+**Apple dataplane** (не копия Android JSON — нет `VpnService.protect`):
+
+| Источник | Применение |
+|----------|------------|
+| `geoip-*` | bundled `geoip-*.cidrs.json` → NE `excludedRoutes` (`TunBypassCidrs` в `openTun`) |
+| `geosite-*` | remote `route.rule_set` + DNS → `dns-direct` (UDP `1.1.1.1`) |
+| API `route_exclude_address_set` | **игнор** (no-op под Libbox `platformInterface`) |
+| geo*/geosite → `outbound:direct` | **не эмитим** (`ENETUNREACH` внутри TUN) |
+
+`dns-direct` остаётся `type: local`, пока нет geosite bypass; при geosite — UDP `1.1.1.1` + `route_exclude_address` `1.1.1.1/32`. Sidecars: `scripts/gen-tun-bypass-cidrs.py`.
+
 ### TUN / DNS / route
 
 | Параметр | Значение | Эффект |
 |----------|----------|--------|
 | `dns.final` | `dns-remote` | DNS через proxy |
 | `dns-remote` | `https` DoH, `detour: proxy` | DNS через proxy |
-| `dns-direct` | `local` | системный Darwin resolver |
+| `dns-direct` | `local` / UDP `1.1.1.1` | без bypass — Darwin; с geosite — вне TUN |
 | PTR | `action: reject` (`drop`) | отсев локальных reverse/DNS-SD floods в NE |
 | `experimental.cache_file` | `enabled: true` | кэш DNS/rule-set |
 | DNS bootstrap | `[tlsServerName, server]` → direct DNS | SNI + uplink host |

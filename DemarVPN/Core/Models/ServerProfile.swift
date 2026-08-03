@@ -33,8 +33,9 @@ struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
     let id: String
     let displayName: String
     let profile: Hysteria2Profile
+    let bypassRuleSets: [ApiBypassRuleSet]
 
-    var connectPlan: SingBoxConnectPlan { .hysteria2(profile) }
+    var connectPlan: SingBoxConnectPlan { .hysteria2(profile, bypassRuleSets: bypassRuleSets) }
     var canConnect: Bool { profile.canConnect }
 
     var serverProtocol: ServerProtocol { .hysteria2 }
@@ -77,10 +78,15 @@ struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
         return String(scalars)
     }
 
-    init(hysteria2 profile: Hysteria2Profile, id: String? = nil) {
+    init(
+        hysteria2 profile: Hysteria2Profile,
+        id: String? = nil,
+        bypassRuleSets: [ApiBypassRuleSet] = []
+    ) {
         self.profile = profile
         self.id = id ?? "hysteria2:\(profile.displayName)"
         displayName = profile.displayName
+        self.bypassRuleSets = bypassRuleSets.uniquedByTag()
     }
 }
 

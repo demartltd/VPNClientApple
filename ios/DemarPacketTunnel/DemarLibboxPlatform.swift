@@ -62,7 +62,8 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             }
             ipv4.excludedRoutes = Self.mergedIPv4Exclusions(
                 configured: configuredExcludedIPv4Routes,
-                runtimeAddresses: addresses
+                runtimeAddresses: addresses,
+                sidecars: TunBypassCidrs.ipv4Routes(forTags: VpnSharedStore.loadBypassGeoipTags())
             )
             try await provider.setTunnelNetworkSettings(settings)
             Self.diag("reapplied endpoint bypass: \(addresses.joined(separator: ","))")
@@ -153,9 +154,11 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             configuredExcludedRoutes.append(NEIPv4Route(destinationAddress: prefix.address(), subnetMask: prefix.mask()))
         }
         configuredExcludedIPv4Routes = configuredExcludedRoutes
+        let sidecarRoutes = TunBypassCidrs.ipv4Routes(forTags: VpnSharedStore.loadBypassGeoipTags())
         let ipv4ExcludedRoutes = Self.mergedIPv4Exclusions(
             configured: configuredExcludedRoutes,
-            runtimeAddresses: excludedIPv4
+            runtimeAddresses: excludedIPv4,
+            sidecars: sidecarRoutes
         )
 
         configuredIncludedIPv4Routes = ipv4Routes
@@ -177,6 +180,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         Self.diag(
             "openTun mtu=\(options.getMTU()) dns=\(dns.servers.joined(separator: ",")) "
                 + "routes=\(ipv4Routes.count) excluded=\(ipv4ExcludedRoutes.count) "
+                + "bypassCidrs=\(sidecarRoutes.count) "
                 + "ipv6=\(configuredIPv6Settings == nil ? "off" : "on") capture=deferred"
         )
 
@@ -231,7 +235,8 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
 
     private static func mergedIPv4Exclusions(
         configured: [NEIPv4Route],
-        runtimeAddresses: [String]
+        runtimeAddresses: [String],
+        sidecars: [NEIPv4Route] = []
     ) -> [NEIPv4Route] {
         var routes = configured
         var keys = Set(routes.map { "\($0.destinationAddress)/\($0.destinationSubnetMask)" })
@@ -239,6 +244,11 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             let key = "\(address)/255.255.255.255"
             guard keys.insert(key).inserted else { continue }
             routes.append(NEIPv4Route(destinationAddress: address, subnetMask: "255.255.255.255"))
+        }
+        for route in sidecars {
+            let key = "\(route.destinationAddress)/\(route.destinationSubnetMask)"
+            guard keys.insert(key).inserted else { continue }
+            routes.append(route)
         }
         return routes
     }

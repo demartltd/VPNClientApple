@@ -9,6 +9,7 @@ struct VpnConnectPayload: Codable {
 
 enum VpnSharedStore {
   private static let payloadFile = "last_connect_payload.json"
+  private static let bypassGeoipTagsFile = "bypass_geoip_tags.json"
   private static let stateFile = "control_state.json"
   private static let pendingUiDiagFile = "pending_ui_diag.log"
   private static let journalFile = "vpn_journal.log"
@@ -239,6 +240,31 @@ enum VpnSharedStore {
     encoder.outputFormatting = [.sortedKeys]
     let data = try encoder.encode(payload)
     try data.write(to: try payloadURL(), options: [.atomic])
+  }
+
+  static func saveBypassGeoipTags(_ tags: [String]) throws {
+    var seen = Set<String>()
+    let unique = tags.compactMap { raw -> String? in
+      let tag = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard tag.hasPrefix("geoip"), seen.insert(tag).inserted else { return nil }
+      return tag
+    }
+    let data = try JSONSerialization.data(withJSONObject: unique, options: [.sortedKeys])
+    try data.write(
+      to: try vpnDirectoryURL().appendingPathComponent(bypassGeoipTagsFile, isDirectory: false),
+      options: [.atomic]
+    )
+  }
+
+  static func loadBypassGeoipTags() -> [String] {
+    do {
+      let url = try vpnDirectoryURL().appendingPathComponent(bypassGeoipTagsFile, isDirectory: false)
+      guard FileManager.default.fileExists(atPath: url.path) else { return [] }
+      let data = try Data(contentsOf: url)
+      return (try JSONSerialization.jsonObject(with: data) as? [String]) ?? []
+    } catch {
+      return []
+    }
   }
 
   static func loadConnectPayload() throws -> VpnConnectPayload? {

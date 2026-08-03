@@ -149,6 +149,46 @@ final class SingBoxConfigTests: XCTestCase {
         try assertSingBoxCheckPasses(json: json)
     }
 
+    func testApiBypassGeositeInjectsDnsAndRuleSet() throws {
+        let bypass = [
+            ApiBypassRuleSet(
+                tag: "geoip-ru",
+                url: "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-ru.srs"
+            ),
+            ApiBypassRuleSet(
+                tag: "geosite-category-ru",
+                url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ru.srs"
+            ),
+        ]
+        let plan = SingBoxConnectPlan.hysteria2(TestServers.hysteria2[0], bypassRuleSets: bypass)
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: plan)
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
+
+        XCTAssertFalse(json.contains("route_exclude_address_set"))
+        let route = try XCTUnwrap(root["route"] as? [String: Any])
+        let ruleSets = try XCTUnwrap(route["rule_set"] as? [[String: Any]])
+        XCTAssertEqual(ruleSets.count, 1)
+        XCTAssertEqual(ruleSets[0]["tag"] as? String, "geosite-category-ru")
+        XCTAssertEqual(ruleSets[0]["download_detour"] as? String, "proxy")
+        let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
+        XCTAssertFalse(rules.contains { ($0["rule_set"] as? [String])?.contains("geoip-ru") == true })
+        XCTAssertFalse(rules.contains { ($0["rule_set"] as? [String])?.contains("geosite-category-ru") == true })
+
+        let dns = try XCTUnwrap(root["dns"] as? [String: Any])
+        let dnsServers = try XCTUnwrap(dns["servers"] as? [[String: Any]])
+        let direct = try XCTUnwrap(dnsServers.first { ($0["tag"] as? String) == "dns-direct" })
+        XCTAssertEqual(direct["type"] as? String, "udp")
+        XCTAssertEqual(direct["server"] as? String, "1.1.1.1")
+        let dnsRules = try XCTUnwrap(dns["rules"] as? [[String: Any]])
+        XCTAssertTrue(dnsRules.contains {
+            ($0["rule_set"] as? [String]) == ["geosite-category-ru"]
+                && ($0["server"] as? String) == "dns-direct"
+        })
+
+        let tun = try XCTUnwrap((root["inbounds"] as? [[String: Any]])?.first { ($0["type"] as? String) == "tun" })
+        XCTAssertTrue((tun["route_exclude_address"] as? [String])?.contains("1.1.1.1/32") == true)
+    }
+
     func testClashApiExternalController() throws {
         let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(TestServers.hysteria2[0]))
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])

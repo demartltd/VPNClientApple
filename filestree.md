@@ -29,6 +29,7 @@ DemarVPN/                              # SwiftUI target
 │   │   └── LegalDocuments.swift       # ToS/PP raw GitHub Markdown fetch
 │   ├── Vpn/
 │   │   ├── Hysteria2Profile.swift     # Hysteria2 профиль (+ alpn/obfs)
+│   │   ├── ApiBypassRuleSet.swift     # API route.rule_set (geoip/geosite)
 │   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun options
 │   │   └── SingBoxConfigBuilder.swift # Sing-box JSON TUN
 │   ├── Services/
@@ -65,6 +66,7 @@ DemarVPN/                              # SwiftUI target
 │   ├── en.lproj/Localizable.strings   # UI strings (en)
 │   ├── ru.lproj/Localizable.strings   # UI strings (ru)
 │   ├── InfoPlist.xcstrings            # privacy / NE usage ru/en
+│   ├── TunBypass/                     # geoip-*.cidrs.json → NE excludedRoutes
 │   └── Fonts/
 │       ├── fa-brands-400.ttf
 │       └── MaterialSymbolsOutlined.ttf  # резерв
@@ -92,6 +94,7 @@ singbox-version.txt                    # единая закреплённая �
 scripts/
 ├── journal.sh                         # pull vpn_journal.log (macos/sim/ios)
 ├── singbox-download-auto.py           # latest sing-box + geo db
+├── gen-tun-bypass-cidrs.py            # geoip-*.cidrs.json from sing-geoip .srs
 ├── libbox-build.py                    # Libbox.xcframework (latest)
 ├── upload-testflight.ps1              # App Store archive/upload
 ├── sign-singbox-in-appex.sh           # iOS appex binary signing
@@ -108,6 +111,7 @@ ios/
 │   ├── VpnAppGroup.swift              # App Group paths
 │   ├── DemarLogTime.swift             # journal stamp yyyy-MM-dd-HH-mm-ss (UTC)
 │   ├── VpnSharedStore.swift           # journal, payload, state, Clash throughput
+│   ├── TunBypassCidrs.swift           # geoip CIDR sidecars → NEIPv4Route
 │   ├── ClashTraffic.swift             # parse Clash /traffic NDJSON sample
 │   ├── DefaultInterfaceReporter.swift # sticky default iface + debounce для libbox
 │   ├── VpnTunnelController.swift      # NETunnelProviderManager

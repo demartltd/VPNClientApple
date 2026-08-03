@@ -144,6 +144,85 @@ final class ServersApiParseTests: XCTestCase {
         XCTAssertFalse(tiers.contains(.dev))
     }
 
+    func testParseBypassRuleSetsFromClientConfig() throws {
+        let config: [String: Any] = [
+            "outbounds": [
+                [
+                    "type": "hysteria2",
+                    "server": "hy2.example.com",
+                    "server_port": 443,
+                    "password": "hy2-pass",
+                    "tls": ["server_name": "hy2.example.com", "alpn": ["h3"]],
+                ] as [String: Any],
+                ["type": "direct", "tag": "direct"] as [String: Any],
+            ],
+            "route": [
+                "final": "FI-FREE-2",
+                "rule_set": [
+                    [
+                        "tag": "geoip-ru",
+                        "type": "remote",
+                        "format": "binary",
+                        "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-ru.srs",
+                    ],
+                    [
+                        "tag": "geosite-category-ru",
+                        "type": "remote",
+                        "format": "binary",
+                        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ru.srs",
+                    ],
+                    [
+                        "tag": "geoip-ir",
+                        "type": "remote",
+                        "format": "binary",
+                        "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-ir.srs",
+                    ],
+                    [
+                        "tag": "geosite-ir",
+                        "type": "remote",
+                        "format": "binary",
+                        "url": "https://raw.githubusercontent.com/Chocolate4U/Iran-sing-box-rules/rule-set/geosite-ir.srs",
+                    ],
+                    [
+                        "tag": "geoip-cn",
+                        "type": "remote",
+                        "format": "binary",
+                        "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs",
+                    ],
+                    [
+                        "tag": "geosite-cn",
+                        "type": "remote",
+                        "format": "binary",
+                        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-cn.srs",
+                    ],
+                ],
+            ],
+            "inbounds": [
+                [
+                    "type": "tun",
+                    "route_exclude_address_set": ["geoip-ru", "geoip-ir", "geoip-cn"],
+                ] as [String: Any],
+            ],
+        ]
+        let configJSON = String(data: try JSONSerialization.data(withJSONObject: config), encoding: .utf8)!
+        let item: [String: Any] = [
+            "id": "def456",
+            "name": "FI-FREE-2",
+            "protocol": "hysteria2",
+            "clientConfigJson": configJSON,
+        ]
+        let profile = try XCTUnwrap(ServersApi.parseServerItem(item))
+        XCTAssertEqual(profile.bypassRuleSets.count, 6)
+        XCTAssertTrue(profile.bypassRuleSets.contains {
+            $0.tag == "geosite-ir" && $0.url.contains("Chocolate4U")
+        })
+        XCTAssertEqual(profile.connectPlan.geoipBypassTags, ["geoip-ru", "geoip-ir", "geoip-cn"])
+        let built = try SingBoxConfigBuilder.buildTunConfigJson(plan: profile.connectPlan)
+        XCTAssertFalse(built.contains("route_exclude_address_set"))
+        XCTAssertTrue(built.contains("geosite-ir"))
+        XCTAssertFalse(built.contains("\"tag\" : \"geoip-ru\"") || built.contains("\"tag\": \"geoip-ru\""))
+    }
+
     func testConnectPlanIncludesObfs() throws {
         let profile = Hysteria2Profile(
             displayName: "FI-FREE-1",
