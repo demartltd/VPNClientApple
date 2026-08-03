@@ -56,6 +56,8 @@ struct SingBoxConnectPlan {
         if let obfs = profile.obfsPassword, !obfs.isEmpty {
             outbound["obfs"] = ["type": "salamander", "password": obfs]
         }
+        if let up = profile.upMbps { outbound["up_mbps"] = up }
+        if let down = profile.downMbps { outbound["down_mbps"] = down }
         return SingBoxConnectPlan(
             uplinkHost: profile.server,
             proxyOutbound: outbound,

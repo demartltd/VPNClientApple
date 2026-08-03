@@ -9,6 +9,8 @@ struct Hysteria2Profile: Equatable, Hashable, Sendable {
     let tlsServerName: String
     let alpn: [String]
     let obfsPassword: String?
+    let upMbps: Int?
+    let downMbps: Int?
 
     var canConnect: Bool { !password.isEmpty }
 
@@ -20,7 +22,9 @@ struct Hysteria2Profile: Equatable, Hashable, Sendable {
         password: String,
         tlsServerName: String,
         alpn: [String] = ["h3"],
-        obfsPassword: String? = nil
+        obfsPassword: String? = nil,
+        upMbps: Int? = nil,
+        downMbps: Int? = nil
     ) {
         self.displayName = displayName
         self.city = city
@@ -30,5 +34,7 @@ struct Hysteria2Profile: Equatable, Hashable, Sendable {
         self.tlsServerName = tlsServerName
         self.alpn = alpn.isEmpty ? ["h3"] : alpn
         self.obfsPassword = obfsPassword
+        self.upMbps = upMbps
+        self.downMbps = downMbps
     }
 }

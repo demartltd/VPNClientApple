@@ -49,6 +49,7 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 | `port` | `server_port` | yes |
 | `password` | `password` | yes |
 | `tlsServerName` | `tls.server_name` | yes |
+| `upMbps` / `downMbps` | `up_mbps` / `down_mbps` | no (empty → BBR) |
 | `displayName` / `city` | — | UI only |
 
 ### Outbound (`SingBoxConnectPlan.hysteria2`)

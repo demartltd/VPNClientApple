@@ -97,11 +97,23 @@ enum ServersApi {
                 password: password,
                 tlsServerName: tlsName,
                 alpn: alpn,
-                obfsPassword: obfs
+                obfsPassword: obfs,
+                upMbps: positiveMbps(hy2["up_mbps"]),
+                downMbps: positiveMbps(hy2["down_mbps"])
             ),
             id: id,
             bypassRuleSets: parseBypassRuleSets(config)
         )
+    }
+
+    /// Positive Mbps for Hysteria CC; 0 / negative / garbage → nil (BBR).
+    private static func positiveMbps(_ raw: Any?) -> Int? {
+        let value: Int?
+        if let i = raw as? Int { value = i }
+        else if let n = raw as? NSNumber { value = n.intValue }
+        else { value = nil }
+        guard let value, value > 0 else { return nil }
+        return value
     }
 
     /// Remote rule-sets from API; ignores TUN `route_exclude_address_set` (no-op under Apple NE platformInterface).

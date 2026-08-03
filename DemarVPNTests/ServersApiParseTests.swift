@@ -16,6 +16,8 @@ final class ServersApiParseTests: XCTestCase {
                     ],
                     "obfs": ["type": "salamander", "password": "obfs-pass"],
                     "city": "Helsinki",
+                    "up_mbps": 10,
+                    "down_mbps": 10,
                 ] as [String: Any],
             ],
         ]
@@ -38,6 +40,8 @@ final class ServersApiParseTests: XCTestCase {
         XCTAssertEqual(profile.profile.tlsServerName, "sni.example.com")
         XCTAssertEqual(profile.profile.alpn, ["h3", "h2"])
         XCTAssertEqual(profile.profile.obfsPassword, "obfs-pass")
+        XCTAssertEqual(profile.profile.upMbps, 10)
+        XCTAssertEqual(profile.profile.downMbps, 10)
     }
 
     func testSkipUnsupportedProtocol() {
@@ -73,6 +77,8 @@ final class ServersApiParseTests: XCTestCase {
         let profile = try XCTUnwrap(ServersApi.parseServerItem(item))
         XCTAssertEqual(profile.profile.alpn, ["h3"])
         XCTAssertNil(profile.profile.obfsPassword)
+        XCTAssertNil(profile.profile.upMbps)
+        XCTAssertNil(profile.profile.downMbps)
         XCTAssertEqual(profile.tier, .plus)
         XCTAssertEqual(profile.city, "Amsterdam")
     }
@@ -242,5 +248,25 @@ final class ServersApiParseTests: XCTestCase {
         XCTAssertEqual(obfs["password"] as? String, "obfs")
         let tls = try XCTUnwrap(proxy["tls"] as? [String: Any])
         XCTAssertEqual(tls["alpn"] as? [String], ["h3"])
+        XCTAssertNil(proxy["up_mbps"])
+        XCTAssertNil(proxy["down_mbps"])
+    }
+
+    func testConnectPlanIncludesBandwidthMbps() throws {
+        let profile = Hysteria2Profile(
+            displayName: "FI-FREE-1",
+            server: "fi.example.com",
+            port: 8443,
+            password: "secret",
+            tlsServerName: "sni.example.com",
+            upMbps: 10,
+            downMbps: 10
+        )
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(profile))
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
+        let outbounds = try XCTUnwrap(root["outbounds"] as? [[String: Any]])
+        let proxy = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
+        XCTAssertEqual(proxy["up_mbps"] as? Int, 10)
+        XCTAssertEqual(proxy["down_mbps"] as? Int, 10)
     }
 }
