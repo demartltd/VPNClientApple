@@ -74,7 +74,7 @@ enum AuthSessionStore {
         do {
             save(try await AuthApi.checkSession(userId: current.userId, loginAt: current.loginAt))
             return true
-        } catch let e as DemarAPIError where e.statusCode == 401 || e.message == "session_revoked" {
+        } catch let e as DemarAPIError where e.isSessionInvalid {
             clearLocal()
             AppLog.shared.append("[auth] session inactive — signed out")
             return false
@@ -120,8 +120,7 @@ enum AuthSessionStore {
         AppLog.shared.append("[auth] signed in as \(exchange.userId) (oauth token)")
     }
 
-    /// Clears local session only after successful logout (2xx) or 404 (already gone / user missing).
-    /// Network / other errors keep the session and rethrow. Local demo skips the API.
+    /// Clears local after 2xx, 404, or 401 (already revoked). Other errors keep session and rethrow.
     static func signOut() async throws {
         guard let current = session else {
             clearLocal()
@@ -134,9 +133,9 @@ enum AuthSessionStore {
         do {
             try await AuthApi.logoutSession(userId: current.userId, loginAt: current.loginAt)
             clearLocal()
-        } catch let e as DemarAPIError where e.statusCode == 404 {
+        } catch let e as DemarAPIError where e.isSessionInvalid || e.statusCode == 404 {
             clearLocal()
-            AppLog.shared.append("[auth] logout: session/user gone — cleared local")
+            AppLog.shared.append("[auth] logout: session gone — cleared local")
         } catch {
             AppLog.shared.append("[auth] logout failed — \(error.localizedDescription)")
             throw error

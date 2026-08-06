@@ -81,7 +81,7 @@ final class AppState {
         if isSignedIn {
             await refreshServers()
         } else {
-            clearServers()
+            await applyLocalSignOut()
         }
     }
 
@@ -111,6 +111,17 @@ final class AppState {
     /// Stops VPN and clears local state only after server logout succeeds (or session already gone).
     func signOut() async throws {
         try await AuthSessionStore.signOut()
+        await applyLocalSignOut()
+    }
+
+    /// Clears local auth + servers and disconnects VPN (no server logout call).
+    func forceLocalSignOut() async {
+        AuthSessionStore.clearLocal()
+        await applyLocalSignOut()
+        AppLog.shared.append("[auth] forced local sign-out")
+    }
+
+    private func applyLocalSignOut() async {
         authSession = nil
         clearServers()
         if vpnState.isConnected || vpnState == .connecting {
@@ -130,14 +141,12 @@ final class AppState {
             let result = try await ServersApi.fetchServers(userId: session.userId, loginAt: session.loginAt)
             applyServerList(result.servers)
             AppLog.shared.append("[servers] loaded \(result.servers.count) (sub=\(result.vpnSubscription ?? "—"))")
-        } catch let e as DemarAPIError where e.statusCode == 401 {
+        } catch let e as DemarAPIError where e.isSessionInvalid {
             if session.isLocalDemo {
                 serversError = e.message.nilIfBlank ?? String(localized: "Couldn’t load servers")
                 AppLog.shared.append("[servers] demo fetch unauthorized — keeping session")
             } else {
-                AuthSessionStore.clearLocal()
-                authSession = nil
-                clearServers()
+                await forceLocalSignOut()
                 AppLog.shared.append("[servers] session revoked")
             }
         } catch {

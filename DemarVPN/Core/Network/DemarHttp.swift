@@ -10,6 +10,7 @@ struct DemarAPIError: Error, LocalizedError {
     let hint: String?
 
     var errorDescription: String? { message }
+    var isSessionInvalid: Bool { statusCode == 401 }
 }
 
 enum DemarHttp {
