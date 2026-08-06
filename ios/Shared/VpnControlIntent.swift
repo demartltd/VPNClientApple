@@ -50,6 +50,10 @@ private enum VpnControlExecutor {
     }
 
     if enabled {
+      guard (try? VpnSharedStore.loadConnectPayload()) != nil else {
+        VpnSharedStore.appendPendingUiDiagLine("[ui] ios control_center: enable blocked (signed out)")
+        throw VpnTunnelError.missingPayload
+      }
       try await withCheckedThrowingContinuation { continuation in
         tunnelController.connectWithStoredPayload(triggerSource: "controlIntent") { result in
           continuation.resume(with: result)

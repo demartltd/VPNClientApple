@@ -124,9 +124,29 @@ final class AppState {
     private func applyLocalSignOut() async {
         authSession = nil
         clearServers()
+        await revokeVpnAccess()
+    }
+
+    /// Stops tunnel, clears reconnect payload/config, removes NE profile (CC/Settings cannot reconnect).
+    private func revokeVpnAccess() async {
+        #if os(iOS) || os(macOS)
+        beginVpnOperation()
+        statusMonitor?.endConnectAttempt()
         if vpnState.isConnected || vpnState == .connecting {
-            await disconnect()
+            vpnState = .disconnecting
+            resetThroughput()
         }
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            VpnTunnelController.shared.revokeAccess { continuation.resume() }
+        }
+        vpnState = .disconnected
+        resetThroughput()
+        statusMonitor?.refreshStatus(reason: "signOut", force: true)
+        #if os(iOS)
+        ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
+        #endif
+        AppLog.shared.append("[auth] vpn access revoked")
+        #endif
     }
 
     func refreshServers() async {
@@ -175,6 +195,7 @@ final class AppState {
         selectedServer = nil
         serversError = nil
         serversLoading = false
+        UserDefaults.standard.removeObject(forKey: StorageKey.selectedServerId)
     }
 
     @discardableResult

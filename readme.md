@@ -100,5 +100,5 @@ Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На devi
 
 ### Аккаунт
 
-Email OTP (+ optional TOTP) и Telegram OAuth → `auth.example.invalid` / `account.example.invalid`. Сессия: `userId`+`loginAt` в UserDefaults; при старте — `session/check`. **Гость:** вход через bottom sheet. **Вошёл:** username, план VPN, срок, «Выйти» (logout API + stop VPN + clear servers). Callback: `demar://auth/callback`. **App Review:** email `test@test.com` — локальный вход без OTP; `POST /vpn/servers` как обычно (free без паролей); connect блокируется snackbar.
+Email OTP (+ optional TOTP) и Telegram OAuth → `auth.example.invalid` / `account.example.invalid`. Сессия: `userId`+`loginAt` в UserDefaults; при старте — `session/check`. **Гость:** вход через bottom sheet. **Вошёл:** username, план VPN, срок, «Выйти» (logout API + stop VPN + clear servers). **Revoked / logout:** stop tunnel, wipe App Group `config.json` + connect payload, `removeFromPreferences` — Control Center / Settings VPN не подключат без авторизации. Callback: `demar://auth/callback`. **App Review:** email `test@test.com` — локальный вход без OTP; `POST /vpn/servers` как обычно (free без паролей); connect блокируется snackbar.
 

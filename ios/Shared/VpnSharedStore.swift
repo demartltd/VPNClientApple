@@ -274,6 +274,19 @@ enum VpnSharedStore {
     return try JSONDecoder().decode(VpnConnectPayload.self, from: data)
   }
 
+  /// Wipes reconnect material so Control Center / Settings cannot start a tunnel after sign-out.
+  static func clearConnectArtifacts() {
+    let fm = FileManager.default
+    for url in [try? payloadURL(), try? VpnAppGroup.configURL()].compactMap({ $0 }) {
+      try? fm.removeItem(at: url)
+    }
+    clearActiveSession()
+    clearThroughput()
+    clearExtensionHeartbeat()
+    clearTunnelStartFailure()
+    saveControlState("disconnected")
+  }
+
   /// - Parameter notify: Post Darwin signal for cross-process UI sync (extension only; host uses `false`).
   static func saveControlState(_ state: String, notify: Bool = true) {
     if loadControlState() == state { return }

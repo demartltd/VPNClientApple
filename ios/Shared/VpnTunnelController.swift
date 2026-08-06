@@ -301,9 +301,13 @@ final class VpnTunnelController {
           finish(.failure(VpnTunnelError.missingPayload))
           return
         }
-        let payload = (try? VpnSharedStore.loadConnectPayload()) ?? nil
-        if payload?.uplinkHost?.isEmpty == false {
-          self.diag("reconnect payload loaded with uplinkHost=\(payload?.uplinkHost ?? "<none>")")
+        guard let payload = try? VpnSharedStore.loadConnectPayload() else {
+          self.diag("connectWithStoredPayload rejected: no connect payload (signed out?)")
+          finish(.failure(VpnTunnelError.missingPayload))
+          return
+        }
+        if let host = payload.uplinkHost, !host.isEmpty {
+          self.diag("reconnect payload loaded with uplinkHost=\(host)")
         } else {
           self.diag("reconnect payload loaded without uplinkHost")
         }
@@ -476,6 +480,34 @@ final class VpnTunnelController {
           self?.invalidateCachedManager()
           completion()
         }
+      }
+    }
+  }
+
+  /// Sign-out / session revoke: stop tunnel, wipe App Group connect files, remove NE profile
+  /// so system VPN / Control Center cannot reconnect without auth.
+  func revokeAccess(completion: @escaping () -> Void) {
+    cancelConnectOperation()
+    Self.setControlState("disconnecting")
+    loadTunnelManager { [weak self] result in
+      guard let self else {
+        VpnSharedStore.clearConnectArtifacts()
+        completion()
+        return
+      }
+      if case .success(let manager?) = result {
+        let status = manager.connection.status
+        if status != .disconnected, status != .invalid {
+          let sessionId = self.extractSessionId(from: manager)
+            ?? VpnSharedStore.loadActiveSession()?["sessionId"]
+          VpnSharedStore.setPendingStopContext(triggerSource: "signOut", sessionId: sessionId)
+          manager.connection.stopVPNTunnel()
+        }
+      }
+      VpnSharedStore.clearConnectArtifacts()
+      self.removeAllDemarVPNProfiles {
+        Self.setControlState("disconnected")
+        completion()
       }
     }
   }
