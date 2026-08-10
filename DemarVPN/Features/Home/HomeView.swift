@@ -23,7 +23,7 @@ struct HomeView: View {
             + "↑ \(ThroughputFormatter.kilobytesPerSecond(appState.uploadBps))"
 
         return VStack(spacing: 0) {
-            Text("Demar VPN")
+            Text("Demar Proxy")
                 .font(.demarTitleLarge)
                 .foregroundStyle(Color.demarOnSurface)
                 .frame(maxWidth: .infinity)

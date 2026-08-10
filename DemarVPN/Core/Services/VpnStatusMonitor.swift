@@ -626,7 +626,7 @@ final class VpnStatusMonitor {
     private static func messageForStopLabel(_ label: String) -> String {
         switch label {
         case "configurationDisabled":
-            return String(localized: "VPN profile disabled by the system (configurationDisabled). Check iOS Settings > VPN and enable Demar VPN again.")
+            return String(localized: "VPN profile disabled by the system (configurationDisabled). Check iOS Settings > VPN and enable Demar Proxy again.")
         case "configurationFailed":
             return String(localized: "VPN configuration error. Check the profile and permission in System Settings → VPN.")
         case "providerFailed":

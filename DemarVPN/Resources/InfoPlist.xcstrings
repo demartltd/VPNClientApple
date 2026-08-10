@@ -7,13 +7,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Demar VPN"
+            "value": "Demar Proxy"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Demar VPN"
+            "value": "Demar Proxy"
           }
         }
       }
@@ -36,13 +36,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Demar VPN uses the system VPN tunnel for a secure connection."
+            "value": "Demar Proxy uses the system VPN tunnel for a secure connection."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Demar VPN использует системный VPN-туннель для защищённого подключения."
+            "value": "Demar Proxy использует системный VPN-туннель для защищённого подключения."
           }
         }
       }

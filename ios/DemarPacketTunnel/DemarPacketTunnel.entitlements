@@ -8,7 +8,7 @@
 	</array>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.demar.vpn</string>
+		<string>group.com.demar.adblock</string>
 	</array>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>

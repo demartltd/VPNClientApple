@@ -1,9 +1,9 @@
 import Foundation
 
 enum VpnAppGroup {
-  static let id = "group.com.demar.vpn"
+  static let id = "group.com.demar.adblock"
   /// Host app bundle (not Packet Tunnel / Controls) — Documents export mirror for `scripts/journal.sh`.
-  static let hostBundleId = "com.demar.vpn"
+  static let hostBundleId = "com.demar.adblock"
 
   static var containerURL: URL? {
     FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: id)

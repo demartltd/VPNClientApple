@@ -79,7 +79,7 @@ struct SettingsView: View {
             Image(systemName: "moon.stars.fill")
                 .font(.system(size: 64))
                 .foregroundStyle(Color.demarPrimary)
-            Text("Demar VPN")
+            Text("Demar Proxy")
                 .font(.demarHeadlineMedium)
                 .foregroundStyle(Color.demarOnSurface)
             Text("Connection and app settings")
@@ -93,7 +93,7 @@ struct SettingsView: View {
     private var versionFooter: some View {
         Button(action: onVersionFooterTap) {
             VStack(spacing: 2) {
-                Text("Demar VPN - \(appState.appVersionLabel) - \(AppPlatform.label)")
+                Text("Demar Proxy - \(appState.appVersionLabel) - \(AppPlatform.label)")
                 Text(appState.coreVersionToken.isEmpty ? "core - …" : "core - \(appState.coreVersionToken)")
             }
             .font(.demarBodySmall)

@@ -19,7 +19,7 @@ struct ServiceMenuView: View {
                     leading: { icon("info.circle") }
                 ) {
                     VStack(alignment: .leading, spacing: 8) {
-                        DemarKvRow(key: String(localized: "Name"), value: "Demar VPN")
+                        DemarKvRow(key: String(localized: "Name"), value: "Demar Proxy")
                         DemarKvRow(key: String(localized: "Bundle"), value: Bundle.main.bundleIdentifier ?? "—")
                         DemarKvRow(key: String(localized: "Version"), value: appState.appVersionDetailLabel)
                         DemarKvRow(key: String(localized: "Platform"), value: AppPlatform.label)

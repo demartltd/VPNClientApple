@@ -1,4 +1,4 @@
-/* Demar VPN — Localizable */
+/* Demar Proxy — Localizable */
 "A connection is already in progress." = "A connection is already in progress.";
 "About" = "About";
 "Account" = "Account";
@@ -41,16 +41,16 @@
 "Delete selected" = "Delete selected";
 "Delete selected (%@)?" = "Delete selected (%@)?";
 "Delete selected (%lld)?" = "Delete selected (%lld)?";
-"Demar VPN - %@ - %@" = "Demar VPN - %1$@ - %2$@";
-"Demar VPN — Hysteria2 / Sing-box client." = "Demar VPN — Hysteria2 / Sing-box client.";
-"DemarPacketTunnel did not start. 1) Enable Demar VPN in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar VPN” profile in System Settings → VPN. 3) Relaunch the app and connect again." = "DemarPacketTunnel did not start. 1) Enable Demar VPN in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar VPN” profile in System Settings → VPN. 3) Relaunch the app and connect again.";
+"Demar Proxy - %@ - %@" = "Demar Proxy - %1$@ - %2$@";
+"Demar Proxy — Hysteria2 / Sing-box client." = "Demar Proxy — Hysteria2 / Sing-box client.";
+"DemarPacketTunnel did not start. 1) Enable Demar Proxy in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar Proxy” profile in System Settings → VPN. 3) Relaunch the app and connect again." = "DemarPacketTunnel did not start. 1) Enable Demar Proxy in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar Proxy” profile in System Settings → VPN. 3) Relaunch the app and connect again.";
 "Demo: %@" = "Demo: %@";
 "Document is empty or corrupted" = "Document is empty or corrupted";
 "Documents" = "Documents";
 "Done" = "Done";
 "Empty for now" = "Empty for now";
 "Enable IDFA" = "Enable IDFA";
-"Enable “Demar VPN” in System Settings → VPN (or Extensions/VPN, if available on your macOS version)." = "Enable “Demar VPN” in System Settings → VPN (or Extensions/VPN, if available on your macOS version).";
+"Enable “Demar Proxy” in System Settings → VPN (or Extensions/VPN, if available on your macOS version)." = "Enable “Demar Proxy” in System Settings → VPN (or Extensions/VPN, if available on your macOS version).";
 "End session on this device" = "End session on this device";
 "Expires" = "Expires";
 "Feedback" = "Feedback";
@@ -70,13 +70,13 @@
 "Journal" = "Journal";
 "Language" = "Language";
 "List is empty" = "List is empty";
-"macOS blocked the app (quarantine). Right-click Demar VPN → Open, or install a signed notarized build." = "macOS blocked the app (quarantine). Right-click Demar VPN → Open, or install a signed notarized build.";
+"macOS blocked the app (quarantine). Right-click Demar Proxy → Open, or install a signed notarized build." = "macOS blocked the app (quarantine). Right-click Demar Proxy → Open, or install a signed notarized build.";
 "Name" = "Name";
-"Network extension did not register (%@). %@ Then remove the “Demar VPN” profile in System Settings → VPN and connect again." = "Network extension did not register (%@). %@ Then remove the “Demar VPN” profile in System Settings → VPN and connect again.";
+"Network extension did not register (%@). %@ Then remove the “Demar Proxy” profile in System Settings → VPN and connect again." = "Network extension did not register (%@). %@ Then remove the “Demar Proxy” profile in System Settings → VPN and connect again.";
 "No" = "No";
 "No servers available for your subscription" = "No servers available for your subscription";
 "Not selected" = "Not selected";
-"Open the Demar VPN app once for initial setup." = "Open the Demar VPN app once for initial setup.";
+"Open the Demar Proxy app once for initial setup." = "Open the Demar Proxy app once for initial setup.";
 "Plan" = "Plan";
 "Platform" = "Platform";
 "Privacy" = "Privacy";
@@ -128,8 +128,8 @@
 "VPN disconnected when the device slept. Check the VPN profile (disconnectOnSleep)." = "VPN disconnected when the device slept. Check the VPN profile (disconnectOnSleep).";
 "VPN disconnected: no network. Connect again when internet is available." = "VPN disconnected: no network. Connect again when internet is available.";
 "VPN is not connected." = "VPN is not connected.";
-"VPN profile disabled by the system (configurationDisabled). Check iOS Settings > VPN and enable Demar VPN again." = "VPN profile disabled by the system (configurationDisabled). Check iOS Settings > VPN and enable Demar VPN again.";
-"VPN profile is disabled in the system. Enable Demar VPN in System Settings → VPN." = "VPN profile is disabled in the system. Enable Demar VPN in System Settings → VPN.";
+"VPN profile disabled by the system (configurationDisabled). Check iOS Settings > VPN and enable Demar Proxy again." = "VPN profile disabled by the system (configurationDisabled). Check iOS Settings > VPN and enable Demar Proxy again.";
+"VPN profile is disabled in the system. Enable Demar Proxy in System Settings → VPN." = "VPN profile is disabled in the system. Enable Demar Proxy in System Settings → VPN.";
 "VPN stopped by the system (internalError). Open the journal." = "VPN stopped by the system (internalError). Open the journal.";
 "VPN tunnel error (%@)." = "VPN tunnel error (%@).";
 "Yes" = "Yes";

@@ -7,7 +7,7 @@ import WidgetKit
 
 struct ToggleVpnIntent: SetValueIntent {
   static let title: LocalizedStringResource = "Toggle VPN"
-  static let description = IntentDescription("Enable or disable Demar VPN.")
+  static let description = IntentDescription("Enable or disable Demar Proxy.")
   static var openAppWhenRun: Bool = false
   static var isDiscoverable: Bool = false
 

@@ -1,4 +1,4 @@
-# Ядро VPN: Sing-box (Hysteria2) — Demar VPN (Apple)
+# Ядро VPN: Sing-box (Hysteria2) — Demar Proxy (Apple)
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
 
@@ -164,8 +164,8 @@ Libbox закрывает **все** соединения при пустом de
 
 Clash API `127.0.0.1:19090` (`experimental.clash_api`) — Home throughput via extension stream `GET /traffic` → App Group (host не видит localhost Packet Tunnel). На macOS App Sandbox bind этих listener'ов (Clash + diagnostic mixed) требует `com.apple.security.network.server` **только** в `DemarPacketTunnel.entitlements`; host остаётся client-only.
 
-**App Group:** `group.com.demar.vpn`  
-**Bundle tunnel:** `com.demar.vpn.packet-tunnel`  
+**App Group:** `group.com.demar.adblock`  
+**Bundle tunnel:** `com.demar.adblock.packet-tunnel`  
 **Журнал (dev):** `./scripts/journal.sh` — см. [`readme.md`](readme.md) § Журнал.
 
 Assets: `python3 scripts/singbox-download-auto.py` → `sing-box` из release + `geoip.db`/`geosite.db` из [sing-geoip](https://github.com/SagerNet/sing-geoip) и [sing-geosite](https://github.com/SagerNet/sing-geosite).
@@ -207,8 +207,8 @@ Connect: `NativeVpnService` → `VpnTunnelController` → extension → Libbox (
 
 Для предсказуемого старта `NEPacketTunnelProvider` на macOS:
 
-- Оба App ID (`com.demar.vpn`, `com.demar.vpn.packet-tunnel`) имеют `App Groups` и `Network Extensions (Packet Tunnel Provider)`.
-- В обоих используется один `App Group`: `group.com.demar.vpn`.
+- Оба App ID (`com.demar.adblock`, `com.demar.adblock.packet-tunnel`) имеют `App Groups` и `Network Extensions (Packet Tunnel Provider)`.
+- В обоих используется один `App Group`: `group.com.demar.adblock`.
 - Provisioning profiles после изменений capabilities обновлены и применены.
 - Хост `.app` и `DemarPacketTunnel.appex` подписаны одной Team ID.
 - Пользователь один раз включил расширение в `System Settings → Login Items & Extensions → Network Extensions`.

@@ -15,7 +15,7 @@ struct DemarVpnToggleControl: ControlWidget {
       }
       .tint(.blue)
     }
-    .displayName("Demar VPN")
+    .displayName("Demar Proxy")
     .description(LocalizedStringResource("Quickly turn VPN on or off."))
   }
 }

@@ -29,9 +29,9 @@ enum VpnSharedStore {
     return f
   }()
 
-  private static let coreJournalImportQueue = DispatchQueue(label: "com.demar.vpn.coreJournalImport")
-  private static let journalAppendQueue = DispatchQueue(label: "com.demar.vpn.journalAppend", qos: .utility)
-  private static let exportMirrorQueue = DispatchQueue(label: "com.demar.vpn.exportMirror", qos: .utility)
+  private static let coreJournalImportQueue = DispatchQueue(label: "com.demar.adblock.coreJournalImport")
+  private static let journalAppendQueue = DispatchQueue(label: "com.demar.adblock.journalAppend", qos: .utility)
+  private static let exportMirrorQueue = DispatchQueue(label: "com.demar.adblock.exportMirror", qos: .utility)
   private static let exportMirrorLock = NSLock()
   private static var exportMirrorWork: DispatchWorkItem?
   private static let journalOffsetCore = "demar_journal_core_bytes"

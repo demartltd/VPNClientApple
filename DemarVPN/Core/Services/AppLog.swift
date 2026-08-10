@@ -30,9 +30,9 @@ final class AppLog {
     init(includeStartupLine: Bool = true) {
         guard includeStartupLine else { return }
         #if os(macOS)
-        append("[app] Demar VPN macOS (SwiftUI) started")
+        append("[app] Demar Proxy macOS (SwiftUI) started")
         #else
-        append("[app] Demar VPN iOS (SwiftUI) started")
+        append("[app] Demar Proxy iOS (SwiftUI) started")
         #endif
     }
 

@@ -61,7 +61,7 @@ final class AppState {
             AppLog.shared.append("[app] \(line)")
         }
         if case .disabled = MacVpnDiag.pluginkitStatus() {
-            AppLog.shared.append("[app] packet-tunnel: disabled — enable Demar VPN in System Settings → Login Items & Extensions → Network Extensions")
+            AppLog.shared.append("[app] packet-tunnel: disabled — enable Demar Proxy in System Settings → Login Items & Extensions → Network Extensions")
         }
         #endif
         #else

@@ -14,13 +14,13 @@ enum VpnTunnelError: LocalizedError {
   var errorDescription: String? {
     switch self {
     case .missingPayload:
-      return String(localized: "Open the Demar VPN app once for initial setup.")
+      return String(localized: "Open the Demar Proxy app once for initial setup.")
     case .missingAssets:
       return String(localized: "Core assets are missing. Run: python3 scripts/singbox-download-auto.py")
     case .missingUplinkHost:
       return String(localized: "Couldn’t resolve uplinkHost for the VPN route exclusion.")
     case .managerDisabled:
-      return String(localized: "VPN profile is disabled in the system. Enable Demar VPN in System Settings → VPN.")
+      return String(localized: "VPN profile is disabled in the system. Enable Demar Proxy in System Settings → VPN.")
     case .connectInProgress:
       return String(localized: "A connection is already in progress.")
     case .noProviderSession:
@@ -82,7 +82,7 @@ enum UplinkIPv4Resolver {
 
 final class VpnTunnelController {
   static let shared = VpnTunnelController()
-  static let packetTunnelBundleId = "com.demar.vpn.packet-tunnel"
+  static let packetTunnelBundleId = "com.demar.adblock.packet-tunnel"
 
   private var connectInFlight = false
   private var connectGeneration: UInt64 = 0
@@ -91,8 +91,8 @@ final class VpnTunnelController {
   private let connectStateLock = NSLock()
   private var cachedManager: NETunnelProviderManager?
   /// Serializes all NetworkExtension preference load/save/remove mutations.
-  private let neMutationQueue = DispatchQueue(label: "com.demar.vpn.neMutation")
-  private let runtimePrepQueue = DispatchQueue(label: "com.demar.vpn.runtimePrep", qos: .userInitiated)
+  private let neMutationQueue = DispatchQueue(label: "com.demar.adblock.neMutation")
+  private let runtimePrepQueue = DispatchQueue(label: "com.demar.adblock.runtimePrep", qos: .userInitiated)
 
   var isConnectInFlight: Bool {
     connectStateLock.lock()
@@ -401,7 +401,7 @@ final class VpnTunnelController {
             sessionId: effectiveSessionId,
             connectTriggerSource: connectTriggerSource
           )
-          manager.localizedDescription = "Demar VPN"
+          manager.localizedDescription = "Demar Proxy"
           // Enable profile so iOS prefers Demar over another VPN app when the user connects from our UI.
           manager.isEnabled = true
           manager.onDemandRules = nil
@@ -1151,7 +1151,7 @@ final class VpnTunnelController {
 
   private static func normalizedServerAddress(_ uplinkHost: String?) -> String {
     let host = uplinkHost?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    return host.isEmpty ? "Demar VPN" : host
+    return host.isEmpty ? "Demar Proxy" : host
   }
 
   #if os(macOS)

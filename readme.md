@@ -1,4 +1,4 @@
-**Demar VPN (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **latest sing-box** (Hysteria2 через Libbox).
+**Demar Proxy (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **latest sing-box** (Hysteria2 через Libbox).
 
 Поддерживаются **iOS 18+** и **macOS 14+** (нативное приложение, один target).
 
@@ -8,7 +8,10 @@
 
 - **Xcode 15+**
 - Deployment: **iOS 18+**, **macOS 14+** (VPN на Mac — **Apple Silicon arm64**)
-- Bundle ID: `com.demar.vpn`
+- Display name: **Demar Proxy**
+- Bundle ID: `com.demar.adblock` · SKU: `demar-adblock`
+- Extensions: `com.demar.adblock.packet-tunnel`, `com.demar.adblock.controls`
+- App Group: `group.com.demar.adblock`
 - **iOS:** SwiftUI + Network Extension (`DemarPacketTunnel`) + App Group + sing-box **1.13.14**
 - **macOS:** Network Extension + Libbox in-process (как iOS)
 - См. [`readme-core.md`](readme-core.md)
@@ -22,15 +25,15 @@ python3 scripts/libbox-build.py           # same pinned core → Libbox.xcframew
 
 Xcode копирует geo assets в host app и в `DemarPacketTunnel.appex` (iOS: `singbox/`, macOS: `singbox_macos/`). Dev binary `sing-box` в runtime bundle не включается.
 
-В [Apple Developer](https://developer.apple.com/account) для App ID `com.demar.vpn`, `com.demar.vpn.packet-tunnel` и **`com.demar.vpn.controls`** (Control Center) включите: **App Groups** (`group.com.demar.vpn`), **Network Extensions** → Packet Tunnel. Entitlements уже в `DemarVPN.entitlements`, `ios/DemarPacketTunnel/DemarPacketTunnel.entitlements` и `ios/DemarControls/DemarControls.entitlements`.
+В [Apple Developer](https://developer.apple.com/account) для App ID `com.demar.adblock`, `com.demar.adblock.packet-tunnel` и **`com.demar.adblock.controls`** (Control Center) включите: **App Groups** (`group.com.demar.adblock`), **Network Extensions** → Packet Tunnel. Entitlements уже в `DemarVPN.entitlements`, `ios/DemarPacketTunnel/DemarPacketTunnel.entitlements` и `ios/DemarControls/DemarControls.entitlements`.
 
 ### Definition of Done: capabilities/provisioning
 
 Перед запуском VPN на macOS проверьте, что выполнены все пункты:
 
-- Для `com.demar.vpn` включены `App Groups` и `Network Extensions (Packet Tunnel Provider)`.
-- Для `com.demar.vpn.packet-tunnel` включены `App Groups` и `Network Extensions (Packet Tunnel Provider)`.
-- В обоих App ID присутствует одинаковая группа `group.com.demar.vpn`.
+- Для `com.demar.adblock` включены `App Groups` и `Network Extensions (Packet Tunnel Provider)`.
+- Для `com.demar.adblock.packet-tunnel` включены `App Groups` и `Network Extensions (Packet Tunnel Provider)`.
+- В обоих App ID присутствует одинаковая группа `group.com.demar.adblock`.
 - После изменения capabilities пересозданы provisioning profiles и подтянуты в Xcode.
 - Хост и `DemarPacketTunnel.appex` подписаны одной Team (`codesign: app=... appex=... match=yes`).
 - Локально установлен один активный bundle (не смешивать старые копии из `DerivedData` и `/Applications`).
@@ -57,7 +60,7 @@ pwsh ./scripts/upload-testflight.ps1 -Platform iOS   # или macOS / Both
 
 `xcodebuild` не использует ASC API key: с ключом без Cloud Managed Distribution Xcode чинит профили через cloud cert → `403` / «profile doesn't include Apple Distribution». Profiles обновляет Apple ID из Accounts + локальный Distribution.
 
-Для проверки Packet Tunnel на macOS запускайте приложение через Xcode (**My Mac**) или установленную App Store/TestFlight сборку, затем включите `Demar VPN` в `System Settings → Login Items & Extensions → Network Extensions`.
+Для проверки Packet Tunnel на macOS запускайте приложение через Xcode (**My Mac**) или установленную App Store/TestFlight сборку, затем включите `Demar Proxy` в `System Settings → Login Items & Extensions → Network Extensions`.
 
 Документация Sing-box: https://sing-box.sagernet.org/
 
@@ -88,7 +91,7 @@ Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На devi
 
 ### Подключение
 
-Вкл/выкл VPN, статус, имя сервера, скорость RX/TX при подключении (Clash API `GET /traffic` в extension → App Group; Home читает ↓/↑ KB/s). **iOS:** control «Demar VPN» в Control Center; UI синхронизируется с `NEVPNConnection` при любом переключении Demar (приложение, control, Настройки → VPN, системная кнопка VPN в CC).
+Вкл/выкл VPN, статус, имя сервера, скорость RX/TX при подключении (Clash API `GET /traffic` в extension → App Group; Home читает ↓/↑ KB/s). **iOS:** control «Demar Proxy» в Control Center; UI синхронизируется с `NEVPNConnection` при любом переключении Demar (приложение, control, Настройки → VPN, системная кнопка VPN в CC).
 
 ### Сервера
 

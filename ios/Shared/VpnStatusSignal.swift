@@ -2,7 +2,7 @@ import Foundation
 
 /// Cross-process hint when extension or host updates App Group VPN state.
 enum VpnStatusSignal {
-  private static let darwinName = "com.demar.vpn.status" as CFString
+  private static let darwinName = "com.demar.adblock.status" as CFString
 
   static func post() {
     CFNotificationCenterPostNotification(

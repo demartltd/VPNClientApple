@@ -7,12 +7,12 @@ import Security
 
 /// macOS packet-tunnel preflight: pluginkit, codesign, App Group, NE manager.
 enum MacVpnDiag {
-    static let packetTunnelBundleId = "com.demar.vpn.packet-tunnel"
+    static let packetTunnelBundleId = "com.demar.adblock.packet-tunnel"
     static let extensionPoint = "com.apple.networkextension.packet-tunnel"
 
     /// Shown only when pluginkit confirms the extension toggle is off.
     static var enableExtensionMessage: String {
-        String(localized: "Enable “Demar VPN” in System Settings → VPN (or Extensions/VPN, if available on your macOS version).")
+        String(localized: "Enable “Demar Proxy” in System Settings → VPN (or Extensions/VPN, if available on your macOS version).")
     }
 
     enum PluginkitStatus: Equatable {
@@ -125,7 +125,7 @@ enum MacVpnDiag {
     }
 
     static var extensionNotStartedMessage: String {
-        String(localized: "DemarPacketTunnel did not start. 1) Enable Demar VPN in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar VPN” profile in System Settings → VPN. 3) Relaunch the app and connect again.")
+        String(localized: "DemarPacketTunnel did not start. 1) Enable Demar Proxy in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar Proxy” profile in System Settings → VPN. 3) Relaunch the app and connect again.")
     }
 
     static func connectBlockReason() -> String? {
@@ -134,7 +134,7 @@ enum MacVpnDiag {
             return String(localized: "App and extension signatures do not match. \(codesignLine()). Reinstall the app.")
         }
         if let installIssue = UserDefaults.standard.string(forKey: lastInstallBlockingIssueKey), !installIssue.isEmpty {
-            return String(localized: "Network extension did not register (\(installIssue)). \(enableExtensionMessage) Then remove the “Demar VPN” profile in System Settings → VPN and connect again.")
+            return String(localized: "Network extension did not register (\(installIssue)). \(enableExtensionMessage) Then remove the “Demar Proxy” profile in System Settings → VPN and connect again.")
         }
         return nil
     }
@@ -154,7 +154,7 @@ enum MacVpnDiag {
     private static func gatekeeperBlockReason() -> String? {
         let url = Bundle.main.bundleURL
         if (try? url.resourceValues(forKeys: [.quarantinePropertiesKey]))?.quarantineProperties != nil {
-            return String(localized: "macOS blocked the app (quarantine). Right-click Demar VPN → Open, or install a signed notarized build.")
+            return String(localized: "macOS blocked the app (quarantine). Right-click Demar Proxy → Open, or install a signed notarized build.")
         }
         var staticCode: SecStaticCode?
         guard SecStaticCodeCreateWithPath(url as CFURL, [], &staticCode) == errSecSuccess,

@@ -1,4 +1,4 @@
-/* Demar VPN — Localizable */
+/* Demar Proxy — Localizable */
 "A connection is already in progress." = "Подключение уже выполняется.";
 "About" = "О приложении";
 "Account" = "Аккаунт";
@@ -41,16 +41,16 @@
 "Delete selected" = "Удалить выбранные";
 "Delete selected (%@)?" = "Удалить выбранные (%@)?";
 "Delete selected (%lld)?" = "Удалить выбранные (%lld)?";
-"Demar VPN - %@ - %@" = "Demar VPN - %1$@ - %2$@";
-"Demar VPN — Hysteria2 / Sing-box client." = "Demar VPN — клиент Hysteria2 / Sing-box.";
-"DemarPacketTunnel did not start. 1) Enable Demar VPN in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar VPN” profile in System Settings → VPN. 3) Relaunch the app and connect again." = "Туннель DemarPacketTunnel не запустился. 1) Включите Demar VPN в System Settings → VPN (или Extensions/VPN). 2) Удалите старый профиль «Demar VPN» в System Settings → VPN. 3) Перезапустите приложение и подключитесь снова.";
+"Demar Proxy - %@ - %@" = "Demar Proxy - %1$@ - %2$@";
+"Demar Proxy — Hysteria2 / Sing-box client." = "Demar Proxy — клиент Hysteria2 / Sing-box.";
+"DemarPacketTunnel did not start. 1) Enable Demar Proxy in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar Proxy” profile in System Settings → VPN. 3) Relaunch the app and connect again." = "Туннель DemarPacketTunnel не запустился. 1) Включите Demar Proxy в System Settings → VPN (или Extensions/VPN). 2) Удалите старый профиль «Demar Proxy» в System Settings → VPN. 3) Перезапустите приложение и подключитесь снова.";
 "Demo: %@" = "Демо: %@";
 "Document is empty or corrupted" = "Документ пуст или повреждён";
 "Documents" = "Документы";
 "Done" = "Готово";
 "Empty for now" = "Пока пусто";
 "Enable IDFA" = "Включить IDFA";
-"Enable “Demar VPN” in System Settings → VPN (or Extensions/VPN, if available on your macOS version)." = "Включите «Demar VPN» в System Settings → VPN (или в разделе Extensions/VPN, если он доступен в вашей версии macOS).";
+"Enable “Demar Proxy” in System Settings → VPN (or Extensions/VPN, if available on your macOS version)." = "Включите «Demar Proxy» в System Settings → VPN (или в разделе Extensions/VPN, если он доступен в вашей версии macOS).";
 "End session on this device" = "Завершить сеанс на этом устройстве";
 "Expires" = "Срок";
 "Feedback" = "Обратная связь";
@@ -70,13 +70,13 @@
 "Journal" = "Журнал";
 "Language" = "Язык";
 "List is empty" = "Список пуст";
-"macOS blocked the app (quarantine). Right-click Demar VPN → Open, or install a signed notarized build." = "macOS заблокировал приложение (quarantine). ПКМ по Demar VPN → Open, или установите подписанную нотаризованную сборку.";
+"macOS blocked the app (quarantine). Right-click Demar Proxy → Open, or install a signed notarized build." = "macOS заблокировал приложение (quarantine). ПКМ по Demar Proxy → Open, или установите подписанную нотаризованную сборку.";
 "Name" = "Имя";
-"Network extension did not register (%@). %@ Then remove the “Demar VPN” profile in System Settings → VPN and connect again." = "Расширение сети не зарегистрировалось (%@). %@ Затем удалите профиль «Demar VPN» в System Settings → VPN и подключитесь снова.";
+"Network extension did not register (%@). %@ Then remove the “Demar Proxy” profile in System Settings → VPN and connect again." = "Расширение сети не зарегистрировалось (%@). %@ Затем удалите профиль «Demar Proxy» в System Settings → VPN и подключитесь снова.";
 "No" = "Нет";
 "No servers available for your subscription" = "Нет доступных серверов для вашей подписки";
 "Not selected" = "Не выбран";
-"Open the Demar VPN app once for initial setup." = "Откройте приложение Demar VPN один раз для первичной инициализации.";
+"Open the Demar Proxy app once for initial setup." = "Откройте приложение Demar Proxy один раз для первичной инициализации.";
 "Plan" = "План";
 "Platform" = "Платформа";
 "Privacy" = "Конфиденциальность";
@@ -128,8 +128,8 @@
 "VPN disconnected when the device slept. Check the VPN profile (disconnectOnSleep)." = "VPN отключился при переходе устройства в сон. Проверьте профиль VPN (disconnectOnSleep).";
 "VPN disconnected: no network. Connect again when internet is available." = "VPN отключился: нет сети. Подключитесь снова, когда появится интернет.";
 "VPN is not connected." = "VPN не подключён.";
-"VPN profile disabled by the system (configurationDisabled). Check iOS Settings > VPN and enable Demar VPN again." = "VPN-профиль отключен системой (configurationDisabled). Проверьте iOS Settings > VPN и включите Demar VPN снова.";
-"VPN profile is disabled in the system. Enable Demar VPN in System Settings → VPN." = "Профиль VPN отключён в системе. Включите Demar VPN в Системных настройках → VPN.";
+"VPN profile disabled by the system (configurationDisabled). Check iOS Settings > VPN and enable Demar Proxy again." = "VPN-профиль отключен системой (configurationDisabled). Проверьте iOS Settings > VPN и включите Demar Proxy снова.";
+"VPN profile is disabled in the system. Enable Demar Proxy in System Settings → VPN." = "Профиль VPN отключён в системе. Включите Demar Proxy в Системных настройках → VPN.";
 "VPN stopped by the system (internalError). Open the journal." = "VPN остановлен системой (internalError). Откройте журнал.";
 "VPN tunnel error (%@)." = "VPN tunnel error (%@).";
 "Yes" = "Да";

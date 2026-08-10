@@ -4,7 +4,7 @@ import WidgetKit
 #endif
 
 enum VpnControlConstants {
-  static let kind = "com.demar.vpn.controls.vpn-toggle"
+  static let kind = "com.demar.adblock.controls.vpn-toggle"
 }
 
 enum VpnTunnelProviderKeys {
