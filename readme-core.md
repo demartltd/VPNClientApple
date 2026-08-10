@@ -214,3 +214,7 @@ Connect: `NativeVpnService` → `VpnTunnelController` → extension → Libbox (
 - Пользователь один раз включил расширение в `System Settings → Login Items & Extensions → Network Extensions`.
 
 Для App Store-ветки не используем root/helper-модель повышения привилегий; Packet Tunnel работает в рамках entitlement-модели Network Extension.
+
+### TestFlight / Mac: native vs iOS-on-Mac
+
+При общем Bundle ID multiplatform-таргет по умолчанию отдаёт iOS-билд на Apple Silicon Mac (`SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD`). Тогда TestFlight на Mac ставит iOS IPA, а native macOS PKG «не виден». В проекте флаг выключен; в ASC отключите *iPhone and iPad Apps on Apple Silicon Macs* и добавляйте в группу именно macOS-билд. Подробнее: [`readme.md`](readme.md) § TestFlight.

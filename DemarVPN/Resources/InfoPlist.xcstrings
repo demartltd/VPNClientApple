@@ -19,13 +19,18 @@
       }
     },
     "CFBundleName": {
-      "comment": "Bundle name",
-      "extractionState": "extracted_with_value",
+      "comment": "Bundle name (macOS app menu / Dock short name)",
       "localizations": {
         "en": {
           "stringUnit": {
-            "state": "new",
-            "value": "DemarVPN"
+            "state": "translated",
+            "value": "Demar Proxy"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demar Proxy"
           }
         }
       }

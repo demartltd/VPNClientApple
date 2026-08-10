@@ -60,6 +60,21 @@ pwsh ./scripts/upload-testflight.ps1 -Platform iOS   # или macOS / Both
 
 `xcodebuild` не использует ASC API key: с ключом без Cloud Managed Distribution Xcode чинит профили через cloud cert → `403` / «profile doesn't include Apple Distribution». Profiles обновляет Apple ID из Accounts + локальный Distribution.
 
+### TestFlight: macOS видит только iOS-билд
+
+Один App Record (`com.demar.adblock`) хранит **два** бинарника: iOS IPA и native macOS PKG. На Mac TestFlight по умолчанию предлагает **iOS App on Mac** («Designed for iPhone/iPad»), а не native `.pkg` — поэтому «одобрено всё», но ставится iOS.
+
+**В проекте (уже в репо):** `SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO` — iOS-сборка больше не помечается как runnable on Mac.
+
+**В App Store Connect (разово после следующего upload):**
+
+1. **Pricing and Availability** → *iPhone and iPad Apps on Apple Silicon Macs* → **Don't Make Available** (нужен native macOS, не iOS-on-Mac).
+2. **TestFlight → группа тестеров → Settings** → *Test iPhone and iPad apps on Apple silicon Macs* → **Disable**.
+3. В группу явно добавьте **macOS**-билд (фильтр платформы macOS), не только iOS.
+4. На Mac в TestFlight: Build → платформа **macOS** (не iOS).
+
+Проверка после upload: ASC → TestFlight → Builds → отдельно вкладки iOS / macOS; у macOS-билда тип *macOS*, не *iOS*.
+
 Для проверки Packet Tunnel на macOS запускайте приложение через Xcode (**My Mac**) или установленную App Store/TestFlight сборку, затем включите `Demar Proxy` в `System Settings → Login Items & Extensions → Network Extensions`.
 
 Документация Sing-box: https://sing-box.sagernet.org/
