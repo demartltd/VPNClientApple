@@ -26,7 +26,7 @@ final class AppState {
     /// Bumped after OAuth deep-link handoff so UI can navigate to return tab.
     var authCallbackTick: Int = 0
 
-    var appVersionLabel: String = "1.0.3"
+    var appVersionLabel: String = "1.0.4"
     var appVersionDetailLabel: String {
         "\(appVersionLabel) (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"))"
     }

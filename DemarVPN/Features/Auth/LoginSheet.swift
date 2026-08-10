@@ -15,15 +15,6 @@ private enum LoginFieldStyle {
     static let controlHeight: CGFloat = 48
 }
 
-#if os(iOS)
-private struct LoginSheetHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
-#endif
-
 struct LoginSheet: View {
     var onSignedIn: () -> Void
     var onDismiss: () -> Void
@@ -38,7 +29,9 @@ struct LoginSheet: View {
     @State private var busy = false
     @State private var webAuth: WebAuthSession?
     #if os(iOS)
-    @State private var sheetHeight: CGFloat = 340
+    @State private var sheetHeight: CGFloat = 300
+    @State private var fitEpoch = 0
+    @State private var fittedEpoch = -1
     #endif
 
     var body: some View {
@@ -47,8 +40,8 @@ struct LoginSheet: View {
             Capsule()
                 .fill(Color.demarOnSurface.opacity(0.35))
                 .frame(width: 36, height: 5)
-                .padding(.top, 20)
-                .padding(.bottom, 8)
+                .padding(.top, 12)
+                .padding(.bottom, 4)
             #endif
 
             Text(title)
@@ -71,20 +64,27 @@ struct LoginSheet: View {
         .padding(.horizontal, 16)
         #if os(macOS)
         .padding(.top, 16)
+        .padding(.bottom, 16)
+        #else
+        .padding(.bottom, 4)
         #endif
-        .padding(.bottom, 12)
-        .frame(maxWidth: .infinity, alignment: .top)
         #if os(iOS)
         .fixedSize(horizontal: false, vertical: true)
-        .background {
-            GeometryReader { geo in
-                Color.clear.preference(key: LoginSheetHeightKey.self, value: geo.size.height)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { _, height in
+            guard fittedEpoch != fitEpoch, height > 1 else { return }
+            if abs(height - sheetHeight) > 1 {
+                withAnimation(.easeInOut(duration: 0.2)) { sheetHeight = height }
+            }
+            let epoch = fitEpoch
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(50))
+                guard fitEpoch == epoch else { return }
+                fittedEpoch = epoch
             }
         }
-        .onPreferenceChange(LoginSheetHeightKey.self) { height in
-            guard height > 0, abs(height - sheetHeight) > 1 else { return }
-            sheetHeight = height
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        #else
+        .frame(maxWidth: .infinity, alignment: .top)
         #endif
         .background(Color.demarSurface)
         .disabled(busy)
@@ -100,6 +100,8 @@ struct LoginSheet: View {
             Text("Create a new account for \(email.trimmingCharacters(in: .whitespacesAndNewlines))?")
         }
         #if os(iOS)
+        .onChange(of: step) { _, _ in fitEpoch += 1 }
+        .onChange(of: error) { _, _ in fitEpoch += 1 }
         .presentationDetents([.height(sheetHeight)])
         .presentationDragIndicator(.hidden)
         #endif
@@ -142,12 +144,10 @@ struct LoginSheet: View {
             Button {
                 Task { await sendOtp() }
             } label: {
-                Group {
-                    if busy { ProgressView() }
-                    else { Text("Continue").font(.demarTitleMediumBold) }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
+                Text("Continue")
+                    .font(.demarTitleMediumBold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
             }
             .buttonStyle(.borderedProminent)
             .tint(Color.demarPrimary)
@@ -180,7 +180,6 @@ struct LoginSheet: View {
                     .foregroundStyle(Color.demarError)
                     .frame(maxWidth: .infinity)
             }
-            if busy { ProgressView() }
             if step == .verify {
                 Button("Resend code") {
                     Task { await sendOtp() }
@@ -213,7 +212,7 @@ struct LoginSheet: View {
     }
 
     private var moreMethods: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             HStack {
                 Rectangle().fill(Color.demarOutline.opacity(0.35)).frame(height: 1)
                 Text("More Login Methods")
@@ -222,7 +221,7 @@ struct LoginSheet: View {
                     .fixedSize()
                 Rectangle().fill(Color.demarOutline.opacity(0.35)).frame(height: 1)
             }
-            .padding(.top, 8)
+            .padding(.top, 4)
 
             Button {
                 startTelegram()
