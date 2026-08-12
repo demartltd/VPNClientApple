@@ -19,10 +19,6 @@ final class AppState {
     var isRefreshingServers = false
     var serversLoading = false
     var serversError: String?
-    /// Account + traffic snapshot. Refreshed with servers (launch / pull) — not on tab focus.
-    var vpnAccount: VpnAccount?
-    var vpnTraffic: VpnTraffic?
-    var accountLoading = false
     var vpnState: VpnConnectionState = .disconnected
     var downloadBps: Double = 0
     var uploadBps: Double = 0
@@ -30,7 +26,7 @@ final class AppState {
     /// Bumped after OAuth deep-link handoff so UI can navigate to return tab.
     var authCallbackTick: Int = 0
 
-    var appVersionLabel: String = "1.0.4"
+    var appVersionLabel: String = "1.0.5"
     var appVersionDetailLabel: String {
         "\(appVersionLabel) (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"))"
     }
@@ -128,7 +124,6 @@ final class AppState {
     private func applyLocalSignOut() async {
         authSession = nil
         clearServers()
-        clearAccount()
         await revokeVpnAccess()
     }
 
@@ -157,13 +152,11 @@ final class AppState {
     func refreshServers() async {
         guard let session = AuthSessionStore.session else {
             clearServers()
-            clearAccount()
             return
         }
         serversLoading = true
         serversError = nil
         defer { serversLoading = false }
-        async let accountDone: Void = refreshAccount()
         do {
             let result = try await ServersApi.fetchServers(userId: session.userId, loginAt: session.loginAt)
             applyServerList(result.servers)
@@ -179,60 +172,6 @@ final class AppState {
         } catch {
             serversError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             AppLog.shared.append("[servers] fetch failed — \(serversError ?? "")")
-        }
-        await accountDone
-    }
-
-    private func refreshAccount() async {
-        guard let session = AuthSessionStore.session else {
-            clearAccount()
-            return
-        }
-        accountLoading = true
-        defer { accountLoading = false }
-
-        if session.isLocalDemo {
-            vpnAccount = LocalDemoAccount.vpnAccount()
-            vpnTraffic = LocalDemoAccount.vpnTraffic()
-            AuthSessionStore.updateVpnProfile(
-                LocalDemoAccount.vpnSubscription,
-                LocalDemoAccount.vpnExpiresAt
-            )
-            authSession = AuthSessionStore.session
-            return
-        }
-
-        async let aRes: Result<VpnAccount, Error> = {
-            do { return .success(try await VpnAccountApi.fetchAccount(userId: session.userId, loginAt: session.loginAt)) }
-            catch { return .failure(error) }
-        }()
-        async let tRes: Result<VpnTraffic, Error> = {
-            do { return .success(try await VpnAccountApi.fetchTraffic(userId: session.userId, loginAt: session.loginAt)) }
-            catch { return .failure(error) }
-        }()
-        let (accountResult, trafficResult) = await (aRes, tRes)
-
-        if case .success(let a) = accountResult {
-            vpnAccount = a
-            AuthSessionStore.updateVpnProfile(a.vpnSubscription, a.vpnExpiresAt)
-            authSession = AuthSessionStore.session
-        }
-        if case .success(let t) = trafficResult {
-            vpnTraffic = t
-        }
-
-        let err: Error? = {
-            if case .failure(let e) = accountResult { return e }
-            if case .failure(let e) = trafficResult { return e }
-            return nil
-        }()
-        if let e = err as? DemarAPIError, e.isSessionInvalid {
-            await forceLocalSignOut()
-            AppLog.shared.append("[account] session revoked")
-        } else if let err {
-            AppLog.shared.append("[account] refresh failed — \(err.localizedDescription)")
-        } else {
-            AppLog.shared.append("[account] refreshed")
         }
     }
 
@@ -257,12 +196,6 @@ final class AppState {
         serversError = nil
         serversLoading = false
         UserDefaults.standard.removeObject(forKey: StorageKey.selectedServerId)
-    }
-
-    private func clearAccount() {
-        vpnAccount = nil
-        vpnTraffic = nil
-        accountLoading = false
     }
 
     @discardableResult
