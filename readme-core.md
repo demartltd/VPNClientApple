@@ -217,4 +217,4 @@ Connect: `NativeVpnService` → `VpnTunnelController` → extension → Libbox (
 
 ### TestFlight / Mac: native vs iOS-on-Mac
 
-При общем Bundle ID multiplatform-таргет по умолчанию отдаёт iOS-билд на Apple Silicon Mac (`SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD`). Тогда TestFlight на Mac ставит iOS IPA, а native macOS PKG «не виден». В проекте флаг выключен; в ASC отключите *iPhone and iPad Apps on Apple Silicon Macs* и добавляйте в группу именно macOS-билд. Подробнее: [`readme.md`](readme.md) § TestFlight.
+При общем Bundle ID multiplatform-таргет по умолчанию отдаёт iOS-билд на Apple Silicon Mac (`SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD`). External TestFlight тогда ставит iOS-on-Mac, internal видит native macOS. В проекте флаг выключен; `upload-testflight.ps1` после upload (или `-AscConfigureOnly`) через ASC API линкует macOS-билд и гасит `iosBuildsAvailableForAppleSiliconMac` (нужен API key App Manager/Admin; иначе — вручную в ASC). Разово: Pricing → *Don't Make Available*; имя листинга — App Information. Подробнее: [`readme.md`](readme.md) § TestFlight.

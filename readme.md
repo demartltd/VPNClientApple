@@ -53,7 +53,8 @@ xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17'
 Для App Store / TestFlight используйте:
 
 ```powershell
-pwsh ./scripts/upload-testflight.ps1 -Platform iOS   # или macOS / Both
+pwsh ./scripts/upload-testflight.ps1 -Platform Both   # или iOS / macOS
+pwsh ./scripts/upload-testflight.ps1 -AscConfigureOnly  # только ASC (группы / линк билдов)
 ```
 
 Нужны: Apple ID в **Xcode → Settings → Accounts**, **Apple Distribution** в Keychain, плюс `scripts/.env` + `AuthKey_*.p8` только для `altool` upload.
@@ -62,18 +63,26 @@ pwsh ./scripts/upload-testflight.ps1 -Platform iOS   # или macOS / Both
 
 ### TestFlight: macOS видит только iOS-билд
 
-Один App Record (`com.demar.adblock`) хранит **два** бинарника: iOS IPA и native macOS PKG. На Mac TestFlight по умолчанию предлагает **iOS App on Mac** («Designed for iPhone/iPad»), а не native `.pkg` — поэтому «одобрено всё», но ставится iOS.
+Один App Record (`com.demar.adblock`) хранит **два** бинарника: iOS IPA и native macOS PKG. External public link на Mac иначе ставит **iOS App on Mac**, а internal (developer) видит native macOS — у internal есть доступ ко всем билдам.
 
-**В проекте (уже в репо):** `SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO` — iOS-сборка больше не помечается как runnable on Mac.
+**В проекте:** `SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO`. Display name в bundle: **Demar Proxy**.
 
-**В App Store Connect (разово после следующего upload):**
+**После upload** `upload-testflight.ps1` вызывает ASC API: линкует latest VALID iOS+macOS в external-группы и пытается выключить `iosBuildsAvailableForAppleSiliconMac`. Нужен API key с ролью **App Manager** или **Admin** (ключ только для `altool` upload даст `403` — тогда шаги ниже вручную).
 
-1. **Pricing and Availability** → *iPhone and iPad Apps on Apple Silicon Macs* → **Don't Make Available** (нужен native macOS, не iOS-on-Mac).
-2. **TestFlight → группа тестеров → Settings** → *Test iPhone and iPad apps on Apple silicon Macs* → **Disable**.
-3. В группу явно добавьте **macOS**-билд (фильтр платформы macOS), не только iOS.
-4. На Mac в TestFlight: Build → платформа **macOS** (не iOS).
+Без полной сборки:
 
-Проверка после upload: ASC → TestFlight → Builds → отдельно вкладки iOS / macOS; у macOS-билда тип *macOS*, не *iOS*.
+```powershell
+pwsh ./scripts/upload-testflight.ps1 -AscConfigureOnly
+```
+
+**В ASC (если API 403 / разово):**
+
+1. TestFlight → группа (public link) → Settings → *Test iPhone and iPad apps on Apple silicon Macs* → **Disable**
+2. В ту же группу добавить билд платформы **macOS** (не только iOS)
+3. Pricing and Availability → *iPhone and iPad Apps on Apple Silicon Macs* → **Don't Make Available**
+4. Имя в листинге ASC (сейчас может быть «Demar Proxy + AdBlock») → App Information → **Demar Proxy** (API `apps.name` не принимает UPDATE)
+
+На Mac-тестере: удалить старый iOS-on-Mac → установить снова → платформа **macOS**, имя **Demar Proxy**.
 
 Для проверки Packet Tunnel на macOS запускайте приложение через Xcode (**My Mac**) или установленную App Store/TestFlight сборку, затем включите `Demar Proxy` в `System Settings → Login Items & Extensions → Network Extensions`.
 
@@ -118,5 +127,5 @@ Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На devi
 
 ### Аккаунт
 
-Email OTP (+ optional TOTP) и Telegram OAuth → `auth.example.invalid` / `account.example.invalid`. Сессия: `userId`+`loginAt` в UserDefaults; при старте — `session/check`. **Гость:** вход через bottom sheet. **Вошёл:** username, план VPN, срок, «Выйти» (logout API + stop VPN + clear servers). **Revoked / logout:** stop tunnel, wipe App Group `config.json` + connect payload, `removeFromPreferences` — Control Center / Settings VPN не подключат без авторизации. Callback: `demar://auth/callback`. **App Review:** email `test@test.com` — локальный вход без OTP; `POST /vpn/servers` как обычно (free без паролей); connect блокируется snackbar.
+Email OTP (+ optional TOTP) и Telegram OAuth → `auth.example.invalid` / `account.example.invalid` (только вход/сессия). Сессия: `userId`+`loginAt` в UserDefaults; при старте — `session/check`. План, срок, уведомления и трафик за месяц — `vpn.example.invalid` (`POST /vpn/account`, `/vpn/notify`, `/vpn/traffic`). **Гость:** вход через bottom sheet. **Вошёл (как Android):** avatar + username + tap ID (clipboard); карточка подписки (Plan/Expires + Buy/Renew → «Скоро»); ряд трафика с preview `used/limit · %` и progress → **Traffic sheet** (pie); family stub → «Скоро»; Notifications → **Notify sheet** (2 toggle); Sign out → confirm → logout API + stop VPN + clear servers. **Revoked / logout:** stop tunnel, wipe App Group `config.json` + connect payload, `removeFromPreferences` — Control Center / Settings VPN не подключат без авторизации. Callback: `demar://auth/callback`. **App Review:** email `test@test.com` — локальный вход без OTP; `POST /vpn/servers` как обычно (free без паролей); connect блокируется snackbar.
 

@@ -14,8 +14,27 @@ enum LocalDemoAccount {
     static let userId = "demo"
     static let loginAt = "2020-01-01T00:00:00.000Z"
     static let username = "App Store Review"
-    static let vpnSubscription = "FREE"
-    static let vpnExpiresAt = "2099-12-31T23:59:59.000Z"
+    static let vpnSubscription = "free"
+    static let vpnExpiresAt = "2099-12-31T00:00:00.000Z"
+
+    static func vpnAccount() -> VpnAccount {
+        VpnAccount(
+            notifyNews: true,
+            notifyImportant: true,
+            vpnSubscription: vpnSubscription,
+            vpnExpiresAt: vpnExpiresAt
+        )
+    }
+
+    static func vpnTraffic() -> VpnTraffic {
+        VpnTraffic(
+            y: 2026,
+            m: 1,
+            servers: [],
+            total: 0,
+            limitBytes: 20 * 1024 * 1024 * 1024
+        )
+    }
 }
 
 @MainActor
@@ -34,15 +53,29 @@ enum AuthSessionStore {
     static var isSignedIn: Bool { session != nil }
 
     static func save(_ exchange: SessionExchange, isLocalDemo: Bool = false) {
+        let prev = session
+        let keepVpn = prev?.userId == exchange.userId
         let s = AuthSession(
             userId: exchange.userId,
             loginAt: exchange.loginAt,
             username: exchange.username?.nilIfBlank ?? exchange.userId,
-            vpnSubscription: exchange.vpnSubscription,
-            vpnExpiresAt: exchange.vpnExpiresAt,
+            vpnSubscription: keepVpn ? prev?.vpnSubscription : nil,
+            vpnExpiresAt: keepVpn ? prev?.vpnExpiresAt : nil,
             isLocalDemo: isLocalDemo
         )
         persist(s)
+    }
+
+    static func updateVpnProfile(_ subscription: String?, _ expiresAt: String?) {
+        guard let cur = session else { return }
+        persist(AuthSession(
+            userId: cur.userId,
+            loginAt: cur.loginAt,
+            username: cur.username,
+            vpnSubscription: subscription,
+            vpnExpiresAt: expiresAt,
+            isLocalDemo: cur.isLocalDemo
+        ))
     }
 
     static func signInLocalDemo() {

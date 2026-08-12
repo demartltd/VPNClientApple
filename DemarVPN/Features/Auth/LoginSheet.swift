@@ -28,22 +28,9 @@ struct LoginSheet: View {
     @State private var otp = ""
     @State private var busy = false
     @State private var webAuth: WebAuthSession?
-    #if os(iOS)
-    @State private var sheetHeight: CGFloat = 300
-    @State private var fitEpoch = 0
-    @State private var fittedEpoch = -1
-    #endif
 
     var body: some View {
         VStack(spacing: 12) {
-            #if os(iOS)
-            Capsule()
-                .fill(Color.demarOnSurface.opacity(0.35))
-                .frame(width: 36, height: 5)
-                .padding(.top, 12)
-                .padding(.bottom, 4)
-            #endif
-
             Text(title)
                 .font(.demarTitleMediumBold)
                 .foregroundStyle(Color.demarOnSurface)
@@ -61,32 +48,6 @@ struct LoginSheet: View {
 
             moreMethods
         }
-        .padding(.horizontal, 16)
-        #if os(macOS)
-        .padding(.top, 16)
-        .padding(.bottom, 16)
-        #else
-        .padding(.bottom, 4)
-        #endif
-        #if os(iOS)
-        .fixedSize(horizontal: false, vertical: true)
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { _, height in
-            guard fittedEpoch != fitEpoch, height > 1 else { return }
-            if abs(height - sheetHeight) > 1 {
-                withAnimation(.easeInOut(duration: 0.2)) { sheetHeight = height }
-            }
-            let epoch = fitEpoch
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(50))
-                guard fitEpoch == epoch else { return }
-                fittedEpoch = epoch
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        #else
-        .frame(maxWidth: .infinity, alignment: .top)
-        #endif
-        .background(Color.demarSurface)
         .disabled(busy)
         .alert(String(localized: "Account not found"), isPresented: $showRegisterDialog) {
             Button(String(localized: "Create account")) {
@@ -99,12 +60,7 @@ struct LoginSheet: View {
         } message: {
             Text("Create a new account for \(email.trimmingCharacters(in: .whitespacesAndNewlines))?")
         }
-        #if os(iOS)
-        .onChange(of: step) { _, _ in fitEpoch += 1 }
-        .onChange(of: error) { _, _ in fitEpoch += 1 }
-        .presentationDetents([.height(sheetHeight)])
-        .presentationDragIndicator(.hidden)
-        #endif
+        .demarSheetChrome(horizontalPadding: 16, bottomPadding: 8)
     }
 
     private var title: String {
@@ -335,8 +291,7 @@ struct LoginSheet: View {
 extension View {
     /// iOS: system sheet. macOS: overlay — tap outside dismisses (system sheet is modal).
     func loginSheet(isPresented: Binding<Bool>, onSignedIn: @escaping () -> Void) -> some View {
-        #if os(iOS)
-        sheet(isPresented: isPresented, onDismiss: {}) {
+        demarBottomSheet(isPresented: isPresented) {
             LoginSheet(
                 onSignedIn: {
                     onSignedIn()
@@ -345,44 +300,8 @@ extension View {
                 onDismiss: { isPresented.wrappedValue = false }
             )
         }
-        #else
-        modifier(LoginSheetMacOverlay(isPresented: isPresented, onSignedIn: onSignedIn))
-        #endif
     }
 }
-
-#if os(macOS)
-private struct LoginSheetMacOverlay: ViewModifier {
-    @Binding var isPresented: Bool
-    let onSignedIn: () -> Void
-
-    func body(content: Content) -> some View {
-        content.overlay {
-            if isPresented {
-                ZStack(alignment: .bottom) {
-                    Color.black.opacity(0.55)
-                        .ignoresSafeArea()
-                        .contentShape(Rectangle())
-                        .onTapGesture { isPresented = false }
-
-                    LoginSheet(
-                        onSignedIn: {
-                            onSignedIn()
-                            isPresented = false
-                        },
-                        onDismiss: { isPresented = false }
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .shadow(color: .black.opacity(0.18), radius: 16, y: 4)
-                    .padding(16)
-                }
-                .transition(.opacity)
-            }
-        }
-        .animation(.easeOut(duration: 0.18), value: isPresented)
-    }
-}
-#endif
 
 /// Keeps ASWebAuthenticationSession alive for the duration of the flow.
 private final class WebAuthSession: NSObject, ASWebAuthenticationPresentationContextProviding {

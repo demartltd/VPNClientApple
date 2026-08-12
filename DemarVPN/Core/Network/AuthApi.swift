@@ -9,8 +9,6 @@ struct SessionExchange: Sendable {
     let userId: String
     let loginAt: String
     let username: String?
-    let vpnSubscription: String?
-    let vpnExpiresAt: String?
 }
 
 enum AuthApi {
@@ -101,16 +99,11 @@ enum AuthApi {
         guard let userId = (profile["id"] as? String)?.nilIfBlank else {
             throw DemarAPIError(message: "Missing userId", statusCode: 0, retryAfterSeconds: nil, hint: nil)
         }
-        let username = (profile["username"] as? String)?.nilIfBlank
-        let vpn = profile["vpn"] as? [String: Any]
-        let sub = (vpn?["subscription"] as? String)?.nilIfBlank
-        let exp: String? = {
-            guard let raw = vpn?["expiresAt"] else { return nil }
-            if let s = raw as? String { return s.nilIfBlank }
-            let s = "\(raw)"
-            return (s.isEmpty || s == "null") ? nil : s
-        }()
-        return SessionExchange(userId: userId, loginAt: loginAt, username: username, vpnSubscription: sub, vpnExpiresAt: exp)
+        return SessionExchange(
+            userId: userId,
+            loginAt: loginAt,
+            username: (profile["username"] as? String)?.nilIfBlank
+        )
     }
 
     private static func parseSession(_ json: [String: Any]) throws -> SessionExchange {
@@ -123,9 +116,7 @@ enum AuthApi {
         return SessionExchange(
             userId: userId,
             loginAt: loginAt,
-            username: (json["username"] as? String)?.nilIfBlank,
-            vpnSubscription: (json["vpnSubscription"] as? String)?.nilIfBlank,
-            vpnExpiresAt: (json["vpnExpiresAt"] as? String)?.nilIfBlank
+            username: (json["username"] as? String)?.nilIfBlank
         )
     }
 }

@@ -74,9 +74,9 @@ extension View {
 
     func customEgressProbesSheet(isPresented: Binding<Bool>) -> some View {
         #if os(iOS)
-        sheet(isPresented: isPresented) {
+        demarBottomSheet(isPresented: isPresented) {
             CustomEgressProbesPanel()
-                .presentationDetents([.medium, .large])
+                .demarSheetPresentation([.medium, .large], systemDragIndicator: true)
         }
         #else
         self

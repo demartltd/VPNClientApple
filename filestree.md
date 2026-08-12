@@ -25,6 +25,7 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── DemarHttp.swift            # URLSession, UA, X-Demar-Client, DemarAPIError
 │   │   ├── AuthApi.swift              # auth.example.invalid / account.example.invalid auth
 │   │   ├── ServersApi.swift           # POST vpn.example.invalid/vpn/servers → profiles
+│   │   ├── VpnAccountApi.swift        # POST /vpn/account|notify|traffic
 │   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
 │   │   └── LegalDocuments.swift       # ToS/PP raw GitHub Markdown fetch
 │   ├── Vpn/
@@ -56,6 +57,7 @@ DemarVPN/                              # SwiftUI target
 │   ├── DemarKvRow.swift               # key / value
 │   ├── VpnMainToggle.swift            # кнопка VPN
 │   ├── SettingsActionButton.swift     # кнопка в настройках
+│   ├── DemarBottomSheet.swift         # единый bottom sheet (iOS sheet / macOS overlay)
 │   ├── SettingsLinksStrip.swift       # соцссылки
 │   ├── DemarSnackBar.swift            # тосты
 │   ├── ServersRefreshBanner.swift     # top banner при pull-refresh серверов
@@ -74,17 +76,19 @@ DemarVPN/                              # SwiftUI target
 └── Features/
     ├── Home/HomeView.swift            # toggle, скорость
     ├── Servers/ServersView.swift      # выбор сервера (API)
-    ├── Account/AccountView.swift      # сессия / подписка
+    ├── Account/
+    │   ├── AccountView.swift          # сессия / подписка / notify / трафик
+    │   └── TrafficPieChart.swift      # donut + legend по серверам
     ├── Auth/LoginSheet.swift          # Email OTP + TOTP + Telegram OAuth
     └── Settings/
         ├── SettingsView.swift         # настройки, 3 тапа → service
         ├── AppSettingsView.swift      # Change language + журнал
         ├── ServiceMenuView.swift      # служебное меню
-        ├── DocumentsMenuSheet.swift   # ToS/PP: iOS sheet, macOS overlay
+        ├── DocumentsMenuSheet.swift   # ToS/PP через demarBottomSheet
         ├── LegalDocumentView.swift    # MarkdownUI viewer
         └── CustomEgressProbes.swift   # свои хосты зондов
 
-DemarVPNTests/                         # unit tests (Sing-box, servers parse, interface, legal docs)
+DemarVPNTests/                         # unit tests (Sing-box, servers/account parse, interface, legal docs)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка
