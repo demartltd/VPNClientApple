@@ -2,7 +2,7 @@
 
 Поддерживаются **iOS 18+** и **macOS 14+** (нативное приложение, один target).
 
-Все доступные сервера и их конфиги получаются удалённо после входа (`POST https://vpn.example.invalid/vpn/servers`). Без сессии вкладки **Сервера** и **Аккаунт** открывают login bottom sheet.
+Все доступные сервера и их конфиги получаются удалённо после входа (`POST https://vpn.example.invalid/vpn/servers`). Без сессии вкладки **Сервера** и **Аккаунт** открывают login bottom sheet. Control-plane (`api` / `fastapi` / `account.example.invalid`) ходит через Cloudflare anycast (SNI/Host сохраняются) — обход DPI-блокировки origin A на части ISP.
 
 ## Сборка
 
@@ -119,7 +119,7 @@ Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На devi
 
 ### Сервера
 
-Список профилей с API по подписке (после входа). SegmentBar: Hysteria2 + All/Free/Plus/Vip (+ Dev/Tester если есть). Pull-to-refresh обновляет список. Гость — CTA «Войти».
+Список профилей с API по подписке (после входа). SegmentBar: Hysteria2 + All/Free/Plus/Vip (+ Dev/Tester если есть). Pull-to-refresh обновляет список и параллельно account/traffic. Гость — CTA «Войти».
 
 ### Настройки
 
@@ -127,5 +127,5 @@ Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На devi
 
 ### Аккаунт
 
-Email OTP (+ optional TOTP) и Telegram OAuth → `auth.example.invalid` / `account.example.invalid` (только вход/сессия). Сессия: `userId`+`loginAt` в UserDefaults; при старте — `session/check`. План, срок, уведомления и трафик за месяц — `vpn.example.invalid` (`POST /vpn/account`, `/vpn/notify`, `/vpn/traffic`). **Гость:** вход через bottom sheet. **Вошёл (как Android):** avatar + username + tap ID (clipboard); карточка подписки (Plan/Expires + Buy/Renew → «Скоро»); ряд трафика с preview `used/limit · %` и progress → **Traffic sheet** (pie); family stub → «Скоро»; Notifications → **Notify sheet** (2 toggle); Sign out → confirm → logout API + stop VPN + clear servers. **Revoked / logout:** stop tunnel, wipe App Group `config.json` + connect payload, `removeFromPreferences` — Control Center / Settings VPN не подключат без авторизации. Callback: `demar://auth/callback`. **App Review:** email `test@test.com` — локальный вход без OTP; `POST /vpn/servers` как обычно (free без паролей); connect блокируется snackbar.
+Email OTP (+ optional TOTP) и Telegram OAuth → `auth.example.invalid` / `account.example.invalid` (только вход/сессия). Сессия: `userId`+`loginAt` в UserDefaults; при старте — `session/check`. План, срок, уведомления и трафик за месяц — `vpn.example.invalid` (`POST /vpn/account`, `/vpn/notify`, `/vpn/traffic`); snapshot грузится **на старте и при refresh серверов** (не при фокусе вкладки Аккаунт). **Гость:** вход через bottom sheet. **Вошёл (как Android):** avatar + username + tap ID (clipboard); карточка подписки (Plan/Expires + Buy/Renew → «Скоро»); ряд трафика с preview `used/limit · %` и progress → **Traffic sheet** (pie); family stub → «Скоро»; Notifications → **Notify sheet** (2 toggle); Sign out → confirm → logout API + stop VPN + clear servers. **Revoked / logout:** stop tunnel, wipe App Group `config.json` + connect payload, `removeFromPreferences` — Control Center / Settings VPN не подключат без авторизации. Callback: `demar://auth/callback`. **App Review:** email `test@test.com` — локальный вход без OTP; `POST /vpn/servers` как обычно (free без паролей); connect блокируется snackbar.
 

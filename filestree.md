@@ -22,7 +22,7 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── ServerProfile.swift        # профиль сервера + UI metadata/filters
 │   │   └── TestServers.swift          # тестовые профили
 │   ├── Network/
-│   │   ├── DemarHttp.swift            # URLSession, UA, X-Demar-Client, DemarAPIError
+│   │   ├── DemarHttp.swift            # URLSession + CF-edge DPI remap (api/fastapi/account)
 │   │   ├── AuthApi.swift              # auth.example.invalid / account.example.invalid auth
 │   │   ├── ServersApi.swift           # POST vpn.example.invalid/vpn/servers → profiles
 │   │   ├── VpnAccountApi.swift        # POST /vpn/account|notify|traffic
@@ -34,7 +34,7 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun options
 │   │   └── SingBoxConfigBuilder.swift # Sing-box JSON TUN
 │   ├── Services/
-│   │   ├── AppState.swift             # UI state, auth, servers, toggle VPN
+│   │   ├── AppState.swift             # UI state, auth, servers, account/traffic, toggle VPN
 │   │   ├── AuthSessionStore.swift     # UserDefaults session + auth orchestration
 │   │   ├── AppLanguage.swift          # open system per-app language settings
 │   │   ├── VpnControlling.swift       # connect/disconnect API
@@ -88,7 +88,7 @@ DemarVPN/                              # SwiftUI target
         ├── LegalDocumentView.swift    # MarkdownUI viewer
         └── CustomEgressProbes.swift   # свои хосты зондов
 
-DemarVPNTests/                         # unit tests (Sing-box, servers/account parse, interface, legal docs)
+DemarVPNTests/                         # unit tests (Sing-box, servers/account parse, DemarHttp control hosts, interface, legal docs)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка

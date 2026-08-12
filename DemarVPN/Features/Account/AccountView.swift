@@ -7,9 +7,6 @@ struct AccountView: View {
     var onNeedSignIn: (() -> Void)?
 
     @State private var signingOut = false
-    @State private var account: VpnAccount?
-    @State private var traffic: VpnTraffic?
-    @State private var loading = false
     @State private var notifyBusy = false
     @State private var showTraffic = false
     @State private var showNotify = false
@@ -17,6 +14,10 @@ struct AccountView: View {
 
     private let familySlots = 4
     private let familyOccupied = 3
+
+    private var account: VpnAccount? { appState.vpnAccount }
+    private var traffic: VpnTraffic? { appState.vpnTraffic }
+    private var loading: Bool { appState.accountLoading }
 
     var body: some View {
         Group {
@@ -35,7 +36,6 @@ struct AccountView: View {
                     .padding(.bottom, 20)
                 }
                 .demarScrollScreen()
-                .task(id: loadTaskId) { await loadAccountData() }
             } else {
                 Color.clear
             }
@@ -56,11 +56,6 @@ struct AccountView: View {
         #if os(iOS)
         .demarNavigationRoot(backHistoryLabel: String(localized: "Account"))
         #endif
-    }
-
-    private var loadTaskId: String {
-        guard isActive, let s = appState.authSession else { return "" }
-        return "\(s.userId)|\(s.loginAt)"
     }
 
     private var soon: () -> Void {
@@ -375,62 +370,10 @@ struct AccountView: View {
             defer { signingOut = false }
             do {
                 try await appState.signOut()
-                account = nil
-                traffic = nil
                 snackBar.showInfo(String(localized: "You signed out"))
             } catch {
                 snackBar.showError(String(localized: "Couldn’t sign out. Try again"))
             }
-        }
-    }
-
-    private func loadAccountData() async {
-        guard let session = appState.authSession else {
-            account = nil
-            traffic = nil
-            return
-        }
-        loading = true
-        defer { loading = false }
-
-        if session.isLocalDemo {
-            let local = LocalDemoAccount.vpnAccount()
-            account = local
-            traffic = LocalDemoAccount.vpnTraffic()
-            AuthSessionStore.updateVpnProfile(local.vpnSubscription, local.vpnExpiresAt)
-            appState.authSession = AuthSessionStore.session
-            return
-        }
-
-        async let aRes: Result<VpnAccount, Error> = {
-            do { return .success(try await VpnAccountApi.fetchAccount(userId: session.userId, loginAt: session.loginAt)) }
-            catch { return .failure(error) }
-        }()
-        async let tRes: Result<VpnTraffic, Error> = {
-            do { return .success(try await VpnAccountApi.fetchTraffic(userId: session.userId, loginAt: session.loginAt)) }
-            catch { return .failure(error) }
-        }()
-        let (accountResult, trafficResult) = await (aRes, tRes)
-
-        if case .success(let a) = accountResult {
-            account = a
-            AuthSessionStore.updateVpnProfile(a.vpnSubscription, a.vpnExpiresAt)
-            appState.authSession = AuthSessionStore.session
-        }
-        if case .success(let t) = trafficResult {
-            traffic = t
-        }
-
-        let err = accountResult.failure ?? trafficResult.failure
-        if let e = err as? DemarAPIError, e.isSessionInvalid {
-            await appState.forceLocalSignOut()
-            account = nil
-            traffic = nil
-            return
-        }
-        if let err {
-            AppLog.shared.append("[account] load failed — \(err.localizedDescription)")
-            snackBar.showError(String(localized: "Couldn’t load account"))
         }
     }
 
@@ -443,10 +386,10 @@ struct AccountView: View {
             vpnExpiresAt: cur.vpnExpiresAt
         )
         if session.isLocalDemo {
-            account = next
+            appState.vpnAccount = next
             return
         }
-        account = next
+        appState.vpnAccount = next
         notifyBusy = true
         Task {
             defer { notifyBusy = false }
@@ -457,16 +400,16 @@ struct AccountView: View {
                     notifyNews: news,
                     notifyImportant: important
                 )
-                if var a = account {
+                if var a = appState.vpnAccount {
                     a.notifyNews = updated.notifyNews
                     a.notifyImportant = updated.notifyImportant
-                    account = a
+                    appState.vpnAccount = a
                 }
             } catch let e as DemarAPIError where e.isSessionInvalid {
-                account = cur
+                appState.vpnAccount = cur
                 await appState.forceLocalSignOut()
             } catch {
-                account = cur
+                appState.vpnAccount = cur
                 snackBar.showError(String(localized: "Couldn’t update notifications"))
             }
         }
@@ -515,12 +458,5 @@ struct AccountView: View {
             return String(localized: "in %d days")
         }
         return String(localized: days == 1 ? "in %d day" : "in %d days")
-    }
-}
-
-private extension Result where Failure == Error {
-    var failure: Error? {
-        if case .failure(let e) = self { return e }
-        return nil
     }
 }
