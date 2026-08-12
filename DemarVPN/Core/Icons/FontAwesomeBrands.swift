@@ -10,8 +10,7 @@ enum FontAwesomeBrands {
         ("\u{e61b}", URL(string: "https://x.com/demargames")!),
         ("\u{e671}", URL(string: "https://bsky.app/profile/demargames.bsky.social")!),
         ("\u{f16d}", URL(string: "https://www.instagram.com/demargames/")!),
-        ("\u{f09a}", URL(string: "https://www.facebook.com/demargames")!),
-        ("\u{f1a1}", URL(string: "https://reddit.com/r/demargames")!),
+        ("\u{e07b}", URL(string: "https://www.tiktok.com/@demargames")!),
         ("\u{f2c6}", URL(string: "https://t.me/demargames")!),
     ]
 

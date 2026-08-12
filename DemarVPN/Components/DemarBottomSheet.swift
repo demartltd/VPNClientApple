@@ -69,9 +69,10 @@ private struct DemarSheetChromeModifier: ViewModifier {
             content
         }
         .padding(.horizontal, horizontalPadding)
-        .padding(.bottom, bottomPadding)
         #if os(macOS)
-        .padding(.top, 16)
+        .padding(.vertical, 16)
+        #else
+        .padding(.bottom, bottomPadding)
         #endif
         .frame(maxWidth: .infinity, alignment: .top)
         .background(Color.demarSurface)

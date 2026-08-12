@@ -220,7 +220,7 @@
 		F10000010000000000000016 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F10000010000000000000017 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F10000010000000000000018 /* DemarVPN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DemarVPN.entitlements; sourceTree = "<group>"; };
-		F10000010000000000000019 /* DemarVPN.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DemarVPN.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F10000010000000000000019 /* Demar Proxy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Demar Proxy.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1000001000000000000001A /* DemarCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarCardRow.swift; sourceTree = "<group>"; };
 		F1000001000000000000001B /* FontAwesomeBrands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontAwesomeBrands.swift; sourceTree = "<group>"; };
 		F1000001000000000000001C /* fa-brands-400.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "fa-brands-400.ttf"; sourceTree = "<group>"; };
@@ -346,7 +346,7 @@
 		G10000010000000000000003 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F10000010000000000000019 /* DemarVPN.app */,
+				F10000010000000000000019 /* Demar Proxy.app */,
 				F40000021CF9000F007C117D /* DemarVPNTests.xctest */,
 				E20000021CF9000F007C117D /* DemarPacketTunnel.appex */,
 				E30000011CF9000F007C117D /* DemarControls.appex */,
@@ -666,7 +666,7 @@
 				P10000010000000000000046 /* MarkdownUI */,
 			);
 			productName = DemarVPN;
-			productReference = F10000010000000000000019 /* DemarVPN.app */;
+			productReference = F10000010000000000000019 /* Demar Proxy.app */;
 			productType = "com.apple.product-type.application";
 		};
 		T20000011CF9000F007C117D /* DemarPacketTunnel */ = {
@@ -1116,7 +1116,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.demar.adblock;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "Demar Proxy";
 				REGISTER_APP_GROUPS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
@@ -1153,7 +1153,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.demar.adblock;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "Demar Proxy";
 				REGISTER_APP_GROUPS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
@@ -1332,7 +1332,7 @@
 				SDKROOT = macosx;
 				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DemarVPN.app/Contents/MacOS/DemarVPN";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Demar Proxy.app/Contents/MacOS/Demar Proxy";
 			};
 			name = Debug;
 		};
@@ -1356,7 +1356,7 @@
 				SDKROOT = macosx;
 				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DemarVPN.app/Contents/MacOS/DemarVPN";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Demar Proxy.app/Contents/MacOS/Demar Proxy";
 			};
 			name = Release;
 		};

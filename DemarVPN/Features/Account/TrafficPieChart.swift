@@ -132,7 +132,7 @@ private struct AnimatedPieRing: View, Animatable {
     }
 }
 
-/// Minimal wrapping row (Android FlowRow).
+/// Minimal wrapping row (Android FlowRow), rows centered.
 private struct FlowLayout: Layout {
     var spacing: CGFloat
     var lineSpacing: CGFloat
@@ -149,23 +149,31 @@ private struct FlowLayout: Layout {
     }
 
     private func layout(_ width: CGFloat, _ subviews: Subviews) -> (size: CGSize, origins: [CGPoint]) {
-        var origins: [CGPoint] = []
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var rowH: CGFloat = 0
-        var maxX: CGFloat = 0
-        for sub in subviews {
+        var rows: [[(Int, CGSize)]] = [[]]
+        var rowW: [CGFloat] = [0]
+        for (i, sub) in subviews.enumerated() {
             let s = sub.sizeThatFits(.unspecified)
-            if x > 0, x + s.width > width {
-                x = 0
-                y += rowH + lineSpacing
-                rowH = 0
+            let r = rows.count - 1
+            if rowW[r] > 0, rowW[r] + spacing + s.width > width {
+                rows.append([(i, s)])
+                rowW.append(s.width)
+            } else {
+                rows[r].append((i, s))
+                rowW[r] += (rowW[r] > 0 ? spacing : 0) + s.width
             }
-            origins.append(CGPoint(x: x, y: y))
-            rowH = max(rowH, s.height)
-            x += s.width + spacing
-            maxX = max(maxX, x - spacing)
         }
-        return (CGSize(width: max(maxX, width), height: y + rowH), origins)
+        var origins = Array(repeating: CGPoint.zero, count: subviews.count)
+        var y: CGFloat = 0
+        for (r, row) in rows.enumerated() {
+            var x = max(0, (width - rowW[r]) / 2)
+            var h: CGFloat = 0
+            for (i, s) in row {
+                origins[i] = CGPoint(x: x, y: y)
+                h = max(h, s.height)
+                x += s.width + spacing
+            }
+            y += h + (r + 1 < rows.count ? lineSpacing : 0)
+        }
+        return (CGSize(width: width, height: y), origins)
     }
 }

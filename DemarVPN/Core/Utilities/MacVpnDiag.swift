@@ -271,7 +271,7 @@ enum MacVpnDiag {
             for entry in entries where entry.lastPathComponent.hasPrefix("DemarVPN-") {
                 for config in ["Debug", "Release"] as [String] {
                     let candidate = entry
-                        .appendingPathComponent("Build/Products/\(config)/DemarVPN.app/Contents/PlugIns/DemarPacketTunnel.appex")
+                        .appendingPathComponent("Build/Products/\(config)/Demar Proxy.app/Contents/PlugIns/DemarPacketTunnel.appex")
                         .path
                     if candidate != current, FileManager.default.fileExists(atPath: candidate) {
                         paths.insert(candidate)

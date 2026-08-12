@@ -342,12 +342,17 @@ struct AccountView: View {
     }
 
     private func notifyRow(_ label: String, _ checked: Bool, onChange: @escaping (Bool) -> Void) -> some View {
-        Toggle(isOn: Binding(get: { checked }, set: onChange)) {
+        HStack {
             Text(label)
                 .font(.demarBodyMedium)
                 .foregroundStyle(Color.demarOnSurface)
+            Spacer(minLength: 8)
+            Toggle("", isOn: Binding(get: { checked }, set: onChange))
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .tint(Color.demarPrimary)
+                .accessibilityLabel(label)
         }
-        .tint(Color.demarPrimary)
         .disabled(notifyBusy)
         .padding(.vertical, 4)
     }
