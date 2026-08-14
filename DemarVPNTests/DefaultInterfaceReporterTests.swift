@@ -1,5 +1,5 @@
 import XCTest
-@testable import DemarVPN
+@testable import Demar_Proxy
 
 final class DefaultInterfaceReporterTests: XCTestCase {
     private let en0 = DefaultInterfaceUpdate(name: "en0", index: 14, isExpensive: false, isConstrained: false)

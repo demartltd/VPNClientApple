@@ -19,6 +19,9 @@ final class AppState {
     var isRefreshingServers = false
     var serversLoading = false
     var serversError: String?
+    var account: VpnAccount?
+    var traffic: VpnTraffic?
+    var accountLoading = false
     var vpnState: VpnConnectionState = .disconnected
     var downloadBps: Double = 0
     var uploadBps: Double = 0
@@ -26,7 +29,7 @@ final class AppState {
     /// Bumped after OAuth deep-link handoff so UI can navigate to return tab.
     var authCallbackTick: Int = 0
 
-    var appVersionLabel: String = "1.0.5"
+    var appVersionLabel: String = "1.0.6"
     var appVersionDetailLabel: String {
         "\(appVersionLabel) (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"))"
     }
@@ -41,8 +44,17 @@ final class AppState {
     #endif
 
     init(vpn: VpnControlling? = nil) {
-        authSession = AuthSessionStore.session
-        selectedServer = nil
+        let session = AuthSessionStore.session
+        authSession = session
+        if let session, let cached = SessionCacheStore.load(userId: session.userId) {
+            servers = cached.servers
+            selectedServer = Self.restoreSelectedServer(from: cached.servers)
+            account = cached.account
+            traffic = cached.traffic
+            AppLog.shared.append("[session] restored cache (servers=\(cached.servers.count))")
+        } else {
+            selectedServer = nil
+        }
         if let bundleVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
             appVersionLabel = bundleVersion
         }
@@ -79,7 +91,7 @@ final class AppState {
         _ = await AuthSessionStore.refreshSession()
         authSession = AuthSessionStore.session
         if isSignedIn {
-            await refreshServers()
+            await refreshSessionData()
         } else {
             await applyLocalSignOut()
         }
@@ -87,7 +99,7 @@ final class AppState {
 
     func onAuthSuccess() async {
         authSession = AuthSessionStore.session
-        await refreshServers()
+        await refreshSessionData()
     }
 
     func consumeAuthCallback(_ url: URL) async {
@@ -123,7 +135,9 @@ final class AppState {
 
     private func applyLocalSignOut() async {
         authSession = nil
+        SessionCacheStore.clear()
         clearServers()
+        clearAccount()
         await revokeVpnAccess()
     }
 
@@ -149,18 +163,97 @@ final class AppState {
         #endif
     }
 
+    /// Servers + account — app start, sign-in, servers pull-to-refresh.
+    func refreshSessionData() async {
+        async let servers: Void = refreshServers()
+        async let account: Void = refreshAccount()
+        _ = await (servers, account)
+    }
+
+    func refreshAccount() async {
+        guard let session = AuthSessionStore.session else {
+            clearAccount()
+            return
+        }
+        guard !accountLoading else { return }
+        accountLoading = true
+        defer { accountLoading = false }
+
+        if session.isLocalDemo {
+            let local = LocalDemoAccount.vpnAccount()
+            account = local
+            traffic = LocalDemoAccount.vpnTraffic()
+            AuthSessionStore.updateVpnProfile(local.vpnSubscription, local.vpnExpiresAt)
+            authSession = AuthSessionStore.session
+            SessionCacheStore.saveAccount(local, userId: session.userId)
+            SessionCacheStore.saveTraffic(LocalDemoAccount.vpnTraffic(), userId: session.userId)
+            AppLog.shared.append("[account] loaded (local demo)")
+            return
+        }
+
+        async let aRes: Result<VpnAccount, Error> = {
+            do { return .success(try await VpnAccountApi.fetchAccount(userId: session.userId, loginAt: session.loginAt)) }
+            catch { return .failure(error) }
+        }()
+        async let tRes: Result<VpnTraffic, Error> = {
+            do { return .success(try await VpnAccountApi.fetchTraffic(userId: session.userId, loginAt: session.loginAt)) }
+            catch { return .failure(error) }
+        }()
+        let (accountResult, trafficResult) = await (aRes, tRes)
+
+        if case .success(let a) = accountResult {
+            account = a
+            AuthSessionStore.updateVpnProfile(a.vpnSubscription, a.vpnExpiresAt)
+            authSession = AuthSessionStore.session
+            SessionCacheStore.saveAccount(a, userId: session.userId)
+        }
+        if case .success(let t) = trafficResult {
+            traffic = t
+            SessionCacheStore.saveTraffic(t, userId: session.userId)
+        }
+
+        let err: Error? = switch accountResult {
+        case .failure(let e): e
+        case .success: switch trafficResult {
+            case .failure(let e): e
+            case .success: nil
+            }
+        }
+        if err is CancellationError { return }
+        if let e = err as? DemarAPIError, e.isSessionInvalid {
+            await forceLocalSignOut()
+            return
+        }
+        if let err {
+            AppLog.shared.append("[account] load failed — \(err.localizedDescription)")
+        } else {
+            AppLog.shared.append("[account] refreshed")
+        }
+    }
+
+    /// Fetch when Servers tab opens — only if list empty or prior fetch failed.
+    func refreshServersOnTabOpen() async {
+        guard isSignedIn else { return }
+        guard servers.isEmpty || serversError != nil else { return }
+        await refreshServers()
+    }
+
     func refreshServers() async {
         guard let session = AuthSessionStore.session else {
             clearServers()
             return
         }
+        guard !serversLoading else { return }
         serversLoading = true
         serversError = nil
         defer { serversLoading = false }
         do {
             let result = try await ServersApi.fetchServers(userId: session.userId, loginAt: session.loginAt)
             applyServerList(result.servers)
+            SessionCacheStore.saveServers(result.rawJson, userId: session.userId)
             AppLog.shared.append("[servers] loaded \(result.servers.count) (sub=\(result.vpnSubscription ?? "—"))")
+        } catch is CancellationError {
+            return
         } catch let e as DemarAPIError where e.isSessionInvalid {
             if session.isLocalDemo {
                 serversError = e.message.nilIfBlank ?? String(localized: "Couldn’t load servers")
@@ -180,9 +273,15 @@ final class AppState {
         guard beginServersRefresh() else { return false }
         defer { isRefreshingServers = false }
         async let sleep: Void = { try? await Task.sleep(for: minimumVisibleDuration) }()
-        await refreshServers()
+        await refreshSessionData()
         await sleep
         return !Task.isCancelled && serversError == nil
+    }
+
+    private func clearAccount() {
+        account = nil
+        traffic = nil
+        accountLoading = false
     }
 
     private func applyServerList(_ list: [ServerProfile]) {

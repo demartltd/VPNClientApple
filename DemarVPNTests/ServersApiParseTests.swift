@@ -1,7 +1,13 @@
 import XCTest
-@testable import DemarVPN
+@testable import Demar_Proxy
 
 final class ServersApiParseTests: XCTestCase {
+    func testValidateParsedCountRejectsEmptyParse() throws {
+        XCTAssertThrowsError(try ServersApi.validateParsedCount(rawCount: 3, parsedCount: 0))
+        try ServersApi.validateParsedCount(rawCount: 0, parsedCount: 0)
+        try ServersApi.validateParsedCount(rawCount: 2, parsedCount: 2)
+    }
+
     func testParseHysteria2WithAlpnAndObfs() throws {
         let config: [String: Any] = [
             "outbounds": [

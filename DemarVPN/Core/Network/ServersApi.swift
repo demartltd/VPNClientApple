@@ -4,6 +4,7 @@ struct ServersListResult: Sendable {
     let vpnSubscription: String?
     let vpnExpiresAt: String?
     let servers: [ServerProfile]
+    let rawJson: [String: Any]
 }
 
 enum ServersApi {
@@ -12,24 +13,36 @@ enum ServersApi {
             AuthApi.vpnAPIBaseURL.appendingPathComponent("vpn/servers"),
             body: ["userId": userId, "loginAt": loginAt]
         )
+        let result = try parseServersResponse(json)
+        let rawCount = (json["servers"] as? [[String: Any]])?.count ?? 0
+        await MainActor.run {
+            AppLog.shared.append("[servers] raw=\(rawCount) parsed=\(result.servers.count)")
+        }
+        return result
+    }
+
+    static func parseServersResponse(_ json: [String: Any]) throws -> ServersListResult {
         let arr = json["servers"] as? [[String: Any]] ?? []
         var profiles: [ServerProfile] = []
         for item in arr {
             if let p = parseServerItem(item) {
                 profiles.append(p)
-            } else {
-                let proto = item["protocol"] as? String ?? "?"
-                let name = item["name"] as? String ?? "?"
-                await MainActor.run {
-                    AppLog.shared.append("[servers] skip unsupported protocol=\(proto) name=\(name)")
-                }
             }
         }
+        let rawCount = arr.count
+        try validateParsedCount(rawCount: rawCount, parsedCount: profiles.count)
         return ServersListResult(
             vpnSubscription: (json["vpnSubscription"] as? String)?.nilIfBlank,
             vpnExpiresAt: (json["vpnExpiresAt"] as? String)?.nilIfBlank,
-            servers: profiles
+            servers: profiles,
+            rawJson: json
         )
+    }
+
+    static func validateParsedCount(rawCount: Int, parsedCount: Int) throws {
+        if rawCount > 0 && parsedCount == 0 {
+            throw DemarAPIError(message: "No supported servers in response", statusCode: 0, retryAfterSeconds: nil, hint: nil)
+        }
     }
 
     /// Pure helper for unit tests — no network.

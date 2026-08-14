@@ -1,6 +1,6 @@
 import XCTest
 import NetworkExtension
-@testable import DemarVPN
+@testable import Demar_Proxy
 
 final class TunBypassCidrsTests: XCTestCase {
     func testIPv4RouteFromCidr() throws {

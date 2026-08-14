@@ -1,5 +1,5 @@
 import XCTest
-@testable import DemarVPN
+@testable import Demar_Proxy
 
 final class VpnStabilityTests: XCTestCase {
     func testSharedLineFileAppendsWithoutImmediateCompaction() throws {

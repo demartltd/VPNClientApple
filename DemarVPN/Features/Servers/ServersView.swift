@@ -19,8 +19,8 @@ struct ServersView: View {
         .task(id: isActive) {
             guard isActive else { return }
             selectedProtocol = appState.selectedServer?.serverProtocol ?? .hysteria2
-            if appState.isSignedIn, appState.servers.isEmpty, !appState.serversLoading {
-                await appState.refreshServers()
+            if appState.isSignedIn {
+                await appState.refreshServersOnTabOpen()
             }
         }
         .onChange(of: appState.selectedServer?.id) { _, _ in
