@@ -5,7 +5,7 @@ struct DemarVPNApp: App {
     @State private var appState = AppState()
     @State private var snackBar = SnackBarController()
 
-    init() {
+    init() {    
         // Apply stored AppleLanguages before UI reads Bundle localizations.
         _ = AppLanguage.shared
         FontAwesomeBrands.register()

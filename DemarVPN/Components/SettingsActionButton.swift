@@ -6,6 +6,7 @@ struct SettingsActionButton<Extra: View>: View {
     let subtitle: String
     var danger: Bool
     var showsChevron: Bool
+    var unread: Bool
     let action: () -> Void
     @ViewBuilder var extra: () -> Extra
 
@@ -15,6 +16,7 @@ struct SettingsActionButton<Extra: View>: View {
         subtitle: String,
         danger: Bool = false,
         showsChevron: Bool = false,
+        unread: Bool = false,
         action: @escaping () -> Void,
         @ViewBuilder extra: @escaping () -> Extra
     ) {
@@ -23,6 +25,7 @@ struct SettingsActionButton<Extra: View>: View {
         self.subtitle = subtitle
         self.danger = danger
         self.showsChevron = showsChevron
+        self.unread = unread
         self.action = action
         self.extra = extra
     }
@@ -43,10 +46,17 @@ struct SettingsActionButton<Extra: View>: View {
                     )
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.demarTitleMedium)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.demarOnSurface)
+                    HStack(spacing: 8) {
+                        if unread {
+                            Circle()
+                                .fill(Color.demarPrimary)
+                                .frame(width: 8, height: 8)
+                        }
+                        Text(title)
+                            .font(.demarTitleMedium)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Color.demarOnSurface)
+                    }
                     Text(subtitle)
                         .font(.demarBodySmall)
                         .foregroundStyle(Color.demarOnSurfaceVariant)
@@ -82,6 +92,7 @@ extension SettingsActionButton where Extra == EmptyView {
         subtitle: String,
         danger: Bool = false,
         showsChevron: Bool = false,
+        unread: Bool = false,
         action: @escaping () -> Void
     ) {
         self.init(
@@ -90,6 +101,7 @@ extension SettingsActionButton where Extra == EmptyView {
             subtitle: subtitle,
             danger: danger,
             showsChevron: showsChevron,
+            unread: unread,
             action: action,
             extra: { EmptyView() }
         )

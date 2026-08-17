@@ -80,6 +80,7 @@ private struct DemarDetailNavTitle: ViewModifier {
                     Text(title)
                         .font(.headline)
                         .opacity(showTitle ? 1 : 0)
+                        .animation(.easeInOut(duration: 0.18), value: showTitle)
                 }
             }
             .overlay(alignment: .top) {
@@ -99,7 +100,6 @@ private struct DemarDetailNavTitle: ViewModifier {
                 guard showTitle != show else { return }
                 showTitle = show
             }
-            .animation(.easeInOut(duration: 0.18), value: showTitle)
     }
 }
 #endif

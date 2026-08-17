@@ -136,6 +136,7 @@ final class AppState {
     private func applyLocalSignOut() async {
         authSession = nil
         SessionCacheStore.clear()
+        SupportStore.clearOnSignOut()
         clearServers()
         clearAccount()
         await revokeVpnAccess()
@@ -167,7 +168,16 @@ final class AppState {
     func refreshSessionData() async {
         async let servers: Void = refreshServers()
         async let account: Void = refreshAccount()
-        _ = await (servers, account)
+        async let unread: Void = refreshSupportUnread()
+        _ = await (servers, account, unread)
+    }
+
+    private func refreshSupportUnread() async {
+        guard let session = AuthSessionStore.session else {
+            SupportUnreadStore.shared.clear()
+            return
+        }
+        await SupportUnreadStore.shared.refresh(session: session)
     }
 
     func refreshAccount() async {

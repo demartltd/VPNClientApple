@@ -69,6 +69,14 @@
 		B10000010000000000000051 /* AuthApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000051 /* AuthApi.swift */; };
 		B10000010000000000000052 /* ServersApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000052 /* ServersApi.swift */; };
 		B10000010000000000000055 /* VpnAccountApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000055 /* VpnAccountApi.swift */; };
+		B10000010000000000000056 /* SupportApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000056 /* SupportApi.swift */; };
+		B10000010000000000000057 /* SupportStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000057 /* SupportStore.swift */; };
+		B10000010000000000000058 /* SupportScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000058 /* SupportScreen.swift */; };
+		B10000010000000000000059 /* SupportAttach.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000059 /* SupportAttach.swift */; };
+		B1000001000000000000005B /* SupportChatPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005B /* SupportChatPane.swift */; };
+		B1000001000000000000005C /* SupportComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005C /* SupportComposer.swift */; };
+		B1000001000000000000005D /* SupportBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005D /* SupportBubble.swift */; };
+		B1000001000000000000005E /* SupportHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005E /* SupportHelpers.swift */; };
 		B10000010000000000000053 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000053 /* AuthSessionStore.swift */; };
 		B1000001000000000000005A /* SessionCacheStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005A /* SessionCacheStore.swift */; };
 		B10000010000000000000054 /* LoginSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000054 /* LoginSheet.swift */; };
@@ -253,6 +261,14 @@
 		F10000010000000000000051 /* AuthApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthApi.swift; sourceTree = "<group>"; };
 		F10000010000000000000052 /* ServersApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersApi.swift; sourceTree = "<group>"; };
 		F10000010000000000000055 /* VpnAccountApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnAccountApi.swift; sourceTree = "<group>"; };
+		F10000010000000000000056 /* SupportApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportApi.swift; sourceTree = "<group>"; };
+		F10000010000000000000057 /* SupportStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportStore.swift; sourceTree = "<group>"; };
+		F10000010000000000000058 /* SupportScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportScreen.swift; sourceTree = "<group>"; };
+		F10000010000000000000059 /* SupportAttach.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportAttach.swift; sourceTree = "<group>"; };
+		F1000001000000000000005B /* SupportChatPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportChatPane.swift; sourceTree = "<group>"; };
+		F1000001000000000000005C /* SupportComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportComposer.swift; sourceTree = "<group>"; };
+		F1000001000000000000005D /* SupportBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportBubble.swift; sourceTree = "<group>"; };
+		F1000001000000000000005E /* SupportHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportHelpers.swift; sourceTree = "<group>"; };
 		F10000010000000000000053 /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
 		F1000001000000000000005A /* SessionCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCacheStore.swift; sourceTree = "<group>"; };
 		F10000010000000000000054 /* LoginSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginSheet.swift; sourceTree = "<group>"; };
@@ -425,6 +441,7 @@
 				F1000001000000000000000A /* AppState.swift */,
 				F10000010000000000000053 /* AuthSessionStore.swift */,
 				F1000001000000000000005A /* SessionCacheStore.swift */,
+				F10000010000000000000057 /* SupportStore.swift */,
 				F10000010000000000000029 /* VpnControlling.swift */,
 				F10000010000000000000034 /* NativeVpnService.swift */,
 				F1000001000000000000002B /* VpnStatusMonitor.swift */,
@@ -472,8 +489,22 @@
 				F10000010000000000000039 /* CustomEgressProbes.swift */,
 				F10000010000000000000044 /* DocumentsMenuSheet.swift */,
 				F10000010000000000000045 /* LegalDocumentView.swift */,
+				G10000010000000000000016 /* Support */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		G10000010000000000000016 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				F10000010000000000000058 /* SupportScreen.swift */,
+				F1000001000000000000005B /* SupportChatPane.swift */,
+				F1000001000000000000005C /* SupportComposer.swift */,
+				F1000001000000000000005D /* SupportBubble.swift */,
+				F10000010000000000000059 /* SupportAttach.swift */,
+				F1000001000000000000005E /* SupportHelpers.swift */,
+			);
+			path = Support;
 			sourceTree = "<group>";
 		};
 		G1000001000000000000000E /* Icons */ = {
@@ -532,6 +563,7 @@
 				F10000010000000000000051 /* AuthApi.swift */,
 				F10000010000000000000052 /* ServersApi.swift */,
 				F10000010000000000000055 /* VpnAccountApi.swift */,
+				F10000010000000000000056 /* SupportApi.swift */,
 				F10000010000000000000035 /* PublicEgressDiagnostics.swift */,
 				F10000010000000000000043 /* LegalDocuments.swift */,
 			);
@@ -896,6 +928,14 @@
 				B10000010000000000000051 /* AuthApi.swift in Sources */,
 				B10000010000000000000052 /* ServersApi.swift in Sources */,
 				B10000010000000000000055 /* VpnAccountApi.swift in Sources */,
+				B10000010000000000000056 /* SupportApi.swift in Sources */,
+				B10000010000000000000057 /* SupportStore.swift in Sources */,
+				B10000010000000000000058 /* SupportScreen.swift in Sources */,
+				B1000001000000000000005B /* SupportChatPane.swift in Sources */,
+				B1000001000000000000005C /* SupportComposer.swift in Sources */,
+				B1000001000000000000005D /* SupportBubble.swift in Sources */,
+				B10000010000000000000059 /* SupportAttach.swift in Sources */,
+				B1000001000000000000005E /* SupportHelpers.swift in Sources */,
 				B10000010000000000000053 /* AuthSessionStore.swift in Sources */,
 				B1000001000000000000005A /* SessionCacheStore.swift in Sources */,
 				B10000010000000000000054 /* LoginSheet.swift in Sources */,

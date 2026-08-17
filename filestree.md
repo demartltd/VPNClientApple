@@ -26,6 +26,7 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── AuthApi.swift              # auth.example.invalid / account.example.invalid auth
 │   │   ├── ServersApi.swift           # POST vpn.example.invalid/vpn/servers → profiles
 │   │   ├── VpnAccountApi.swift        # POST /vpn/account|notify|traffic
+│   │   ├── SupportApi.swift           # csauth.example.invalid tickets / themes / media
 │   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
 │   │   └── LegalDocuments.swift       # ToS/PP raw GitHub Markdown fetch
 │   ├── Vpn/
@@ -36,6 +37,8 @@ DemarVPN/                              # SwiftUI target
 │   ├── Services/
 │   │   ├── AppState.swift             # UI state, auth, servers, toggle VPN
 │   │   ├── AuthSessionStore.swift     # UserDefaults session + auth orchestration
+│   │   ├── SessionCacheStore.swift    # servers/account disk cache
+│   │   ├── SupportStore.swift         # ticket cache + unread badge
 │   │   ├── AppLanguage.swift          # open system per-app language settings
 │   │   ├── VpnControlling.swift       # connect/disconnect API
 │   │   ├── NativeVpnService.swift     # → VpnTunnelController
@@ -47,7 +50,7 @@ DemarVPN/                              # SwiftUI target
 │       ├── ThroughputFormatter.swift  # KB/s
 │       ├── PlatformServices.swift     # pasteboard, haptic
 │       ├── MacVpnDiag.swift            # pluginkit, NE preflight
-│       ├── AppPlatform.swift          # «iOS» / «macOS»
+│       ├── AppPlatform.swift          # «iOS» / «macOS» + supportChannel
 │       ├── BundledCoreVersion.swift    # версия core из bundle
 │       └── DemarNavigation.swift      # секции + demarDetailNavigationTitle (iOS scroll title)
 │
@@ -56,7 +59,7 @@ DemarVPN/                              # SwiftUI target
 │   ├── DemarCardRow.swift             # demarScrollScreen
 │   ├── DemarKvRow.swift               # key / value
 │   ├── VpnMainToggle.swift            # кнопка VPN
-│   ├── SettingsActionButton.swift     # кнопка в настройках
+│   ├── SettingsActionButton.swift     # кнопка в настройках (+ unread)
 │   ├── DemarBottomSheet.swift         # единый bottom sheet (iOS sheet / macOS overlay)
 │   ├── SettingsLinksStrip.swift       # соцссылки
 │   ├── DemarSnackBar.swift            # тосты
@@ -86,7 +89,14 @@ DemarVPN/                              # SwiftUI target
         ├── ServiceMenuView.swift      # служебное меню
         ├── DocumentsMenuSheet.swift   # ToS/PP через demarBottomSheet
         ├── LegalDocumentView.swift    # MarkdownUI viewer
-        └── CustomEgressProbes.swift   # свои хосты зондов
+        ├── CustomEgressProbes.swift   # свои хосты зондов
+        └── Support/
+            ├── SupportScreen.swift    # ticket list / draft entry
+            ├── SupportChatPane.swift  # chat + polling / send
+            ├── SupportComposer.swift  # input bar + glass chrome
+            ├── SupportBubble.swift    # message bubble / album / menu
+            ├── SupportAttach.swift    # gallery photo ingest / JPEG compress
+            └── SupportHelpers.swift   # errors, time, linkify
 
 DemarVPNTests/                         # unit tests (Sing-box, servers/account parse, interface, legal docs)
 DemarVPN.xcodeproj/                    # app + tunnel + controls

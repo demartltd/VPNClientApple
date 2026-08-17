@@ -11,6 +11,11 @@ struct DemarAPIError: Error, LocalizedError {
 
     var errorDescription: String? { message }
     var isSessionInvalid: Bool { statusCode == 401 }
+    var isNotFound: Bool { statusCode == 404 }
+    var isMediaTooLarge: Bool {
+        statusCode == 413 || message.localizedCaseInsensitiveContains("too large")
+    }
+    var isChannelMismatch: Bool { message == "ticket_channel_mismatch" }
 }
 
 enum DemarHttp {
@@ -24,6 +29,14 @@ enum DemarHttp {
         return URLSession(configuration: cfg)
     }()
 
+    static let mediaSession: URLSession = {
+        let cfg = URLSessionConfiguration.ephemeral
+        cfg.waitsForConnectivity = false
+        cfg.timeoutIntervalForRequest = 180
+        cfg.timeoutIntervalForResource = 180
+        return URLSession(configuration: cfg)
+    }()
+
     /// e.g. `iPhone (18.0) - DemarVPN (1.0.2) (iOS)` — ASCII, max 120.
     static var userAgent: String {
         let model = sanitize(deviceModel(), allowSpace: true, fallback: "Apple")
@@ -32,13 +45,27 @@ enum DemarHttp {
         return "\(model) (\(os)) - DemarVPN (\(ver)) (\(AppPlatform.label))".prefix(120).description
     }
 
-    static func postJSON(_ url: URL, body: [String: Any]) async throws -> [String: Any] {
+    static func postJSON(_ url: URL, body: [String: Any], media: Bool = false) async throws -> [String: Any] {
+        // Build payload off the main actor — multi‑MB base64 freezes UI otherwise.
+        let payload = try await Task.detached(priority: .userInitiated) {
+            try JSONSerialization.data(withJSONObject: body)
+        }.value
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
         applyCommonHeaders(&req)
+        req.httpBody = payload
+        req.setValue("\(payload.count)", forHTTPHeaderField: "Content-Length")
+        return try await decodeJSON(req, media: media)
+    }
+
+    static func patchJSON(_ url: URL, body: [String: Any]) async throws -> [String: Any] {
+        var req = URLRequest(url: url)
+        req.httpMethod = "PATCH"
+        req.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        applyCommonHeaders(&req)
         req.httpBody = try JSONSerialization.data(withJSONObject: body)
-        return try await decodeJSON(req)
+        return try await decodeJSON(req, media: false)
     }
 
     static func getJSON(_ url: URL, bearer: String? = nil) async throws -> [String: Any] {
@@ -46,24 +73,48 @@ enum DemarHttp {
         req.httpMethod = "GET"
         applyCommonHeaders(&req)
         if let bearer { req.setValue("Bearer \(bearer)", forHTTPHeaderField: "Authorization") }
-        return try await decodeJSON(req)
+        return try await decodeJSON(req, media: false)
     }
 
-    private static func applyCommonHeaders(_ req: inout URLRequest) {
+    static func getData(_ url: URL, accept: String = "*/*") async throws -> Data {
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        req.setValue(accept, forHTTPHeaderField: "Accept")
+        req.setValue(clientID, forHTTPHeaderField: "X-Demar-Client")
+        req.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        let (data, response) = try await mediaSession.data(for: req)
+        let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+        guard (200...299).contains(code) else {
+            let msg = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
+            throw DemarAPIError(
+                message: msg?.nilIfBlank ?? "HTTP \(code)",
+                statusCode: code,
+                retryAfterSeconds: nil,
+                hint: nil
+            )
+        }
+        return data
+    }
+
+    static func applyCommonHeaders(_ req: inout URLRequest) {
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         req.setValue(clientID, forHTTPHeaderField: "X-Demar-Client")
         req.setValue(userAgent, forHTTPHeaderField: "User-Agent")
     }
 
-    private static func decodeJSON(_ req: URLRequest) async throws -> [String: Any] {
-        let (data, response) = try await session.data(for: req)
+    private static func decodeJSON(_ req: URLRequest, media: Bool) async throws -> [String: Any] {
+        let sess = media ? mediaSession : session
+        let (data, response) = try await sess.data(for: req)
         let code = (response as? HTTPURLResponse)?.statusCode ?? -1
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
         guard (200...299).contains(code) else {
             let msg = (json["error"] as? String)?.nilIfBlank ?? "HTTP \(code)"
-            let retry = json["retryAfterSeconds"] as? Int
-            let hint = (json["hint"] as? String)?.nilIfBlank
-            throw DemarAPIError(message: msg, statusCode: code, retryAfterSeconds: retry, hint: hint)
+            throw DemarAPIError(
+                message: msg,
+                statusCode: code,
+                retryAfterSeconds: json["retryAfterSeconds"] as? Int,
+                hint: (json["hint"] as? String)?.nilIfBlank
+            )
         }
         return json
     }

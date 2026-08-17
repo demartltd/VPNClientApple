@@ -151,7 +151,12 @@ struct ContentView: View {
                     onNeedSignIn: { openLogin(returnTo: .servers) }
                 )
             case .settings:
-                SettingsView(appState: appState, isActive: active, snackBar: snackBar)
+                SettingsView(
+                    appState: appState,
+                    isActive: active,
+                    snackBar: snackBar,
+                    onNeedSignIn: { openLogin(returnTo: .settings) }
+                )
             case .account:
                 AccountView(
                     appState: appState,

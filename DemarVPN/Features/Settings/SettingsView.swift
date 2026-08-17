@@ -4,14 +4,17 @@ struct SettingsView: View {
     @Bindable var appState: AppState
     let isActive: Bool
     var snackBar: SnackBarController
+    var onNeedSignIn: (() -> Void)?
 
     @State private var showAppSettings = false
     @State private var showServiceMenu = false
     @State private var showDocumentsMenu = false
+    @State private var showSupport = false
     @State private var pendingDocument: LegalDocument?
     @State private var openedDocument: LegalDocument?
     @State private var serviceMenuTapCount = 0
     @State private var serviceMenuTapResetTask: Task<Void, Never>?
+    @State private var supportUnread = SupportUnreadStore.shared
 
     var body: some View {
         Group {
@@ -29,6 +32,7 @@ struct SettingsView: View {
                                     systemImage: item.systemImage,
                                     title: item.title,
                                     subtitle: item.subtitle,
+                                    unread: item == .feedback && supportUnread.hasUnread,
                                     action: { perform(item) }
                                 )
                             }
@@ -45,6 +49,11 @@ struct SettingsView: View {
                 .navigationDestination(isPresented: $showAppSettings) { AppSettingsView() }
                 .navigationDestination(isPresented: $showServiceMenu) {
                     ServiceMenuView(appState: appState, snackBar: snackBar)
+                }
+                .navigationDestination(isPresented: $showSupport) {
+                    if let session = appState.authSession {
+                        SupportScreen(session: session, snackBar: snackBar)
+                    }
                 }
                 .navigationDestination(item: $openedDocument) { LegalDocumentView(document: $0) }
             } else {
@@ -70,7 +79,14 @@ struct SettingsView: View {
         switch item {
         case .appSettings: showAppSettings = true
         case .documents: showDocumentsMenu = true
-        case .invite, .feedback: snackBar.showInfo(String(localized: "Coming soon"))
+        case .feedback:
+            if appState.isSignedIn {
+                showSupport = true
+            } else {
+                onNeedSignIn?()
+            }
+        case .invite:
+            snackBar.showInfo(String(localized: "Coming soon"))
         }
     }
 
@@ -138,7 +154,7 @@ private enum SettingsMenuItem: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .appSettings: String(localized: "App settings")
-        case .feedback: String(localized: "Feedback")
+        case .feedback: String(localized: "Support")
         case .invite: String(localized: "Invite friends")
         case .documents: String(localized: "Documents")
         }
@@ -147,7 +163,7 @@ private enum SettingsMenuItem: String, CaseIterable, Identifiable {
     var subtitle: String {
         switch self {
         case .appSettings: String(localized: "Connection, diagnostics journal, and feature status")
-        case .feedback: String(localized: "Send a bug report or suggestion")
+        case .feedback: String(localized: "Ask a question or get help with the app")
         case .invite: String(localized: "Get free premium")
         case .documents: String(localized: "Terms of use and privacy")
         }
