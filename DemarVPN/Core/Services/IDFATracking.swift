@@ -8,13 +8,11 @@ import UIKit
 #if os(iOS)
 enum IDFATracking {
     static var isAuthorized: Bool {
-        guard #available(iOS 14, *) else { return false }
-        return ATTrackingManager.trackingAuthorizationStatus == .authorized
+        ATTrackingManager.trackingAuthorizationStatus == .authorized
     }
 
     static var showPermissionButton: Bool {
-        guard #available(iOS 14, *) else { return false }
-        return ATTrackingManager.trackingAuthorizationStatus != .authorized
+        ATTrackingManager.trackingAuthorizationStatus != .authorized
     }
 
     static var displayIDFA: String {
@@ -23,7 +21,6 @@ enum IDFATracking {
 
     @MainActor
     static func promptIfNeeded() async {
-        guard #available(iOS 14, *) else { return }
         try? await Task.sleep(for: .milliseconds(450))
         guard UIApplication.shared.applicationState == .active else { return }
 
@@ -39,7 +36,6 @@ enum IDFATracking {
 
     @MainActor
     static func requestPermission() async -> Bool {
-        guard #available(iOS 14, *) else { return false }
         switch ATTrackingManager.trackingAuthorizationStatus {
         case .authorized:
             return true

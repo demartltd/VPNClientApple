@@ -1,6 +1,6 @@
 # Ядро VPN: Sing-box (Hysteria2) — Demar Proxy (Apple)
 
-Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 14+** (`demar_vpn_apple`).
+Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 15+** (`demar_vpn_apple`).
 
 Целевая версия core: **sing-box 1.13.14**, зафиксированная в [`singbox-version.txt`](singbox-version.txt). Оба build-скрипта и `bundled_version.txt` обязаны использовать эту версию.
 

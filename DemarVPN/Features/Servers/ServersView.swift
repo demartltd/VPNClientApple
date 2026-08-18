@@ -319,16 +319,11 @@ private struct CountryFlag: View {
 
 private extension View {
     #if os(iOS)
-    @ViewBuilder
     func demarScrollPullDistance(_ onPull: @escaping (CGFloat) -> Void) -> some View {
-        if #available(iOS 18.0, *) {
-            onScrollGeometryChange(for: CGFloat.self) { geo in
-                max(0, -geo.contentOffset.y)
-            } action: { _, pull in
-                onPull(pull)
-            }
-        } else {
-            self
+        onScrollGeometryChange(for: CGFloat.self) { geo in
+            max(0, -geo.contentOffset.y)
+        } action: { _, pull in
+            onPull(pull)
         }
     }
     #endif

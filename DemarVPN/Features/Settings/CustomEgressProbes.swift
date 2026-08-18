@@ -299,11 +299,7 @@ struct CustomEgressProbesPanel: View {
 #if os(macOS)
 private struct CustomEgressProbesMacResizeLock: ViewModifier {
     func body(content: Content) -> some View {
-        if #available(macOS 15.0, *) {
-            content.windowResizeBehavior(.disabled)
-        } else {
-            content
-        }
+        content.windowResizeBehavior(.disabled)
     }
 }
 #endif
