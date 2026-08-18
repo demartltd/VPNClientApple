@@ -8,8 +8,8 @@ import AppKit
 
 enum SupportAttachLoader {
     /// Keep payloads small — large base64 JSON hangs / 502s through CS relay.
-    private static let maxPhotoEdge: CGFloat = 1600
-    private static let maxPhotoBytes = 1024 * 1024
+    private static let maxPhotoEdge: CGFloat = 1024
+    private static let maxPhotoBytes = 400 * 1024
 
     static func fromPhotos(_ items: [PhotosPickerItem]) async throws -> [SupportUploadMedia] {
         var out: [SupportUploadMedia] = []
@@ -55,10 +55,10 @@ enum SupportAttachLoader {
     }
 
     private static func compressedJPEG(_ image: UIImage, maxBytes: Int) -> Data? {
-        var quality: CGFloat = 0.82
+        var quality: CGFloat = 0.65
         var data = image.jpegData(compressionQuality: quality)
-        while let bytes = data, bytes.count > maxBytes, quality > 0.35 {
-            quality -= 0.1
+        while let bytes = data, bytes.count > maxBytes, quality > 0.22 {
+            quality -= 0.08
             data = image.jpegData(compressionQuality: quality)
         }
         return data
@@ -86,10 +86,10 @@ enum SupportAttachLoader {
         guard let tiff = image.tiffRepresentation,
               let rep = NSBitmapImageRep(data: tiff)
         else { return nil }
-        var quality = 0.82
+        var quality = 0.65
         var data = rep.representation(using: .jpeg, properties: [.compressionFactor: quality])
-        while let bytes = data, bytes.count > maxBytes, quality > 0.35 {
-            quality -= 0.1
+        while let bytes = data, bytes.count > maxBytes, quality > 0.22 {
+            quality -= 0.08
             data = rep.representation(using: .jpeg, properties: [.compressionFactor: quality])
         }
         return data

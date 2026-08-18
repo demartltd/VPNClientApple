@@ -414,7 +414,7 @@ struct SupportChatPane: View {
         if editing != nil {
             guard !body.isEmpty else { return }
         } else if creating {
-            guard !body.isEmpty else { return }
+            guard !body.isEmpty || !uploads.isEmpty else { return }
         } else if body.isEmpty && uploads.isEmpty {
             return
         }
@@ -441,14 +441,15 @@ struct SupportChatPane: View {
                 var created = try await SupportApi.postTicket(
                     userId: session.userId,
                     loginAt: session.loginAt,
-                    text: body,
+                    text: body.isEmpty ? nil : body,
+                    media: body.isEmpty ? uploads : [],
                     log: deviceText,
                     logMedia: [logFile],
                     themeId: themeId,
                     forceNew: true
                 )
                 text = ""
-                if !uploads.isEmpty {
+                if !body.isEmpty, !uploads.isEmpty {
                     created = try await SupportApi.postMediaSeparated(
                         userId: session.userId,
                         loginAt: session.loginAt,
