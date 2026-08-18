@@ -22,6 +22,7 @@ struct ServiceMenuView: View {
                         DemarKvRow(key: String(localized: "Name"), value: "Demar Proxy")
                         DemarKvRow(key: String(localized: "Bundle"), value: Bundle.main.bundleIdentifier ?? "—")
                         DemarKvRow(key: String(localized: "Version"), value: appState.appVersionDetailLabel)
+                        DemarKvRow(key: String(localized: "Actual version"), value: appState.actualVersionLabel)
                         DemarKvRow(key: String(localized: "Platform"), value: AppPlatform.label)
                         DemarKvRow(
                             key: "Core",

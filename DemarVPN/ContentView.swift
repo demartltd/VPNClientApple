@@ -7,9 +7,7 @@ struct ContentView: View {
     @State private var section: DemarSection? = .home
     @State private var showLogin = false
     @State private var loginReturn: DemarSection = .account
-    #if os(iOS)
     @Environment(\.scenePhase) private var scenePhase
-    #endif
 
     var body: some View {
         Group {
@@ -25,7 +23,26 @@ struct ContentView: View {
                 section = loginReturn
             }
         }
+        .alert(
+            String(localized: "Update the app."),
+            isPresented: $appState.shouldShowUpdateAlert
+        ) {
+            Button(String(localized: "Later"), role: .cancel) {
+                appState.dismissUpdateAlert()
+            }
+            Button(String(localized: "Update")) {
+                AppPlatform.openTestFlight()
+                appState.dismissUpdateAlert()
+            }
+        } message: {
+            Text(String(
+                format: String(localized: "You can update the app from %@ to %@."),
+                appState.appVersionDetailLabel,
+                appState.actualVersionLabel
+            ))
+        }
         .task { await appState.bootstrapAuth() }
+        .task(id: scenePhase) { await handleScenePhase() }
         .onChange(of: section) { previous, newValue in
             guard let target = newValue, needsAuth(target), !appState.isSignedIn else { return }
             var t = Transaction()
@@ -103,13 +120,6 @@ struct ContentView: View {
             }
         }
         .animation(.smooth(duration: 0.28), value: appState.isRefreshingServers)
-        .task(id: scenePhase) {
-            guard scenePhase == .active else { return }
-            try? await Task.sleep(for: .milliseconds(250))
-            guard !Task.isCancelled, scenePhase == .active else { return }
-            appState.syncVpnStatusFromSystem()
-            await IDFATracking.promptIfNeeded()
-        }
     }
 
     private func iosTab(_ item: DemarSection) -> some View {
@@ -133,6 +143,27 @@ struct ContentView: View {
         var t = Transaction()
         t.disablesAnimations = true
         withTransaction(t) { showLogin = true }
+    }
+
+    private func handleScenePhase() async {
+        if scenePhase == .active {
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled, scenePhase == .active else { return }
+            appState.syncVpnStatusFromSystem()
+            appState.presentCachedUpdateAlertIfNeeded()
+            appState.refreshVersionIfNeeded()
+            #if os(macOS)
+            appState.setAppActive(true)
+            #endif
+            #if os(iOS)
+            await IDFATracking.promptIfNeeded()
+            #endif
+        } else {
+            appState.rearmUpdateAlertForNextActive()
+            #if os(macOS)
+            appState.setAppActive(false)
+            #endif
+        }
     }
 
     @ViewBuilder

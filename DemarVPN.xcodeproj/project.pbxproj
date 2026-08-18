@@ -77,6 +77,7 @@
 		B1000001000000000000005C /* SupportComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005C /* SupportComposer.swift */; };
 		B1000001000000000000005D /* SupportBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005D /* SupportBubble.swift */; };
 		B1000001000000000000005E /* SupportHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005E /* SupportHelpers.swift */; };
+		B10000010000000000000060 /* AppVersionApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000060 /* AppVersionApi.swift */; };
 		B10000010000000000000053 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000053 /* AuthSessionStore.swift */; };
 		B1000001000000000000005A /* SessionCacheStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005A /* SessionCacheStore.swift */; };
 		B10000010000000000000054 /* LoginSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000054 /* LoginSheet.swift */; };
@@ -141,6 +142,7 @@
 		E20000BIRCF9000F007C117D /* geoip-ir.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BIR /* geoip-ir.cidrs.json */; };
 		E20000BCNCF9000F007C117D /* geoip-cn.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BCN /* geoip-cn.cidrs.json */; };
 		T40000091CF9000F007C117E /* TunBypassCidrsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */; };
+		T400000B1CF9000F007C117E /* AppVersionApiTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000B1CF9000F007C117E /* AppVersionApiTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -269,6 +271,7 @@
 		F1000001000000000000005C /* SupportComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportComposer.swift; sourceTree = "<group>"; };
 		F1000001000000000000005D /* SupportBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportBubble.swift; sourceTree = "<group>"; };
 		F1000001000000000000005E /* SupportHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportHelpers.swift; sourceTree = "<group>"; };
+		F10000010000000000000060 /* AppVersionApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersionApi.swift; sourceTree = "<group>"; };
 		F10000010000000000000053 /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
 		F1000001000000000000005A /* SessionCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCacheStore.swift; sourceTree = "<group>"; };
 		F10000010000000000000054 /* LoginSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginSheet.swift; sourceTree = "<group>"; };
@@ -295,6 +298,7 @@
 		F1000001000000000000BIR /* geoip-ir.cidrs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "geoip-ir.cidrs.json"; sourceTree = "<group>"; };
 		F1000001000000000000BCN /* geoip-cn.cidrs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "geoip-cn.cidrs.json"; sourceTree = "<group>"; };
 		F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunBypassCidrsTests.swift; sourceTree = "<group>"; };
+		F400000B1CF9000F007C117E /* AppVersionApiTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersionApiTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -562,6 +566,7 @@
 				F10000010000000000000050 /* DemarHttp.swift */,
 				F10000010000000000000051 /* AuthApi.swift */,
 				F10000010000000000000052 /* ServersApi.swift */,
+				F10000010000000000000060 /* AppVersionApi.swift */,
 				F10000010000000000000055 /* VpnAccountApi.swift */,
 				F10000010000000000000056 /* SupportApi.swift */,
 				F10000010000000000000035 /* PublicEgressDiagnostics.swift */,
@@ -661,6 +666,7 @@
 				F40000071CF9000F007C117E /* ServersApiParseTests.swift */,
 				F400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift */,
 				F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */,
+				F400000B1CF9000F007C117E /* AppVersionApiTests.swift */,
 			);
 			path = DemarVPNTests;
 			sourceTree = "<group>";
@@ -927,6 +933,7 @@
 				B10000010000000000000050 /* DemarHttp.swift in Sources */,
 				B10000010000000000000051 /* AuthApi.swift in Sources */,
 				B10000010000000000000052 /* ServersApi.swift in Sources */,
+				B10000010000000000000060 /* AppVersionApi.swift in Sources */,
 				B10000010000000000000055 /* VpnAccountApi.swift in Sources */,
 				B10000010000000000000056 /* SupportApi.swift in Sources */,
 				B10000010000000000000057 /* SupportStore.swift in Sources */,
@@ -999,6 +1006,7 @@
 				T40000081CF9000F007C117E /* ServersApiParseTests.swift in Sources */,
 				T400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift in Sources */,
 				T40000091CF9000F007C117E /* TunBypassCidrsTests.swift in Sources */,
+				T400000B1CF9000F007C117E /* AppVersionApiTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1138,7 +1146,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 50;
+				CURRENT_PROJECT_VERSION = 51;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1176,7 +1184,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 50;
+				CURRENT_PROJECT_VERSION = 51;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1210,7 +1218,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 50;
+				CURRENT_PROJECT_VERSION = 51;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1257,7 +1265,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 50;
+				CURRENT_PROJECT_VERSION = 51;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1304,7 +1312,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 50;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1331,7 +1339,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 50;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1357,7 +1365,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 50;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1381,7 +1389,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 50;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (

@@ -28,16 +28,32 @@ final class AppState {
     var authSession: AuthSession?
     /// Bumped after OAuth deep-link handoff so UI can navigate to return tab.
     var authCallbackTick: Int = 0
+    var latestAppVersion: AppVersionInfo?
+    var shouldShowUpdateAlert = false
+    var versionCheckInFlight = false
+    var versionCheckError: String?
 
     var appVersionLabel: String = "1.0.6"
     var appVersionDetailLabel: String {
-        "\(appVersionLabel) (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"))"
+        "\(appVersionLabel) (\(installedBuildNumber))"
+    }
+    var installedBuildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
+    }
+    var actualVersionLabel: String { latestAppVersion?.version ?? "…" }
+    var isUpdateAvailable: Bool {
+        latestAppVersion?.isNewer(thanInstalledBuild: installedBuildNumber) == true
     }
     var coreVersionToken: String = BundledCoreVersion.label
     var isSignedIn: Bool { authSession != nil }
 
     private let vpn: VpnControlling
     private var vpnOperationGeneration: UInt64 = 0
+    private var versionCheckTask: Task<Void, Never>?
+    private var shownUpdateTokenInSession: String?
+    #if os(macOS)
+    private var macVersionPollingTask: Task<Void, Never>?
+    #endif
 
     #if os(iOS) || os(macOS)
     private var statusMonitor: VpnStatusMonitor?
@@ -87,6 +103,7 @@ final class AppState {
     }
 
     func bootstrapAuth() async {
+        refreshVersionIfNeeded(force: true)
         authSession = AuthSessionStore.session
         _ = await AuthSessionStore.refreshSession()
         authSession = AuthSessionStore.session
@@ -99,6 +116,7 @@ final class AppState {
 
     func onAuthSuccess() async {
         authSession = AuthSessionStore.session
+        refreshVersionIfNeeded(force: true)
         await refreshSessionData()
     }
 
@@ -306,6 +324,43 @@ final class AppState {
         serversLoading = false
         UserDefaults.standard.removeObject(forKey: StorageKey.selectedServerId)
     }
+
+    func refreshVersionIfNeeded(force: Bool = false) {
+        guard !versionCheckInFlight else { return }
+        if force {
+            versionCheckTask?.cancel()
+            versionCheckTask = nil
+        } else if versionCheckTask != nil {
+            return
+        }
+        versionCheckTask = Task { [weak self] in
+            await self?.performVersionCheck()
+        }
+    }
+
+    func dismissUpdateAlert() {
+        shouldShowUpdateAlert = false
+    }
+
+    func presentCachedUpdateAlertIfNeeded() {
+        guard let latestAppVersion else { return }
+        presentUpdateAlertIfNeeded(for: latestAppVersion)
+    }
+
+    func rearmUpdateAlertForNextActive() {
+        shouldShowUpdateAlert = false
+        shownUpdateTokenInSession = nil
+    }
+
+    #if os(macOS)
+    func setAppActive(_ active: Bool) {
+        if active {
+            startMacVersionPollingIfNeeded()
+        } else {
+            stopMacVersionPolling()
+        }
+    }
+    #endif
 
     @discardableResult
     private func beginVpnOperation() -> UInt64 {
@@ -532,6 +587,58 @@ final class AppState {
     private static func persistSelectedServerId(_ id: String) {
         UserDefaults.standard.set(id, forKey: StorageKey.selectedServerId)
     }
+
+    private func performVersionCheck() async {
+        versionCheckInFlight = true
+        versionCheckError = nil
+        defer {
+            versionCheckInFlight = false
+            versionCheckTask = nil
+        }
+        do {
+            applyLatestVersion(try await AppVersionApi.fetchLatest())
+        } catch is CancellationError {
+            return
+        } catch {
+            versionCheckError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            AppLog.shared.append("[version] check failed — \(versionCheckError ?? "")")
+        }
+    }
+
+    private func applyLatestVersion(_ latest: AppVersionInfo) {
+        latestAppVersion = latest
+        guard latest.isNewer(thanInstalledBuild: installedBuildNumber) else {
+            rearmUpdateAlertForNextActive()
+            return
+        }
+        presentUpdateAlertIfNeeded(for: latest)
+        AppLog.shared.append("[version] update available \(latest.version)")
+    }
+
+    private func presentUpdateAlertIfNeeded(for latest: AppVersionInfo) {
+        guard latest.isNewer(thanInstalledBuild: installedBuildNumber) else { return }
+        guard shownUpdateTokenInSession != latest.token else { return }
+        shownUpdateTokenInSession = latest.token
+        shouldShowUpdateAlert = true
+    }
+
+    #if os(macOS)
+    private func startMacVersionPollingIfNeeded() {
+        guard macVersionPollingTask == nil else { return }
+        macVersionPollingTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(600))
+                guard !Task.isCancelled else { break }
+                await self?.refreshVersionIfNeeded()
+            }
+        }
+    }
+
+    private func stopMacVersionPolling() {
+        macVersionPollingTask?.cancel()
+        macVersionPollingTask = nil
+    }
+    #endif
 
     func runHomeThroughputSampling() async {
         while !Task.isCancelled {

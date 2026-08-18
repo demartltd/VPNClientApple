@@ -2,6 +2,7 @@
 "A connection is already in progress." = "Подключение уже выполняется.";
 "About" = "О приложении";
 "Account" = "Аккаунт";
+"Actual version" = "Актуальная версия";
 "Account not found" = "Аккаунт не найден";
 "All" = "All";
 "App and extension signatures do not match. %@ Reinstall the app." = "Подпись приложения и расширения не совпадают. %@ Переустановите приложение.";
@@ -82,6 +83,7 @@
 "Invite friends with a link" = "Пригласите друзей по ссылке";
 "Journal" = "Журнал";
 "Language" = "Язык";
+"Later" = "Позже";
 "List is empty" = "Список пуст";
 "Loading" = "Загрузка";
 "Loading…" = "Загрузка…";
@@ -169,6 +171,9 @@
 "Tunnel stopped (core). Open the journal — [mac] and [core] lines." = "Туннель остановлен (core). Откройте журнал — строки [mac] и [core].";
 "Updating" = "Обновление";
 "Updating servers" = "Обновление серверов";
+"Update" = "Обновить";
+"Update the app." = "Обновите приложение.";
+"You can update the app from %@ to %@." = "Можно обновить приложение с %1$@ до %2$@.";
 "Version" = "Версия";
 "VPN configuration error. Check the profile and permission in System Settings → VPN." = "Ошибка конфигурации VPN. Проверьте профиль и разрешение в Системных настройках → VPN.";
 "VPN connection timed out. Open the journal ([mac]/[core]) or remove the profile in System Settings → VPN." = "Таймаут подключения VPN. Откройте журнал ([mac]/[core]) или удалите профиль в Системных настройках → VPN.";

@@ -1,4 +1,9 @@
 import Foundation
+#if os(iOS)
+import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 enum AppPlatform {
     static var label: String {
@@ -19,6 +24,40 @@ enum AppPlatform {
         "macos"
         #else
         "apple"
+        #endif
+    }
+
+    static var versionEndpointURL: URL {
+        let path: String
+        #if os(iOS)
+        path = "ios/version"
+        #elseif os(macOS)
+        path = "macos/version"
+        #else
+        path = "apple/version"
+        #endif
+        return AuthApi.vpnAPIBaseURL.appendingPathComponent(path)
+    }
+
+    static func openTestFlight() {
+        guard let testFlightURL = URL(string: "itms-beta://testflight.apple.com/"),
+              let appStoreURL = URL(string: "https://apps.apple.com/us/app/testflight/id899247664")
+        else { return }
+        #if os(iOS)
+        let app = UIApplication.shared
+        guard app.canOpenURL(testFlightURL) else {
+            app.open(appStoreURL)
+            return
+        }
+        app.open(testFlightURL) { opened in
+            if !opened {
+                app.open(appStoreURL)
+            }
+        }
+        #elseif os(macOS)
+        if !NSWorkspace.shared.open(testFlightURL) {
+            NSWorkspace.shared.open(appStoreURL)
+        }
         #endif
     }
 }

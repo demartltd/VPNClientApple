@@ -2,6 +2,7 @@
 "A connection is already in progress." = "A connection is already in progress.";
 "About" = "About";
 "Account" = "Account";
+"Actual version" = "Actual version";
 "Account not found" = "Account not found";
 "All" = "All";
 "App and extension signatures do not match. %@ Reinstall the app." = "App and extension signatures do not match. %@ Reinstall the app.";
@@ -82,6 +83,7 @@
 "Invite friends with a link" = "Invite friends with a link";
 "Journal" = "Journal";
 "Language" = "Language";
+"Later" = "Later";
 "List is empty" = "List is empty";
 "Loading" = "Loading";
 "Loading…" = "Loading…";
@@ -169,6 +171,9 @@
 "Tunnel stopped (core). Open the journal — [mac] and [core] lines." = "Tunnel stopped (core). Open the journal — [mac] and [core] lines.";
 "Updating" = "Updating";
 "Updating servers" = "Updating servers";
+"Update" = "Update";
+"Update the app." = "Update the app.";
+"You can update the app from %@ to %@." = "You can update the app from %1$@ to %2$@.";
 "Version" = "Version";
 "VPN configuration error. Check the profile and permission in System Settings → VPN." = "VPN configuration error. Check the profile and permission in System Settings → VPN.";
 "VPN connection timed out. Open the journal ([mac]/[core]) or remove the profile in System Settings → VPN." = "VPN connection timed out. Open the journal ([mac]/[core]) or remove the profile in System Settings → VPN.";
