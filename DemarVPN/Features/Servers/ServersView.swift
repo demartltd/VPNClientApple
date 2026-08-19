@@ -19,9 +19,9 @@ struct ServersView: View {
         .task(id: isActive) {
             guard isActive else { return }
             selectedProtocol = appState.selectedServer?.serverProtocol ?? .hysteria2
-            if appState.isSignedIn {
-                await appState.refreshServersOnTabOpen()
-            }
+            guard appState.isSignedIn else { return }
+            guard appState.servers.isEmpty || appState.serversError != nil else { return }
+            await appState.refreshSessionData()
         }
         .onChange(of: appState.selectedServer?.id) { _, _ in
             selectedProtocol = appState.selectedServer?.serverProtocol ?? selectedProtocol
@@ -50,7 +50,7 @@ struct ServersView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    Task { await refreshServersFromToolbar() }
+                    Task { await pullRefresh() }
                 } label: {
                     if appState.isRefreshingServers || (appState.serversLoading && appState.servers.isEmpty) {
                         ProgressView()
@@ -114,7 +114,7 @@ struct ServersView: View {
                                 .foregroundStyle(Color.demarOnSurfaceVariant)
                                 .multilineTextAlignment(.center)
                             Button(String(localized: "Retry")) {
-                                Task { await appState.refreshServers() }
+                                Task { await appState.refreshSessionData() }
                             }
                             .buttonStyle(.borderedProminent)
                             .tint(Color.demarPrimary)
@@ -163,10 +163,13 @@ struct ServersView: View {
         }
     }
 
-    #if os(macOS)
-    private func refreshServersFromToolbar() async {
+    private func pullRefresh() async {
         guard appState.isSignedIn else { return }
+        #if os(macOS)
         AppLog.shared.append("[ui] servers toolbar refresh")
+        #else
+        AppLog.shared.append("[ui] servers pull-to-refresh")
+        #endif
         let ok = await appState.pullRefreshServers()
         if ok {
             snackBar.showSuccess(String(localized: "Servers updated"))
@@ -174,7 +177,6 @@ struct ServersView: View {
             snackBar.showInfo(appState.serversError ?? String(localized: "Couldn’t refresh"))
         }
     }
-    #endif
 
     #if os(iOS)
     private func handlePull(_ pull: CGFloat) {
@@ -187,14 +189,7 @@ struct ServersView: View {
         guard pull >= refreshPullThreshold else { return }
         pullArmed = true
         PlatformServices.lightImpact()
-        AppLog.shared.append("[ui] servers pull-to-refresh")
-        Task {
-            let ok = await appState.pullRefreshServers()
-            if ok { snackBar.showSuccess(String(localized: "Servers updated")) }
-            else if appState.serversError != nil {
-                snackBar.showInfo(appState.serversError ?? String(localized: "Couldn’t refresh"))
-            }
-        }
+        Task { await pullRefresh() }
     }
     #endif
 }

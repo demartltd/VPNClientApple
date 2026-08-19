@@ -199,7 +199,7 @@ final class AppState {
         #endif
     }
 
-    /// Servers + account — app start, sign-in, servers pull-to-refresh.
+    /// Session data — app start, sign-in, pull-to-refresh, promo activation.
     func refreshSessionData() async {
         async let servers: Void = refreshServers()
         async let account: Void = refreshAccount()
@@ -215,7 +215,7 @@ final class AppState {
         await SupportUnreadStore.shared.refresh(session: session)
     }
 
-    func refreshAccount() async {
+    private func refreshAccount() async {
         guard let session = AuthSessionStore.session else {
             clearAccount()
             return
@@ -276,14 +276,7 @@ final class AppState {
         }
     }
 
-    /// Fetch when Servers tab opens — only if list empty or prior fetch failed.
-    func refreshServersOnTabOpen() async {
-        guard isSignedIn else { return }
-        guard servers.isEmpty || serversError != nil else { return }
-        await refreshServers()
-    }
-
-    func refreshServers() async {
+    private func refreshServers() async {
         guard let session = AuthSessionStore.session else {
             clearServers()
             return
