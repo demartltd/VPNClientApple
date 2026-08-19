@@ -52,7 +52,7 @@ DemarVPN/                              # SwiftUI target
 │       ├── MacVpnDiag.swift            # pluginkit, NE preflight
 │       ├── AppPlatform.swift          # «iOS» / «macOS» + supportChannel
 │       ├── BundledCoreVersion.swift    # версия core из bundle
-│       └── DemarNavigation.swift      # секции + demarDetailNavigationTitle (iOS scroll title)
+│       └── DemarNavigation.swift      # секции, demarPush, route IDs/deep links, demarDetailNavigationTitle
 │
 ├── Components/
 │   ├── SectionCard.swift              # карточка-секция

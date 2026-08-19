@@ -1,5 +1,93 @@
 import SwiftUI
 
+enum DemarURLScheme {
+    static let name = "demarvpn"
+}
+
+enum SupportRoute: Hashable, Identifiable {
+    case chat(String)
+    case draft(String)
+
+    var id: String { pathComponent }
+    var deepLinkKey: String { pathComponent }
+
+    var pathComponent: String {
+        switch self {
+        case .chat(let id): "settings/support/ticket/\(id)"
+        case .draft(let themeId): "settings/support/new/\(themeId)"
+        }
+    }
+}
+
+enum ServiceRoute: Hashable, Identifiable {
+    case customProbes
+
+    var id: String { pathComponent }
+    var deepLinkKey: String { pathComponent }
+    var pathComponent: String { "settings/service/custom-checks" }
+}
+
+enum SettingsRoute: Hashable, Identifiable {
+    case appSettings
+    case serviceMenu(ServiceRoute? = nil)
+    case support(SupportRoute? = nil)
+    case document(LegalDocument)
+
+    var id: String { pathComponent }
+    var deepLinkKey: String { pathComponent }
+
+    var pathComponent: String {
+        switch self {
+        case .appSettings:
+            "settings/app"
+        case .serviceMenu(let route):
+            route?.pathComponent ?? "settings/service"
+        case .support(let route):
+            route?.pathComponent ?? "settings/support"
+        case .document(let document):
+            "settings/documents/\(document.rawValue)"
+        }
+    }
+
+    init?(url: URL) {
+        var parts = [String]()
+        if url.scheme == DemarURLScheme.name,
+           let host = url.host(percentEncoded: false)?.nilIfBlank,
+           host != "auth"
+        {
+            parts.append(host)
+        }
+        parts.append(contentsOf: url.pathComponents.filter { $0 != "/" })
+        if parts.first == "open" { parts.removeFirst() }
+        guard !parts.isEmpty else { return nil }
+        self.init(pathComponents: parts)
+    }
+
+    init?(pathComponents: [String]) {
+        switch pathComponents {
+        case ["settings", "app"]:
+            self = .appSettings
+        case ["settings", "service"]:
+            self = .serviceMenu()
+        case ["settings", "service", "custom-checks"]:
+            self = .serviceMenu(.customProbes)
+        case ["settings", "support"]:
+            self = .support()
+        case let parts where parts.count == 4 && parts[0] == "settings" && parts[1] == "support" && parts[2] == "ticket":
+            guard !parts[3].isEmpty else { return nil }
+            self = .support(.chat(parts[3]))
+        case let parts where parts.count == 4 && parts[0] == "settings" && parts[1] == "support" && parts[2] == "new":
+            guard !parts[3].isEmpty else { return nil }
+            self = .support(.draft(parts[3]))
+        case let parts where parts.count == 3 && parts[0] == "settings" && parts[1] == "documents":
+            guard let document = LegalDocument(rawValue: parts[2]) else { return nil }
+            self = .document(document)
+        default:
+            return nil
+        }
+    }
+}
+
 enum DemarSection: CaseIterable, Hashable, Identifiable {
     case home, servers, settings, account
 
@@ -36,6 +124,13 @@ enum DemarSection: CaseIterable, Hashable, Identifiable {
 }
 
 extension View {
+    func demarPush<Item: Hashable, Content: View>(
+        _ item: Binding<Item?>,
+        @ViewBuilder destination: @escaping (Item) -> Content
+    ) -> some View {
+        navigationDestination(item: item, destination: destination)
+    }
+
     #if os(macOS)
     func demarMacWindowTitle(_ section: DemarSection) -> some View {
         navigationTitle(section.title)

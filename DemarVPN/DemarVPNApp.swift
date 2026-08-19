@@ -21,7 +21,7 @@ struct DemarVPNApp: App {
                 .demarDynamicIslandBadge()
                 #endif
                 .onOpenURL { url in
-                    Task { await appState.consumeAuthCallback(url) }
+                    Task { await appState.consumeIncomingURL(url) }
                 }
         }
         #if os(macOS)

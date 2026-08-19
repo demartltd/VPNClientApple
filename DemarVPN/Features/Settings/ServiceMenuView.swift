@@ -3,7 +3,9 @@ import SwiftUI
 struct ServiceMenuView: View {
     @Bindable var appState: AppState
     var snackBar: SnackBarController
+    var initialRoute: ServiceRoute? = nil
 
+    @State private var route: ServiceRoute?
     @State private var deviceRows: [(String, String)]?
     @State private var coreRestartBusy = false
     #if os(iOS)
@@ -31,7 +33,9 @@ struct ServiceMenuView: View {
                     }
                 }
 
-                ServiceEgressDiagnosticsCard(appState: appState)
+                ServiceEgressDiagnosticsCard(appState: appState) {
+                    route = .customProbes
+                }
 
                 SectionCard(
                     title: "Device",
@@ -83,12 +87,22 @@ struct ServiceMenuView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
         }
+        .demarPush($route) { route in
+            switch route {
+            case .customProbes:
+                CustomEgressProbesPanel()
+            }
+        }
         #if os(iOS)
         .demarDetailNavigationTitle(String(localized: "Service menu"))
         #else
         .background(Color.demarSurface)
         .navigationTitle(String(localized: "Service menu"))
         #endif
+        .task {
+            guard route == nil, let initialRoute else { return }
+            route = initialRoute
+        }
         .task { await reloadDevice() }
         #if os(iOS)
         .onChange(of: scenePhase) { _, phase in
@@ -141,6 +155,7 @@ private let kServiceMenuRefreshSpinDuration: TimeInterval = 2.5
 
 private struct ServiceEgressDiagnosticsCard: View {
     @Bindable var appState: AppState
+    var onOpenCustomChecks: () -> Void
     #if os(macOS)
     @Environment(\.openWindow) private var openWindow
     #endif
@@ -156,7 +171,6 @@ private struct ServiceEgressDiagnosticsCard: View {
     @State private var userHosts = CustomEgressProbeStore.hosts
     @State private var userProbes: [EgressHostProbe] = []
     @State private var userProbesReady = Set<Int>()
-    @State private var showCustomList = false
     #if os(iOS)
     @Environment(\.scenePhase) private var scenePhase
     #endif
@@ -192,7 +206,6 @@ private struct ServiceEgressDiagnosticsCard: View {
         }
         .task { await load() }
         .onChange(of: appState.vpnState) { _, _ in Task { await load() } }
-        .customEgressProbesSheet(isPresented: $showCustomList)
         .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
             syncUserHosts()
         }
@@ -241,7 +254,7 @@ private struct ServiceEgressDiagnosticsCard: View {
         #if os(macOS)
         openWindow(id: CustomEgressProbesWindow.id)
         #else
-        showCustomList = true
+        onOpenCustomChecks()
         #endif
     }
 

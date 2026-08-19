@@ -309,7 +309,7 @@ private final class WebAuthSession: NSObject, ASWebAuthenticationPresentationCon
 
     init(url: URL, completion: @escaping (Result<URL, Error>) -> Void) {
         super.init()
-        let s = ASWebAuthenticationSession(url: url, callbackURLScheme: "demar") { callbackURL, error in
+        let s = ASWebAuthenticationSession(url: url, callbackURLScheme: DemarURLScheme.name) { callbackURL, error in
             if let callbackURL {
                 completion(.success(callbackURL))
             } else {

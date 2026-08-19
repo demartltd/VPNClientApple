@@ -3,21 +3,9 @@ import SwiftUI
 struct SupportScreen: View {
     let session: AuthSession
     var snackBar: SnackBarController
+    var initialRoute: SupportRoute?
 
-    /// Pushed on the *parent* Settings stack (no nested NavigationStack — that was dismissing Support).
-    private enum Dest: Hashable, Identifiable {
-        case chat(String)
-        case draft(String)
-
-        var id: String {
-            switch self {
-            case .chat(let id): "chat:\(id)"
-            case .draft(let id): "draft:\(id)"
-            }
-        }
-    }
-
-    @State private var dest: Dest?
+    @State private var route: SupportRoute?
     @State private var tickets: [SupportTicketSummary] = []
     @State private var loadingList = true
     @State private var confirmNew = false
@@ -36,8 +24,8 @@ struct SupportScreen: View {
                     }
                 }
             }
-            .navigationDestination(item: $dest) { dest in
-                switch dest {
+            .demarPush($route) { route in
+                switch route {
                 case .chat(let id):
                     SupportChatPane(
                         session: session,
@@ -46,7 +34,7 @@ struct SupportScreen: View {
                         title: String(format: String(localized: "Ticket #%@"), id),
                         snackBar: snackBar,
                         seedTicket: SupportCacheStore.loadTicket(userId: session.userId, ticketId: id),
-                        onTicketGone: { self.dest = nil }
+                        onTicketGone: { self.route = nil }
                     )
                 case .draft(let themeId):
                     SupportChatPane(
@@ -55,15 +43,19 @@ struct SupportScreen: View {
                         themeId: themeId,
                         title: String(localized: "Create ticket"),
                         snackBar: snackBar,
-                        onTicketGone: { self.dest = nil },
+                        onTicketGone: { self.route = nil },
                         onTicketCreated: { ticket in
                             SupportCacheStore.saveTicket(userId: session.userId, ticket: ticket)
                             Task { await reloadList(quiet: true) }
-                            self.dest = .chat(ticket.id)
+                            self.route = .chat(ticket.id)
                         }
                     )
                 }
             }
+        .task {
+            guard route == nil, let initialRoute else { return }
+            route = initialRoute
+        }
         .task(id: session.userId) {
             tickets = SupportCacheStore.loadList(userId: session.userId) ?? []
             SupportUnreadStore.shared.apply(tickets)
@@ -72,12 +64,12 @@ struct SupportScreen: View {
             await reloadList(quiet: !tickets.isEmpty)
             await SupportUnreadStore.shared.warmTickets(session: session, summaries: tickets)
         }
-        .task(id: dest == nil) {
-            guard dest == nil else { return }
+        .task(id: route == nil) {
+            guard route == nil else { return }
             await reloadList(quiet: !tickets.isEmpty)
-            while !Task.isCancelled, dest == nil {
+            while !Task.isCancelled, route == nil {
                 try? await Task.sleep(for: .seconds(8))
-                guard !Task.isCancelled, dest == nil else { return }
+                guard !Task.isCancelled, route == nil else { return }
                 await reloadList(quiet: true)
             }
         }
@@ -127,7 +119,7 @@ struct SupportScreen: View {
                                 title: "\(status) · #\(t.id)",
                                 subtitle: preview,
                                 unread: t.hasUnread,
-                                action: { dest = .chat(t.id) }
+                                action: { route = .chat(t.id) }
                             )
                         }
                     }
@@ -167,7 +159,7 @@ struct SupportScreen: View {
             Button {
                 guard let selectedTheme else { return }
                 pickTheme = false
-                dest = .draft(selectedTheme.id)
+                route = .draft(selectedTheme.id)
             } label: {
                 Text(String(localized: "Create ticket"))
             }

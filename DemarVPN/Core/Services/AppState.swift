@@ -28,6 +28,9 @@ final class AppState {
     var authSession: AuthSession?
     /// Bumped after OAuth deep-link handoff so UI can navigate to return tab.
     var authCallbackTick: Int = 0
+    /// Pending settings route requested by incoming URL / public link.
+    var pendingSettingsRoute: SettingsRoute?
+    var settingsRouteRequestTick: Int = 0
     var latestAppVersion: AppVersionInfo?
     var shouldShowUpdateAlert = false
     var versionCheckInFlight = false
@@ -120,8 +123,21 @@ final class AppState {
         await refreshSessionData()
     }
 
-    func consumeAuthCallback(_ url: URL) async {
-        guard url.scheme == "demar", url.host == "auth" else { return }
+    func consumeIncomingURL(_ url: URL) async {
+        if await consumeAuthCallback(url) { return }
+        guard let route = SettingsRoute(url: url) else { return }
+        pendingSettingsRoute = route
+        settingsRouteRequestTick &+= 1
+    }
+
+    @discardableResult
+    func consumePendingSettingsRoute() -> SettingsRoute? {
+        defer { pendingSettingsRoute = nil }
+        return pendingSettingsRoute
+    }
+
+    private func consumeAuthCallback(_ url: URL) async -> Bool {
+        guard url.scheme == DemarURLScheme.name, url.host == "auth" else { return false }
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         do {
             if let token = items.first(where: { $0.name == "token" })?.value?.nilIfBlank {
@@ -129,13 +145,14 @@ final class AppState {
             } else if let code = items.first(where: { $0.name == "code" })?.value?.nilIfBlank {
                 try await AuthSessionStore.completeExchange(code)
             } else {
-                return
+                return false
             }
             await onAuthSuccess()
             authCallbackTick &+= 1
         } catch {
             AppLog.shared.append("[auth] callback failed — \(error.localizedDescription)")
         }
+        return true
     }
 
     /// Stops VPN and clears local state only after server logout succeeds (or session already gone).

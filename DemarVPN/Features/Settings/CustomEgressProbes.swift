@@ -72,17 +72,6 @@ extension View {
     }
     #endif
 
-    func customEgressProbesSheet(isPresented: Binding<Bool>) -> some View {
-        #if os(iOS)
-        demarBottomSheet(isPresented: isPresented) {
-            CustomEgressProbesPanel()
-                .demarSheetPresentation([.medium, .large], systemDragIndicator: true)
-        }
-        #else
-        self
-        #endif
-    }
-
     func demarConfirmAlert(
         _ title: String,
         isPresented: Binding<Bool>,
@@ -137,66 +126,59 @@ struct CustomEgressProbesPanel: View {
     @State private var renameDraft = ""
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                Group {
-                    if hosts.isEmpty {
-                        ContentUnavailableView(
-                            String(localized: "List is empty"),
-                            systemImage: "list.bullet.rectangle",
-                            description: Text("Host or IP")
-                        )
-                        #if os(iOS)
-                        .demarDetailNavigationTitle(String(localized: "Custom checks"))
-                        #endif
-                    } else {
-                        ScrollView {
-                            LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
-                                ForEach(hosts, id: \.self) { hostChip($0) }
-                            }
-                            .padding(16)
+        VStack(spacing: 0) {
+            Group {
+                if hosts.isEmpty {
+                    ContentUnavailableView(
+                        String(localized: "List is empty"),
+                        systemImage: "list.bullet.rectangle",
+                        description: Text("Host or IP")
+                    )
+                } else {
+                    ScrollView {
+                        LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+                            ForEach(hosts, id: \.self) { hostChip($0) }
                         }
-                        #if os(iOS)
-                        .demarDetailNavigationTitle(String(localized: "Custom checks"))
-                        #endif
+                        .padding(16)
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.demarSurface)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.demarSurface)
+            .demarDetailNavigationTitle(String(localized: "Custom checks"))
 
-                HStack(spacing: 8) {
-                    TextField(String(localized: "Host or IP"), text: $draft)
-                        .textFieldStyle(.plain)
-                        .font(.demarBodyMedium)
-                        #if os(iOS)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                        #endif
-                        .submitLabel(.done)
-                        .padding(.horizontal, CustomEgressProbesFieldStyle.fieldInset)
-                        .frame(height: CustomEgressProbesFieldStyle.controlHeight)
-                        .background(CustomEgressProbesFieldStyle.background)
-                        .onSubmit(commitDraft)
-                        .onChange(of: draft) { _, value in
-                            if value.contains(where: \.isNewline) { commitDraft() }
-                        }
-                    deleteButton
-                }
-                .padding(16)
-                .background(Color.demarSurface)
+            HStack(spacing: 8) {
+                TextField(String(localized: "Host or IP"), text: $draft)
+                    .textFieldStyle(.plain)
+                    .font(.demarBodyMedium)
+                    #if os(iOS)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                    #endif
+                    .submitLabel(.done)
+                    .padding(.horizontal, CustomEgressProbesFieldStyle.fieldInset)
+                    .frame(height: CustomEgressProbesFieldStyle.controlHeight)
+                    .background(CustomEgressProbesFieldStyle.background)
+                    .onSubmit(commitDraft)
+                    .onChange(of: draft) { _, value in
+                        if value.contains(where: \.isNewline) { commitDraft() }
+                    }
+                deleteButton
             }
-            .background(Color.demarSurface.ignoresSafeArea())
-            #if os(macOS)
-            .navigationTitle(String(localized: "Custom checks"))
-            .focusable()
-            .focusEffectDisabled()
-            .onKeyPress(.escape) {
-                handleEscape()
-                return .handled
-            }
-            #endif
+            .padding(16)
+            .background(Color.demarSurface)
         }
+        .background(Color.demarSurface.ignoresSafeArea())
+        #if os(macOS)
+        .navigationTitle(String(localized: "Custom checks"))
+        .focusable()
+        .focusEffectDisabled()
+        .onKeyPress(.escape) {
+            handleEscape()
+            return .handled
+        }
+        #endif
         .onAppear(perform: resetTransientState)
         .onDisappear(perform: resetTransientState)
         .renameAlert(host: $renameHost, draft: $renameDraft) {

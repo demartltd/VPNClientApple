@@ -66,6 +66,12 @@ struct ContentView: View {
                 section = loginReturn
             }
         }
+        .onChange(of: appState.settingsRouteRequestTick) { _, tick in
+            guard tick > 0 else { return }
+            var t = Transaction()
+            t.disablesAnimations = true
+            withTransaction(t) { section = .settings }
+        }
     }
 
     #if os(macOS)

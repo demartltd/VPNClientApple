@@ -6,12 +6,8 @@ struct SettingsView: View {
     var snackBar: SnackBarController
     var onNeedSignIn: (() -> Void)?
 
-    @State private var showAppSettings = false
-    @State private var showServiceMenu = false
+    @State private var route: SettingsRoute?
     @State private var showDocumentsMenu = false
-    @State private var showSupport = false
-    @State private var pendingDocument: LegalDocument?
-    @State private var openedDocument: LegalDocument?
     @State private var serviceMenuTapCount = 0
     @State private var serviceMenuTapResetTask: Task<Void, Never>?
     @State private var supportUnread = SupportUnreadStore.shared
@@ -51,16 +47,20 @@ struct SettingsView: View {
                     .padding(.bottom, 20)
                 }
                 .demarScrollScreen()
-                .navigationDestination(isPresented: $showAppSettings) { AppSettingsView() }
-                .navigationDestination(isPresented: $showServiceMenu) {
-                    ServiceMenuView(appState: appState, snackBar: snackBar)
-                }
-                .navigationDestination(isPresented: $showSupport) {
-                    if let session = appState.authSession {
-                        SupportScreen(session: session, snackBar: snackBar)
+                .demarPush($route) { route in
+                    switch route {
+                    case .appSettings:
+                        AppSettingsView()
+                    case .serviceMenu(let initialRoute):
+                        ServiceMenuView(appState: appState, snackBar: snackBar, initialRoute: initialRoute)
+                    case .support(let initialRoute):
+                        if let session = appState.authSession {
+                            SupportScreen(session: session, snackBar: snackBar, initialRoute: initialRoute)
+                        }
+                    case .document(let document):
+                        LegalDocumentView(document: document)
                     }
                 }
-                .navigationDestination(item: $openedDocument) { LegalDocumentView(document: $0) }
             } else {
                 Color.clear
             }
@@ -86,13 +86,15 @@ struct SettingsView: View {
         .tint(Color.white)
         .documentsMenu(
             isPresented: $showDocumentsMenu,
-            onSelect: { pendingDocument = $0 },
-            onDismiss: {
-                guard let pendingDocument else { return }
-                openedDocument = pendingDocument
-                self.pendingDocument = nil
-            }
+            onSelect: { route = .document($0) }
         )
+        .task(id: appState.settingsRouteRequestTick) {
+            applyPendingSettingsRoute()
+        }
+        .onChange(of: isActive) { _, active in
+            guard active else { return }
+            applyPendingSettingsRoute()
+        }
         #if os(iOS)
         .demarNavigationRoot(backHistoryLabel: String(localized: "Settings"))
         #endif
@@ -100,10 +102,10 @@ struct SettingsView: View {
 
     private func perform(_ item: SettingsMenuItem) {
         switch item {
-        case .appSettings: showAppSettings = true
+        case .appSettings: route = .appSettings
         case .documents: showDocumentsMenu = true
         case .feedback:
-            if appState.isSignedIn { showSupport = true } else { onNeedSignIn?() }
+            if appState.isSignedIn { route = .support() } else { onNeedSignIn?() }
         case .invite:
             snackBar.showInfo(String(localized: "Coming soon"))
         case .promoCode:
@@ -166,13 +168,18 @@ struct SettingsView: View {
         serviceMenuTapCount += 1
         if serviceMenuTapCount >= 3 {
             serviceMenuTapCount = 0
-            showServiceMenu = true
+            route = .serviceMenu()
             return
         }
         serviceMenuTapResetTask = Task {
             try? await Task.sleep(for: .seconds(2))
             if !Task.isCancelled { await MainActor.run { serviceMenuTapCount = 0 } }
         }
+    }
+
+    private func applyPendingSettingsRoute() {
+        guard isActive, let requested = appState.consumePendingSettingsRoute() else { return }
+        route = requested
     }
 }
 

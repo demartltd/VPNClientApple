@@ -21,13 +21,12 @@ struct DocumentsMenuSheet: View {
 extension View {
     func documentsMenu(
         isPresented: Binding<Bool>,
-        onSelect: @escaping (LegalDocument) -> Void,
-        onDismiss: @escaping () -> Void
+        onSelect: @escaping (LegalDocument) -> Void
     ) -> some View {
-        demarBottomSheet(isPresented: isPresented, onDismiss: onDismiss) {
+        demarBottomSheet(isPresented: isPresented) {
             DocumentsMenuSheet { doc in
-                onSelect(doc)
                 isPresented.wrappedValue = false
+                onSelect(doc)
             }
         }
     }
