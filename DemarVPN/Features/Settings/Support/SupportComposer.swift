@@ -19,6 +19,10 @@ struct SupportComposerBar: View {
     var onRemovePending: (Int) -> Void
     var onAttach: () -> Void
     var onSend: () -> Void
+    #if os(macOS)
+    @State private var macEditorHeight: CGFloat = 32
+    private let macEditorMaxHeight: CGFloat = 110
+    #endif
 
     private var interactive: Bool { enabled && !sending }
     private var canSend: Bool {
@@ -105,6 +109,21 @@ struct SupportComposerBar: View {
                             .padding(.vertical, 10)
                             .allowsHitTesting(false)
                     }
+                    #if os(macOS)
+                    MacSupportComposerTextView(
+                        text: $text,
+                        isEnabled: enabled,
+                        isFocused: focused,
+                        height: $macEditorHeight,
+                        maxHeight: macEditorMaxHeight,
+                        onSend: {
+                            guard canSend else { return }
+                            onSend()
+                        }
+                    )
+                    .frame(height: max(32, macEditorHeight))
+                        .disabled(!enabled)
+                    #else
                     TextField("", text: $text, axis: .vertical)
                         .font(.demarBodyMedium)
                         .foregroundStyle(enabled ? Color.demarOnSurface : Color.demarOnSurfaceVariant)
@@ -115,8 +134,18 @@ struct SupportComposerBar: View {
                         .padding(.vertical, 10)
                         .focused(focused)
                         .id(focusID)
+                        #if os(macOS)
+                        // macOS chat UX: Enter sends, Shift+Enter inserts a new line.
+                        .onKeyPress(keys: [.return]) { keyPress in
+                            if keyPress.modifiers.contains(.shift) { return .ignored }
+                            guard canSend else { return .handled }
+                            onSend()
+                            return .handled
+                        }
+                        #endif
                         // Keep focus while sending — disabling the field dismisses the keyboard.
                         .disabled(!enabled)
+                    #endif
                 }
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
@@ -124,6 +153,7 @@ struct SupportComposerBar: View {
                     in: RoundedRectangle(cornerRadius: 22, style: .continuous),
                     interactive: false
                 )
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
 
                 composerCircleButton(
                     systemImage: editTarget == nil ? "paperplane.fill" : "checkmark",
@@ -148,6 +178,7 @@ struct SupportComposerBar: View {
                 if busy {
                     ProgressView()
                         .controlSize(.small)
+                        .tint(.white)
                 } else {
                     Image(systemName: systemImage)
                         .font(.system(size: 16, weight: .semibold))
@@ -233,6 +264,111 @@ struct SupportDismissKeyboardOnPop: UIViewControllerRepresentable {
         @objc private func handle(_ gesture: UIGestureRecognizer) {
             guard gesture.state == .began else { return }
             onBlur()
+        }
+    }
+}
+#endif
+
+#if os(macOS)
+private struct MacSupportComposerTextView: NSViewRepresentable {
+    @Binding var text: String
+    let isEnabled: Bool
+    var isFocused: FocusState<Bool>.Binding
+    @Binding var height: CGFloat
+    let maxHeight: CGFloat
+    var onSend: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text, height: $height, maxHeight: maxHeight, onSend: onSend)
+    }
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scroll = NSTextView.scrollableTextView()
+        scroll.drawsBackground = false
+        scroll.hasVerticalScroller = false
+        scroll.hasHorizontalScroller = false
+        scroll.borderType = .noBorder
+        guard let textView = scroll.documentView as? NSTextView else { return scroll }
+        textView.delegate = context.coordinator
+        textView.string = text
+        textView.drawsBackground = false
+        textView.isRichText = false
+        textView.importsGraphics = false
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.font = .systemFont(ofSize: NSFont.systemFontSize)
+        textView.textColor = NSColor(Color.demarOnSurface)
+        textView.insertionPointColor = .white
+        textView.textContainerInset = NSSize(width: 14, height: 9)
+        textView.textContainer?.lineFragmentPadding = 0
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.autoresizingMask = [.width]
+        context.coordinator.textView = textView
+        context.coordinator.scrollView = scroll
+        context.coordinator.recalculateHeight()
+        return scroll
+    }
+
+    func updateNSView(_ scroll: NSScrollView, context: Context) {
+        guard let textView = context.coordinator.textView else { return }
+        context.coordinator.onSend = onSend
+        if textView.string != text {
+            textView.string = text
+            context.coordinator.recalculateHeight()
+        }
+        textView.isEditable = isEnabled
+        textView.isSelectable = isEnabled
+        textView.textColor = NSColor(isEnabled ? Color.demarOnSurface : Color.demarOnSurfaceVariant)
+        if isFocused.wrappedValue, scroll.window?.firstResponder !== textView {
+            scroll.window?.makeFirstResponder(textView)
+        }
+    }
+
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        @Binding var text: String
+        @Binding var height: CGFloat
+        let maxHeight: CGFloat
+        var onSend: () -> Void
+        weak var textView: NSTextView?
+        weak var scrollView: NSScrollView?
+
+        init(text: Binding<String>, height: Binding<CGFloat>, maxHeight: CGFloat, onSend: @escaping () -> Void) {
+            _text = text
+            _height = height
+            self.maxHeight = maxHeight
+            self.onSend = onSend
+        }
+
+        func textDidChange(_ notification: Notification) {
+            guard let textView else { return }
+            text = textView.string
+            recalculateHeight()
+        }
+
+        func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+                if NSApp.currentEvent?.modifierFlags.contains(.shift) == true {
+                    return false
+                }
+                onSend()
+                return true
+            }
+            return false
+        }
+
+        func recalculateHeight() {
+            guard let textView, let scrollView else { return }
+            textView.layoutManager?.ensureLayout(for: textView.textContainer!)
+            let used = textView.layoutManager?.usedRect(for: textView.textContainer!).height ?? 0
+            let padded = used + textView.textContainerInset.height * 2 + 2
+            let next = min(max(34, ceil(padded)), maxHeight)
+            if abs(height - next) > 0.5 {
+                DispatchQueue.main.async { self.height = next }
+            }
+            scrollView.hasVerticalScroller = padded > maxHeight
         }
     }
 }

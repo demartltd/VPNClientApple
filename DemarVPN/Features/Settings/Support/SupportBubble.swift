@@ -44,9 +44,7 @@ struct SupportBubble: View {
                             SupportPhotoAlbum(photos: photos, session: session, ticketId: ticketId)
                         }
                         ForEach(Array(files.enumerated()), id: \.offset) { _, med in
-                            Label(med.fileName ?? String(localized: "Attachment"), systemImage: "doc")
-                                .font(.demarBodySmall)
-                                .foregroundStyle(Color.demarOnSurface)
+                            SupportFileRow(media: med)
                         }
                         if let timeStr {
                             Text(timeStr)
@@ -98,6 +96,40 @@ struct SupportBubble: View {
             bottomTrailingRadius: mine ? 4 : 16,
             topTrailingRadius: 16,
             style: .continuous
+        )
+    }
+}
+
+private struct SupportFileRow: View {
+    let media: SupportMedia
+
+    private var title: String {
+        media.fileName ?? media.type ?? String(localized: "Attachment")
+    }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(Color.demarPrimary.opacity(0.18))
+                Image(systemName: "doc.fill")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(Color.demarPrimary)
+            }
+            .frame(width: 42, height: 42)
+
+            Text(title)
+                .font(.demarBodyMedium)
+                .foregroundStyle(Color.demarOnSurface)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.demarSurface.opacity(0.45))
         )
     }
 }

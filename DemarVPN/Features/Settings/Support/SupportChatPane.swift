@@ -3,7 +3,7 @@ import PhotosUI
 #if os(iOS)
 import UIKit
 #elseif os(macOS)
-import AppKit
+import UniformTypeIdentifiers
 #endif
 
 struct SupportChatPane: View {
@@ -27,6 +27,9 @@ struct SupportChatPane: View {
     @State private var menuMessage: SupportMessage?
     @State private var showPhotos = false
     @State private var photoItems: [PhotosPickerItem] = []
+    #if os(macOS)
+    @State private var showFiles = false
+    #endif
     @FocusState private var composerFocused: Bool
     @State private var composerFocusID = 0
 
@@ -147,7 +150,11 @@ struct SupportChatPane: View {
                         reportSendError(String(localized: "You can attach up to 10 photos"))
                         return
                     }
+                    #if os(iOS)
                     showPhotos = true
+                    #elseif os(macOS)
+                    showFiles = true
+                    #endif
                 },
                 onSend: { Task { await send() } }
             )
@@ -191,6 +198,21 @@ struct SupportChatPane: View {
             guard !items.isEmpty else { return }
             Task { await ingestPhotos(items) }
         }
+        #if os(macOS)
+        .fileImporter(
+            isPresented: $showFiles,
+            allowedContentTypes: [.png, .jpeg, .webP],
+            allowsMultipleSelection: true
+        ) { result in
+            switch result {
+            case .success(let urls):
+                guard !urls.isEmpty else { return }
+                Task { await ingestFileURLs(Array(urls.prefix(remainingPhotoSlots))) }
+            case .failure(let error):
+                reportSendError(supportErrorMessage(error))
+            }
+        }
+        #endif
     }
 
     @ViewBuilder
@@ -255,12 +277,23 @@ struct SupportChatPane: View {
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: ticket.messages.count) { _, _ in
                     if let last = ticket.messages.last {
-                        withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                        DispatchQueue.main.async {
+                            withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                        }
+                    }
+                }
+                .onChange(of: ticket.id) { _, _ in
+                    if let last = ticket.messages.last {
+                        DispatchQueue.main.async {
+                            proxy.scrollTo(last.id, anchor: .bottom)
+                        }
                     }
                 }
                 .onAppear {
                     if let last = ticket.messages.last {
-                        proxy.scrollTo(last.id, anchor: .bottom)
+                        DispatchQueue.main.async {
+                            proxy.scrollTo(last.id, anchor: .bottom)
+                        }
                     }
                 }
             }
@@ -383,6 +416,30 @@ struct SupportChatPane: View {
             reportSendError(supportErrorMessage(error))
         }
     }
+
+    #if os(macOS)
+    private func ingestFileURLs(_ urls: [URL]) async {
+        attaching = true
+        defer { attaching = false }
+
+        let room = remainingPhotoSlots
+        guard room > 0 else {
+            reportSendError(String(localized: "You can attach up to 10 photos"))
+            return
+        }
+
+        let limited = Array(urls.prefix(room))
+        guard !limited.isEmpty else { return }
+
+        do {
+            let added = try await SupportAttachLoader.fromFileURLs(limited)
+            guard !added.isEmpty else { return }
+            pending += added
+        } catch {
+            reportSendError(supportErrorMessage(error))
+        }
+    }
+    #endif
 
     private func delete(_ msg: SupportMessage) async {
         guard let id = activeTicketId else { return }

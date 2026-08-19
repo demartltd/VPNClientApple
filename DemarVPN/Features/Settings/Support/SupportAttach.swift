@@ -28,6 +28,30 @@ enum SupportAttachLoader {
         return out
     }
 
+    static func fromFileURLs(_ urls: [URL]) async throws -> [SupportUploadMedia] {
+        var out: [SupportUploadMedia] = []
+        for (i, url) in urls.enumerated() {
+            #if os(macOS)
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            #endif
+
+            let raw = try Data(contentsOf: url, options: .mappedIfSafe)
+            guard !raw.isEmpty else { continue }
+
+            guard let jpeg = jpegData(from: raw) else {
+                throw DemarAPIError(
+                    message: "unsupported image",
+                    statusCode: 400,
+                    retryAfterSeconds: nil,
+                    hint: nil
+                )
+            }
+            out.append(try SupportApi.uploadFromData(jpeg, fileName: "photo_\(i + 1).jpg", mimeType: "image/jpeg"))
+        }
+        return out
+    }
+
     /// Re-encode image bytes as JPEG (downscaled). Returns nil if not a decodable image.
     private static func jpegData(from data: Data) -> Data? {
         #if os(iOS)

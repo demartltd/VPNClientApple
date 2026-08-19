@@ -90,7 +90,11 @@ struct SupportScreen: View {
             Text("You already have an open ticket. Create a new one?")
         }
         .tint(Color.white)
-        .demarBottomSheet(isPresented: $pickTheme) { themeSheet }
+        .demarBottomSheet(isPresented: $pickTheme, onDismiss: { selectedTheme = nil }) { themeSheet }
+        .onChange(of: pickTheme) { _, shown in
+            guard shown else { return }
+            selectedTheme = themes.first
+        }
     }
 
     @ViewBuilder
@@ -141,23 +145,22 @@ struct SupportScreen: View {
     private var themeSheet: some View {
         VStack(spacing: 12) {
             if themes.isEmpty {
-                Text("No topics available")
+                Text(String(localized: "No topics available"))
                     .font(.demarBodyMedium)
-                    .foregroundStyle(Color.demarOnSurfaceVariant)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 8)
             } else {
+                #if os(iOS)
                 Picker("", selection: $selectedTheme) {
                     ForEach(themes) { theme in
                         Text(theme.name).tag(Optional(theme))
                     }
                 }
-                #if os(iOS)
                 .pickerStyle(.wheel)
                 .frame(maxHeight: 140)
                 #else
-                .pickerStyle(.menu)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                topicList
                 #endif
             }
 
@@ -166,14 +169,52 @@ struct SupportScreen: View {
                 pickTheme = false
                 dest = .draft(selectedTheme.id)
             } label: {
-                Text("Create ticket")
+                Text(String(localized: "Create ticket"))
             }
             .buttonStyle(SupportPlainButtonStyle())
             .disabled(selectedTheme == nil)
             .opacity(selectedTheme == nil ? 0.45 : 1)
         }
         .demarSheetChrome(horizontalPadding: 16, bottomPadding: 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
+
+    #if os(macOS)
+    private var topicList: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 8) {
+                ForEach(themes) { theme in
+                    Button {
+                        selectedTheme = theme
+                    } label: {
+                        HStack(spacing: 10) {
+                            Text(theme.name)
+                                .font(.demarBodyMedium)
+                                .foregroundStyle(.white)
+                                .multilineTextAlignment(.leading)
+                            Spacer(minLength: 0)
+                            if selectedTheme?.id == theme.id {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.white.opacity(selectedTheme?.id == theme.id ? 0.18 : 0.08))
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .frame(maxHeight: 220)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    #endif
 
     private func startCreate() {
         let openLocal = tickets.contains { $0.isOpen && $0.channel == SupportApi.channel }
