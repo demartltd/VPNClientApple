@@ -99,6 +99,15 @@
 "Open the Demar Proxy app once for initial setup." = "Откройте приложение Demar Proxy один раз для первичной инициализации.";
 "Other" = "Другое";
 "Plan" = "План";
+"Promo code" = "Промокод";
+"Activate a subscription promo code" = "Активируйте промокод на подписку";
+"Enter promo code" = "Введите промокод";
+"Activate" = "Активировать";
+"Promo code activated! Subscription has been applied." = "Промокод активирован! Подписка применена.";
+"Promo code not found." = "Промокод не найден.";
+"This promo code has already been used." = "Промокод уже был использован.";
+"You cannot activate this promo code." = "Вы не можете активировать этот промокод.";
+"This promo code has expired." = "Срок действия промокода истёк.";
 "—" = "—";
 "%@ / %@ · %d%%" = "%1$@ / %2$@ · %3$d%%";
 "%@ (%@)" = "%1$@ (%2$@)";

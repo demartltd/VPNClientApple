@@ -16,6 +16,11 @@ struct SettingsView: View {
     @State private var serviceMenuTapResetTask: Task<Void, Never>?
     @State private var supportUnread = SupportUnreadStore.shared
 
+    @State private var showPromoInput = false
+    @State private var showPromoResult = false
+    @State private var promoCode = ""
+    @State private var promoResultMessage = ""
+
     var body: some View {
         Group {
             if isActive {
@@ -61,6 +66,24 @@ struct SettingsView: View {
             }
         }
         .background(Color.demarSurface)
+        .alert(String(localized: "Enter promo code"), isPresented: $showPromoInput) {
+            TextField("DEMARFREE", text: $promoCode)
+                #if os(iOS)
+                .textInputAutocapitalization(.characters)
+                #endif
+                .autocorrectionDisabled()
+                .onChange(of: promoCode) { _, new in
+                    let filtered = new.uppercased().filter { $0.isLetter && $0.isASCII || $0.isNumber }
+                    if filtered != new { promoCode = filtered }
+                }
+            Button(String(localized: "Activate")) { Task { await activatePromo() } }
+            Button(String(localized: "Cancel"), role: .cancel) { promoCode = "" }
+        }
+        .tint(Color.white)
+        .alert(promoResultMessage, isPresented: $showPromoResult) {
+            Button(String(localized: "OK"), role: .cancel) {}
+        }
+        .tint(Color.white)
         .documentsMenu(
             isPresented: $showDocumentsMenu,
             onSelect: { pendingDocument = $0 },
@@ -80,14 +103,30 @@ struct SettingsView: View {
         case .appSettings: showAppSettings = true
         case .documents: showDocumentsMenu = true
         case .feedback:
-            if appState.isSignedIn {
-                showSupport = true
-            } else {
-                onNeedSignIn?()
-            }
+            if appState.isSignedIn { showSupport = true } else { onNeedSignIn?() }
         case .invite:
             snackBar.showInfo(String(localized: "Coming soon"))
+        case .promoCode:
+            if appState.isSignedIn { showPromoInput = true } else { onNeedSignIn?() }
         }
+    }
+
+    private func activatePromo() async {
+        guard let session = appState.authSession else { return }
+        let code = promoCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        promoCode = ""
+        guard !code.isEmpty else { return }
+        do {
+            let result = try await PromoApi.activate(
+                code: code,
+                userId: session.userId,
+                loginAt: session.loginAt
+            )
+            promoResultMessage = result.localizedMessage
+        } catch {
+            promoResultMessage = error.localizedDescription
+        }
+        showPromoResult = true
     }
 
     private var settingsHeader: some View {
@@ -138,7 +177,7 @@ struct SettingsView: View {
 }
 
 private enum SettingsMenuItem: String, CaseIterable, Identifiable {
-    case appSettings, feedback, invite, documents
+    case appSettings, feedback, invite, promoCode, documents
 
     var id: String { rawValue }
 
@@ -147,6 +186,7 @@ private enum SettingsMenuItem: String, CaseIterable, Identifiable {
         case .appSettings: "gearshape.2"
         case .feedback: "star.bubble"
         case .invite: "square.and.arrow.up"
+        case .promoCode: "tag"
         case .documents: "doc.on.doc"
         }
     }
@@ -156,6 +196,7 @@ private enum SettingsMenuItem: String, CaseIterable, Identifiable {
         case .appSettings: String(localized: "App settings")
         case .feedback: String(localized: "Support")
         case .invite: String(localized: "Invite friends")
+        case .promoCode: String(localized: "Promo code")
         case .documents: String(localized: "Documents")
         }
     }
@@ -165,6 +206,7 @@ private enum SettingsMenuItem: String, CaseIterable, Identifiable {
         case .appSettings: String(localized: "Connection, diagnostics journal, and feature status")
         case .feedback: String(localized: "Ask a question or get help with the app")
         case .invite: String(localized: "Get free premium")
+        case .promoCode: String(localized: "Activate a subscription promo code")
         case .documents: String(localized: "Terms of use and privacy")
         }
     }
