@@ -106,7 +106,7 @@ struct LoginSheet: View {
                     .padding(.vertical, 14)
             }
             .buttonStyle(.borderedProminent)
-            .tint(Color.demarPrimary)
+            .tint(Color.demarToggle)
             .disabled(busy)
         }
     }

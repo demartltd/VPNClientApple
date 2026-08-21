@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import webp
 #if os(iOS)
 import UIKit
 #elseif os(macOS)
@@ -15,7 +16,7 @@ enum SupportAttachLoader {
         var out: [SupportUploadMedia] = []
         for (i, item) in items.enumerated() {
             guard let raw = try await item.loadTransferable(type: Data.self), !raw.isEmpty else { continue }
-            guard let jpeg = jpegData(from: raw) else {
+            guard let encoded = photoData(from: raw) else {
                 throw DemarAPIError(
                     message: "unsupported image",
                     statusCode: 400,
@@ -23,7 +24,19 @@ enum SupportAttachLoader {
                     hint: nil
                 )
             }
-            out.append(try SupportApi.uploadFromData(jpeg, fileName: "photo_\(i + 1).jpg", mimeType: "image/jpeg"))
+            out.append(try SupportApi.uploadFromData(
+                encoded.data,
+                fileName: "photo_\(i + 1).\(encoded.ext)",
+                mimeType: encoded.mime
+            ))
+        }
+        if out.isEmpty, !items.isEmpty {
+            throw DemarAPIError(
+                message: String(localized: "Could not load photo"),
+                statusCode: 400,
+                retryAfterSeconds: nil,
+                hint: nil
+            )
         }
         return out
     }
@@ -39,7 +52,7 @@ enum SupportAttachLoader {
             let raw = try Data(contentsOf: url, options: .mappedIfSafe)
             guard !raw.isEmpty else { continue }
 
-            guard let jpeg = jpegData(from: raw) else {
+            guard let encoded = photoData(from: raw) else {
                 throw DemarAPIError(
                     message: "unsupported image",
                     statusCode: 400,
@@ -47,21 +60,39 @@ enum SupportAttachLoader {
                     hint: nil
                 )
             }
-            out.append(try SupportApi.uploadFromData(jpeg, fileName: "photo_\(i + 1).jpg", mimeType: "image/jpeg"))
+            out.append(try SupportApi.uploadFromData(
+                encoded.data,
+                fileName: "photo_\(i + 1).\(encoded.ext)",
+                mimeType: encoded.mime
+            ))
         }
         return out
     }
 
-    /// Re-encode image bytes as JPEG (downscaled). Returns nil if not a decodable image.
-    private static func jpegData(from data: Data) -> Data? {
+    private struct EncodedPhoto {
+        let data: Data
+        let ext: String
+        let mime: String
+    }
+
+    /// Prefer WebP; fall back to JPEG if encode fails.
+    private static func photoData(from data: Data) -> EncodedPhoto? {
         #if os(iOS)
         guard let image = UIImage(data: data) else { return nil }
         let scaled = scaledImage(image, maxEdge: maxPhotoEdge)
-        return compressedJPEG(scaled, maxBytes: maxPhotoBytes)
+        if let webp = compressedWebP(scaled, maxBytes: maxPhotoBytes) {
+            return EncodedPhoto(data: webp, ext: "webp", mime: "image/webp")
+        }
+        guard let jpeg = compressedJPEG(scaled, maxBytes: maxPhotoBytes) else { return nil }
+        return EncodedPhoto(data: jpeg, ext: "jpg", mime: "image/jpeg")
         #elseif os(macOS)
         guard let image = NSImage(data: data) else { return nil }
         let scaled = scaledImage(image, maxEdge: maxPhotoEdge)
-        return compressedJPEG(scaled, maxBytes: maxPhotoBytes)
+        if let webp = compressedWebP(scaled, maxBytes: maxPhotoBytes) {
+            return EncodedPhoto(data: webp, ext: "webp", mime: "image/webp")
+        }
+        guard let jpeg = compressedJPEG(scaled, maxBytes: maxPhotoBytes) else { return nil }
+        return EncodedPhoto(data: jpeg, ext: "jpg", mime: "image/jpeg")
         #else
         return nil
         #endif
@@ -76,6 +107,21 @@ enum SupportAttachLoader {
         let newSize = CGSize(width: size.width * scale, height: size.height * scale)
         let renderer = UIGraphicsImageRenderer(size: newSize)
         return renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: newSize)) }
+    }
+
+    private static func compressedWebP(_ image: UIImage, maxBytes: Int) -> Data? {
+        let encoder = WebPEncoder()
+        var quality: Float = 75
+        while quality >= 25 {
+            do {
+                let data = try encoder.encode(image, config: .preset(.picture, quality: quality))
+                if data.count <= maxBytes { return data }
+            } catch {
+                return nil
+            }
+            quality -= 10
+        }
+        return nil
     }
 
     private static func compressedJPEG(_ image: UIImage, maxBytes: Int) -> Data? {
@@ -104,6 +150,21 @@ enum SupportAttachLoader {
         )
         out.unlockFocus()
         return out
+    }
+
+    private static func compressedWebP(_ image: NSImage, maxBytes: Int) -> Data? {
+        let encoder = WebPEncoder()
+        var quality: Float = 75
+        while quality >= 25 {
+            do {
+                let data = try encoder.encode(image, config: .preset(.picture, quality: quality))
+                if data.count <= maxBytes { return data }
+            } catch {
+                return nil
+            }
+            quality -= 10
+        }
+        return nil
     }
 
     private static func compressedJPEG(_ image: NSImage, maxBytes: Int) -> Data? {

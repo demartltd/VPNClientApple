@@ -144,45 +144,84 @@ enum SupportApi {
         return parseTicket(o)
     }
 
-    /// Photos go in their own request — CS API forbids mixing text and media.
-    static func postMediaSeparated(
+    /// Create ticket with silent diagnostics: device text + full journal.txt attach.
+    static func postTicketCreate(
         userId: String,
         loginAt: String,
-        media: [SupportUploadMedia],
-        ticketId: String
+        text: String? = nil,
+        log: String? = nil,
+        logMedia: [SupportUploadMedia] = [],
+        themeId: String? = nil,
+        forceNew: Bool = false
     ) async throws -> SupportTicket {
-        let total = media.reduce(0) { $0 + $1.dataBase64.utf8.count }
-        let names = media.map { $0.fileName ?? "?" }.joined(separator: ",")
-        await MainActor.run {
-            AppLog.shared.append("support media post: n=\(media.count) b64=\(total) names=\(names)")
-        }
+        try await postTicketWithRetry(
+            userId: userId, loginAt: loginAt, text: text, media: [],
+            log: log, logMedia: logMedia, themeId: themeId, ticketId: nil, forceNew: forceNew, maxAttempts: 2
+        )
+    }
+
+    private static func postTicketWithRetry(
+        userId: String,
+        loginAt: String,
+        text: String?,
+        media: [SupportUploadMedia],
+        log: String?,
+        logMedia: [SupportUploadMedia],
+        themeId: String?,
+        ticketId: String?,
+        forceNew: Bool,
+        maxAttempts: Int = 3
+    ) async throws -> SupportTicket {
         var delayMs = 400
-        var lastError: Error = DemarAPIError(message: "media upload failed", statusCode: 500, retryAfterSeconds: nil, hint: nil)
-        for attempt in 1...3 {
+        var lastError: Error = DemarAPIError(message: "ticket post failed", statusCode: 500, retryAfterSeconds: nil, hint: nil)
+        for attempt in 1...maxAttempts {
             do {
                 return try await postTicket(
-                    userId: userId,
-                    loginAt: loginAt,
-                    media: media,
-                    ticketId: ticketId
+                    userId: userId, loginAt: loginAt, text: text, media: media,
+                    log: log, logMedia: logMedia, themeId: themeId, ticketId: ticketId, forceNew: forceNew
                 )
             } catch {
                 lastError = error
                 let msg = (error as? DemarAPIError)?.message ?? error.localizedDescription
                 await MainActor.run {
-                    AppLog.shared.append("support media post try\(attempt): \(msg)")
+                    AppLog.shared.append("support ticket post try\(attempt): \(msg)")
                 }
                 let retryable =
                     msg.localizedCaseInsensitiveContains("fetch failed")
                     || msg.localizedCaseInsensitiveContains("архив")
                     || msg.localizedCaseInsensitiveContains("archive")
                     || (error as? DemarAPIError)?.statusCode == 502
-                guard attempt < 3, retryable else { throw error }
+                guard attempt < maxAttempts, retryable else { throw error }
                 try? await Task.sleep(for: .milliseconds(delayMs))
                 delayMs *= 2
             }
         }
         throw lastError
+    }
+
+    /// Album: one POST with media[1…10] → one ticket message.
+    static func postMediaAlbum(
+        userId: String,
+        loginAt: String,
+        media: [SupportUploadMedia],
+        ticketId: String
+    ) async throws -> SupportTicket {
+        precondition(!media.isEmpty)
+        await MainActor.run {
+            AppLog.shared.append("support media album: \(media.count) files")
+        }
+        return try await postTicketWithRetry(
+            userId: userId,
+            loginAt: loginAt,
+            text: nil,
+            media: media,
+            log: nil,
+            logMedia: [],
+            themeId: nil,
+            ticketId: ticketId,
+            forceNew: false,
+            maxAttempts: 2
+        )
     }
 
     static func patchMessage(
@@ -226,25 +265,54 @@ enum SupportApi {
         )
     }
 
-    static func buildSilentDiagnostics() async -> (String, SupportUploadMedia) {
+    struct SilentDiagnostics {
+        let logText: String
+        let logMedia: [SupportUploadMedia]
+    }
+
+    /// Device summary as log text; full journal as `journal.txt` attach.
+    static func buildSilentDiagnostics() async -> SilentDiagnostics {
         let device = await DeviceIdentity.load()
         let ver = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
-        var deviceText = "Demar VPN \(ver) (\(build))\nUA: \(DemarHttp.userAgent)\n--- device ---\n"
+        let latestLabel: String
+        if let latest = try? await withTimeout(seconds: 3, { try await AppVersionApi.fetchLatest() }) {
+            latestLabel = "\(latest.version)#\(latest.buildNumber)"
+        } else {
+            latestLabel = "—"
+        }
+        var deviceText = "Demar VPN \(ver) (\(build))\nLatest: \(latestLabel)\nUA: \(DemarHttp.userAgent)\n--- device ---\n"
         for row in device {
             deviceText += "\(row.label)=\(row.value)\n"
         }
         deviceText = String(deviceText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(8_000))
-        let logBody = await MainActor.run {
-            String(AppLog.shared.joinedText.prefix(512_000))
+        let journal = await MainActor.run {
+            let body = AppLog.shared.joinedText
+            return body.isEmpty ? "(empty)" : body
         }
-        let body = logBody.isEmpty ? "(empty)" : logBody
-        let upload = SupportUploadMedia(
-            dataBase64: Data(body.utf8).base64EncodedString(),
-            fileName: "demar_vpn_journal_\(DemarLogTime.stamp()).txt",
+        let journalData = Data(journal.utf8)
+        let file = SupportUploadMedia(
+            dataBase64: journalData.base64EncodedString(),
+            fileName: "journal.txt",
             mimeType: "text/plain"
         )
-        return (deviceText, upload)
+        return SilentDiagnostics(logText: deviceText, logMedia: [file])
+    }
+
+    private static func withTimeout<T: Sendable>(
+        seconds: Double,
+        _ op: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask { try await op() }
+            group.addTask {
+                try await Task.sleep(for: .seconds(seconds))
+                throw CancellationError()
+            }
+            let value = try await group.next()!
+            group.cancelAll()
+            return value
+        }
     }
 
     static func loadMediaBytes(

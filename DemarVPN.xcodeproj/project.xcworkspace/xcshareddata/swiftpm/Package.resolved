@@ -1,6 +1,15 @@
 {
-  "originHash" : "04d9e4d8045a6310349928a2f8d2e6c6fe1c41e0c952a800e312800fac9624f9",
+  "originHash" : "1266d200a414670b23a12ae3478b5801b29c6414f7a6563017a4ac342e0341e7",
   "pins" : [
+    {
+      "identity" : "libwebp-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/awxkee/libwebp-ios.git",
+      "state" : {
+        "revision" : "09ab26afc64c55a49332c396c4b465c278fcb05f",
+        "version" : "1.1.1"
+      }
+    },
     {
       "identity" : "networkimage",
       "kind" : "remoteSourceControl",
@@ -26,6 +35,15 @@
       "state" : {
         "revision" : "5f613358148239d0292c0cef674a3c2314737f9e",
         "version" : "2.4.1"
+      }
+    },
+    {
+      "identity" : "webp.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/awxkee/webp.swift",
+      "state" : {
+        "revision" : "10562e79e338de46e70f0f5c67b24cb90e02adb2",
+        "version" : "1.1.2"
       }
     }
   ],

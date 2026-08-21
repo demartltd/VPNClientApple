@@ -17,16 +17,23 @@ enum DeviceIdentity {
 
     private static func collect() -> [String: String] {
         #if os(iOS)
+        let device = UIDevice.current
         return [
-            "ios_model_code": iosModelCode(),
-            "idfv": UIDevice.current.identifierForVendor?.uuidString ?? "—",
+            "ios_version": device.systemVersion,
+            "ios_model": iosModelCode(),
+            "ios_locale": Locale.current.identifier,
+            "ios_timezone": TimeZone.current.identifier,
+            "idfv": device.identifierForVendor?.uuidString ?? "—",
             "idfa": IDFATracking.displayIDFA,
         ]
         #elseif os(macOS)
+        let pi = ProcessInfo.processInfo
         return [
+            "mac_computer_name": Host.current().localizedName ?? pi.hostName,
+            "mac_os": pi.operatingSystemVersionString,
             "mac_hw_model": sysctl("hw.model") ?? "—",
-            "mac_os": ProcessInfo.processInfo.operatingSystemVersionString,
-            "mac_computer_name": Host.current().localizedName ?? ProcessInfo.processInfo.hostName,
+            "mac_locale": Locale.current.identifier,
+            "mac_timezone": TimeZone.current.identifier,
             "mac_hw_uuid": ioPlatformUUID() ?? "—",
         ]
         #else
@@ -87,8 +94,9 @@ enum DeviceIdentity {
     }
 
     private static let order = [
-        "ios_model_code", "idfv", "idfa",
-        "mac_hw_model", "mac_os", "mac_computer_name", "mac_hw_uuid",
+        "ios_version", "ios_model", "ios_locale", "ios_timezone", "idfv", "idfa",
+        "mac_computer_name", "mac_os", "mac_hw_model",
+        "mac_locale", "mac_timezone", "mac_hw_uuid",
         "fingerprint_sha256",
     ]
 
@@ -107,12 +115,17 @@ enum DeviceIdentity {
 
     private static func label(_ k: String) -> String {
         switch k {
-        case "ios_model_code": "Model Code"
+        case "ios_version": "iOS"
+        case "ios_model": "Model"
+        case "ios_locale": "Locale"
+        case "ios_timezone": "Timezone"
         case "idfv": "IDFV"
         case "idfa": "IDFA"
-        case "mac_hw_model": "Model"
-        case "mac_os": "macOS"
         case "mac_computer_name": "Mac Name"
+        case "mac_os": "macOS"
+        case "mac_hw_model": "Model"
+        case "mac_locale": "Locale"
+        case "mac_timezone": "Timezone"
         case "mac_hw_uuid": "UUID"
         case "fingerprint_sha256": "Fingerprint"
         default: k

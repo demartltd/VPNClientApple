@@ -16,7 +16,6 @@ enum PublicEgressDiagnostics {
         "github.com", "bing.com", "ya.ru", "vk.ru", "x.com", "bbc.com", "www.gov.cn",
     ]
     static let probeTimeout: TimeInterval = 2.5
-    private static let geoTotalBudget: TimeInterval = 3
 
     static let fallback = PublicEgressInfo(ip: "localhost", country: "None 🏳️")
 
@@ -52,23 +51,17 @@ enum PublicEgressDiagnostics {
     }
 
     static func fetchPublicEgressGeo() async -> PublicEgressInfo {
-        await withTaskGroup(of: PublicEgressInfo?.self) { group in
-            group.addTask { await fetchIpWhoIs(url: "https://ipwho.is/") }
-            group.addTask { await fetchCloudflareTrace() }
-            group.addTask { await fetchIpApiCo() }
-            group.addTask { await fetchPublicIPv4Info() }
-            group.addTask {
-                try? await Task.sleep(for: .seconds(geoTotalBudget))
-                return nil
-            }
-            for await candidate in group {
-                if let info = candidate, isIPv4(info.ip) {
-                    group.cancelAll()
-                    return info
-                }
-            }
-            return fallback
+        // One provider at a time; next only after failure (parity Windows).
+        let providers: [() async -> PublicEgressInfo?] = [
+            { await fetchCloudflareTrace() },
+            { await fetchIpWhoIs(url: "https://ipwho.is/") },
+            { await fetchIpApiCo() },
+            { await fetchPublicIPv4Info() },
+        ]
+        for provider in providers {
+            if let info = await provider(), isIPv4(info.ip) { return info }
         }
+        return fallback
     }
 
     static func probeAllHosts(
@@ -171,7 +164,7 @@ enum PublicEgressDiagnostics {
     // MARK: - Geo
 
     private static func fetchPublicIPv4Info() async -> PublicEgressInfo? {
-        if let ip = await raceFirstIPv4(from: [
+        if let ip = await firstIPv4(from: [
             "https://api.ipify.org?format=json",
             "https://api64.ipify.org?format=json",
             "https://ipv4.icanhazip.com/",
@@ -184,34 +177,24 @@ enum PublicEgressDiagnostics {
         return nil
     }
 
-    private static func raceFirstIPv4(from urls: [String]) async -> String? {
-        await withTaskGroup(of: String?.self) { group in
-            for url in urls {
-                group.addTask {
-                    if url.contains("format=json") {
-                        guard let body = await httpGetBody(url: url),
-                              let data = body.data(using: .utf8),
-                              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                              let ip = (obj["ip"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                              isIPv4(ip)
-                        else { return nil }
-                        return ip
-                    }
-                    guard let body = await httpGetBody(url: url)?
-                        .trimmingCharacters(in: .whitespacesAndNewlines),
-                        isIPv4(body)
-                    else { return nil }
-                    return body
-                }
+    private static func firstIPv4(from urls: [String]) async -> String? {
+        for url in urls {
+            if url.contains("format=json") {
+                guard let body = await httpGetBody(url: url),
+                      let data = body.data(using: .utf8),
+                      let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let ip = (obj["ip"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                      isIPv4(ip)
+                else { continue }
+                return ip
             }
-            for await ip in group {
-                if let ip {
-                    group.cancelAll()
-                    return ip
-                }
-            }
-            return nil
+            guard let body = await httpGetBody(url: url)?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+                isIPv4(body)
+            else { continue }
+            return body
         }
+        return nil
     }
 
     private static func fetchIpWhoIs(url: String) async -> PublicEgressInfo? {

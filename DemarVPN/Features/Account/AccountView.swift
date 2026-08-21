@@ -308,8 +308,16 @@ struct AccountView: View {
         Group {
             if let a = account {
                 VStack(spacing: 8) {
-                    notifyRow(String(localized: "News and offers"), a.notifyNews) { setNotify(news: $0) }
-                    notifyRow(String(localized: "Important notices"), a.notifyImportant) { setNotify(important: $0) }
+                    notifyCard(
+                        title: String(localized: "News"),
+                        subtitle: String(localized: "Product updates and announcements."),
+                        checked: a.notifyNews
+                    ) { setNotify(news: $0) }
+                    notifyCard(
+                        title: String(localized: "Important"),
+                        subtitle: String(localized: "Security alerts and critical account notices."),
+                        checked: a.notifyImportant
+                    ) { setNotify(important: $0) }
                 }
             } else if loading {
                 Text(String(localized: "Loading…"))
@@ -341,20 +349,34 @@ struct AccountView: View {
         .demarSheetChrome(bottomPadding: 8)
     }
 
-    private func notifyRow(_ label: String, _ checked: Bool, onChange: @escaping (Bool) -> Void) -> some View {
-        HStack {
-            Text(label)
-                .font(.demarBodyMedium)
-                .foregroundStyle(Color.demarOnSurface)
-            Spacer(minLength: 8)
+    private func notifyCard(
+        title: String,
+        subtitle: String,
+        checked: Bool,
+        onChange: @escaping (Bool) -> Void
+    ) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.demarTitleMediumBold)
+                    .foregroundStyle(Color.demarOnSurface)
+                Text(subtitle)
+                    .font(.demarBodySmall)
+                    .foregroundStyle(Color.demarOnSurfaceVariant)
+            }
+            Spacer(minLength: 0)
             Toggle("", isOn: Binding(get: { checked }, set: onChange))
                 .labelsHidden()
                 .toggleStyle(.switch)
-                .tint(Color.demarPrimary)
-                .accessibilityLabel(label)
+                .tint(Color.demarToggle)
+                .accessibilityLabel(title)
         }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.demarSurfaceContainerHighest)
+        )
         .disabled(notifyBusy)
-        .padding(.vertical, 4)
     }
 
     private var guestCTA: some View {

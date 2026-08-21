@@ -410,7 +410,6 @@ struct SupportChatPane: View {
         guard !limited.isEmpty else { return }
         do {
             let added = try await SupportAttachLoader.fromPhotos(limited)
-            guard !added.isEmpty else { return }
             pending += added
         } catch {
             reportSendError(supportErrorMessage(error))
@@ -493,21 +492,23 @@ struct SupportChatPane: View {
                 editTarget = nil
                 text = ""
             } else if creating {
-                guard let themeId else { return }
-                let (deviceText, logFile) = await SupportApi.buildSilentDiagnostics()
-                var created = try await SupportApi.postTicket(
+                guard let themeId else {
+                    reportSendError(String(localized: "Choose a topic"))
+                    return
+                }
+                let diagnostics = await SupportApi.buildSilentDiagnostics()
+                var created = try await SupportApi.postTicketCreate(
                     userId: session.userId,
                     loginAt: session.loginAt,
                     text: body.isEmpty ? nil : body,
-                    media: body.isEmpty ? uploads : [],
-                    log: deviceText,
-                    logMedia: [logFile],
+                    log: diagnostics.logText,
+                    logMedia: diagnostics.logMedia,
                     themeId: themeId,
                     forceNew: true
                 )
                 text = ""
-                if !body.isEmpty, !uploads.isEmpty {
-                    created = try await SupportApi.postMediaSeparated(
+                if !uploads.isEmpty {
+                    created = try await SupportApi.postMediaAlbum(
                         userId: session.userId,
                         loginAt: session.loginAt,
                         media: uploads,
@@ -534,7 +535,7 @@ struct SupportChatPane: View {
                     text = ""
                 }
                 if !uploads.isEmpty {
-                    fresh = try await SupportApi.postMediaSeparated(
+                    fresh = try await SupportApi.postMediaAlbum(
                         userId: session.userId,
                         loginAt: session.loginAt,
                         media: uploads,

@@ -95,7 +95,7 @@ DemarVPN/                              # SwiftUI target
             ├── SupportChatPane.swift  # chat + polling / send
             ├── SupportComposer.swift  # input bar + glass chrome
             ├── SupportBubble.swift    # message bubble / album / menu
-            ├── SupportAttach.swift    # gallery photo ingest / JPEG compress
+            ├── SupportAttach.swift    # gallery photo ingest / WebP compress
             └── SupportHelpers.swift   # errors, time, linkify
 
 DemarVPNTests/                         # unit tests (Sing-box, servers/account parse, interface, legal docs)
