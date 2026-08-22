@@ -66,10 +66,14 @@ struct HomeView: View {
             await appState.toggleVpn()
             return
         }
-        if appState.selectedServer == nil {
+        guard appState.selectedServer != nil else {
             if !appState.isSignedIn {
                 onNeedSignIn?()
             }
+            return
+        }
+        if appState.isTrafficConnectBlocked() {
+            snackBar.showError(String(localized: "Monthly traffic limit reached. Upgrade your subscription to continue."))
             return
         }
         guard appState.selectedServer?.canConnect == true else {

@@ -4,6 +4,7 @@ struct ServersListResult: Sendable {
     let vpnSubscription: String?
     let vpnExpiresAt: String?
     let servers: [ServerProfile]
+    let trafficExceeded: Bool
     let rawJson: [String: Any]
 }
 
@@ -35,6 +36,7 @@ enum ServersApi {
             vpnSubscription: (json["vpnSubscription"] as? String)?.nilIfBlank,
             vpnExpiresAt: (json["vpnExpiresAt"] as? String)?.nilIfBlank,
             servers: profiles,
+            trafficExceeded: json["trafficExceeded"] as? Bool ?? false,
             rawJson: json
         )
     }

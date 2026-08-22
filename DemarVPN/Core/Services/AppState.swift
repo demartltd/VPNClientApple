@@ -21,6 +21,7 @@ final class AppState {
     var serversError: String?
     var account: VpnAccount?
     var traffic: VpnTraffic?
+    var trafficExceeded = false
     var accountLoading = false
     var vpnState: VpnConnectionState = .disconnected
     var downloadBps: Double = 0
@@ -288,6 +289,7 @@ final class AppState {
         do {
             let result = try await ServersApi.fetchServers(userId: session.userId, loginAt: session.loginAt)
             applyServerList(result.servers)
+            trafficExceeded = result.trafficExceeded
             SessionCacheStore.saveServers(result.rawJson, userId: session.userId)
             AppLog.shared.append("[servers] loaded \(result.servers.count) (sub=\(result.vpnSubscription ?? "—"))")
         } catch is CancellationError {
@@ -319,7 +321,12 @@ final class AppState {
     private func clearAccount() {
         account = nil
         traffic = nil
+        trafficExceeded = false
         accountLoading = false
+    }
+
+    func isTrafficConnectBlocked() -> Bool {
+        trafficExceeded
     }
 
     private func applyServerList(_ list: [ServerProfile]) {
@@ -332,6 +339,7 @@ final class AppState {
         selectedServer = nil
         serversError = nil
         serversLoading = false
+        trafficExceeded = false
         UserDefaults.standard.removeObject(forKey: StorageKey.selectedServerId)
     }
 
@@ -437,6 +445,12 @@ final class AppState {
     }
 
     private func connect(force: Bool, operationGeneration: UInt64) async {
+        if isTrafficConnectBlocked() {
+            let message = String(localized: "Monthly traffic limit reached. Upgrade your subscription to continue.")
+            vpnState = .error(message: message)
+            AppLog.shared.append("[vpn] connect blocked: traffic limit")
+            return
+        }
         guard let server = selectedServer, server.canConnect else { return }
         #if os(iOS) || os(macOS)
         let systemStatus = await withCheckedContinuation { (continuation: CheckedContinuation<NEVPNStatus, Never>) in

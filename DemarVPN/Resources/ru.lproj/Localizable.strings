@@ -32,6 +32,7 @@
 "Couldn’t update notifications" = "Не удалось обновить уведомления";
 "Couldn’t open a VPN session (NETunnelProviderSession). Reinstall the VPN profile in system settings." = "Не удалось открыть VPN-сессию (NETunnelProviderSession). Переустановите профиль VPN в настройках системы.";
 "Couldn’t refresh" = "Не удалось обновить";
+"Monthly traffic limit reached. Upgrade your subscription to continue." = "Лимит трафика исчерпан. Оформите подписку для продолжения.";
 "Couldn’t resolve uplinkHost for the VPN route exclusion." = "Не удалось определить uplinkHost для исключения маршрута VPN.";
 "Couldn’t sign in. Try again" = "Не удалось войти. Попробуйте ещё раз";
 "Couldn’t sign out. Try again" = "Не удалось выйти. Попробуйте ещё раз";

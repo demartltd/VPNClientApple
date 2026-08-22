@@ -32,6 +32,7 @@
 "Couldn’t update notifications" = "Couldn’t update notifications";
 "Couldn’t open a VPN session (NETunnelProviderSession). Reinstall the VPN profile in system settings." = "Couldn’t open a VPN session (NETunnelProviderSession). Reinstall the VPN profile in system settings.";
 "Couldn’t refresh" = "Couldn’t refresh";
+"Monthly traffic limit reached. Upgrade your subscription to continue." = "Monthly traffic limit reached. Upgrade your subscription to continue.";
 "Couldn’t resolve uplinkHost for the VPN route exclusion." = "Couldn’t resolve uplinkHost for the VPN route exclusion.";
 "Couldn’t sign in. Try again" = "Couldn’t sign in. Try again";
 "Couldn’t sign out. Try again" = "Couldn’t sign out. Try again";
