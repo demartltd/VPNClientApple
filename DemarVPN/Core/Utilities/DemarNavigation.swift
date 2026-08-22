@@ -2,6 +2,24 @@ import SwiftUI
 
 enum DemarURLScheme {
     static let name = "demarvpn"
+
+    /// `demarvpn://settings/traffic` → Account tab + traffic sheet (not a Settings push).
+    static func isAccountTrafficURL(_ url: URL) -> Bool {
+        pathComponents(from: url) == ["settings", "traffic"]
+    }
+
+    static func pathComponents(from url: URL) -> [String] {
+        var parts = [String]()
+        if url.scheme == name,
+           let host = url.host(percentEncoded: false)?.nilIfBlank,
+           host != "auth"
+        {
+            parts.append(host)
+        }
+        parts.append(contentsOf: url.pathComponents.filter { $0 != "/" })
+        if parts.first == "open" { parts.removeFirst() }
+        return parts
+    }
 }
 
 enum SupportRoute: Hashable, Identifiable {
@@ -9,7 +27,6 @@ enum SupportRoute: Hashable, Identifiable {
     case draft(String)
 
     var id: String { pathComponent }
-    var deepLinkKey: String { pathComponent }
 
     var pathComponent: String {
         switch self {
@@ -23,7 +40,6 @@ enum ServiceRoute: Hashable, Identifiable {
     case customProbes
 
     var id: String { pathComponent }
-    var deepLinkKey: String { pathComponent }
     var pathComponent: String { "settings/service/custom-checks" }
 }
 
@@ -32,10 +48,8 @@ enum SettingsRoute: Hashable, Identifiable {
     case serviceMenu(ServiceRoute? = nil)
     case support(SupportRoute? = nil)
     case document(LegalDocument)
-    case traffic
 
     var id: String { pathComponent }
-    var deepLinkKey: String { pathComponent }
 
     var pathComponent: String {
         switch self {
@@ -47,21 +61,11 @@ enum SettingsRoute: Hashable, Identifiable {
             route?.pathComponent ?? "settings/support"
         case .document(let document):
             "settings/documents/\(document.rawValue)"
-        case .traffic:
-            "settings/traffic"
         }
     }
 
     init?(url: URL) {
-        var parts = [String]()
-        if url.scheme == DemarURLScheme.name,
-           let host = url.host(percentEncoded: false)?.nilIfBlank,
-           host != "auth"
-        {
-            parts.append(host)
-        }
-        parts.append(contentsOf: url.pathComponents.filter { $0 != "/" })
-        if parts.first == "open" { parts.removeFirst() }
+        let parts = DemarURLScheme.pathComponents(from: url)
         guard !parts.isEmpty else { return nil }
         self.init(pathComponents: parts)
     }
@@ -76,8 +80,6 @@ enum SettingsRoute: Hashable, Identifiable {
             self = .serviceMenu(.customProbes)
         case ["settings", "support"]:
             self = .support()
-        case ["settings", "traffic"]:
-            self = .traffic
         case let parts where parts.count == 4 && parts[0] == "settings" && parts[1] == "support" && parts[2] == "ticket":
             guard !parts[3].isEmpty else { return nil }
             self = .support(.chat(parts[3]))

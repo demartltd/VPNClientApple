@@ -129,11 +129,11 @@ final class AppState {
 
     func consumeIncomingURL(_ url: URL) async {
         if await consumeAuthCallback(url) { return }
-        guard let route = SettingsRoute(url: url) else { return }
-        if case .traffic = route {
+        if DemarURLScheme.isAccountTrafficURL(url) {
             openAccountTrafficSheet()
             return
         }
+        guard let route = SettingsRoute(url: url) else { return }
         pendingSettingsRoute = route
         settingsRouteRequestTick &+= 1
     }

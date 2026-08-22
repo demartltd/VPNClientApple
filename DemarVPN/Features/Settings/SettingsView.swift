@@ -59,8 +59,6 @@ struct SettingsView: View {
                         }
                     case .document(let document):
                         LegalDocumentView(document: document)
-                    case .traffic:
-                        EmptyView()
                     }
                 }
             } else {
