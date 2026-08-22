@@ -73,7 +73,7 @@ struct HomeView: View {
             return
         }
         if appState.isTrafficConnectBlocked() {
-            snackBar.showError(String(localized: "Monthly traffic limit reached. Upgrade your subscription to continue."))
+            appState.openAccountTrafficSheet()
             return
         }
         guard appState.selectedServer?.canConnect == true else {

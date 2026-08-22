@@ -32,6 +32,9 @@ final class AppState {
     /// Pending settings route requested by incoming URL / public link.
     var pendingSettingsRoute: SettingsRoute?
     var settingsRouteRequestTick: Int = 0
+    /// Open Account tab + traffic bottom sheet (`demarvpn://settings/traffic`).
+    var pendingOpenTrafficSheet = false
+    var accountRouteRequestTick: Int = 0
     var latestAppVersion: AppVersionInfo?
     var shouldShowUpdateAlert = false
     var versionCheckInFlight = false
@@ -127,6 +130,10 @@ final class AppState {
     func consumeIncomingURL(_ url: URL) async {
         if await consumeAuthCallback(url) { return }
         guard let route = SettingsRoute(url: url) else { return }
+        if case .traffic = route {
+            openAccountTrafficSheet()
+            return
+        }
         pendingSettingsRoute = route
         settingsRouteRequestTick &+= 1
     }
@@ -135,6 +142,17 @@ final class AppState {
     func consumePendingSettingsRoute() -> SettingsRoute? {
         defer { pendingSettingsRoute = nil }
         return pendingSettingsRoute
+    }
+
+    func openAccountTrafficSheet() {
+        pendingOpenTrafficSheet = true
+        accountRouteRequestTick &+= 1
+    }
+
+    @discardableResult
+    func consumeOpenTrafficSheetRequest() -> Bool {
+        defer { pendingOpenTrafficSheet = false }
+        return pendingOpenTrafficSheet
     }
 
     private func consumeAuthCallback(_ url: URL) async -> Bool {
@@ -446,9 +464,8 @@ final class AppState {
 
     private func connect(force: Bool, operationGeneration: UInt64) async {
         if isTrafficConnectBlocked() {
-            let message = String(localized: "Monthly traffic limit reached. Upgrade your subscription to continue.")
-            vpnState = .error(message: message)
             AppLog.shared.append("[vpn] connect blocked: traffic limit")
+            openAccountTrafficSheet()
             return
         }
         guard let server = selectedServer, server.canConnect else { return }

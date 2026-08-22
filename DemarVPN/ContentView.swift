@@ -72,6 +72,12 @@ struct ContentView: View {
             t.disablesAnimations = true
             withTransaction(t) { section = .settings }
         }
+        .onChange(of: appState.accountRouteRequestTick) { _, tick in
+            guard tick > 0 else { return }
+            var t = Transaction()
+            t.disablesAnimations = true
+            withTransaction(t) { section = .account }
+        }
     }
 
     #if os(macOS)

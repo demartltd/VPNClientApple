@@ -32,6 +32,7 @@ enum SettingsRoute: Hashable, Identifiable {
     case serviceMenu(ServiceRoute? = nil)
     case support(SupportRoute? = nil)
     case document(LegalDocument)
+    case traffic
 
     var id: String { pathComponent }
     var deepLinkKey: String { pathComponent }
@@ -46,6 +47,8 @@ enum SettingsRoute: Hashable, Identifiable {
             route?.pathComponent ?? "settings/support"
         case .document(let document):
             "settings/documents/\(document.rawValue)"
+        case .traffic:
+            "settings/traffic"
         }
     }
 
@@ -73,6 +76,8 @@ enum SettingsRoute: Hashable, Identifiable {
             self = .serviceMenu(.customProbes)
         case ["settings", "support"]:
             self = .support()
+        case ["settings", "traffic"]:
+            self = .traffic
         case let parts where parts.count == 4 && parts[0] == "settings" && parts[1] == "support" && parts[2] == "ticket":
             guard !parts[3].isEmpty else { return nil }
             self = .support(.chat(parts[3]))

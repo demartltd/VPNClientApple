@@ -32,7 +32,6 @@
 "Couldn’t update notifications" = "Не удалось обновить уведомления";
 "Couldn’t open a VPN session (NETunnelProviderSession). Reinstall the VPN profile in system settings." = "Не удалось открыть VPN-сессию (NETunnelProviderSession). Переустановите профиль VPN в настройках системы.";
 "Couldn’t refresh" = "Не удалось обновить";
-"Monthly traffic limit reached. Upgrade your subscription to continue." = "Лимит трафика исчерпан. Оформите подписку для продолжения.";
 "Couldn’t resolve uplinkHost for the VPN route exclusion." = "Не удалось определить uplinkHost для исключения маршрута VPN.";
 "Couldn’t sign in. Try again" = "Не удалось войти. Попробуйте ещё раз";
 "Couldn’t sign out. Try again" = "Не удалось выйти. Попробуйте ещё раз";
@@ -81,6 +80,7 @@
 "Invalid email" = "Неправильный email";
 "Important" = "Важные";
 "Security alerts and critical account notices." = "Оповещения безопасности и критические уведомления аккаунта.";
+"Increase limits" = "Увеличить лимиты";
 "Invite friends" = "Пригласить друзей";
 "Invite friends with a link" = "Пригласите друзей по ссылке";
 "Journal" = "Журнал";
@@ -176,6 +176,7 @@
 "The app language is set in system settings." = "Язык приложения задаётся в системных настройках.";
 "The embedded DemarPacketTunnel extension is damaged or missing. Reinstall the app." = "Встроенное расширение DemarPacketTunnel повреждено или отсутствует. Переустановите приложение.";
 "today" = "сегодня";
+"Traffic remaining: %@" = "Осталось трафика: %@";
 "Traffic this month" = "Трафик за месяц";
 "Traffic unavailable" = "Трафик недоступен";
 "Tunnel did not connect (heartbeat=%@): %@" = "Туннель не подключился (heartbeat=%@): %@";

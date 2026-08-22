@@ -4,8 +4,11 @@ struct TrafficPieChart: View {
     let servers: [VpnTrafficServer]
     let otherLabel: String
     let centerPrimary: String
+    let accountId: String
 
     @State private var progress = 0.0
+
+    private let chartSize: CGFloat = 144
 
     private var palette: [Color] {
         [
@@ -26,47 +29,51 @@ struct TrafficPieChart: View {
         let slices = self.slices
         let hasData = slices.contains { $0.bytes > 0 }
 
-        VStack(spacing: 16) {
-            ZStack {
-                AnimatedPieRing(
-                    progress: progress,
-                    slices: slices,
-                    palette: palette
-                )
-                .frame(width: 200, height: 200)
-                .rotationEffect(.degrees(-18 * (1 - progress)))
-
-                Text(centerPrimary)
-                    .font(.demarTitleMedium)
-                    .foregroundStyle(Color.demarOnSurface)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 28)
-                    .opacity(0.35 + 0.65 * progress)
-            }
+        FloatEndFlow(spacing: 12, lineSpacing: 10, gap: 12) {
+            Text(accountId)
+                .font(.demarBodyMedium)
+                .foregroundStyle(Color.demarOnSurfaceVariant)
+                .opacity(progress)
+                .floatFullRow()
 
             if hasData {
-                FlowLayout(spacing: 16, lineSpacing: 10) {
-                    ForEach(Array(slices.enumerated()), id: \.element.id) { i, slice in
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(palette[i % palette.count])
-                                .frame(width: 10, height: 10)
-                            VStack(alignment: .leading, spacing: 0) {
-                                Text(slice.name)
-                                    .font(.demarBodySmall)
-                                    .foregroundStyle(Color.demarOnSurface)
-                                Text(VpnAccountApi.formatBytes(slice.bytes))
-                                    .font(.demarBodySmall)
-                                    .foregroundStyle(Color.demarOnSurfaceVariant)
-                            }
+                ForEach(Array(slices.enumerated()), id: \.element.id) { i, slice in
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(palette[i % palette.count])
+                            .frame(width: 10, height: 10)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(slice.name)
+                                .font(.demarBodySmall)
+                                .foregroundStyle(Color.demarOnSurface)
+                            Text(VpnAccountApi.formatBytes(slice.bytes))
+                                .font(.demarBodySmall)
+                                .foregroundStyle(Color.demarOnSurfaceVariant)
                         }
-                        .frame(minWidth: 120, alignment: .leading)
-                        .opacity(progress)
                     }
+                    .opacity(progress)
                 }
             }
+
+            ZStack {
+                AnimatedPieRing(progress: progress, slices: slices, palette: palette)
+                    .frame(width: chartSize, height: chartSize)
+                    .rotationEffect(.degrees(-18 * (1 - progress)))
+                Text(centerPrimary)
+                    .font(.demarBodySmall)
+                    .foregroundStyle(Color.demarOnSurface)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 14)
+                    .opacity(0.35 + 0.65 * progress)
+            }
+            .frame(width: chartSize, height: chartSize)
         }
-        .frame(maxWidth: .infinity)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(Color.demarOutline.opacity(0.20), lineWidth: 1)
+        )
         .onAppear {
             progress = 0
             withAnimation(.timingCurve(0.4, 0.0, 0.2, 1.0, duration: 0.75)) {
@@ -132,10 +139,21 @@ private struct AnimatedPieRing: View, Animatable {
     }
 }
 
-/// Minimal wrapping row (Android FlowRow), rows centered.
-private struct FlowLayout: Layout {
+private struct FloatFullRowKey: LayoutValueKey {
+    static let defaultValue = false
+}
+
+private extension View {
+    func floatFullRow(_ value: Bool = true) -> some View {
+        layoutValue(key: FloatFullRowKey.self, value: value)
+    }
+}
+
+/// Leading flow with last subview floated top-trailing (CSS float:right).
+private struct FloatEndFlow: Layout {
     var spacing: CGFloat
     var lineSpacing: CGFloat
+    var gap: CGFloat
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         layout(proposal.replacingUnspecifiedDimensions().width, subviews).size
@@ -144,36 +162,64 @@ private struct FlowLayout: Layout {
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let result = layout(bounds.width, subviews)
         for (i, origin) in result.origins.enumerated() {
-            subviews[i].place(at: CGPoint(x: bounds.minX + origin.x, y: bounds.minY + origin.y), proposal: .unspecified)
+            subviews[i].place(
+                at: CGPoint(x: bounds.minX + origin.x, y: bounds.minY + origin.y),
+                proposal: .unspecified
+            )
         }
     }
 
     private func layout(_ width: CGFloat, _ subviews: Subviews) -> (size: CGSize, origins: [CGPoint]) {
-        var rows: [[(Int, CGSize)]] = [[]]
-        var rowW: [CGFloat] = [0]
-        for (i, sub) in subviews.enumerated() {
-            let s = sub.sizeThatFits(.unspecified)
-            let r = rows.count - 1
-            if rowW[r] > 0, rowW[r] + spacing + s.width > width {
-                rows.append([(i, s)])
-                rowW.append(s.width)
-            } else {
-                rows[r].append((i, s))
-                rowW[r] += (rowW[r] > 0 ? spacing : 0) + s.width
-            }
+        guard let floatIndex = subviews.indices.last else {
+            return (.zero, [])
         }
+        let floatSize = subviews[floatIndex].sizeThatFits(.unspecified)
+        let floatX = max(0, width - floatSize.width)
         var origins = Array(repeating: CGPoint.zero, count: subviews.count)
+        origins[floatIndex] = CGPoint(x: floatX, y: 0)
+
+        let flow = subviews.indices.filter { $0 != floatIndex }
+        var x: CGFloat = 0
         var y: CGFloat = 0
-        for (r, row) in rows.enumerated() {
-            var x = max(0, (width - rowW[r]) / 2)
-            var h: CGFloat = 0
-            for (i, s) in row {
-                origins[i] = CGPoint(x: x, y: y)
-                h = max(h, s.height)
-                x += s.width + spacing
+        var rowH: CGFloat = 0
+        var maxY = floatSize.height
+
+        for i in flow {
+            let s = subviews[i].sizeThatFits(.unspecified)
+            let fullRow = subviews[i][FloatFullRowKey.self]
+
+            if fullRow {
+                if x > 0 {
+                    x = 0
+                    y += rowH + lineSpacing
+                    rowH = 0
+                }
+                origins[i] = CGPoint(x: 0, y: y)
+                y += s.height + lineSpacing
+                rowH = 0
+                x = 0
+                maxY = max(maxY, y)
+                continue
             }
-            y += h + (r + 1 < rows.count ? lineSpacing : 0)
+
+            let beside = y < floatSize.height
+            let avail = beside ? max(0, floatX - gap) : width
+            if x > 0, x + spacing + s.width > avail {
+                x = 0
+                y += rowH + lineSpacing
+                rowH = 0
+            }
+            let lineAvail = (y < floatSize.height) ? max(0, floatX - gap) : width
+            if s.width > lineAvail, lineAvail < width {
+                x = 0
+                y = max(y, floatSize.height + lineSpacing)
+                rowH = 0
+            }
+            origins[i] = CGPoint(x: x, y: y)
+            rowH = max(rowH, s.height)
+            x += s.width + spacing
+            maxY = max(maxY, y + s.height)
         }
-        return (CGSize(width: width, height: y), origins)
+        return (CGSize(width: width, height: maxY), origins)
     }
 }

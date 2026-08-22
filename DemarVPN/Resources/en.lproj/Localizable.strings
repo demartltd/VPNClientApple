@@ -32,7 +32,6 @@
 "Couldn’t update notifications" = "Couldn’t update notifications";
 "Couldn’t open a VPN session (NETunnelProviderSession). Reinstall the VPN profile in system settings." = "Couldn’t open a VPN session (NETunnelProviderSession). Reinstall the VPN profile in system settings.";
 "Couldn’t refresh" = "Couldn’t refresh";
-"Monthly traffic limit reached. Upgrade your subscription to continue." = "Monthly traffic limit reached. Upgrade your subscription to continue.";
 "Couldn’t resolve uplinkHost for the VPN route exclusion." = "Couldn’t resolve uplinkHost for the VPN route exclusion.";
 "Couldn’t sign in. Try again" = "Couldn’t sign in. Try again";
 "Couldn’t sign out. Try again" = "Couldn’t sign out. Try again";
@@ -81,6 +80,7 @@
 "Invalid email" = "Invalid email";
 "Important" = "Important";
 "Security alerts and critical account notices." = "Security alerts and critical account notices.";
+"Increase limits" = "Increase limits";
 "Invite friends" = "Invite friends";
 "Invite friends with a link" = "Invite friends with a link";
 "Journal" = "Journal";
@@ -176,6 +176,7 @@
 "The app language is set in system settings." = "The app language is set in system settings.";
 "The embedded DemarPacketTunnel extension is damaged or missing. Reinstall the app." = "The embedded DemarPacketTunnel extension is damaged or missing. Reinstall the app.";
 "today" = "today";
+"Traffic remaining: %@" = "Traffic remaining: %@";
 "Traffic this month" = "Traffic this month";
 "Traffic unavailable" = "Traffic unavailable";
 "Tunnel did not connect (heartbeat=%@): %@" = "Tunnel did not connect (heartbeat=%@): %@";

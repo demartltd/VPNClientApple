@@ -43,6 +43,13 @@ struct AccountView: View {
         .background(Color.demarSurface)
         .demarBottomSheet(isPresented: $showNotify) { notifySheet }
         .demarBottomSheet(isPresented: $showTraffic) { trafficSheet }
+        .task(id: appState.accountRouteRequestTick) {
+            applyPendingTrafficSheet()
+        }
+        .onChange(of: isActive) { _, active in
+            guard active else { return }
+            applyPendingTrafficSheet()
+        }
         .alert(
             String(localized: "Sign out?"),
             isPresented: $showSignOutConfirm
@@ -60,6 +67,12 @@ struct AccountView: View {
 
     private var soon: () -> Void {
         { snackBar.showInfo(String(localized: "Coming soon")) }
+    }
+
+    private func applyPendingTrafficSheet() {
+        guard isActive, appState.isSignedIn else { return }
+        guard appState.consumeOpenTrafficSheetRequest() else { return }
+        showTraffic = true
     }
 
     // MARK: - Header
@@ -185,19 +198,8 @@ struct AccountView: View {
                     metaRow(systemImage: "calendar", label: String(localized: "Expires"), value: expires)
                         .padding(.top, 12)
                 }
-                Button(action: soon) {
-                    Text(String(localized: isFree ? "Buy subscription" : "Renew subscription"))
-                        .font(.demarTitleMedium)
-                        .foregroundStyle(Color.demarOnPrimary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color.demarPrimary)
-                        )
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 16)
+                primarySoonButton(String(localized: isFree ? "Buy subscription" : "Renew subscription"))
+                    .padding(.top, 16)
             }
         }
         .padding(16)
@@ -206,6 +208,21 @@ struct AccountView: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color.demarOutline.opacity(0.20), lineWidth: 1)
         )
+    }
+
+    private func primarySoonButton(_ title: String) -> some View {
+        Button(action: soon) {
+            Text(title)
+                .font(.demarTitleMedium)
+                .foregroundStyle(Color.demarOnPrimary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.demarPrimary)
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     private func metaRow(systemImage: String, label: String, value: String) -> some View {
@@ -329,13 +346,26 @@ struct AccountView: View {
     }
 
     private var trafficSheet: some View {
-        Group {
+        VStack(alignment: .leading, spacing: 16) {
             if let t = traffic {
+                let remaining = max(Int64(0), t.limitBytes - t.total)
+                Text(
+                    String(
+                        format: String(localized: "Traffic remaining: %@"),
+                        VpnAccountApi.formatBytes(remaining)
+                    )
+                )
+                .font(.demarHeadlineMedium)
+                .foregroundStyle(Color.demarOnSurface)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
                 TrafficPieChart(
                     servers: t.servers,
                     otherLabel: String(localized: "Other"),
-                    centerPrimary: VpnAccountApi.formatBytes(t.total)
+                    centerPrimary: VpnAccountApi.formatBytes(t.total),
+                    accountId: appState.authSession?.userId ?? ""
                 )
+                primarySoonButton(String(localized: "Increase limits"))
             } else if loading {
                 Text(String(localized: "Loading…"))
                     .font(.demarBodySmall)
