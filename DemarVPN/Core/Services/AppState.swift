@@ -49,7 +49,6 @@ final class AppState {
     var payResult: PayFeedback?
     var latestAppVersion: AppVersionInfo?
     var shouldShowUpdateAlert = false
-    var versionCheckInFlight = false
     var versionCheckError: String?
 
     var appVersionLabel: String = "1.0.6"
@@ -289,10 +288,12 @@ final class AppState {
 
     /// Session data — app start, sign-in, pull-to-refresh, promo activation.
     func refreshSessionData() async {
-        async let servers: Void = refreshServers()
-        async let account: Void = refreshAccount()
-        async let unread: Void = refreshSupportUnread()
-        _ = await (servers, account, unread)
+        await Flight.run("session.refresh") {
+            async let servers: Void = self.refreshServers()
+            async let account: Void = self.refreshAccount()
+            async let unread: Void = self.refreshSupportUnread()
+            _ = await (servers, account, unread)
+        }
     }
 
     private func refreshSupportUnread() async {
@@ -431,8 +432,7 @@ final class AppState {
     }
 
     func refreshVersion() {
-        guard !versionCheckInFlight else { return }
-        Task { await performVersionCheck() }
+        Task { await Flight.run("version") { await self.performVersionCheck() } }
     }
 
     func dismissUpdateAlert() {
@@ -691,9 +691,7 @@ final class AppState {
     }
 
     private func performVersionCheck() async {
-        versionCheckInFlight = true
         versionCheckError = nil
-        defer { versionCheckInFlight = false }
         do {
             applyLatestVersion(try await AppVersionApi.fetchLatest())
         } catch is CancellationError {

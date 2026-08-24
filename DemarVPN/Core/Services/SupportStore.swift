@@ -14,15 +14,25 @@ final class SupportUnreadStore {
         hasUnread = tickets.contains(where: \.hasUnread)
     }
 
+    /// Clear unread flag for one ticket in disk list + badge (no network).
+    func noteRead(ticketId: String, userId: String) {
+        guard let list = SupportCacheStore.loadList(userId: userId) else { return }
+        let updated = list.map { $0.id == ticketId ? $0.markingRead() : $0 }
+        SupportCacheStore.saveList(userId: userId, tickets: updated)
+        apply(updated)
+    }
+
     /// Called on app start / sign-in — same moment as servers & account (Android parity + ticket warm).
-    func refresh(session: AuthSession) async {
-        do {
-            let tickets = try await SupportApi.listTickets(userId: session.userId, loginAt: session.loginAt)
-            apply(tickets)
-            SupportCacheStore.saveList(userId: session.userId, tickets: tickets)
-            await warmTickets(session: session, summaries: tickets)
-        } catch {
-            // Quiet — badge stays until next successful fetch.
+    func refresh(session: AuthSession, warm: Bool = true) async {
+        await Flight.run("support.unread") {
+            do {
+                let tickets = try await SupportApi.listTickets(userId: session.userId, loginAt: session.loginAt)
+                self.apply(tickets)
+                SupportCacheStore.saveList(userId: session.userId, tickets: tickets)
+                if warm { await self.warmTickets(session: session, summaries: tickets) }
+            } catch {
+                // Quiet — badge stays until next successful fetch.
+            }
         }
     }
 
@@ -32,21 +42,13 @@ final class SupportUnreadStore {
             SupportCacheStore.loadTicket(userId: session.userId, ticketId: $0.id) == nil
         }
         guard !missing.isEmpty else { return }
-        await withTaskGroup(of: Void.self) { group in
-            for summary in missing {
-                group.addTask { @MainActor in
-                    do {
-                        let fresh = try await SupportApi.getTicket(
-                            userId: session.userId,
-                            loginAt: session.loginAt,
-                            ticketId: summary.id
-                        )
-                        SupportCacheStore.saveTicket(userId: session.userId, ticket: fresh)
-                    } catch {
-                        // Best-effort warm — chat can still fetch on open.
-                    }
-                }
-            }
+        await Flight.forEachLimited(missing) { summary in
+            guard let fresh = try? await SupportApi.getTicket(
+                userId: session.userId,
+                loginAt: session.loginAt,
+                ticketId: summary.id
+            ) else { return }
+            SupportCacheStore.saveTicket(userId: session.userId, ticket: fresh)
         }
     }
 }

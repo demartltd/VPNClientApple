@@ -142,15 +142,21 @@ enum AuthSessionStore {
     }
 
     static func completeExchange(_ code: String) async throws {
-        let exchange = try await AuthApi.exchangeSession(code: code.trimmingCharacters(in: .whitespacesAndNewlines))
-        save(exchange)
-        AppLog.shared.append("[auth] signed in as \(exchange.userId)")
+        let code = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        try await Flight.run("auth.ex.\(code)") {
+            let exchange = try await AuthApi.exchangeSession(code: code)
+            save(exchange)
+            AppLog.shared.append("[auth] signed in as \(exchange.userId)")
+        }
     }
 
     static func completeClientToken(_ token: String) async throws {
-        let exchange = try await AuthApi.sessionFromClientToken(token.trimmingCharacters(in: .whitespacesAndNewlines))
-        save(exchange)
-        AppLog.shared.append("[auth] signed in as \(exchange.userId) (oauth token)")
+        let token = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        try await Flight.run("auth.tok.\(token)") {
+            let exchange = try await AuthApi.sessionFromClientToken(token)
+            save(exchange)
+            AppLog.shared.append("[auth] signed in as \(exchange.userId) (oauth token)")
+        }
     }
 
     /// Clears local after 2xx, 404, or 401 (already revoked). Other errors keep session and rethrow.

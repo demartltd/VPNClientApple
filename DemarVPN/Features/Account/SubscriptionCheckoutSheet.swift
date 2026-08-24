@@ -478,14 +478,20 @@ struct SubscriptionCheckoutSheet: View {
     }
 
     private func loadPlans() async {
-        loadingPlans = true
-        plansError = nil
-        defer { loadingPlans = false }
-        do {
-            catalog = try await PayApi.fetchPlans()
-        } catch {
-            plansError = String(localized: "Couldn’t load plans")
-            snackBar.showError(plansError!)
+        await Flight.run("pay.plans") {
+            guard catalog == nil else {
+                loadingPlans = false
+                return
+            }
+            loadingPlans = true
+            plansError = nil
+            defer { loadingPlans = false }
+            do {
+                catalog = try await PayApi.fetchPlans()
+            } catch {
+                plansError = String(localized: "Couldn’t load plans")
+                snackBar.showError(plansError!)
+            }
         }
     }
 

@@ -13,6 +13,15 @@ struct SupportTicketSummary: Equatable, Identifiable, Sendable {
     let hasUnread: Bool
 
     var isOpen: Bool { status == "open" }
+
+    func markingRead() -> SupportTicketSummary {
+        guard hasUnread else { return self }
+        return SupportTicketSummary(
+            id: id, status: status, openedAt: openedAt, closedAt: closedAt,
+            channel: channel, sourceId: sourceId, themeId: themeId,
+            preview: preview, lastMessageRole: lastMessageRole, hasUnread: false
+        )
+    }
 }
 
 struct SupportTheme: Equatable, Hashable, Identifiable, Sendable {
@@ -334,15 +343,18 @@ enum SupportApi {
         }
         let cacheKey = "\(path)|\(ticketId ?? "")|\(userId)"
         if let cached = SupportMediaCache.load(cacheKey) { return cached }
-        let sep = path.contains("?") ? "&" : "?"
-        let ticketQ = ticketId.flatMap { $0.isEmpty ? nil : "&ticketId=\(enc($0))" } ?? ""
-        let full = "\(baseURL.absoluteString)\(path)\(sep)userId=\(enc(userId))&loginAt=\(enc(loginAt))\(ticketQ)"
-        guard let url = URL(string: full) else {
-            throw DemarAPIError(message: "bad media url", statusCode: 400, retryAfterSeconds: nil, hint: nil)
+        return try await KeyedFlight.run("media:\(cacheKey)") {
+            if let cached = SupportMediaCache.load(cacheKey) { return cached }
+            let sep = path.contains("?") ? "&" : "?"
+            let ticketQ = ticketId.flatMap { $0.isEmpty ? nil : "&ticketId=\(Self.enc($0))" } ?? ""
+            let full = "\(Self.baseURL.absoluteString)\(path)\(sep)userId=\(Self.enc(userId))&loginAt=\(Self.enc(loginAt))\(ticketQ)"
+            guard let url = URL(string: full) else {
+                throw DemarAPIError(message: "bad media url", statusCode: 400, retryAfterSeconds: nil, hint: nil)
+            }
+            let data = try await DemarHttp.getData(url)
+            SupportMediaCache.save(cacheKey, data)
+            return data
         }
-        let data = try await DemarHttp.getData(url)
-        SupportMediaCache.save(cacheKey, data)
-        return data
     }
 
     // MARK: - Cache encode/decode

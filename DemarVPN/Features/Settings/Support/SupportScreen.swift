@@ -62,16 +62,15 @@ struct SupportScreen: View {
             if !tickets.isEmpty { loadingList = false }
             _ = await ensureThemes()
             await reloadList(quiet: !tickets.isEmpty)
-            await SupportUnreadStore.shared.warmTickets(session: session, summaries: tickets)
-        }
-        .task(id: route == nil) {
-            guard route == nil else { return }
-            await reloadList(quiet: !tickets.isEmpty)
-            while !Task.isCancelled, route == nil {
+            while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(8))
-                guard !Task.isCancelled, route == nil else { return }
+                guard !Task.isCancelled, route == nil else { continue }
                 await reloadList(quiet: true)
             }
+        }
+        .onChange(of: route) { _, new in
+            guard new == nil else { return }
+            Task { await reloadList(quiet: true) }
         }
         .alert(String(localized: "Open ticket"), isPresented: $confirmNew) {
             Button(String(localized: "Create new")) {
@@ -232,19 +231,21 @@ struct SupportScreen: View {
     }
 
     private func reloadList(quiet: Bool) async {
-        if let cached = SupportCacheStore.loadList(userId: session.userId), tickets.isEmpty {
-            tickets = cached
+        await Flight.run("support.list.\(session.userId)") {
+            if let cached = SupportCacheStore.loadList(userId: session.userId), tickets.isEmpty {
+                tickets = cached
+            }
+            if tickets.isEmpty { loadingList = true }
+            do {
+                let fresh = try await SupportApi.listTickets(userId: session.userId, loginAt: session.loginAt)
+                tickets = fresh
+                SupportCacheStore.saveList(userId: session.userId, tickets: fresh)
+                SupportUnreadStore.shared.apply(fresh)
+            } catch {
+                if tickets.isEmpty || !quiet { showError(error) }
+            }
+            loadingList = false
         }
-        if tickets.isEmpty { loadingList = true }
-        do {
-            let fresh = try await SupportApi.listTickets(userId: session.userId, loginAt: session.loginAt)
-            tickets = fresh
-            SupportCacheStore.saveList(userId: session.userId, tickets: fresh)
-            SupportUnreadStore.shared.apply(fresh)
-        } catch {
-            if tickets.isEmpty || !quiet { showError(error) }
-        }
-        loadingList = false
     }
 
     private func showError(_ error: Error) {

@@ -84,6 +84,7 @@
 		B1000001000000000000005C /* SupportComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005C /* SupportComposer.swift */; };
 		B1000001000000000000005D /* SupportBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005D /* SupportBubble.swift */; };
 		B1000001000000000000005E /* SupportHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005E /* SupportHelpers.swift */; };
+		B1000001000000000000005F /* Flight.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005F /* Flight.swift */; };
 		B10000010000000000000060 /* AppVersionApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000060 /* AppVersionApi.swift */; };
 		B10000010000000000000053 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000053 /* AuthSessionStore.swift */; };
 		B1000001000000000000005A /* SessionCacheStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005A /* SessionCacheStore.swift */; };
@@ -284,6 +285,7 @@
 		F1000001000000000000005C /* SupportComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportComposer.swift; sourceTree = "<group>"; };
 		F1000001000000000000005D /* SupportBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportBubble.swift; sourceTree = "<group>"; };
 		F1000001000000000000005E /* SupportHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportHelpers.swift; sourceTree = "<group>"; };
+		F1000001000000000000005F /* Flight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Flight.swift; sourceTree = "<group>"; };
 		F10000010000000000000060 /* AppVersionApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersionApi.swift; sourceTree = "<group>"; };
 		F10000010000000000000053 /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
 		F1000001000000000000005A /* SessionCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCacheStore.swift; sourceTree = "<group>"; };
@@ -478,6 +480,7 @@
 				F1000001000000000000001F /* DemarNavigation.swift */,
 				F10000010000000000000020 /* AppPlatform.swift */,
 				F1000001000000000000002D /* BundledCoreVersion.swift */,
+				F1000001000000000000005F /* Flight.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -970,6 +973,7 @@
 				B1000001000000000000005D /* SupportBubble.swift in Sources */,
 				B10000010000000000000059 /* SupportAttach.swift in Sources */,
 				B1000001000000000000005E /* SupportHelpers.swift in Sources */,
+				B1000001000000000000005F /* Flight.swift in Sources */,
 				B10000010000000000000053 /* AuthSessionStore.swift in Sources */,
 				B1000001000000000000005A /* SessionCacheStore.swift in Sources */,
 				B10000010000000000000054 /* LoginSheet.swift in Sources */,
@@ -1174,7 +1178,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 60;
+				CURRENT_PROJECT_VERSION = 61;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1212,7 +1216,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 60;
+				CURRENT_PROJECT_VERSION = 61;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1246,7 +1250,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 60;
+				CURRENT_PROJECT_VERSION = 61;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1293,7 +1297,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 60;
+				CURRENT_PROJECT_VERSION = 61;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1340,7 +1344,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 60;
+				CURRENT_PROJECT_VERSION = 61;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1367,7 +1371,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 60;
+				CURRENT_PROJECT_VERSION = 61;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1393,7 +1397,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 60;
+				CURRENT_PROJECT_VERSION = 61;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1417,7 +1421,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 60;
+				CURRENT_PROJECT_VERSION = 61;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (

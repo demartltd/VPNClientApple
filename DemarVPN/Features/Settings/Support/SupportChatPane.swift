@@ -336,61 +336,64 @@ struct SupportChatPane: View {
     }
 
     private func refresh(id: String, quiet: Bool) async {
-        var delayMs = 250
-        for attempt in 1...3 {
-            do {
-                let fresh = try await SupportApi.getTicket(
-                    userId: session.userId,
-                    loginAt: session.loginAt,
-                    ticketId: id
-                )
-                ticket = fresh
-                loadError = nil
-                loading = false
-                SupportCacheStore.saveTicket(userId: session.userId, ticket: fresh)
-                _ = try? await SupportApi.markTicketRead(
-                    userId: session.userId,
-                    loginAt: session.loginAt,
-                    ticketId: id
-                )
-                await SupportUnreadStore.shared.refresh(session: session)
-                return
-            } catch {
-                if isSupportCancellation(error) {
-                    // Keep seed/cache on screen; never paint cancel as a hard API failure.
-                    if ticket != nil {
+        await Flight.run("support.chat.\(id)") {
+            var delayMs = 250
+            for attempt in 1...3 {
+                do {
+                    let prev = ticket
+                    let fresh = try await SupportApi.getTicket(
+                        userId: session.userId, loginAt: session.loginAt, ticketId: id
+                    )
+                    ticket = fresh
+                    loadError = nil
+                    loading = false
+                    SupportCacheStore.saveTicket(userId: session.userId, ticket: fresh)
+
+                    let listUnread = SupportCacheStore.loadList(userId: session.userId)?
+                        .first { $0.id == id }?.hasUnread == true
+                    let changed = prev.map { $0.messages != fresh.messages } ?? true
+                    if !quiet || changed || listUnread {
+                        _ = try? await SupportApi.markTicketRead(
+                            userId: session.userId, loginAt: session.loginAt, ticketId: id
+                        )
+                        SupportUnreadStore.shared.noteRead(ticketId: id, userId: session.userId)
+                    }
+                    if !quiet {
+                        await SupportUnreadStore.shared.refresh(session: session, warm: false)
+                    }
+                    return
+                } catch {
+                    if isSupportCancellation(error) {
+                        if ticket != nil { loading = false; return }
+                        if attempt < 3 {
+                            try? await Task.sleep(for: .milliseconds(delayMs))
+                            delayMs *= 2
+                            continue
+                        }
                         loading = false
                         return
                     }
-                    if attempt < 3 {
+                    if let err = error as? DemarAPIError, err.isNotFound {
+                        SupportCacheStore.removeTicket(userId: session.userId, ticketId: id)
+                        onTicketGone()
+                        return
+                    }
+                    if attempt < 3, isTransientSupportFailure(error) {
                         try? await Task.sleep(for: .milliseconds(delayMs))
                         delayMs *= 2
                         continue
                     }
-                    loading = false
+                    let msg = supportErrorMessage(error)
+                    AppLog.shared.append("support getTicket #\(id): \(msg)")
+                    if ticket == nil {
+                        loadError = msg
+                        loading = false
+                        if !quiet { snackBar.showError(msg) }
+                    } else if !quiet {
+                        snackBar.showError(msg)
+                    }
                     return
                 }
-                if let err = error as? DemarAPIError, err.isNotFound {
-                    SupportCacheStore.removeTicket(userId: session.userId, ticketId: id)
-                    onTicketGone()
-                    return
-                }
-                if attempt < 3, isTransientSupportFailure(error) {
-                    try? await Task.sleep(for: .milliseconds(delayMs))
-                    delayMs *= 2
-                    continue
-                }
-                let msg = supportErrorMessage(error)
-                AppLog.shared.append("support getTicket #\(id): \(msg)")
-                // Keep showing seeded/cached messages if we already have them.
-                if ticket == nil {
-                    loadError = msg
-                    loading = false
-                    if !quiet { snackBar.showError(msg) }
-                } else if !quiet {
-                    snackBar.showError(msg)
-                }
-                return
             }
         }
     }
