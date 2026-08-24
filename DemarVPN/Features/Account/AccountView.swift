@@ -198,7 +198,9 @@ struct AccountView: View {
                     metaRow(systemImage: "calendar", label: String(localized: "Expires"), value: expires)
                         .padding(.top, 12)
                 }
-                primarySoonButton(String(localized: isFree ? "Buy subscription" : "Renew subscription"))
+                primaryButton(String(localized: isFree ? "Buy subscription" : "Renew subscription")) {
+                    appState.openCheckout(isFree ? .buy : .renew)
+                }
                     .padding(.top, 16)
             }
         }
@@ -210,8 +212,8 @@ struct AccountView: View {
         )
     }
 
-    private func primarySoonButton(_ title: String) -> some View {
-        Button(action: soon) {
+    private func primaryButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             Text(title)
                 .font(.demarTitleMedium)
                 .foregroundStyle(Color.demarOnPrimary)
@@ -365,7 +367,13 @@ struct AccountView: View {
                     centerPrimary: VpnAccountApi.formatBytes(t.total),
                     accountId: appState.authSession?.userId ?? ""
                 )
-                primarySoonButton(String(localized: "Increase limits"))
+                primaryButton(String(localized: "Increase limits")) {
+                    showTraffic = false
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(400))
+                        appState.openCheckout(.upgradeTraffic)
+                    }
+                }
             } else if loading {
                 Text(String(localized: "Loading…"))
                     .font(.demarBodySmall)

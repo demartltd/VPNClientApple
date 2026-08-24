@@ -7,6 +7,10 @@ import NetworkExtension
 import WidgetKit
 #endif
 
+enum PayFeedback: Equatable {
+    case success, failure
+}
+
 @MainActor
 @Observable
 final class AppState {
@@ -34,7 +38,17 @@ final class AppState {
     var settingsRouteRequestTick: Int = 0
     /// Open Account tab + traffic bottom sheet (`demarvpn://settings/traffic`).
     var pendingOpenTrafficSheet = false
+    /// Deeplink checkout/compare when guest must sign in first (`demarvpn://account/buy|plans`).
+    private var pendingAccountSheet: DemarURLScheme.AccountSheet?
+    private var lastPayReturnRefreshAt: Date?
     var accountRouteRequestTick: Int = 0
+    /// Subscription checkout sheet intent (`nil` = closed).
+    var checkoutIntent: CheckoutIntent?
+    var showPlanCompare = false
+    /// Pay deeplink result sheet (`nil` = closed).
+    var payResult: PayFeedback?
+    /// Bumped on pay deeplink return so UI can switch to Account.
+    var payReturnTick: Int = 0
     var latestAppVersion: AppVersionInfo?
     var shouldShowUpdateAlert = false
     var versionCheckInFlight = false
@@ -56,7 +70,6 @@ final class AppState {
 
     private let vpn: VpnControlling
     private var vpnOperationGeneration: UInt64 = 0
-    private var versionCheckTask: Task<Void, Never>?
     private var shownUpdateTokenInSession: String?
     #if os(macOS)
     private var macVersionPollingTask: Task<Void, Never>?
@@ -110,7 +123,7 @@ final class AppState {
     }
 
     func bootstrapAuth() async {
-        refreshVersionIfNeeded(force: true)
+        refreshVersion()
         authSession = AuthSessionStore.session
         _ = await AuthSessionStore.refreshSession()
         authSession = AuthSessionStore.session
@@ -123,8 +136,9 @@ final class AppState {
 
     func onAuthSuccess() async {
         authSession = AuthSessionStore.session
-        refreshVersionIfNeeded(force: true)
+        refreshVersion()
         await refreshSessionData()
+        presentPendingAccountSheetIfNeeded()
     }
 
     func consumeIncomingURL(_ url: URL) async {
@@ -133,9 +147,73 @@ final class AppState {
             openAccountTrafficSheet()
             return
         }
+        if let sheet = DemarURLScheme.accountSheet(from: url) {
+            openAccountSheet(sheet)
+            return
+        }
+        if let payOk = DemarURLScheme.payReturnSuccess(from: url) {
+            handlePayReturn(success: payOk)
+            return
+        }
         guard let route = SettingsRoute(url: url) else { return }
         pendingSettingsRoute = route
         settingsRouteRequestTick &+= 1
+    }
+
+    func openCheckout(_ intent: CheckoutIntent) {
+        guard isSignedIn else { return }
+        showPlanCompare = false
+        checkoutIntent = intent
+    }
+
+    func dismissCheckout() {
+        checkoutIntent = nil
+    }
+
+    func handlePayReturn(success: Bool) {
+        dismissCheckout()
+        showPlanCompare = false
+        payReturnTick &+= 1
+        accountRouteRequestTick &+= 1
+        payResult = success ? .success : .failure
+        // Fail: UI only. Ok: one silent refresh (servers/account/traffic/unread). No pay/status.
+        guard success else { return }
+        let now = Date()
+        if let last = lastPayReturnRefreshAt, now.timeIntervalSince(last) < 5 { return }
+        lastPayReturnRefreshAt = now
+        Task { await refreshSessionData() }
+    }
+
+    func dismissPayResult() {
+        payResult = nil
+    }
+
+    func openPlanCompare() {
+        checkoutIntent = nil
+        showPlanCompare = true
+    }
+
+    func openAccountSheet(_ sheet: DemarURLScheme.AccountSheet) {
+        accountRouteRequestTick &+= 1
+        guard isSignedIn else {
+            pendingAccountSheet = sheet
+            return
+        }
+        presentAccountSheet(sheet)
+    }
+
+    private func presentAccountSheet(_ sheet: DemarURLScheme.AccountSheet) {
+        switch sheet {
+        case .buy: openCheckout(.buy)
+        case .plans: openPlanCompare()
+        }
+    }
+
+    private func presentPendingAccountSheetIfNeeded() {
+        guard let sheet = pendingAccountSheet else { return }
+        pendingAccountSheet = nil
+        guard isSignedIn else { return }
+        presentAccountSheet(sheet)
     }
 
     @discardableResult
@@ -189,6 +267,9 @@ final class AppState {
 
     private func applyLocalSignOut() async {
         authSession = nil
+        pendingAccountSheet = nil
+        dismissCheckout()
+        showPlanCompare = false
         SessionCacheStore.clear()
         SupportStore.clearOnSignOut()
         clearServers()
@@ -361,17 +442,9 @@ final class AppState {
         UserDefaults.standard.removeObject(forKey: StorageKey.selectedServerId)
     }
 
-    func refreshVersionIfNeeded(force: Bool = false) {
+    func refreshVersion() {
         guard !versionCheckInFlight else { return }
-        if force {
-            versionCheckTask?.cancel()
-            versionCheckTask = nil
-        } else if versionCheckTask != nil {
-            return
-        }
-        versionCheckTask = Task { [weak self] in
-            await self?.performVersionCheck()
-        }
+        Task { await performVersionCheck() }
     }
 
     func dismissUpdateAlert() {
@@ -632,10 +705,7 @@ final class AppState {
     private func performVersionCheck() async {
         versionCheckInFlight = true
         versionCheckError = nil
-        defer {
-            versionCheckInFlight = false
-            versionCheckTask = nil
-        }
+        defer { versionCheckInFlight = false }
         do {
             applyLatestVersion(try await AppVersionApi.fetchLatest())
         } catch is CancellationError {
@@ -647,7 +717,9 @@ final class AppState {
     }
 
     private func applyLatestVersion(_ latest: AppVersionInfo) {
-        latestAppVersion = latest
+        if latestAppVersion != latest {
+            latestAppVersion = latest
+        }
         guard latest.isNewer(thanInstalledBuild: installedBuildNumber) else {
             rearmUpdateAlertForNextActive()
             return
@@ -670,7 +742,7 @@ final class AppState {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(600))
                 guard !Task.isCancelled else { break }
-                await self?.refreshVersionIfNeeded()
+                await self?.refreshVersion()
             }
         }
     }

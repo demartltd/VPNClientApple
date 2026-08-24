@@ -60,4 +60,12 @@ enum AppPlatform {
         }
         #endif
     }
+
+    static func open(_ url: URL) {
+        #if os(iOS)
+        UIApplication.shared.open(url)
+        #elseif os(macOS)
+        NSWorkspace.shared.open(url)
+        #endif
+    }
 }

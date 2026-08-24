@@ -15,6 +15,7 @@ struct ContentView: View {
             macRoot
             #else
             iosRoot
+                .payFlowSheets(appState: appState, snackBar: snackBar)
             #endif
         }
         .loginSheet(isPresented: $showLogin) {
@@ -78,6 +79,12 @@ struct ContentView: View {
             t.disablesAnimations = true
             withTransaction(t) { section = .account }
         }
+        .onChange(of: appState.payReturnTick) { _, tick in
+            guard tick > 0 else { return }
+            var t = Transaction()
+            t.disablesAnimations = true
+            withTransaction(t) { section = .account }
+        }
     }
 
     #if os(macOS)
@@ -98,6 +105,8 @@ struct ContentView: View {
                     .demarMacWindowTitle(section ?? .home)
             }
             .id(section ?? .home)
+            // Detail-scoped overlay: same width as traffic/notify (not over sidebar).
+            .payFlowSheets(appState: appState, snackBar: snackBar)
         }
         .tint(Color.demarPrimary)
     }
@@ -163,7 +172,7 @@ struct ContentView: View {
             guard !Task.isCancelled, scenePhase == .active else { return }
             appState.syncVpnStatusFromSystem()
             appState.presentCachedUpdateAlertIfNeeded()
-            appState.refreshVersionIfNeeded()
+            appState.refreshVersion()
             #if os(macOS)
             appState.setAppActive(true)
             #endif
@@ -211,5 +220,49 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.demarSurface)
+    }
+}
+
+private extension View {
+    /// Pay / compare sheets. On macOS attach to the split detail so width matches traffic overlays.
+    func payFlowSheets(appState: AppState, snackBar: SnackBarController) -> some View {
+        demarBottomSheet(
+            isPresented: Binding(
+                get: { appState.payResult != nil },
+                set: { if !$0 { appState.dismissPayResult() } }
+            )
+        ) {
+            if let result = appState.payResult {
+                PayResultSheet(
+                    success: result == .success,
+                    onDismiss: { appState.dismissPayResult() }
+                )
+            }
+        }
+        .demarBottomSheet(
+            isPresented: Binding(
+                get: { appState.showPlanCompare },
+                set: { appState.showPlanCompare = $0 }
+            )
+        ) {
+            PlanCompareSheet(
+                onBuy: { appState.openCheckout(.buy) }
+            )
+        }
+        .demarBottomSheet(
+            isPresented: Binding(
+                get: { appState.checkoutIntent != nil },
+                set: { if !$0 { appState.dismissCheckout() } }
+            )
+        ) {
+            if let intent = appState.checkoutIntent {
+                SubscriptionCheckoutSheet(
+                    appState: appState,
+                    snackBar: snackBar,
+                    intent: intent,
+                    onDismiss: { appState.dismissCheckout() }
+                )
+            }
+        }
     }
 }

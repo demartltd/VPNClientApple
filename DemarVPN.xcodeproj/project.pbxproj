@@ -71,6 +71,11 @@
 		B10000010000000000000052 /* ServersApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000052 /* ServersApi.swift */; };
 		B10000010000000000000055 /* VpnAccountApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000055 /* VpnAccountApi.swift */; };
 		B100000100000000000000AA /* PromoApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000AA /* PromoApi.swift */; };
+		B100000100000000000000AB /* PayApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000AB /* PayApi.swift */; };
+		E200010D1CF9000F007C117D /* DemarVPN/Features/Account/SubscriptionCheckoutSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E200010E1CF9000F007C117D /* DemarVPN/Features/Account/SubscriptionCheckoutSheet.swift */; };
+		E200010F1CF9000F007C117D /* DemarVPN/Features/Account/PlanCompareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001101CF9000F007C117D /* DemarVPN/Features/Account/PlanCompareSheet.swift */; };
+		E20001111CF9000F007C117D /* DemarVPN/Features/Account/PayResultSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001121CF9000F007C117D /* DemarVPN/Features/Account/PayResultSheet.swift */; };
+		T400000C1CF9000F007C117E /* PayApiParseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000C1CF9000F007C117E /* PayApiParseTests.swift */; };
 		B10000010000000000000056 /* SupportApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000056 /* SupportApi.swift */; };
 		B10000010000000000000057 /* SupportStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000057 /* SupportStore.swift */; };
 		B10000010000000000000058 /* SupportScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000058 /* SupportScreen.swift */; };
@@ -266,6 +271,11 @@
 		F10000010000000000000052 /* ServersApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersApi.swift; sourceTree = "<group>"; };
 		F10000010000000000000055 /* VpnAccountApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnAccountApi.swift; sourceTree = "<group>"; };
 		F100000100000000000000AA /* PromoApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromoApi.swift; sourceTree = "<group>"; };
+		F100000100000000000000AB /* PayApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PayApi.swift; sourceTree = "<group>"; };
+		E200010E1CF9000F007C117D /* DemarVPN/Features/Account/SubscriptionCheckoutSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarVPN/Features/Account/SubscriptionCheckoutSheet.swift; sourceTree = SOURCE_ROOT; };
+		E20001101CF9000F007C117D /* DemarVPN/Features/Account/PlanCompareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarVPN/Features/Account/PlanCompareSheet.swift; sourceTree = SOURCE_ROOT; };
+		E20001121CF9000F007C117D /* DemarVPN/Features/Account/PayResultSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarVPN/Features/Account/PayResultSheet.swift; sourceTree = SOURCE_ROOT; };
+		F400000C1CF9000F007C117E /* PayApiParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PayApiParseTests.swift; sourceTree = "<group>"; };
 		F10000010000000000000056 /* SupportApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportApi.swift; sourceTree = "<group>"; };
 		F10000010000000000000057 /* SupportStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportStore.swift; sourceTree = "<group>"; };
 		F10000010000000000000058 /* SupportScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportScreen.swift; sourceTree = "<group>"; };
@@ -573,6 +583,7 @@
 				F10000010000000000000060 /* AppVersionApi.swift */,
 				F10000010000000000000055 /* VpnAccountApi.swift */,
 				F100000100000000000000AA /* PromoApi.swift */,
+				F100000100000000000000AB /* PayApi.swift */,
 				F10000010000000000000056 /* SupportApi.swift */,
 				F10000010000000000000035 /* PublicEgressDiagnostics.swift */,
 				F10000010000000000000043 /* LegalDocuments.swift */,
@@ -585,6 +596,9 @@
 			children = (
 				E200010A1CF9000F007C117D /* DemarVPN/Features/Account/AccountView.swift */,
 				E200010C1CF9000F007C117D /* DemarVPN/Features/Account/TrafficPieChart.swift */,
+				E200010E1CF9000F007C117D /* DemarVPN/Features/Account/SubscriptionCheckoutSheet.swift */,
+				E20001101CF9000F007C117D /* DemarVPN/Features/Account/PlanCompareSheet.swift */,
+				E20001121CF9000F007C117D /* DemarVPN/Features/Account/PayResultSheet.swift */,
 			);
 			path = Account;
 			sourceTree = "<group>";
@@ -670,6 +684,7 @@
 				F40000061CF9000F007C117E /* LegalDocumentsTests.swift */,
 				F40000071CF9000F007C117E /* ServersApiParseTests.swift */,
 				F400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift */,
+				F400000C1CF9000F007C117E /* PayApiParseTests.swift */,
 				F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */,
 				F400000B1CF9000F007C117E /* AppVersionApiTests.swift */,
 			);
@@ -914,6 +929,9 @@
 				B10000010000000000000039 /* CustomEgressProbes.swift in Sources */,
 				E20001091CF9000F007C117D /* DemarVPN/Features/Account/AccountView.swift in Sources */,
 				E200010B1CF9000F007C117D /* DemarVPN/Features/Account/TrafficPieChart.swift in Sources */,
+				E200010D1CF9000F007C117D /* DemarVPN/Features/Account/SubscriptionCheckoutSheet.swift in Sources */,
+				E200010F1CF9000F007C117D /* DemarVPN/Features/Account/PlanCompareSheet.swift in Sources */,
+				E20001111CF9000F007C117D /* DemarVPN/Features/Account/PayResultSheet.swift in Sources */,
 				B1000001000000000000001D /* AppPlatform.swift in Sources */,
 				B1000001000000000000001E /* DeviceIdentity.swift in Sources */,
 				B10000010000000000000021 /* IDFATracking.swift in Sources */,
@@ -943,6 +961,7 @@
 				B10000010000000000000060 /* AppVersionApi.swift in Sources */,
 				B10000010000000000000055 /* VpnAccountApi.swift in Sources */,
 				B100000100000000000000AA /* PromoApi.swift in Sources */,
+				B100000100000000000000AB /* PayApi.swift in Sources */,
 				B10000010000000000000056 /* SupportApi.swift in Sources */,
 				B10000010000000000000057 /* SupportStore.swift in Sources */,
 				B10000010000000000000058 /* SupportScreen.swift in Sources */,
@@ -1013,6 +1032,7 @@
 				T40000071CF9000F007C117E /* LegalDocumentsTests.swift in Sources */,
 				T40000081CF9000F007C117E /* ServersApiParseTests.swift in Sources */,
 				T400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift in Sources */,
+				T400000C1CF9000F007C117E /* PayApiParseTests.swift in Sources */,
 				T40000091CF9000F007C117E /* TunBypassCidrsTests.swift in Sources */,
 				T400000B1CF9000F007C117E /* AppVersionApiTests.swift in Sources */,
 			);
@@ -1154,7 +1174,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 59;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1192,7 +1212,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 59;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1226,7 +1246,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 59;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1273,7 +1293,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 59;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1320,7 +1340,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 59;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1347,7 +1367,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 59;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1373,7 +1393,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 59;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1397,7 +1417,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 59;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (

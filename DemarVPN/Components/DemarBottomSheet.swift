@@ -1,7 +1,7 @@
 import SwiftUI
 
 extension View {
-    /// iOS: system sheet. macOS: bottom overlay (tap outside dismisses).
+    /// iOS: system sheet. macOS: bottom overlay (tap outside / Esc dismisses).
     func demarBottomSheet<Content: View>(
         isPresented: Binding<Bool>,
         onDismiss: (() -> Void)? = nil,
@@ -75,11 +75,11 @@ private struct DemarSheetChromeModifier: ViewModifier {
         .padding(.bottom, bottomPadding)
         #endif
         .frame(maxWidth: .infinity, alignment: .top)
+        .fixedSize(horizontal: false, vertical: true)
         .background(Color.demarSurface)
 
         #if os(iOS)
         chrome
-            .fixedSize(horizontal: false, vertical: true)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { _, h in
                 guard h > 1, abs(h - height) > 0.5 else { return }
                 height = h
@@ -96,6 +96,7 @@ private struct DemarBottomSheetMacOverlay<Sheet: View>: ViewModifier {
     @Binding var isPresented: Bool
     var onDismiss: (() -> Void)?
     @ViewBuilder var sheet: () -> Sheet
+    @FocusState private var overlayFocused: Bool
 
     func body(content: Content) -> some View {
         content.overlay {
@@ -106,17 +107,30 @@ private struct DemarBottomSheetMacOverlay<Sheet: View>: ViewModifier {
                         .contentShape(Rectangle())
                         .onTapGesture { isPresented = false }
                     sheet()
+                        .fixedSize(horizontal: false, vertical: true)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .shadow(color: .black.opacity(0.18), radius: 16, y: 4)
                         .padding(16)
                 }
+                .focusable()
+                .focusEffectDisabled()
+                .focused($overlayFocused)
+                .onKeyPress(.escape) {
+                    isPresented = false
+                    return .handled
+                }
+                .onExitCommand { isPresented = false }
+                .onAppear { overlayFocused = true }
                 .transition(.opacity)
             }
         }
         .animation(.easeOut(duration: 0.18), value: isPresented)
         .onChange(of: isPresented) { _, shown in
-            guard !shown else { return }
-            onDismiss?()
+            if shown {
+                overlayFocused = true
+            } else {
+                onDismiss?()
+            }
         }
     }
 }

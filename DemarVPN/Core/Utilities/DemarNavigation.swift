@@ -3,9 +3,35 @@ import SwiftUI
 enum DemarURLScheme {
     static let name = "demarvpn"
 
+    /// `demarvpn://account/buy` | `demarvpn://account/plans` → Account tab + checkout / compare sheet.
+    enum AccountSheet: Equatable {
+        case buy, plans
+    }
+
     /// `demarvpn://settings/traffic` → Account tab + traffic sheet (not a Settings push).
     static func isAccountTrafficURL(_ url: URL) -> Bool {
         pathComponents(from: url) == ["settings", "traffic"]
+    }
+
+    static func accountSheet(from url: URL) -> AccountSheet? {
+        let parts = pathComponents(from: url)
+        guard parts.count == 2, parts[0] == "account" else { return nil }
+        switch parts[1] {
+        case "buy": return .buy
+        case "plans": return .plans
+        default: return nil
+        }
+    }
+
+    /// `demarvpn://pay/ok` → true, `demarvpn://pay/fail` → false.
+    static func payReturnSuccess(from url: URL) -> Bool? {
+        let parts = pathComponents(from: url)
+        guard parts.count == 2, parts[0] == "pay" else { return nil }
+        switch parts[1] {
+        case "ok": return true
+        case "fail": return false
+        default: return nil
+        }
     }
 
     static func pathComponents(from url: URL) -> [String] {

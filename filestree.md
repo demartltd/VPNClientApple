@@ -26,16 +26,18 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── AuthApi.swift              # auth.example.invalid / account.example.invalid auth
 │   │   ├── ServersApi.swift           # POST vpn.example.invalid/vpn/servers → profiles
 │   │   ├── VpnAccountApi.swift        # POST /vpn/account|notify|traffic
+│   │   ├── PayApi.swift               # GET /vpn/pay/plans, POST create|status
+│   │   ├── PromoApi.swift             # POST /vpn/promo/activate|apply
 │   │   ├── SupportApi.swift           # csauth.example.invalid tickets / themes / media
 │   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
 │   │   └── LegalDocuments.swift       # ToS/PP raw GitHub Markdown fetch
 │   ├── Vpn/
 │   │   ├── Hysteria2Profile.swift     # Hysteria2 профиль (+ alpn/obfs)
 │   │   ├── ApiBypassRuleSet.swift     # API route.rule_set (geoip/geosite)
-│   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun options
+│   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun; DemarControlPlane hosts
 │   │   └── SingBoxConfigBuilder.swift # Sing-box JSON TUN
 │   ├── Services/
-│   │   ├── AppState.swift             # UI state, auth, servers, toggle VPN
+│   │   ├── AppState.swift             # UI state, auth, servers, toggle VPN, checkout
 │   │   ├── AuthSessionStore.swift     # UserDefaults session + auth orchestration
 │   │   ├── SessionCacheStore.swift    # servers/account disk cache
 │   │   ├── SupportStore.swift         # ticket cache + unread badge
@@ -80,7 +82,10 @@ DemarVPN/                              # SwiftUI target
     ├── Home/HomeView.swift            # toggle, скорость
     ├── Servers/ServersView.swift      # выбор сервера (API)
     ├── Account/
-    │   ├── AccountView.swift          # сессия / подписка / notify / трафик
+    │   ├── AccountView.swift          # сессия / подписка / notify / трафик / checkout
+    │   ├── SubscriptionCheckoutSheet.swift # Plus/VIP × period × currency + pay
+    │   ├── PlanCompareSheet.swift       # compare table (separate sheet)
+    │   ├── PayResultSheet.swift         # pay deeplink ok/fail → icon + OK
     │   └── TrafficPieChart.swift      # donut + legend по серверам
     ├── Auth/LoginSheet.swift          # Email OTP + TOTP + Telegram OAuth
     └── Settings/
@@ -98,7 +103,7 @@ DemarVPN/                              # SwiftUI target
             ├── SupportAttach.swift    # gallery photo ingest / WebP compress
             └── SupportHelpers.swift   # errors, time, linkify
 
-DemarVPNTests/                         # unit tests (Sing-box, servers/account parse, interface, legal docs)
+DemarVPNTests/                         # unit tests (Sing-box, servers/account/pay parse, interface, legal docs)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка
