@@ -36,10 +36,10 @@ final class AppState {
     /// Pending settings route requested by incoming URL / public link.
     var pendingSettingsRoute: SettingsRoute?
     var settingsRouteRequestTick: Int = 0
-    /// Open Account tab + traffic bottom sheet (`demarvpn://settings/traffic`).
+    /// Traffic sheet request for AccountView (`demarvpn://…/traffic`).
     var pendingOpenTrafficSheet = false
-    /// Deeplink checkout/compare when guest must sign in first (`demarvpn://account/buy|plans`).
-    private var pendingAccountSheet: DemarURLScheme.AccountSheet?
+    /// Deeplink / in-app account sheet when guest must sign in first.
+    private var pendingAccountSheet: DemarDeepLink.AccountSheet?
     private var lastPayReturnRefreshAt: Date?
     var accountRouteRequestTick: Int = 0
     /// Subscription checkout sheet intent (`nil` = closed).
@@ -47,8 +47,6 @@ final class AppState {
     var showPlanCompare = false
     /// Pay deeplink result sheet (`nil` = closed).
     var payResult: PayFeedback?
-    /// Bumped on pay deeplink return so UI can switch to Account.
-    var payReturnTick: Int = 0
     var latestAppVersion: AppVersionInfo?
     var shouldShowUpdateAlert = false
     var versionCheckInFlight = false
@@ -143,21 +141,16 @@ final class AppState {
 
     func consumeIncomingURL(_ url: URL) async {
         if await consumeAuthCallback(url) { return }
-        if DemarURLScheme.isAccountTrafficURL(url) {
-            openAccountTrafficSheet()
-            return
-        }
-        if let sheet = DemarURLScheme.accountSheet(from: url) {
+        guard let link = DemarDeepLink(url: url) else { return }
+        switch link {
+        case .account(let sheet):
             openAccountSheet(sheet)
-            return
+        case .payReturn(let success):
+            handlePayReturn(success: success)
+        case .settings(let route):
+            pendingSettingsRoute = route
+            settingsRouteRequestTick &+= 1
         }
-        if let payOk = DemarURLScheme.payReturnSuccess(from: url) {
-            handlePayReturn(success: payOk)
-            return
-        }
-        guard let route = SettingsRoute(url: url) else { return }
-        pendingSettingsRoute = route
-        settingsRouteRequestTick &+= 1
     }
 
     func openCheckout(_ intent: CheckoutIntent) {
@@ -173,7 +166,6 @@ final class AppState {
     func handlePayReturn(success: Bool) {
         dismissCheckout()
         showPlanCompare = false
-        payReturnTick &+= 1
         accountRouteRequestTick &+= 1
         payResult = success ? .success : .failure
         // Fail: UI only. Ok: one silent refresh (servers/account/traffic/unread). No pay/status.
@@ -193,7 +185,7 @@ final class AppState {
         showPlanCompare = true
     }
 
-    func openAccountSheet(_ sheet: DemarURLScheme.AccountSheet) {
+    func openAccountSheet(_ sheet: DemarDeepLink.AccountSheet) {
         accountRouteRequestTick &+= 1
         guard isSignedIn else {
             pendingAccountSheet = sheet
@@ -202,17 +194,18 @@ final class AppState {
         presentAccountSheet(sheet)
     }
 
-    private func presentAccountSheet(_ sheet: DemarURLScheme.AccountSheet) {
+    private func presentAccountSheet(_ sheet: DemarDeepLink.AccountSheet) {
         switch sheet {
+        case .traffic: pendingOpenTrafficSheet = true
         case .buy: openCheckout(.buy)
         case .plans: openPlanCompare()
         }
     }
 
     private func presentPendingAccountSheetIfNeeded() {
-        guard let sheet = pendingAccountSheet else { return }
+        guard isSignedIn, let sheet = pendingAccountSheet else { return }
         pendingAccountSheet = nil
-        guard isSignedIn else { return }
+        if sheet == .traffic { accountRouteRequestTick &+= 1 }
         presentAccountSheet(sheet)
     }
 
@@ -220,11 +213,6 @@ final class AppState {
     func consumePendingSettingsRoute() -> SettingsRoute? {
         defer { pendingSettingsRoute = nil }
         return pendingSettingsRoute
-    }
-
-    func openAccountTrafficSheet() {
-        pendingOpenTrafficSheet = true
-        accountRouteRequestTick &+= 1
     }
 
     @discardableResult
@@ -538,7 +526,7 @@ final class AppState {
     private func connect(force: Bool, operationGeneration: UInt64) async {
         if isTrafficConnectBlocked() {
             AppLog.shared.append("[vpn] connect blocked: traffic limit")
-            openAccountTrafficSheet()
+            openAccountSheet(.traffic)
             return
         }
         guard let server = selectedServer, server.canConnect else { return }

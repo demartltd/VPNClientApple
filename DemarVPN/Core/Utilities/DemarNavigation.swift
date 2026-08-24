@@ -3,37 +3,7 @@ import SwiftUI
 enum DemarURLScheme {
     static let name = "demarvpn"
 
-    /// `demarvpn://account/buy` | `demarvpn://account/plans` → Account tab + checkout / compare sheet.
-    enum AccountSheet: Equatable {
-        case buy, plans
-    }
-
-    /// `demarvpn://settings/traffic` → Account tab + traffic sheet (not a Settings push).
-    static func isAccountTrafficURL(_ url: URL) -> Bool {
-        pathComponents(from: url) == ["settings", "traffic"]
-    }
-
-    static func accountSheet(from url: URL) -> AccountSheet? {
-        let parts = pathComponents(from: url)
-        guard parts.count == 2, parts[0] == "account" else { return nil }
-        switch parts[1] {
-        case "buy": return .buy
-        case "plans": return .plans
-        default: return nil
-        }
-    }
-
-    /// `demarvpn://pay/ok` → true, `demarvpn://pay/fail` → false.
-    static func payReturnSuccess(from url: URL) -> Bool? {
-        let parts = pathComponents(from: url)
-        guard parts.count == 2, parts[0] == "pay" else { return nil }
-        switch parts[1] {
-        case "ok": return true
-        case "fail": return false
-        default: return nil
-        }
-    }
-
+    /// Path segments for `demarvpn://host/path` (host becomes first segment; `auth` excluded).
     static func pathComponents(from url: URL) -> [String] {
         var parts = [String]()
         if url.scheme == name,
@@ -45,6 +15,43 @@ enum DemarURLScheme {
         parts.append(contentsOf: url.pathComponents.filter { $0 != "/" })
         if parts.first == "open" { parts.removeFirst() }
         return parts
+    }
+}
+
+/// All in-app deeplinks except `demarvpn://auth?...` (handled separately for OAuth).
+enum DemarDeepLink: Equatable {
+    enum AccountSheet: Equatable {
+        case traffic, buy, plans
+    }
+
+    case account(AccountSheet)
+    case payReturn(success: Bool)
+    case settings(SettingsRoute)
+
+    init?(url: URL) {
+        let parts = DemarURLScheme.pathComponents(from: url)
+        if let sheet = Self.accountSheet(parts) {
+            self = .account(sheet)
+            return
+        }
+        switch parts {
+        case ["pay", "ok"]:
+            self = .payReturn(success: true)
+        case ["pay", "fail"]:
+            self = .payReturn(success: false)
+        default:
+            guard let route = SettingsRoute(pathComponents: parts) else { return nil }
+            self = .settings(route)
+        }
+    }
+
+    private static func accountSheet(_ parts: [String]) -> AccountSheet? {
+        switch parts {
+        case ["account", "buy"]: return .buy
+        case ["account", "plans"]: return .plans
+        case ["account", "traffic"], ["settings", "traffic"]: return .traffic
+        default: return nil
+        }
     }
 }
 
@@ -91,9 +98,7 @@ enum SettingsRoute: Hashable, Identifiable {
     }
 
     init?(url: URL) {
-        let parts = DemarURLScheme.pathComponents(from: url)
-        guard !parts.isEmpty else { return nil }
-        self.init(pathComponents: parts)
+        self.init(pathComponents: DemarURLScheme.pathComponents(from: url))
     }
 
     init?(pathComponents: [String]) {
