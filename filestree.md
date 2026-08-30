@@ -118,7 +118,6 @@ scripts/
 ├── libbox-build.py                    # Libbox.xcframework (latest)
 ├── upload-testflight.ps1              # App Store archive/upload
 ├── sign-singbox-in-appex.sh           # iOS appex binary signing
-├── increment_version_auto.ps1
 ├── increment_version_common.ps1
 ├── ios-export-options.plist
 └── macos-export-options.plist
