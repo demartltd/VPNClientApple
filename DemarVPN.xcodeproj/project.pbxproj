@@ -88,6 +88,7 @@
 		B10000010000000000000060 /* AppVersionApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000060 /* AppVersionApi.swift */; };
 		B10000010000000000000053 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000053 /* AuthSessionStore.swift */; };
 		B1000001000000000000005A /* SessionCacheStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000005A /* SessionCacheStore.swift */; };
+		B10000010000000000000061 /* SessionRefreshPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000061 /* SessionRefreshPolicy.swift */; };
 		B10000010000000000000054 /* LoginSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000054 /* LoginSheet.swift */; };
 		B100000100000000000000DE /* ios/Shared/DefaultInterfaceReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift */; };
 		B100000100000000000000DF /* ios/Shared/DemarLogTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001DF1CF9000F007C117D /* ios/Shared/DemarLogTime.swift */; };
@@ -151,6 +152,7 @@
 		E20000BCNCF9000F007C117D /* geoip-cn.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BCN /* geoip-cn.cidrs.json */; };
 		T40000091CF9000F007C117E /* TunBypassCidrsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */; };
 		T400000B1CF9000F007C117E /* AppVersionApiTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000B1CF9000F007C117E /* AppVersionApiTests.swift */; };
+		T400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -289,6 +291,7 @@
 		F10000010000000000000060 /* AppVersionApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersionApi.swift; sourceTree = "<group>"; };
 		F10000010000000000000053 /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
 		F1000001000000000000005A /* SessionCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCacheStore.swift; sourceTree = "<group>"; };
+		F10000010000000000000061 /* SessionRefreshPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRefreshPolicy.swift; sourceTree = "<group>"; };
 		F10000010000000000000054 /* LoginSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginSheet.swift; sourceTree = "<group>"; };
 		F40000021CF9000F007C117D /* DemarVPNTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DemarVPNTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F40000021CF9000F007C117E /* SingBoxConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConfigTests.swift; sourceTree = "<group>"; };
@@ -314,6 +317,7 @@
 		F1000001000000000000BCN /* geoip-cn.cidrs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "geoip-cn.cidrs.json"; sourceTree = "<group>"; };
 		F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunBypassCidrsTests.swift; sourceTree = "<group>"; };
 		F400000B1CF9000F007C117E /* AppVersionApiTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersionApiTests.swift; sourceTree = "<group>"; };
+		F400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRefreshPolicyTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -461,6 +465,7 @@
 				F1000001000000000000000A /* AppState.swift */,
 				F10000010000000000000053 /* AuthSessionStore.swift */,
 				F1000001000000000000005A /* SessionCacheStore.swift */,
+				F10000010000000000000061 /* SessionRefreshPolicy.swift */,
 				F10000010000000000000057 /* SupportStore.swift */,
 				F10000010000000000000029 /* VpnControlling.swift */,
 				F10000010000000000000034 /* NativeVpnService.swift */,
@@ -690,6 +695,7 @@
 				F400000C1CF9000F007C117E /* PayApiParseTests.swift */,
 				F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */,
 				F400000B1CF9000F007C117E /* AppVersionApiTests.swift */,
+				F400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift */,
 			);
 			path = DemarVPNTests;
 			sourceTree = "<group>";
@@ -976,6 +982,7 @@
 				B1000001000000000000005F /* Flight.swift in Sources */,
 				B10000010000000000000053 /* AuthSessionStore.swift in Sources */,
 				B1000001000000000000005A /* SessionCacheStore.swift in Sources */,
+				B10000010000000000000061 /* SessionRefreshPolicy.swift in Sources */,
 				B10000010000000000000054 /* LoginSheet.swift in Sources */,
 				B10000010000000000000044 /* DocumentsMenuSheet.swift in Sources */,
 				B10000010000000000000045 /* LegalDocumentView.swift in Sources */,
@@ -1039,6 +1046,7 @@
 				T400000C1CF9000F007C117E /* PayApiParseTests.swift in Sources */,
 				T40000091CF9000F007C117E /* TunBypassCidrsTests.swift in Sources */,
 				T400000B1CF9000F007C117E /* AppVersionApiTests.swift in Sources */,
+				T400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

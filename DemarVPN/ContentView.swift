@@ -166,17 +166,13 @@ struct ContentView: View {
             appState.syncVpnStatusFromSystem()
             appState.presentCachedUpdateAlertIfNeeded()
             appState.refreshVersion()
-            #if os(macOS)
             appState.setAppActive(true)
-            #endif
             #if os(iOS)
             await IDFATracking.promptIfNeeded()
             #endif
         } else {
             appState.rearmUpdateAlertForNextActive()
-            #if os(macOS)
             appState.setAppActive(false)
-            #endif
         }
     }
 

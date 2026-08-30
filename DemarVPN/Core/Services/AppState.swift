@@ -68,9 +68,10 @@ final class AppState {
     private let vpn: VpnControlling
     private var vpnOperationGeneration: UInt64 = 0
     private var shownUpdateTokenInSession: String?
-    #if os(macOS)
-    private var macVersionPollingTask: Task<Void, Never>?
-    #endif
+    private var backgroundRefreshTask: Task<Void, Never>?
+    private var lastSessionDataRefreshAt: Date?
+    private static let sessionDataTTL: TimeInterval = SessionRefreshPolicy.ttl
+    private static let backgroundRefreshInterval: Duration = .seconds(sessionDataTTL)
 
     #if os(iOS) || os(macOS)
     private var statusMonitor: VpnStatusMonitor?
@@ -261,6 +262,7 @@ final class AppState {
         SupportStore.clearOnSignOut()
         clearServers()
         clearAccount()
+        lastSessionDataRefreshAt = nil
         await revokeVpnAccess()
     }
 
@@ -289,11 +291,24 @@ final class AppState {
     /// Session data — app start, sign-in, pull-to-refresh, promo activation.
     func refreshSessionData() async {
         await Flight.run("session.refresh") {
-            async let servers: Void = self.refreshServers()
-            async let account: Void = self.refreshAccount()
+            async let servers: Bool = self.refreshServers()
+            async let account: Bool = self.refreshAccount()
             async let unread: Void = self.refreshSupportUnread()
-            _ = await (servers, account, unread)
+            let (serversOk, accountOk) = await (servers, account)
+            _ = await unread
+            if serversOk || accountOk {
+                self.lastSessionDataRefreshAt = Date()
+            }
         }
+    }
+
+    private func refreshSessionDataIfStale() async {
+        guard isSignedIn else { return }
+        guard SessionRefreshPolicy.isStale(since: lastSessionDataRefreshAt) else { return }
+        _ = await AuthSessionStore.refreshSession()
+        authSession = AuthSessionStore.session
+        guard isSignedIn else { return }
+        await refreshSessionData()
     }
 
     private func refreshSupportUnread() async {
@@ -304,12 +319,13 @@ final class AppState {
         await SupportUnreadStore.shared.refresh(session: session)
     }
 
-    private func refreshAccount() async {
+    @discardableResult
+    private func refreshAccount() async -> Bool {
         guard let session = AuthSessionStore.session else {
             clearAccount()
-            return
+            return false
         }
-        guard !accountLoading else { return }
+        guard !accountLoading else { return false }
         accountLoading = true
         defer { accountLoading = false }
 
@@ -322,7 +338,7 @@ final class AppState {
             SessionCacheStore.saveAccount(local, userId: session.userId)
             SessionCacheStore.saveTraffic(LocalDemoAccount.vpnTraffic(), userId: session.userId)
             AppLog.shared.append("[account] loaded (local demo)")
-            return
+            return true
         }
 
         async let aRes: Result<VpnAccount, Error> = {
@@ -353,24 +369,26 @@ final class AppState {
             case .success: nil
             }
         }
-        if err is CancellationError { return }
+        if err is CancellationError { return false }
         if let e = err as? DemarAPIError, e.isSessionInvalid {
             await forceLocalSignOut()
-            return
+            return false
         }
         if let err {
             AppLog.shared.append("[account] load failed — \(err.localizedDescription)")
-        } else {
-            AppLog.shared.append("[account] refreshed")
+            return false
         }
+        AppLog.shared.append("[account] refreshed")
+        return true
     }
 
-    private func refreshServers() async {
+    @discardableResult
+    private func refreshServers() async -> Bool {
         guard let session = AuthSessionStore.session else {
             clearServers()
-            return
+            return false
         }
-        guard !serversLoading else { return }
+        guard !serversLoading else { return false }
         serversLoading = true
         serversError = nil
         defer { serversLoading = false }
@@ -380,8 +398,9 @@ final class AppState {
             trafficExceeded = result.trafficExceeded
             SessionCacheStore.saveServers(result.rawJson, userId: session.userId)
             AppLog.shared.append("[servers] loaded \(result.servers.count) (sub=\(result.vpnSubscription ?? "—"))")
+            return true
         } catch is CancellationError {
-            return
+            return false
         } catch let e as DemarAPIError where e.isSessionInvalid {
             if session.isLocalDemo {
                 serversError = e.message.nilIfBlank ?? String(localized: "Couldn’t load servers")
@@ -390,9 +409,11 @@ final class AppState {
                 await forceLocalSignOut()
                 AppLog.shared.append("[servers] session revoked")
             }
+            return false
         } catch {
             serversError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             AppLog.shared.append("[servers] fetch failed — \(serversError ?? "")")
+            return false
         }
     }
 
@@ -449,15 +470,10 @@ final class AppState {
         shownUpdateTokenInSession = nil
     }
 
-    #if os(macOS)
     func setAppActive(_ active: Bool) {
-        if active {
-            startMacVersionPollingIfNeeded()
-        } else {
-            stopMacVersionPolling()
-        }
+        if active { startBackgroundRefreshIfNeeded() }
+        else { stopBackgroundRefresh() }
     }
-    #endif
 
     @discardableResult
     private func beginVpnOperation() -> UInt64 {
@@ -721,23 +737,23 @@ final class AppState {
         shouldShowUpdateAlert = true
     }
 
-    #if os(macOS)
-    private func startMacVersionPollingIfNeeded() {
-        guard macVersionPollingTask == nil else { return }
-        macVersionPollingTask = Task { [weak self] in
+    private func startBackgroundRefreshIfNeeded() {
+        guard backgroundRefreshTask == nil else { return }
+        backgroundRefreshTask = Task { [weak self] in
+            await self?.refreshSessionDataIfStale()
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(600))
+                try? await Task.sleep(for: Self.backgroundRefreshInterval)
                 guard !Task.isCancelled else { break }
-                await self?.refreshVersion()
+                self?.refreshVersion()
+                await self?.refreshSessionDataIfStale()
             }
         }
     }
 
-    private func stopMacVersionPolling() {
-        macVersionPollingTask?.cancel()
-        macVersionPollingTask = nil
+    private func stopBackgroundRefresh() {
+        backgroundRefreshTask?.cancel()
+        backgroundRefreshTask = nil
     }
-    #endif
 
     func runHomeThroughputSampling() async {
         while !Task.isCancelled {
