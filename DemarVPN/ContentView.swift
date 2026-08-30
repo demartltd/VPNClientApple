@@ -122,8 +122,7 @@ struct ContentView: View {
             Tab(value: DemarSection.account, role: .search) {
                 iosTab(.account)
             } label: {
-                Image(systemName: DemarSection.account.tabIcon(selected: section == .account))
-                    .accessibilityLabel(DemarSection.account.title)
+                DemarSection.account.accountTabLabel(selected: section == .account)
             }
         }
         .tint(Color.demarPrimary)

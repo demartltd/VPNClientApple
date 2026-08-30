@@ -159,6 +159,19 @@ enum DemarSection: CaseIterable, Hashable, Identifiable {
         case .account: selected ? "person.crop.circle.fill" : "person.crop.circle"
         }
     }
+
+    #if os(iOS)
+    /// iOS 26+: icon-only floating tab (Liquid Glass). Earlier: visible title — no floating chrome.
+    @ViewBuilder
+    func accountTabLabel(selected: Bool) -> some View {
+        if #available(iOS 26.0, *) {
+            Image(systemName: tabIcon(selected: selected))
+                .accessibilityLabel(title)
+        } else {
+            Label(title, systemImage: tabIcon(selected: selected))
+        }
+    }
+    #endif
 }
 
 extension View {
