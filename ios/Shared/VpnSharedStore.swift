@@ -23,11 +23,14 @@ enum VpnSharedStore {
   private static let extensionHeartbeatFile = "extension_heartbeat.json"
   private static let throughputFile = "throughput.json"
   private static let stopReasonHistoryLimit = 32
+  private static let throughputWriteMinInterval: TimeInterval = 2
   private static let throughputISO8601: ISO8601DateFormatter = {
     let f = ISO8601DateFormatter()
     f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     return f
   }()
+  private static let throughputWriteLock = NSLock()
+  private static var lastThroughputWritten: (up: Int64, down: Int64, at: Date)?
 
   private static let coreJournalImportQueue = DispatchQueue(label: "com.demar.adblock.coreJournalImport")
   private static let journalAppendQueue = DispatchQueue(label: "com.demar.adblock.journalAppend", qos: .utility)
@@ -88,11 +91,22 @@ enum VpnSharedStore {
   }
 
   static func saveThroughput(up: Int64, down: Int64) {
+    throughputWriteLock.lock()
+    let now = Date()
+    if let last = lastThroughputWritten,
+       last.up == up, last.down == down,
+       now.timeIntervalSince(last.at) < throughputWriteMinInterval
+    {
+      throughputWriteLock.unlock()
+      return
+    }
+    lastThroughputWritten = (up, down, now)
+    throughputWriteLock.unlock()
     do {
       let body: [String: Any] = [
         "up": up,
         "down": down,
-        "updatedAt": throughputISO8601.string(from: Date()),
+        "updatedAt": throughputISO8601.string(from: now),
       ]
       try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
         .write(to: try throughputURL(), options: [.atomic])
@@ -115,6 +129,9 @@ enum VpnSharedStore {
   }
 
   static func clearThroughput() {
+    throughputWriteLock.lock()
+    lastThroughputWritten = nil
+    throughputWriteLock.unlock()
     try? FileManager.default.removeItem(at: throughputURL())
   }
 

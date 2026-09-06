@@ -7,7 +7,6 @@ struct SingBoxTunOptions {
     var dnsFinal: String
     var dnsBootstrapDomains: [String]
     var directDomains: [String]
-    var strictRoute: Bool
 }
 
 struct SingBoxConnectPlan {
@@ -65,8 +64,7 @@ struct SingBoxConnectPlan {
             tun: SingBoxTunOptions(
                 dnsFinal: SingBoxConfigConstants.dnsRemoteTag,
                 dnsBootstrapDomains: Array(Set([profile.tlsServerName, profile.server])).sorted(),
-                directDomains: Array(Set([profile.tlsServerName, profile.server])).sorted(),
-                strictRoute: false
+                directDomains: Array(Set([profile.tlsServerName, profile.server])).sorted()
             ),
             bypassRuleSets: bypassRuleSets.uniquedByTag()
         )

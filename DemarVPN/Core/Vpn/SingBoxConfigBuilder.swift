@@ -18,7 +18,6 @@ enum SingBoxConfigBuilder {
             logLevel: logLevel,
             dnsFinal: plan.tun.dnsFinal,
             dnsBootstrapDomains: plan.tun.dnsBootstrapDomains,
-            strictRoute: plan.tun.strictRoute,
             directDomains: plan.tun.directDomains,
             bypassRuleSets: plan.bypassRuleSets
         )
@@ -101,7 +100,6 @@ enum SingBoxConfigBuilder {
         logLevel: String,
         dnsFinal: String,
         dnsBootstrapDomains: [String],
-        strictRoute: Bool,
         directDomains: [String],
         bypassRuleSets: [ApiBypassRuleSet]
     ) -> [String: Any] {
@@ -117,7 +115,6 @@ enum SingBoxConfigBuilder {
                 tunName: tunName,
                 mtu: mtu,
                 directIPs: directIPs,
-                strictRoute: strictRoute,
                 excludeDNSResolver: !geosite.isEmpty
             ), [
                 "type": "mixed",
@@ -240,7 +237,7 @@ enum SingBoxRouteBuilder {
         geositeRuleSets: [ApiBypassRuleSet] = []
     ) -> [String: Any] {
         var rules: [[String: Any]] = [
-            ["inbound": [inboundTag], "action": "sniff"],
+            ["inbound": [inboundTag], "action": "sniff", "timeout": "300ms"],
             ["protocol": "dns", "action": "hijack-dns"],
             rejectDefault(["network": ["udp"], "port": [443]]),
             [
@@ -304,7 +301,6 @@ enum SingBoxTunInboundBuilder {
         tunName: String,
         mtu: Int,
         directIPs: [String],
-        strictRoute: Bool,
         excludeDNSResolver: Bool = false
     ) -> [String: Any] {
         let effectiveMtu = min(mtu, 1400)

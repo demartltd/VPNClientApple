@@ -32,6 +32,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     private weak var provider: NEPacketTunnelProvider?
     private var excludedIPv4: [String] = []
     private var configuredExcludedIPv4Routes: [NEIPv4Route] = []
+    private var configuredBypassRoutes: [NEIPv4Route] = []
     private var configuredIncludedIPv4Routes: [NEIPv4Route] = []
     private var configuredDNSSettings: NEDNSSettings?
     private var configuredIPv6Settings: NEIPv6Settings?
@@ -40,7 +41,6 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     private var nwMonitor: NWPathMonitor?
     private let monitorQueue = DispatchQueue(label: "vpn.demar.iface-monitor", qos: .utility)
     private let reportFilter = DefaultInterfaceReportFilter()
-    private var lossDebounceWork: DispatchWorkItem?
     private var lastKnownPhysicalInterfaces: [LibboxNetworkInterface] = []
     private var lastGoodInterface: DefaultInterfaceUpdate?
     private var allowUnsatisfiedDefaultReport = false
@@ -63,7 +63,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             ipv4.excludedRoutes = Self.mergedIPv4Exclusions(
                 configured: configuredExcludedIPv4Routes,
                 runtimeAddresses: addresses,
-                sidecars: TunBypassCidrs.ipv4Routes(forTags: VpnSharedStore.loadBypassGeoipTags())
+                sidecars: configuredBypassRoutes
             )
             try await provider.setTunnelNetworkSettings(settings)
             Self.diag("reapplied endpoint bypass: \(addresses.joined(separator: ","))")
@@ -87,8 +87,6 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             // Libbox closes every conn on empty default iface (kills Hysteria2 QUIC).
             holdDefaultReportUntilSatisfied = true
             allowUnsatisfiedDefaultReport = false
-            lossDebounceWork?.cancel()
-            lossDebounceWork = nil
             ipv4.includedRoutes = configuredIncludedIPv4Routes
             settings.dnsSettings = configuredDNSSettings
             settings.ipv6Settings = configuredIPv6Settings
@@ -154,11 +152,11 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             configuredExcludedRoutes.append(NEIPv4Route(destinationAddress: prefix.address(), subnetMask: prefix.mask()))
         }
         configuredExcludedIPv4Routes = configuredExcludedRoutes
-        let sidecarRoutes = TunBypassCidrs.ipv4Routes(forTags: VpnSharedStore.loadBypassGeoipTags())
+        configuredBypassRoutes = TunBypassCidrs.ipv4Routes(forTags: VpnSharedStore.loadBypassGeoipTags())
         let ipv4ExcludedRoutes = Self.mergedIPv4Exclusions(
             configured: configuredExcludedRoutes,
             runtimeAddresses: excludedIPv4,
-            sidecars: sidecarRoutes
+            sidecars: configuredBypassRoutes
         )
 
         configuredIncludedIPv4Routes = ipv4Routes
@@ -180,7 +178,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         Self.diag(
             "openTun mtu=\(options.getMTU()) dns=\(dns.servers.joined(separator: ",")) "
                 + "routes=\(ipv4Routes.count) excluded=\(ipv4ExcludedRoutes.count) "
-                + "bypassCidrs=\(sidecarRoutes.count) "
+                + "bypassCidrs=\(configuredBypassRoutes.count) "
                 + "ipv6=\(configuredIPv6Settings == nil ? "off" : "on") capture=deferred"
         )
 
@@ -364,14 +362,10 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
 
         switch reportFilter.decide(update) {
         case let .report(update):
-            lossDebounceWork?.cancel()
-            lossDebounceWork = nil
             send(update, to: listener)
         case .scheduleLoss:
             // Never forward .lost while the tunnel is up — libbox closes Hysteria2 +
             // Telegram MTProto. Keep last-reported phys iface until teardown.
-            lossDebounceWork?.cancel()
-            lossDebounceWork = nil
             _ = reportFilter.confirmLoss(candidatesPresent: true)
         case .ignore:
             break
@@ -440,8 +434,6 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     }
 
     func closeDefaultInterfaceMonitor(_: LibboxInterfaceUpdateListenerProtocol?) throws {
-        lossDebounceWork?.cancel()
-        lossDebounceWork = nil
         reportFilter.reset()
         interfaceListener = nil
         allowUnsatisfiedDefaultReport = false
@@ -485,8 +477,6 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     }
 
     func reset() {
-        lossDebounceWork?.cancel()
-        lossDebounceWork = nil
         reportFilter.reset()
         interfaceListener = nil
         allowUnsatisfiedDefaultReport = false
@@ -495,6 +485,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         nwMonitor = nil
         networkSettings = nil
         configuredExcludedIPv4Routes = []
+        configuredBypassRoutes = []
         configuredIncludedIPv4Routes = []
         configuredDNSSettings = nil
         configuredIPv6Settings = nil

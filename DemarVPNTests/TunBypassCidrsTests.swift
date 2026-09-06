@@ -15,11 +15,23 @@ final class TunBypassCidrsTests: XCTestCase {
         let ru = TunBypassCidrs.loadCidrs(tag: "geoip-ru")
         let ir = TunBypassCidrs.loadCidrs(tag: "geoip-ir")
         let cn = TunBypassCidrs.loadCidrs(tag: "geoip-cn")
-        XCTAssertGreaterThan(ru.count, 1000)
-        XCTAssertGreaterThan(ir.count, 100)
-        XCTAssertGreaterThan(cn.count, 1000)
-        XCTAssertTrue(ru.contains("2.56.24.0/22"))
+        // Aggregated (coarsen ≤/16) — far below raw sing-geoip dump (~8k/1.7k/5k).
+        XCTAssertGreaterThan(ru.count, 100)
+        XCTAssertLessThan(ru.count, 3000)
+        XCTAssertGreaterThan(ir.count, 50)
+        XCTAssertLessThan(ir.count, 1500)
+        XCTAssertGreaterThan(cn.count, 100)
+        XCTAssertLessThan(cn.count, 3000)
+        XCTAssertTrue(ru.contains { $0.hasPrefix("2.56.") })
         let routes = TunBypassCidrs.ipv4Routes(forTags: ["geoip-ru", "geoip-ir", "geoip-cn"])
-        XCTAssertEqual(routes.count, ru.count + ir.count + cn.count)
+        XCTAssertEqual(routes.count, Set(ru + ir + cn).count)
+    }
+
+    func testIpv4RoutesCacheReusesInstance() {
+        let tags = ["geoip-ru"]
+        let a = TunBypassCidrs.ipv4Routes(forTags: tags)
+        let b = TunBypassCidrs.ipv4Routes(forTags: tags)
+        XCTAssertEqual(a.count, b.count)
+        XCTAssertFalse(a.isEmpty)
     }
 }

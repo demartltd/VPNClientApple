@@ -7,17 +7,32 @@ import Darwin
 /// GeoIP CIDR sidecars → NE `excludedRoutes`.
 /// Libbox does not expand TUN `route_exclude_address_set` under `platformInterface`.
 enum TunBypassCidrs {
+    private static let lock = NSLock()
+    private static var routeCache: [String: [NEIPv4Route]] = [:]
+
     static func ipv4Routes(forTags tags: [String], bundle: Bundle = .main) -> [NEIPv4Route] {
+        let key = tags.filter { $0.hasPrefix("geoip") }.sorted().joined(separator: ",")
+        guard !key.isEmpty else { return [] }
+        lock.lock()
+        if let cached = routeCache[key] {
+            lock.unlock()
+            return cached
+        }
+        lock.unlock()
+
         var routes: [NEIPv4Route] = []
         var keys = Set<String>()
         for tag in tags where tag.hasPrefix("geoip") {
             for cidr in loadCidrs(tag: tag, bundle: bundle) {
                 guard let route = ipv4Route(cidr: cidr) else { continue }
-                let key = "\(route.destinationAddress)/\(route.destinationSubnetMask)"
-                guard keys.insert(key).inserted else { continue }
+                let routeKey = "\(route.destinationAddress)/\(route.destinationSubnetMask)"
+                guard keys.insert(routeKey).inserted else { continue }
                 routes.append(route)
             }
         }
+        lock.lock()
+        routeCache[key] = routes
+        lock.unlock()
         return routes
     }
 
