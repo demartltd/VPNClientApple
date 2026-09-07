@@ -76,7 +76,7 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 | API `route_exclude_address_set` | **игнор** (no-op под Libbox `platformInterface`) |
 | geo*/geosite → `outbound:direct` | **не эмитим** (`ENETUNREACH` внутри TUN) |
 
-`dns-direct` остаётся `type: local`, пока нет geosite bypass; при geosite — UDP `1.1.1.1` + `route_exclude_address` `1.1.1.1/32`. Sidecars: `scripts/gen-tun-bypass-cidrs.py` — **не** raw dump: coarsen ≤`/16` + lossless aggregate (~2.7k combined vs ~16k raw), иначе `setTunnelNetworkSettings` с 16k `excludedRoutes` тяжёл для NE.
+`dns-direct` остаётся `type: local`, пока нет geosite bypass; при geosite — UDP `1.1.1.1` + `route_exclude_address` `1.1.1.1/32`. Sidecars: `scripts/gen-tun-bypass-cidrs.py` — **не** raw dump: coarsen ≤`/20` + lossless aggregate (~9.8k combined vs ~16k raw). Floor `/20` (не `/16`): слепой `/16` invent’ил покрытие дырявых блоков и уводил чужие платформы (в т.ч. Telegram DC) в NE `excludedRoutes` мимо TUN.
 
 ### TUN / DNS / route
 
