@@ -85,7 +85,9 @@ final class AppState {
             selectedServer = Self.restoreSelectedServer(from: cached.servers)
             account = cached.account
             traffic = cached.traffic
-            AppLog.shared.append("[session] restored cache (servers=\(cached.servers.count))")
+            TunSettingsStore.hydrateFromCache(cached.tunRaw)
+            AppLog.shared.append("[session] restored cache (servers=\(cached.servers.count), tun=\(cached.tunRaw != nil))")
+            applyTunDefaultsIfFree()
         } else {
             selectedServer = nil
         }
@@ -259,6 +261,7 @@ final class AppState {
         dismissCheckout()
         showPlanCompare = false
         SessionCacheStore.clear()
+        TunSettingsStore.clearCatalog()
         SupportStore.clearOnSignOut()
         clearServers()
         clearAccount()
@@ -294,8 +297,10 @@ final class AppState {
             async let servers: Bool = self.refreshServers()
             async let account: Bool = self.refreshAccount()
             async let unread: Void = self.refreshSupportUnread()
+            async let tun: Void = self.refreshTunGroups()
+            async let plans: Void = PayApi.warmPlans()
             let (serversOk, accountOk) = await (servers, account)
-            _ = await unread
+            _ = await (unread, tun, plans)
             if serversOk || accountOk {
                 self.lastSessionDataRefreshAt = Date()
             }
@@ -337,6 +342,7 @@ final class AppState {
             authSession = AuthSessionStore.session
             SessionCacheStore.saveAccount(local, userId: session.userId)
             SessionCacheStore.saveTraffic(LocalDemoAccount.vpnTraffic(), userId: session.userId)
+            applyTunDefaultsIfFree()
             AppLog.shared.append("[account] loaded (local demo)")
             return true
         }
@@ -356,6 +362,7 @@ final class AppState {
             AuthSessionStore.updateVpnProfile(a.vpnSubscription, a.vpnExpiresAt)
             authSession = AuthSessionStore.session
             SessionCacheStore.saveAccount(a, userId: session.userId)
+            applyTunDefaultsIfFree()
         }
         if case .success(let t) = trafficResult {
             traffic = t
@@ -452,6 +459,24 @@ final class AppState {
         UserDefaults.standard.removeObject(forKey: StorageKey.selectedServerId)
     }
 
+    var isFreeSubscription: Bool {
+        let raw = (account?.vpnSubscription ?? authSession?.vpnSubscription ?? "free")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return raw.isEmpty || raw.caseInsensitiveCompare("free") == .orderedSame
+    }
+
+    private func applyTunDefaultsIfFree() {
+        guard isFreeSubscription else { return }
+        TunSettingsStore.resetToDefaults()
+    }
+
+    private func refreshTunGroups() async {
+        guard let session = AuthSessionStore.session else { return }
+        guard let payload = await TunGroupsApi.fetch() else { return }
+        TunSettingsStore.cacheGroups(payload.catalog, raw: payload.raw, userId: session.userId)
+        AppLog.shared.append("[tun] groups cached sites=\(payload.catalog.siteGroups.count)")
+    }
+
     func refreshVersion() {
         Task { await Flight.run("version") { await self.performVersionCheck() } }
     }
@@ -471,8 +496,14 @@ final class AppState {
     }
 
     func setAppActive(_ active: Bool) {
-        if active { startBackgroundRefreshIfNeeded() }
-        else { stopBackgroundRefresh() }
+        if active {
+            Task {
+                await DemarHttp.resetTransport()
+                startBackgroundRefreshIfNeeded()
+            }
+        } else {
+            stopBackgroundRefresh()
+        }
     }
 
     @discardableResult
@@ -685,8 +716,12 @@ final class AppState {
     }
 
     private func applyRemoteVpnState(_ state: VpnConnectionState) {
+        let wasConnected = vpnState.isConnected
         vpnState = state
         if !state.isConnected { resetThroughput() }
+        if wasConnected != state.isConnected {
+            Task { await DemarHttp.resetTransport() }
+        }
     }
 
     private func resetThroughput() {

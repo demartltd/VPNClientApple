@@ -13,7 +13,6 @@ struct SessionExchange: Sendable {
 
 enum AuthApi {
     static let baseURL = URL(string: "https://auth.example.invalid")!
-    static let vpnAPIBaseURL = URL(string: "https://vpn.example.invalid")!
     static let accountBaseURL = URL(string: "https://account.example.invalid")!
     static let appOAuthReturn = accountBaseURL.appendingPathComponent("auth/app/complete")
 

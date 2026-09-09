@@ -22,12 +22,12 @@ struct SubscriptionCheckoutSheet: View {
     let intent: CheckoutIntent
     var onDismiss: () -> Void
 
-    @State private var catalog: PayCatalog?
+    @State private var catalog: PayCatalog? = PayApi.cachedPlans
     @State private var tier = "plus"
     @State private var period = "month"
     @State private var currency = "RUB"
     @State private var paying = false
-    @State private var loadingPlans = true
+    @State private var loadingPlans = PayApi.cachedPlans == nil
     @State private var plansError: String?
 
     @State private var promoCode = ""
@@ -478,20 +478,26 @@ struct SubscriptionCheckoutSheet: View {
     }
 
     private func loadPlans() async {
-        await Flight.run("pay.plans") {
-            guard catalog == nil else {
-                loadingPlans = false
-                return
-            }
-            loadingPlans = true
-            plansError = nil
-            defer { loadingPlans = false }
-            do {
-                catalog = try await PayApi.fetchPlans()
-            } catch {
-                plansError = String(localized: "Couldn’t load plans")
-                snackBar.showError(plansError!)
-            }
+        if let hit = PayApi.cachedPlans {
+            catalog = hit
+            loadingPlans = false
+            return
+        }
+        guard catalog == nil else {
+            loadingPlans = false
+            return
+        }
+        loadingPlans = true
+        plansError = nil
+        defer { loadingPlans = false }
+        do {
+            catalog = try await PayApi.fetchPlans()
+        } catch is CancellationError {
+            return
+        } catch {
+            plansError = (error as? DemarAPIError)?.message
+                ?? String(localized: "Couldn’t load plans")
+            snackBar.showError(plansError!)
         }
     }
 

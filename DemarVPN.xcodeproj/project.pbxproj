@@ -29,6 +29,10 @@
 		B10000010000000000000012 /* ServersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000012 /* ServersView.swift */; };
 		B10000010000000000000013 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000013 /* SettingsView.swift */; };
 		B10000010000000000000014 /* AppSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000014 /* AppSettingsView.swift */; };
+		B1000001000000000000TUN /* TunSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000TUN /* TunSettingsView.swift */; };
+		B1000001000000000000TM1 /* TunModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000TM1 /* TunModels.swift */; };
+		B1000001000000000000TA1 /* TunGroupsApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000TA1 /* TunGroupsApi.swift */; };
+		B1000001000000000000TS1 /* TunSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000TS1 /* TunSettingsStore.swift */; };
 		B10000010000000000000015 /* ServiceMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000015 /* ServiceMenuView.swift */; };
 		B10000010000000000000016 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000016 /* Assets.xcassets */; };
 		B10000010000000000000017 /* DemarCardRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000001A /* DemarCardRow.swift */; };
@@ -135,6 +139,7 @@
 		T40000061CF9000F007C117E /* VpnStabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000051CF9000F007C117E /* VpnStabilityTests.swift */; };
 		T40000071CF9000F007C117E /* LegalDocumentsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000061CF9000F007C117E /* LegalDocumentsTests.swift */; };
 		T40000081CF9000F007C117E /* ServersApiParseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000071CF9000F007C117E /* ServersApiParseTests.swift */; };
+		T400000E1CF9000F007C117E /* TunGroupsParseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000E1CF9000F007C117E /* TunGroupsParseTests.swift */; };
 		B100000100000000000000L1 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000L1 /* Localizable.strings */; };
 		B100000100000000000000L2 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000L2 /* InfoPlist.xcstrings */; };
 		B100000100000000000000L3 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000L3 /* AppLanguage.swift */; };
@@ -236,6 +241,10 @@
 		F10000010000000000000012 /* ServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersView.swift; sourceTree = "<group>"; };
 		F10000010000000000000013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		F10000010000000000000014 /* AppSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsView.swift; sourceTree = "<group>"; };
+		F1000001000000000000TUN /* TunSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunSettingsView.swift; sourceTree = "<group>"; };
+		F1000001000000000000TM1 /* TunModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunModels.swift; sourceTree = "<group>"; };
+		F1000001000000000000TA1 /* TunGroupsApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunGroupsApi.swift; sourceTree = "<group>"; };
+		F1000001000000000000TS1 /* TunSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunSettingsStore.swift; sourceTree = "<group>"; };
 		F10000010000000000000015 /* ServiceMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceMenuView.swift; sourceTree = "<group>"; };
 		F10000010000000000000016 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F10000010000000000000017 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -300,6 +309,7 @@
 		F40000051CF9000F007C117E /* VpnStabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnStabilityTests.swift; sourceTree = "<group>"; };
 		F40000061CF9000F007C117E /* LegalDocumentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentsTests.swift; sourceTree = "<group>"; };
 		F40000071CF9000F007C117E /* ServersApiParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersApiParseTests.swift; sourceTree = "<group>"; };
+		F400000E1CF9000F007C117E /* TunGroupsParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunGroupsParseTests.swift; sourceTree = "<group>"; };
 		F400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnAccountApiParseTests.swift; sourceTree = "<group>"; };
 		F100000100000000000000L1 /* Localizable.strings */ = {isa = PBXVariantGroup; children = (
 			F10000010000000000000L1E /* en */,
@@ -465,6 +475,7 @@
 				F1000001000000000000000A /* AppState.swift */,
 				F10000010000000000000053 /* AuthSessionStore.swift */,
 				F1000001000000000000005A /* SessionCacheStore.swift */,
+				F1000001000000000000TS1 /* TunSettingsStore.swift */,
 				F10000010000000000000061 /* SessionRefreshPolicy.swift */,
 				F10000010000000000000057 /* SupportStore.swift */,
 				F10000010000000000000029 /* VpnControlling.swift */,
@@ -511,6 +522,7 @@
 			children = (
 				F10000010000000000000013 /* SettingsView.swift */,
 				F10000010000000000000014 /* AppSettingsView.swift */,
+				F1000001000000000000TUN /* TunSettingsView.swift */,
 				F10000010000000000000015 /* ServiceMenuView.swift */,
 				F10000010000000000000039 /* CustomEgressProbes.swift */,
 				F10000010000000000000044 /* DocumentsMenuSheet.swift */,
@@ -565,6 +577,7 @@
 			children = (
 				F1000001000000000000003E /* Hysteria2Profile.swift */,
 				F100000100000000000000B1 /* ApiBypassRuleSet.swift */,
+				F1000001000000000000TM1 /* TunModels.swift */,
 				F1000001000000000000003D /* SingBoxConnectPlan.swift */,
 				F10000010000000000000028 /* SingBoxConfigBuilder.swift */,
 			);
@@ -588,6 +601,7 @@
 				F10000010000000000000050 /* DemarHttp.swift */,
 				F10000010000000000000051 /* AuthApi.swift */,
 				F10000010000000000000052 /* ServersApi.swift */,
+				F1000001000000000000TA1 /* TunGroupsApi.swift */,
 				F10000010000000000000060 /* AppVersionApi.swift */,
 				F10000010000000000000055 /* VpnAccountApi.swift */,
 				F100000100000000000000AA /* PromoApi.swift */,
@@ -691,6 +705,7 @@
 				F40000051CF9000F007C117E /* VpnStabilityTests.swift */,
 				F40000061CF9000F007C117E /* LegalDocumentsTests.swift */,
 				F40000071CF9000F007C117E /* ServersApiParseTests.swift */,
+				F400000E1CF9000F007C117E /* TunGroupsParseTests.swift */,
 				F400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift */,
 				F400000C1CF9000F007C117E /* PayApiParseTests.swift */,
 				F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */,
@@ -934,6 +949,7 @@
 				B10000010000000000000012 /* ServersView.swift in Sources */,
 				B10000010000000000000013 /* SettingsView.swift in Sources */,
 				B10000010000000000000014 /* AppSettingsView.swift in Sources */,
+				B1000001000000000000TUN /* TunSettingsView.swift in Sources */,
 				B10000010000000000000015 /* ServiceMenuView.swift in Sources */,
 				B10000010000000000000039 /* CustomEgressProbes.swift in Sources */,
 				E20001091CF9000F007C117D /* DemarVPN/Features/Account/AccountView.swift in Sources */,
@@ -956,6 +972,7 @@
 				B10000010000000000000037 /* ios/Shared/VpnControlIntent.swift in Sources */,
 				B1000001000000000000003E /* Hysteria2Profile.swift in Sources */,
 				B100000100000000000000B1 /* ApiBypassRuleSet.swift in Sources */,
+				B1000001000000000000TM1 /* TunModels.swift in Sources */,
 				B1000001000000000000003C /* SingBoxConnectPlan.swift in Sources */,
 				B10000010000000000000029 /* SingBoxConfigBuilder.swift in Sources */,
 				B1000001000000000000002A /* VpnControlling.swift in Sources */,
@@ -967,6 +984,7 @@
 				B10000010000000000000050 /* DemarHttp.swift in Sources */,
 				B10000010000000000000051 /* AuthApi.swift in Sources */,
 				B10000010000000000000052 /* ServersApi.swift in Sources */,
+				B1000001000000000000TA1 /* TunGroupsApi.swift in Sources */,
 				B10000010000000000000060 /* AppVersionApi.swift in Sources */,
 				B10000010000000000000055 /* VpnAccountApi.swift in Sources */,
 				B100000100000000000000AA /* PromoApi.swift in Sources */,
@@ -982,6 +1000,7 @@
 				B1000001000000000000005F /* Flight.swift in Sources */,
 				B10000010000000000000053 /* AuthSessionStore.swift in Sources */,
 				B1000001000000000000005A /* SessionCacheStore.swift in Sources */,
+				B1000001000000000000TS1 /* TunSettingsStore.swift in Sources */,
 				B10000010000000000000061 /* SessionRefreshPolicy.swift in Sources */,
 				B10000010000000000000054 /* LoginSheet.swift in Sources */,
 				B10000010000000000000044 /* DocumentsMenuSheet.swift in Sources */,
@@ -1042,6 +1061,7 @@
 				T40000061CF9000F007C117E /* VpnStabilityTests.swift in Sources */,
 				T40000071CF9000F007C117E /* LegalDocumentsTests.swift in Sources */,
 				T40000081CF9000F007C117E /* ServersApiParseTests.swift in Sources */,
+				T400000E1CF9000F007C117E /* TunGroupsParseTests.swift in Sources */,
 				T400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift in Sources */,
 				T400000C1CF9000F007C117E /* PayApiParseTests.swift in Sources */,
 				T40000091CF9000F007C117E /* TunBypassCidrsTests.swift in Sources */,
@@ -1408,7 +1428,18 @@
 				CURRENT_PROJECT_VERSION = 65;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				"LD_RUNPATH_SEARCH_PATHS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=iphonesimulator*]" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
@@ -1417,10 +1448,13 @@
 				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.demar.adblock.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SUPPORTED_PLATFORMS = macosx;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Demar Proxy.app/Contents/MacOS/Demar Proxy";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				"TEST_HOST[sdk=iphoneos*]" = "$(BUILT_PRODUCTS_DIR)/Demar Proxy.app/Demar Proxy";
+				"TEST_HOST[sdk=iphonesimulator*]" = "$(BUILT_PRODUCTS_DIR)/Demar Proxy.app/Demar Proxy";
+				"TEST_HOST[sdk=macosx*]" = "$(BUILT_PRODUCTS_DIR)/Demar Proxy.app/Contents/MacOS/Demar Proxy";
 			};
 			name = Debug;
 		};
@@ -1432,7 +1466,18 @@
 				CURRENT_PROJECT_VERSION = 65;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				"LD_RUNPATH_SEARCH_PATHS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=iphonesimulator*]" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
@@ -1441,10 +1486,13 @@
 				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.demar.adblock.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SUPPORTED_PLATFORMS = macosx;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Demar Proxy.app/Contents/MacOS/Demar Proxy";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				"TEST_HOST[sdk=iphoneos*]" = "$(BUILT_PRODUCTS_DIR)/Demar Proxy.app/Demar Proxy";
+				"TEST_HOST[sdk=iphonesimulator*]" = "$(BUILT_PRODUCTS_DIR)/Demar Proxy.app/Demar Proxy";
+				"TEST_HOST[sdk=macosx*]" = "$(BUILT_PRODUCTS_DIR)/Demar Proxy.app/Contents/MacOS/Demar Proxy";
 			};
 			name = Release;
 		};

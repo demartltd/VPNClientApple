@@ -60,4 +60,12 @@ final class LegalDocumentsTests: XCTestCase {
             XCTAssertEqual(error as? LegalDocumentError, .emptyOrInvalid)
         }
     }
+
+    func testCacheHitSkipsNetworkShape() async throws {
+        LegalDocumentLoader.clearCache()
+        LegalDocumentLoader.seedCache(.terms, "# Cached")
+        let md = try await LegalDocumentLoader.load(.terms)
+        XCTAssertEqual(md, "# Cached")
+        LegalDocumentLoader.clearCache()
+    }
 }

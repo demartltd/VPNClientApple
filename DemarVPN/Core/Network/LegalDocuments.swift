@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 enum LegalDocument: String, CaseIterable, Identifiable, Hashable {
     case terms
@@ -37,21 +38,43 @@ enum LegalDocument: String, CaseIterable, Identifiable, Hashable {
     }
 
     func fetchMarkdown() async throws -> String {
-        try await LegalDocumentLoader.fetch(from: url)
+        try await LegalDocumentLoader.load(self)
     }
 }
 
 enum LegalDocumentLoader {
-    private static let session: URLSession = {
-        let cfg = URLSessionConfiguration.ephemeral
-        cfg.waitsForConnectivity = false
-        cfg.timeoutIntervalForRequest = 20
-        cfg.timeoutIntervalForResource = 20
-        return URLSession(configuration: cfg)
-    }()
+    private static let cache = OSAllocatedUnfairLock<[LegalDocument: String]>(initialState: [:])
+
+    static func load(_ document: LegalDocument) async throws -> String {
+        if let hit = cache.withLock({ $0[document] }) { return hit }
+        let md = try await fetch(from: document.url)
+        cache.withLock { $0[document] = md }
+        return md
+    }
+
+    static func clearCache() {
+        cache.withLock { $0.removeAll() }
+    }
+
+    /// Visible for tests.
+    static func seedCache(_ document: LegalDocument, _ md: String) {
+        cache.withLock { $0[document] = md }
+    }
 
     static func fetch(from url: URL) async throws -> String {
-        let (data, response) = try await session.data(from: url)
+        let data: Data
+        do {
+            data = try await DemarHttp.getData(
+                url,
+                accept: "text/plain, text/markdown, */*",
+                media: false
+            )
+        } catch let e as DemarAPIError where e.statusCode > 0 {
+            throw LegalDocumentError.badStatus(e.statusCode)
+        } catch {
+            throw LegalDocumentError.badStatus(0)
+        }
+        let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!
         return try decode(data: data, response: response)
     }
 

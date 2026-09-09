@@ -6,6 +6,9 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
 
     func connect(server: ServerProfile) async throws {
         let tunName = "utun0"
+        let isFree = await MainActor.run { Self.isFreeSubscription() }
+        let bypassHosts = TunSettingsStore.effectiveBypassHosts(isFree: isFree)
+        let tunFp = TunSettingsStore.fingerprint(isFree: isFree)
         let prepared = try await Task.detached(priority: .userInitiated) {
             let basePlan = server.connectPlan
             let endpointAddresses = try UplinkIPv4Resolver.resolve(basePlan.uplinkHost)
@@ -17,13 +20,22 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
             let plan = basePlan.pinEndpoint(to: endpointAddresses)
             return (
                 plan,
-                try SingBoxConfigBuilder.buildTunConfigJson(plan: plan, tunName: tunName)
+                try SingBoxConfigBuilder.buildTunConfigJson(
+                    plan: plan,
+                    tunName: tunName,
+                    bypassHosts: bypassHosts
+                )
             )
         }.value
         let plan = prepared.0
         let configJson = prepared.1
         try VpnSharedStore.saveBypassGeoipTags(plan.geoipBypassTags)
         let sessionId = Self.newSessionId()
+        await MainActor.run {
+            AppLog.shared.append(
+                "[vpn] connect tun=\(tunFp) hosts=\(bypassHosts.count) rs=\(plan.bypassRuleSets.count)"
+            )
+        }
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             controller.connect(
@@ -45,6 +57,13 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
                 continuation.resume(with: result)
             }
         }
+    }
+
+    @MainActor
+    private static func isFreeSubscription() -> Bool {
+        let raw = (AuthSessionStore.session?.vpnSubscription ?? "free")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return raw.isEmpty || raw.caseInsensitiveCompare("free") == .orderedSame
     }
 
     private static func newSessionId() -> String {

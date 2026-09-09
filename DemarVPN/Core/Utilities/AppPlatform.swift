@@ -36,7 +36,7 @@ enum AppPlatform {
         #else
         path = "apple/version"
         #endif
-        return AuthApi.vpnAPIBaseURL.appendingPathComponent(path)
+        return DemarHttp.vpnURL(path)
     }
 
     static func openTestFlight() {

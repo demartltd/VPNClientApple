@@ -78,6 +78,12 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 
 `dns-direct` остаётся `type: local`, пока нет geosite bypass; при geosite — UDP `1.1.1.1` + `route_exclude_address` `1.1.1.1/32`. Sidecars: `scripts/gen-tun-bypass-cidrs.py` — **не** raw dump: coarsen ≤`/20` + lossless aggregate (~9.8k combined vs ~16k raw). Floor `/20` (не `/16`): слепой `/16` invent’ил покрытие дырявых блоков и уводил чужие платформы (в т.ч. Telegram DC) в NE `excludedRoutes` мимо TUN.
 
+### Site-группы TUN (`GET /tun`)
+
+Каталог `sites[]` с API (массив `windows[]` на Apple игнорируется). Disk cache в `SessionCacheStore` рядом с servers (hydrate при старте, UI disk-first). Включённая группа → `domain_suffix` в DNS → `dns-direct` и в route → `outbound: direct` (исключение из VPN). `route.final` остаётся `proxy` (full tunnel). Free: все группы принудительно on; Plus/VIP — overrides + мастер-тоггл. Применение на следующем Connect.
+
+**Нельзя:** из‑за site-hosts переключать `dns-direct` на UDP `1.1.1.1` или добавлять `route_exclude` `1.1.1.1/32` — это **только** для geosite. Site-hosts идут в уже существующий `dns-direct` (`local` без geosite).
+
 ### TUN / DNS / route
 
 | Параметр | Значение | Эффект |

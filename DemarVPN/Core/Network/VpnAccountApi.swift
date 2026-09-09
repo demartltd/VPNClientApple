@@ -28,7 +28,7 @@ struct VpnTraffic: Equatable, Sendable {
 
 enum VpnAccountApi {
     static func fetchAccount(userId: String, loginAt: String) async throws -> VpnAccount {
-        parseAccount(try await post("vpn/account", sessionBody(userId, loginAt)))
+        parseAccount(try await DemarHttp.vpnPost("vpn/account", DemarHttp.sessionBody(userId: userId, loginAt: loginAt)))
     }
 
     static func updateNotify(
@@ -37,10 +37,10 @@ enum VpnAccountApi {
         notifyNews: Bool? = nil,
         notifyImportant: Bool? = nil
     ) async throws -> VpnNotify {
-        var body = sessionBody(userId, loginAt)
+        var body = DemarHttp.sessionBody(userId: userId, loginAt: loginAt)
         if let notifyNews { body["notifyNews"] = notifyNews }
         if let notifyImportant { body["notifyImportant"] = notifyImportant }
-        let json = try await post("vpn/notify", body)
+        let json = try await DemarHttp.vpnPost("vpn/notify", body)
         return VpnNotify(
             notifyNews: (json["notifyNews"] as? Bool) ?? true,
             notifyImportant: (json["notifyImportant"] as? Bool) ?? true
@@ -48,7 +48,7 @@ enum VpnAccountApi {
     }
 
     static func fetchTraffic(userId: String, loginAt: String) async throws -> VpnTraffic {
-        parseTraffic(try await post("vpn/traffic", sessionBody(userId, loginAt)))
+        parseTraffic(try await DemarHttp.vpnPost("vpn/traffic", DemarHttp.sessionBody(userId: userId, loginAt: loginAt)))
     }
 
     /// Pure helpers for unit tests — no network.
@@ -95,14 +95,6 @@ enum VpnAccountApi {
         return value >= 100
             ? String(format: "%.0f %@", value, unit)
             : String(format: "%.1f %@", value, unit)
-    }
-
-    private static func sessionBody(_ userId: String, _ loginAt: String) -> [String: Any] {
-        ["userId": userId, "loginAt": loginAt]
-    }
-
-    private static func post(_ path: String, _ body: [String: Any]) async throws -> [String: Any] {
-        try await DemarHttp.postJSON(AuthApi.vpnAPIBaseURL.appendingPathComponent(path), body: body)
     }
 
     private static func int64(_ raw: Any?) -> Int64 {

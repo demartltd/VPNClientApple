@@ -8,7 +8,8 @@ enum SingBoxConfigBuilder {
         plan: SingBoxConnectPlan,
         tunName: String = "utun0",
         mtu: Int = 1492,
-        logLevel: String = "info"
+        logLevel: String = "info",
+        bypassHosts: [String] = []
     ) throws -> String {
         let config = buildTunConfig(
             proxyOutbound: plan.proxyOutbound,
@@ -19,7 +20,8 @@ enum SingBoxConfigBuilder {
             dnsFinal: plan.tun.dnsFinal,
             dnsBootstrapDomains: plan.tun.dnsBootstrapDomains,
             directDomains: plan.tun.directDomains,
-            bypassRuleSets: plan.bypassRuleSets
+            bypassRuleSets: plan.bypassRuleSets,
+            bypassHosts: bypassHosts
         )
         return try SingBoxConfigEncoding.encodeConfigToJson(
             config,
@@ -101,15 +103,18 @@ enum SingBoxConfigBuilder {
         dnsFinal: String,
         dnsBootstrapDomains: [String],
         directDomains: [String],
-        bypassRuleSets: [ApiBypassRuleSet]
+        bypassRuleSets: [ApiBypassRuleSet],
+        bypassHosts: [String]
     ) -> [String: Any] {
         let geosite = bypassRuleSets.filter(\.isGeosite)
+        let hosts = cleanedDomains(bypassHosts)
         return [
             "log": ["level": logLevel, "timestamp": true],
             "dns": SingBoxDnsBuilder.makeDns(
                 final: dnsFinal,
                 bootstrapDomains: dnsBootstrapDomains,
-                geositeRuleSets: geosite
+                geositeRuleSets: geosite,
+                bypassHosts: hosts
             ),
             "inbounds": [SingBoxTunInboundBuilder.makeTunInbound(
                 tunName: tunName,
@@ -126,7 +131,8 @@ enum SingBoxConfigBuilder {
                 inboundTag: SingBoxConfigConstants.tunInboundTag,
                 directIPs: directIPs,
                 directDomains: directDomains,
-                geositeRuleSets: geosite
+                geositeRuleSets: geosite,
+                bypassHosts: hosts
             ),
             "outbounds": [proxyOutbound, ["type": "direct", "tag": SingBoxConfigConstants.directTag]],
             "experimental": [
@@ -176,7 +182,8 @@ enum SingBoxDnsBuilder {
     static func makeDns(
         final dnsFinal: String,
         bootstrapDomains: [String] = [],
-        geositeRuleSets: [ApiBypassRuleSet] = []
+        geositeRuleSets: [ApiBypassRuleSet] = [],
+        bypassHosts: [String] = []
     ) -> [String: Any] {
         var rules: [[String: Any]] = [
             ["query_type": ["PTR"], "action": "reject", "method": "drop"],
@@ -189,6 +196,13 @@ enum SingBoxDnsBuilder {
                 "server": SingBoxConfigConstants.dnsDirectTag,
             ])
         }
+        if !bypassHosts.isEmpty {
+            rules.append([
+                "domain_suffix": bypassHosts,
+                "action": "route",
+                "server": SingBoxConfigConstants.dnsDirectTag,
+            ])
+        }
         for rs in geositeRuleSets {
             rules.append([
                 "rule_set": [rs.tag],
@@ -196,6 +210,7 @@ enum SingBoxDnsBuilder {
                 "server": SingBoxConfigConstants.dnsDirectTag,
             ])
         }
+        // UDP 1.1.1.1 + route_exclude only for geosite — site hosts must not flip dns-direct.
         let dnsDirect: [String: Any] = geositeRuleSets.isEmpty
             ? ["type": "local", "tag": SingBoxConfigConstants.dnsDirectTag]
             : [
@@ -234,7 +249,8 @@ enum SingBoxRouteBuilder {
         inboundTag: String,
         directIPs: [String],
         directDomains: [String] = [],
-        geositeRuleSets: [ApiBypassRuleSet] = []
+        geositeRuleSets: [ApiBypassRuleSet] = [],
+        bypassHosts: [String] = []
     ) -> [String: Any] {
         var rules: [[String: Any]] = [
             ["inbound": [inboundTag], "action": "sniff", "timeout": "300ms"],
@@ -257,6 +273,13 @@ enum SingBoxRouteBuilder {
             guard let cleanDomain = cleanedDomain(domain) else { continue }
             rules.append([
                 "domain": [cleanDomain],
+                "action": "route",
+                "outbound": SingBoxConfigConstants.directTag,
+            ])
+        }
+        if !bypassHosts.isEmpty {
+            rules.append([
+                "domain_suffix": bypassHosts,
                 "action": "route",
                 "outbound": SingBoxConfigConstants.directTag,
             ])
@@ -331,4 +354,16 @@ enum SingBoxTunInboundBuilder {
 private func cleanedDomain(_ raw: String) -> String? {
     let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
     return trimmed.isEmpty ? nil : trimmed
+}
+
+private func cleanedDomains(_ raw: [String]) -> [String] {
+    var seen = Set<String>()
+    var out: [String] = []
+    for item in raw {
+        guard let clean = cleanedDomain(item) else { continue }
+        let key = clean.lowercased()
+        guard seen.insert(key).inserted else { continue }
+        out.append(clean)
+    }
+    return out
 }

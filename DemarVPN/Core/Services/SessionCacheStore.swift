@@ -6,12 +6,14 @@ enum SessionCacheStore {
         static let servers = "session_cache_servers"
         static let account = "session_cache_account"
         static let traffic = "session_cache_traffic"
+        static let tun = "session_cache_tun"
     }
 
     struct Snapshot: Sendable {
         let servers: [ServerProfile]
         let account: VpnAccount?
         let traffic: VpnTraffic?
+        let tunRaw: String?
     }
 
     static func load(userId: String) -> Snapshot? {
@@ -31,7 +33,13 @@ enum SessionCacheStore {
                 guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
                 return VpnAccountApi.parseTraffic(json)
             }
-            return Snapshot(servers: serversResult.servers, account: account, traffic: traffic)
+            let tunRaw = d.string(forKey: Key.tun)?.nilIfBlank
+            return Snapshot(
+                servers: serversResult.servers,
+                account: account,
+                traffic: traffic,
+                tunRaw: tunRaw
+            )
         } catch {
             return nil
         }
@@ -42,6 +50,14 @@ enum SessionCacheStore {
         let d = UserDefaults.standard
         d.set(userId, forKey: Key.userId)
         d.set(data, forKey: Key.servers)
+    }
+
+    static func saveTun(_ raw: String, userId: String) {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let d = UserDefaults.standard
+        d.set(userId, forKey: Key.userId)
+        d.set(trimmed, forKey: Key.tun)
     }
 
     static func saveAccount(_ account: VpnAccount, userId: String) {
@@ -77,5 +93,6 @@ enum SessionCacheStore {
         d.removeObject(forKey: Key.servers)
         d.removeObject(forKey: Key.account)
         d.removeObject(forKey: Key.traffic)
+        d.removeObject(forKey: Key.tun)
     }
 }

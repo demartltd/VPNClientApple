@@ -116,7 +116,7 @@ enum SupportApi {
     static func markTicketRead(userId: String, loginAt: String, ticketId: String) async throws -> SupportTicket {
         let json = try await DemarHttp.postJSON(
             url("support/tickets/\(enc(ticketId))/read"),
-            body: sessionBody(userId, loginAt)
+            body: DemarHttp.sessionBody(userId: userId, loginAt: loginAt)
         )
         guard let o = json["ticket"] as? [String: Any] else {
             throw DemarAPIError(message: "missing ticket", statusCode: 500, retryAfterSeconds: nil, hint: nil)
@@ -136,7 +136,7 @@ enum SupportApi {
         ticketId: String? = nil,
         forceNew: Bool = false
     ) async throws -> SupportTicket {
-        var body = sessionBody(userId, loginAt)
+        var body = DemarHttp.sessionBody(userId: userId, loginAt: loginAt)
         body["channel"] = channel
         if forceNew { body["forceNew"] = true }
         if let ticketId, !ticketId.isEmpty { body["ticketId"] = ticketId }
@@ -241,7 +241,7 @@ enum SupportApi {
         text: String? = nil,
         deleted: Bool = false
     ) async throws -> SupportTicket {
-        var body = sessionBody(userId, loginAt)
+        var body = DemarHttp.sessionBody(userId: userId, loginAt: loginAt)
         body["channel"] = channel
         if deleted {
             body["deleted"] = true
@@ -343,11 +343,12 @@ enum SupportApi {
         }
         let cacheKey = "\(path)|\(ticketId ?? "")|\(userId)"
         if let cached = SupportMediaCache.load(cacheKey) { return cached }
+        let resolvedPath = path
         return try await KeyedFlight.run("media:\(cacheKey)") {
             if let cached = SupportMediaCache.load(cacheKey) { return cached }
-            let sep = path.contains("?") ? "&" : "?"
+            let sep = resolvedPath.contains("?") ? "&" : "?"
             let ticketQ = ticketId.flatMap { $0.isEmpty ? nil : "&ticketId=\(Self.enc($0))" } ?? ""
-            let full = "\(Self.baseURL.absoluteString)\(path)\(sep)userId=\(Self.enc(userId))&loginAt=\(Self.enc(loginAt))\(ticketQ)"
+            let full = "\(Self.baseURL.absoluteString)\(resolvedPath)\(sep)userId=\(Self.enc(userId))&loginAt=\(Self.enc(loginAt))\(ticketQ)"
             guard let url = URL(string: full) else {
                 throw DemarAPIError(message: "bad media url", statusCode: 400, retryAfterSeconds: nil, hint: nil)
             }
@@ -406,10 +407,6 @@ enum SupportApi {
 
     private static func url(_ path: String) -> URL {
         URL(string: baseURL.absoluteString + "/" + path)!
-    }
-
-    private static func sessionBody(_ userId: String, _ loginAt: String) -> [String: Any] {
-        ["userId": userId, "loginAt": loginAt]
     }
 
     private static func enc(_ v: String) -> String {

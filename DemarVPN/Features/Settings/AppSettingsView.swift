@@ -1,8 +1,12 @@
 import SwiftUI
 
 struct AppSettingsView: View {
+    let isFree: Bool
+    var onBuySubscription: (() -> Void)?
+
     @State private var logExpanded = false
     @State private var language = AppLanguage.shared
+    @State private var showTunSettings = false
     #if os(macOS)
     @State private var showLanguagePicker = false
     #endif
@@ -15,6 +19,9 @@ struct AppSettingsView: View {
             }
             .demarDetailNavigationTitle(String(localized: "App settings"))
         }
+        .navigationDestination(isPresented: $showTunSettings) {
+            TunSettingsView(isFree: isFree, onBuySubscription: onBuySubscription)
+        }
         #else
         GeometryReader { geo in
             VStack(spacing: 0) {
@@ -25,12 +32,14 @@ struct AppSettingsView: View {
         .padding(.bottom, 16)
         .background(Color.demarSurface)
         .navigationTitle(String(localized: "App settings"))
+        .navigationDestination(isPresented: $showTunSettings) {
+            TunSettingsView(isFree: isFree, onBuySubscription: onBuySubscription)
+        }
         .confirmationDialog(
             String(localized: "Change language"),
             isPresented: $showLanguagePicker,
             titleVisibility: .visible
         ) {
-            // Current language first — macOS focuses the first dialog action by default.
             ForEach(languagePickerCodes, id: \.self) { code in
                 let name = AppLanguage.displayName(for: code)
                 Button(language.code == code ? "✓ \(name)" : name) {
@@ -56,6 +65,14 @@ struct AppSettingsView: View {
                 action: changeLanguage
             )
 
+            SettingsActionButton(
+                systemImage: "lock.shield",
+                title: String(localized: "TUN settings"),
+                subtitle: String(localized: "Exclude site groups from the tunnel"),
+                showsChevron: true,
+                action: { showTunSettings = true }
+            )
+
             DiagnosticsLogCard(
                 expanded: $logExpanded,
                 maxLogPanelHeight: maxLogPanelHeight
@@ -74,9 +91,8 @@ struct AppSettingsView: View {
         #endif
     }
 
-    /// Header, toolbar, card chrome, and nav bar — remainder goes to the log scroll area.
     private static func maxLogPanelHeight(in geo: GeometryProxy) -> CGFloat {
-        let chrome: CGFloat = 280
+        let chrome: CGFloat = 340
         let available = geo.size.height - geo.safeAreaInsets.top - geo.safeAreaInsets.bottom - chrome
         return max(120, available)
     }

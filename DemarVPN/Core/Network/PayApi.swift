@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 struct PayPeriodPrices: Sendable, Equatable {
     let rub: String
@@ -41,8 +42,37 @@ struct PayCheckout: Sendable {
 }
 
 enum PayApi {
+    private static let plans = OSAllocatedUnfairLock<PayCatalog?>(initialState: nil)
+
+    /// Last successful catalog (nil until first fetch).
+    static var cachedPlans: PayCatalog? {
+        plans.withLock { $0 }
+    }
+
+    /// Visible for tests.
+    static func clearCachedPlans() {
+        plans.withLock { $0 = nil }
+    }
+
+    /// Visible for tests.
+    static func seedCachedPlans(_ catalog: PayCatalog) {
+        plans.withLock { $0 = catalog }
+    }
+
+    static func warmPlans() async {
+        do { _ = try await fetchPlans() } catch { /* preload best-effort */ }
+    }
+
     static func fetchPlans() async throws -> PayCatalog {
-        parseCatalog(try await DemarHttp.getJSON(AuthApi.vpnAPIBaseURL.appendingPathComponent("vpn/pay/plans")))
+        if let hit = cachedPlans { return hit }
+        return try await KeyedFlight.run("pay.plans") {
+            if let hit = cachedPlans { return hit }
+            let catalog = parseCatalog(try await DemarHttp.vpnGet("vpn/pay/plans"))
+            if !catalog.tiers.isEmpty {
+                plans.withLock { $0 = catalog }
+            }
+            return catalog
+        }
     }
 
     static func create(
@@ -61,7 +91,7 @@ enum PayApi {
             "currency": currency.uppercased(),
         ]
         if let code, !code.isEmpty { body["code"] = code }
-        guard let checkout = parseCheckout(try await post("vpn/pay/create", body)) else {
+        guard let checkout = parseCheckout(try await DemarHttp.vpnPost("vpn/pay/create", body)) else {
             throw DemarAPIError(message: "invalid_checkout", statusCode: 502, retryAfterSeconds: nil, hint: nil)
         }
         return checkout
@@ -125,10 +155,6 @@ enum PayApi {
             amount = String(Int(max(30, raw.rounded())))
         }
         return formatPrice(amount, currency: currency)
-    }
-
-    private static func post(_ path: String, _ body: [String: Any]) async throws -> [String: Any] {
-        try await DemarHttp.postJSON(AuthApi.vpnAPIBaseURL.appendingPathComponent(path), body: body)
     }
 
     private static func stringPrice(_ value: Any?) -> String {

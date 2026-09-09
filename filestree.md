@@ -22,24 +22,27 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── ServerProfile.swift        # профиль сервера + UI metadata/filters
 │   │   └── TestServers.swift          # тестовые профили
 │   ├── Network/
-│   │   ├── DemarHttp.swift            # URLSession, UA, X-Demar-Client, DemarAPIError
+│   │   ├── DemarHttp.swift            # URLSession, UA, vpnPost/Get, retry/reset, DemarAPIError
 │   │   ├── AuthApi.swift              # auth.example.invalid / account.example.invalid auth
 │   │   ├── ServersApi.swift           # POST vpn.example.invalid/vpn/servers → profiles
+│   │   ├── TunGroupsApi.swift         # GET vpn.example.invalid/tun → site groups
 │   │   ├── VpnAccountApi.swift        # POST /vpn/account|notify|traffic
 │   │   ├── PayApi.swift               # GET /vpn/pay/plans, POST create|status
 │   │   ├── PromoApi.swift             # POST /vpn/promo/activate|apply
 │   │   ├── SupportApi.swift           # csauth.example.invalid tickets / themes / media
 │   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
-│   │   └── LegalDocuments.swift       # ToS/PP raw GitHub Markdown fetch
+│   │   └── LegalDocuments.swift       # ToS/PP via DemarHttp Markdown fetch
 │   ├── Vpn/
 │   │   ├── Hysteria2Profile.swift     # Hysteria2 профиль (+ alpn/obfs)
 │   │   ├── ApiBypassRuleSet.swift     # API route.rule_set (geoip/geosite)
+│   │   ├── TunModels.swift            # site groups / TunSettings / effective bypass hosts
 │   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun; DemarControlPlane hosts
 │   │   └── SingBoxConfigBuilder.swift # Sing-box JSON TUN
 │   ├── Services/
 │   │   ├── AppState.swift             # UI state, auth, servers, toggle VPN, checkout
 │   │   ├── AuthSessionStore.swift     # UserDefaults session + auth orchestration
-│   │   ├── SessionCacheStore.swift    # servers/account disk cache
+│   │   ├── SessionCacheStore.swift    # servers/account/traffic/tun disk cache
+│   │   ├── TunSettingsStore.swift     # site-group prefs + in-memory catalog
 │   │   ├── SupportStore.swift         # ticket cache + unread badge
 │   │   ├── AppLanguage.swift          # open system per-app language settings
 │   │   ├── VpnControlling.swift       # connect/disconnect API
@@ -91,7 +94,8 @@ DemarVPN/                              # SwiftUI target
     ├── Auth/LoginSheet.swift          # Email OTP + TOTP + Telegram OAuth
     └── Settings/
         ├── SettingsView.swift         # настройки, 3 тапа → service
-        ├── AppSettingsView.swift      # Change language + журнал
+        ├── AppSettingsView.swift      # language + TUN + журнал
+        ├── TunSettingsView.swift      # site-group bypass (из App settings)
         ├── ServiceMenuView.swift      # служебное меню
         ├── DocumentsMenuSheet.swift   # ToS/PP через demarBottomSheet
         ├── LegalDocumentView.swift    # MarkdownUI viewer
@@ -104,7 +108,7 @@ DemarVPN/                              # SwiftUI target
             ├── SupportAttach.swift    # gallery photo ingest / WebP compress
             └── SupportHelpers.swift   # errors, time, linkify
 
-DemarVPNTests/                         # unit tests (Sing-box, servers/account/pay parse, interface, legal docs)
+DemarVPNTests/                         # unit tests (Sing-box, TUN sites, servers/account/pay parse, interface, legal docs)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка

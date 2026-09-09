@@ -5,6 +5,8 @@ struct LegalDocumentView: View {
     let document: LegalDocument
 
     @State private var markdown: String?
+    @State private var failed = false
+    @State private var loadToken = 0
 
     var body: some View {
         Group {
@@ -16,16 +18,32 @@ struct LegalDocumentView: View {
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .demarDetailNavigationTitle(document.title)
+            } else if failed {
+                ContentUnavailableView {
+                    Label(String(localized: "Couldn’t load the document"), systemImage: "exclamationmark.triangle")
+                } actions: {
+                    Button(String(localized: "Retry")) { loadToken += 1 }
+                }
             } else {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .demarDetailNavigationTitle(document.title)
             }
         }
+        .demarDetailNavigationTitle(document.title)
         .background(Color.demarSurface)
-        .task {
-            markdown = try? await document.fetchMarkdown()
+        .task(id: loadToken) { await load() }
+    }
+
+    private func load() async {
+        failed = false
+        markdown = nil
+        do {
+            markdown = try await document.fetchMarkdown()
+        } catch is CancellationError {
+            return
+        } catch {
+            AppLog.shared.append("[legal] \(document.rawValue) failed — \(error.localizedDescription)")
+            failed = true
         }
     }
 }

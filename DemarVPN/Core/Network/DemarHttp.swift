@@ -16,26 +16,15 @@ struct DemarAPIError: Error, LocalizedError {
         statusCode == 413 || message.localizedCaseInsensitiveContains("too large")
     }
     var isChannelMismatch: Bool { message == "ticket_channel_mismatch" }
+    var isNetworkUnreachable: Bool { statusCode == 0 }
 }
 
 enum DemarHttp {
     static let clientID = "demar-vpn"
+    static let vpnBase = URL(string: "https://vpn.example.invalid")!
 
-    static let session: URLSession = {
-        let cfg = URLSessionConfiguration.ephemeral
-        cfg.waitsForConnectivity = false
-        cfg.timeoutIntervalForRequest = 20
-        cfg.timeoutIntervalForResource = 25
-        return URLSession(configuration: cfg)
-    }()
-
-    static let mediaSession: URLSession = {
-        let cfg = URLSessionConfiguration.ephemeral
-        cfg.waitsForConnectivity = false
-        cfg.timeoutIntervalForRequest = 180
-        cfg.timeoutIntervalForResource = 180
-        return URLSession(configuration: cfg)
-    }()
+    private static let session: URLSession = makeSession(request: 15, resource: 25)
+    private static let mediaSession: URLSession = makeSession(request: 180, resource: 180)
 
     /// e.g. `iPhone (18.0) - DemarVPN (1.0.2) (iOS)` — ASCII, max 120.
     static var userAgent: String {
@@ -43,6 +32,28 @@ enum DemarHttp {
         let os = sanitize(osVersion(), allowSpace: false, fallback: "?")
         let ver = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
         return "\(model) (\(os)) - DemarVPN (\(ver)) (\(AppPlatform.label))".prefix(120).description
+    }
+
+    static func vpnURL(_ path: String) -> URL {
+        vpnBase.appendingPathComponent(path)
+    }
+
+    static func sessionBody(userId: String, loginAt: String) -> [String: Any] {
+        ["userId": userId, "loginAt": loginAt]
+    }
+
+    static func vpnPost(_ path: String, _ body: [String: Any], media: Bool = false) async throws -> [String: Any] {
+        try await postJSON(vpnURL(path), body: body, media: media)
+    }
+
+    static func vpnGet(_ path: String) async throws -> [String: Any] {
+        try await getJSON(vpnURL(path))
+    }
+
+    /// Drop stale sockets after path / VPN / airplane changes.
+    static func resetTransport() async {
+        await session.reset()
+        await mediaSession.reset()
     }
 
     static func postJSON(_ url: URL, body: [String: Any], media: Bool = false) async throws -> [String: Any] {
@@ -76,13 +87,13 @@ enum DemarHttp {
         return try await decodeJSON(req, media: false)
     }
 
-    static func getData(_ url: URL, accept: String = "*/*") async throws -> Data {
+    static func getData(_ url: URL, accept: String = "*/*", media: Bool = true) async throws -> Data {
         var req = URLRequest(url: url)
         req.httpMethod = "GET"
         req.setValue(accept, forHTTPHeaderField: "Accept")
         req.setValue(clientID, forHTTPHeaderField: "X-Demar-Client")
         req.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-        let (data, response) = try await mediaSession.data(for: req)
+        let (data, response) = try await perform(req, media: media)
         let code = (response as? HTTPURLResponse)?.statusCode ?? -1
         guard (200...299).contains(code) else {
             let msg = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
@@ -102,9 +113,16 @@ enum DemarHttp {
         req.setValue(userAgent, forHTTPHeaderField: "User-Agent")
     }
 
+    private static func makeSession(request: TimeInterval, resource: TimeInterval) -> URLSession {
+        let cfg = URLSessionConfiguration.ephemeral
+        cfg.waitsForConnectivity = true
+        cfg.timeoutIntervalForRequest = request
+        cfg.timeoutIntervalForResource = resource
+        return URLSession(configuration: cfg)
+    }
+
     private static func decodeJSON(_ req: URLRequest, media: Bool) async throws -> [String: Any] {
-        let sess = media ? mediaSession : session
-        let (data, response) = try await sess.data(for: req)
+        let (data, response) = try await perform(req, media: media)
         let code = (response as? HTTPURLResponse)?.statusCode ?? -1
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
         guard (200...299).contains(code) else {
@@ -117,6 +135,58 @@ enum DemarHttp {
             )
         }
         return json
+    }
+
+    private static func perform(_ req: URLRequest, media: Bool) async throws -> (Data, URLResponse) {
+        do {
+            return try await dataOnce(req, media: media)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let urlErr as URLError where urlErr.code == .cancelled {
+            throw CancellationError()
+        } catch let urlErr as URLError where isTransient(urlErr) {
+            let kind = urlErr.code == .timedOut ? "timeout" : "network"
+            await MainActor.run { AppLog.shared.append("[http] \(kind) — \(urlErr.code.rawValue), retry") }
+            try? await Task.sleep(for: .milliseconds(400))
+            do {
+                return try await dataOnce(req, media: media)
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch let urlErr as URLError where urlErr.code == .cancelled {
+                throw CancellationError()
+            } catch {
+                await resetTransport()
+                await MainActor.run { AppLog.shared.append("[http] \(kind) after retry — transport reset") }
+                throw networkError
+            }
+        } catch {
+            await MainActor.run { AppLog.shared.append("[http] failed — \(type(of: error)): \(error.localizedDescription)") }
+            throw networkError
+        }
+    }
+
+    private static func dataOnce(_ req: URLRequest, media: Bool) async throws -> (Data, URLResponse) {
+        try await (media ? mediaSession : session).data(for: req)
+    }
+
+    private static var networkError: DemarAPIError {
+        DemarAPIError(
+            message: String(localized: "Could not reach api. Try again"),
+            statusCode: 0,
+            retryAfterSeconds: nil,
+            hint: nil
+        )
+    }
+
+    private static func isTransient(_ err: URLError) -> Bool {
+        switch err.code {
+        case .timedOut, .networkConnectionLost, .notConnectedToInternet,
+             .cannotConnectToHost, .dnsLookupFailed, .internationalRoamingOff,
+             .dataNotAllowed, .secureConnectionFailed:
+            true
+        default:
+            false
+        }
     }
 
     private static func deviceModel() -> String {

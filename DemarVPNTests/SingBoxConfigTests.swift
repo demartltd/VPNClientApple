@@ -191,6 +191,39 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertTrue((tun["route_exclude_address"] as? [String])?.contains("1.1.1.1/32") == true)
     }
 
+    func testSiteBypassHostsKeepLocalDnsWithoutGeosite() throws {
+        let plan = SingBoxConnectPlan.hysteria2(TestServers.hysteria2[0])
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(
+            plan: plan,
+            bypassHosts: ["instagram.com", "tiktok.com"]
+        )
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
+
+        let dns = try XCTUnwrap(root["dns"] as? [String: Any])
+        let dnsServers = try XCTUnwrap(dns["servers"] as? [[String: Any]])
+        let direct = try XCTUnwrap(dnsServers.first { ($0["tag"] as? String) == "dns-direct" })
+        XCTAssertEqual(direct["type"] as? String, "local")
+        XCTAssertNil(direct["server"])
+
+        let dnsRules = try XCTUnwrap(dns["rules"] as? [[String: Any]])
+        XCTAssertTrue(dnsRules.contains {
+            ($0["domain_suffix"] as? [String]) == ["instagram.com", "tiktok.com"]
+                && ($0["server"] as? String) == "dns-direct"
+        })
+
+        let route = try XCTUnwrap(root["route"] as? [String: Any])
+        let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
+        XCTAssertTrue(rules.contains {
+            ($0["domain_suffix"] as? [String]) == ["instagram.com", "tiktok.com"]
+                && ($0["outbound"] as? String) == "direct"
+        })
+
+        let tun = try XCTUnwrap((root["inbounds"] as? [[String: Any]])?.first { ($0["type"] as? String) == "tun" })
+        XCTAssertFalse((tun["route_exclude_address"] as? [String])?.contains("1.1.1.1/32") == true)
+
+        try assertSingBoxCheckPasses(json: json)
+    }
+
     func testClashApiExternalController() throws {
         let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(TestServers.hysteria2[0]))
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
@@ -238,6 +271,7 @@ final class SingBoxConfigTests: XCTestCase {
     }
 
     private func assertSingBoxCheckPasses(json: String) throws {
+        #if os(macOS)
         let repoRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
@@ -271,5 +305,8 @@ final class SingBoxConfigTests: XCTestCase {
             0,
             "sing-box check failed:\n\(output)\nconfig: \(configURL.path)"
         )
+        #else
+        _ = json
+        #endif
     }
 }

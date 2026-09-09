@@ -25,14 +25,14 @@ struct PromoResult: Sendable {
 
 enum PromoApi {
     static func activate(code: String, userId: String, loginAt: String) async throws -> PromoResult {
-        parse(try await post("vpn/promo/activate", [
+        parse(try await DemarHttp.vpnPost("vpn/promo/activate", [
             "userId": userId, "loginAt": loginAt, "code": code,
         ]))
     }
 
     /// Discount preview for checkout (does not consume the code).
     static func apply(code: String, userId: String, loginAt: String) async throws -> PromoResult {
-        parse(try await post("vpn/promo/apply", [
+        parse(try await DemarHttp.vpnPost("vpn/promo/apply", [
             "userId": userId, "loginAt": loginAt, "code": code,
         ]))
     }
@@ -45,9 +45,5 @@ enum PromoApi {
             expiresAt: (json["expiresAt"] as? String)?.nilIfBlank,
             discountPercent: json["discountPercent"] as? Int
         )
-    }
-
-    private static func post(_ path: String, _ body: [String: Any]) async throws -> [String: Any] {
-        try await DemarHttp.postJSON(AuthApi.vpnAPIBaseURL.appendingPathComponent(path), body: body)
     }
 }

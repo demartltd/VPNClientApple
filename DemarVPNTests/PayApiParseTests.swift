@@ -62,4 +62,23 @@ final class PayApiParseTests: XCTestCase {
         XCTAssertEqual(PayApi.formatPrice("4.00", currency: "EUR"), "€4")
         XCTAssertEqual(PayApi.formatPrice("1.50", currency: "EUR"), "€1.5")
     }
+
+    func testCachedPlansSeedAndClear() {
+        PayApi.clearCachedPlans()
+        XCTAssertNil(PayApi.cachedPlans)
+        let catalog = PayApi.parseCatalog([
+            "plans": [
+                [
+                    "tier": "plus",
+                    "periods": [
+                        ["period": "month", "days": 30, "prices": ["RUB": "199.00", "EUR": "4.00"]],
+                    ],
+                ],
+            ],
+        ])
+        PayApi.seedCachedPlans(catalog)
+        XCTAssertEqual(PayApi.cachedPlans?.tiers.count, 1)
+        PayApi.clearCachedPlans()
+        XCTAssertNil(PayApi.cachedPlans)
+    }
 }

@@ -78,6 +78,7 @@ enum ServiceRoute: Hashable, Identifiable {
 
 enum SettingsRoute: Hashable, Identifiable {
     case appSettings
+    case tunSettings
     case serviceMenu(ServiceRoute? = nil)
     case support(SupportRoute? = nil)
     case document(LegalDocument)
@@ -88,6 +89,8 @@ enum SettingsRoute: Hashable, Identifiable {
         switch self {
         case .appSettings:
             "settings/app"
+        case .tunSettings:
+            "settings/tun"
         case .serviceMenu(let route):
             route?.pathComponent ?? "settings/service"
         case .support(let route):
@@ -105,6 +108,8 @@ enum SettingsRoute: Hashable, Identifiable {
         switch pathComponents {
         case ["settings", "app"]:
             self = .appSettings
+        case ["settings", "tun"]:
+            self = .tunSettings
         case ["settings", "service"]:
             self = .serviceMenu()
         case ["settings", "service", "custom-checks"]:

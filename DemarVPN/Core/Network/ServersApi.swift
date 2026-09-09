@@ -1,6 +1,6 @@
 import Foundation
 
-struct ServersListResult: Sendable {
+struct ServersListResult: @unchecked Sendable {
     let vpnSubscription: String?
     let vpnExpiresAt: String?
     let servers: [ServerProfile]
@@ -10,10 +10,7 @@ struct ServersListResult: Sendable {
 
 enum ServersApi {
     static func fetchServers(userId: String, loginAt: String) async throws -> ServersListResult {
-        let json = try await DemarHttp.postJSON(
-            AuthApi.vpnAPIBaseURL.appendingPathComponent("vpn/servers"),
-            body: ["userId": userId, "loginAt": loginAt]
-        )
+        let json = try await DemarHttp.vpnPost("vpn/servers", ["userId": userId, "loginAt": loginAt])
         let result = try parseServersResponse(json)
         let rawCount = (json["servers"] as? [[String: Any]])?.count ?? 0
         await MainActor.run {

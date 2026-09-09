@@ -18,51 +18,53 @@ struct SettingsView: View {
     @State private var promoResultMessage = ""
 
     var body: some View {
-        Group {
-            if isActive {
-                ScrollView {
-                    VStack(spacing: 0) {
-                        settingsHeader
-                        Spacer().frame(height: 32)
-                        SettingsLinksStrip()
-                        Spacer().frame(height: 32)
+        ScrollView {
+            VStack(spacing: 0) {
+                settingsHeader
+                Spacer().frame(height: 32)
+                SettingsLinksStrip()
+                Spacer().frame(height: 32)
 
-                        VStack(spacing: 12) {
-                            ForEach(SettingsMenuItem.all) { item in
-                                SettingsActionButton(
-                                    systemImage: item.systemImage,
-                                    title: item.title,
-                                    subtitle: item.subtitle,
-                                    unread: item == .feedback && supportUnread.hasUnread,
-                                    action: { perform(item) }
-                                )
-                            }
-                        }
-
-                        Spacer().frame(height: 36)
-                        versionFooter
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 64)
-                    .padding(.bottom, 20)
-                }
-                .demarScrollScreen()
-                .demarPush($route) { route in
-                    switch route {
-                    case .appSettings:
-                        AppSettingsView()
-                    case .serviceMenu(let initialRoute):
-                        ServiceMenuView(appState: appState, snackBar: snackBar, initialRoute: initialRoute)
-                    case .support(let initialRoute):
-                        if let session = appState.authSession {
-                            SupportScreen(session: session, snackBar: snackBar, initialRoute: initialRoute)
-                        }
-                    case .document(let document):
-                        LegalDocumentView(document: document)
+                VStack(spacing: 12) {
+                    ForEach(SettingsMenuItem.all) { item in
+                        SettingsActionButton(
+                            systemImage: item.systemImage,
+                            title: item.title,
+                            subtitle: item.subtitle,
+                            unread: item == .feedback && supportUnread.hasUnread,
+                            action: { perform(item) }
+                        )
                     }
                 }
-            } else {
-                Color.clear
+
+                Spacer().frame(height: 36)
+                versionFooter
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 64)
+            .padding(.bottom, 20)
+        }
+        .demarScrollScreen()
+        .demarPush($route) { route in
+            switch route {
+            case .appSettings:
+                AppSettingsView(
+                    isFree: appState.isFreeSubscription,
+                    onBuySubscription: { appState.openCheckout(.buy) }
+                )
+            case .tunSettings:
+                TunSettingsView(
+                    isFree: appState.isFreeSubscription,
+                    onBuySubscription: { appState.openCheckout(.buy) }
+                )
+            case .serviceMenu(let initialRoute):
+                ServiceMenuView(appState: appState, snackBar: snackBar, initialRoute: initialRoute)
+            case .support(let initialRoute):
+                if let session = appState.authSession {
+                    SupportScreen(session: session, snackBar: snackBar, initialRoute: initialRoute)
+                }
+            case .document(let document):
+                LegalDocumentView(document: document)
             }
         }
         .background(Color.demarSurface)
