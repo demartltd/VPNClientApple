@@ -7,7 +7,7 @@ enum SingBoxConfigBuilder {
     static func buildTunConfigJson(
         plan: SingBoxConnectPlan,
         tunName: String = "utun0",
-        mtu: Int = 1492,
+        mtu: Int = 4064,
         logLevel: String = "info",
         bypassHosts: [String] = [],
         bypassExcludeIPs: [String] = []
@@ -326,12 +326,12 @@ enum SingBoxTunInboundBuilder {
         bypassExcludeIPs: [String] = [],
         excludeDNSResolver: Bool = false
     ) -> [String: Any] {
-        let effectiveMtu = min(mtu, 1400)
+        // Apple NE default (sing-box): 4064. Low 1400 cap starved bulk TCP MSS.
         var tunInbound: [String: Any] = [
             "type": "tun",
             "tag": SingBoxConfigConstants.tunInboundTag,
             "interface_name": tunName,
-            "mtu": effectiveMtu,
+            "mtu": mtu,
             "auto_route": true,
             "strict_route": false,
             "address": ["172.19.0.1/30"],

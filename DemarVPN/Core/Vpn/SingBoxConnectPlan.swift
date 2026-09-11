@@ -55,8 +55,9 @@ struct SingBoxConnectPlan {
         if let obfs = profile.obfsPassword, !obfs.isEmpty {
             outbound["obfs"] = ["type": "salamander", "password": obfs]
         }
-        if let up = profile.upMbps { outbound["up_mbps"] = up }
-        if let down = profile.downMbps { outbound["down_mbps"] = down }
+        // Hysteria CC: floor tiny API values so uploads are not throttled to a few Mbps.
+        if let up = profile.upMbps { outbound["up_mbps"] = max(up, 10) }
+        if let down = profile.downMbps { outbound["down_mbps"] = max(down, 10) }
         return SingBoxConnectPlan(
             uplinkHost: profile.server,
             proxyOutbound: outbound,

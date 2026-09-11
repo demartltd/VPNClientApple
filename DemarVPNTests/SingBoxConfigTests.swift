@@ -52,6 +52,7 @@ final class SingBoxConfigTests: XCTestCase {
 
         let tun = try XCTUnwrap((root["inbounds"] as? [[String: Any]])?.first { ($0["type"] as? String) == "tun" })
         XCTAssertEqual(tun["stack"] as? String, "gvisor")
+        XCTAssertEqual(tun["mtu"] as? Int, 4064)
         XCTAssertEqual(tun["strict_route"] as? Bool, false)
         XCTAssertEqual(tun["endpoint_independent_nat"] as? Bool, false)
         XCTAssertEqual(tun["address"] as? [String], ["172.19.0.1/30"])

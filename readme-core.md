@@ -49,7 +49,7 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 | `port` | `server_port` | yes |
 | `password` | `password` | yes |
 | `tlsServerName` | `tls.server_name` | yes |
-| `upMbps` / `downMbps` | `up_mbps` / `down_mbps` | no (empty → BBR) |
+| `upMbps` / `downMbps` | `up_mbps` / `down_mbps` | no (empty → BBR; set values floored to ≥10) |
 | `displayName` / `city` | — | UI only |
 
 ### Outbound (`SingBoxConnectPlan.hysteria2`)
@@ -103,6 +103,7 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 | IPv6 route | late `reject` | как `9f0c3cc` (v6 не в TUN) |
 | UDP/443 | `reject` + `method: default` | форс TCP: QUIC-in-QUIC над H2 вешает App Store; bare reject = blackhole |
 | Hysteria2 `udp_fragment` | `true` | QUIC/MTU на Apple NE |
+| TUN `mtu` | `4064` | Apple utun default; low 1400 cap starved bulk TCP |
 | `directDomains` | `[tlsServerName, server]` | SNI / uplink → direct |
 | `directIPs` | IPv4 literal или runtime merge | exclude/route bypass |
 

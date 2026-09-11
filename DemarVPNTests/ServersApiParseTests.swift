@@ -258,15 +258,15 @@ final class ServersApiParseTests: XCTestCase {
         XCTAssertNil(proxy["down_mbps"])
     }
 
-    func testConnectPlanIncludesBandwidthMbps() throws {
+    func testConnectPlanFloorsBandwidthMbpsToTen() throws {
         let profile = Hysteria2Profile(
             displayName: "FI-FREE-1",
             server: "fi.example.com",
             port: 8443,
             password: "secret",
             tlsServerName: "sni.example.com",
-            upMbps: 10,
-            downMbps: 10
+            upMbps: 3,
+            downMbps: 7
         )
         let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(profile))
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
@@ -274,5 +274,23 @@ final class ServersApiParseTests: XCTestCase {
         let proxy = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
         XCTAssertEqual(proxy["up_mbps"] as? Int, 10)
         XCTAssertEqual(proxy["down_mbps"] as? Int, 10)
+    }
+
+    func testConnectPlanKeepsHighBandwidthMbps() throws {
+        let profile = Hysteria2Profile(
+            displayName: "FI-FREE-1",
+            server: "fi.example.com",
+            port: 8443,
+            password: "secret",
+            tlsServerName: "sni.example.com",
+            upMbps: 100,
+            downMbps: 200
+        )
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: .hysteria2(profile))
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
+        let outbounds = try XCTUnwrap(root["outbounds"] as? [[String: Any]])
+        let proxy = try XCTUnwrap(outbounds.first { ($0["tag"] as? String) == "proxy" })
+        XCTAssertEqual(proxy["up_mbps"] as? Int, 100)
+        XCTAssertEqual(proxy["down_mbps"] as? Int, 200)
     }
 }
