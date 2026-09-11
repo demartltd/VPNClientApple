@@ -141,11 +141,11 @@
 "Expires: %@" = "Истекает: %@";
 "Couldn’t load plans" = "Не удалось загрузить тарифы";
 "Compare plans" = "Сравнить тарифы";
-"Family invites*" = "Приглашений в семейную подписку*";
-"Ad blocking*" = "Отключение рекламы*";
+"Family invites*" = "Семейная подписка*";
+"Ad blocking*" = "Ad block*";
 "*Not available yet." = "*На данный момент не реализовано.";
 "Speed" = "Скорость";
-"Traffic" = "Потребление трафика";
+"Traffic" = "Трафик";
 "TUN settings" = "Настройки TUN";
 "TUN rules" = "Правила TUN";
 "Bypass rules" = "Правила обхода";
