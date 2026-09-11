@@ -57,6 +57,7 @@ DemarVPN/                              # SwiftUI target
 │       ├── MacVpnDiag.swift            # pluginkit, NE preflight
 │       ├── AppPlatform.swift          # «iOS» / «macOS» + supportChannel
 │       ├── BundledCoreVersion.swift    # версия core из bundle
+│       ├── AppRuntimeUpgrade.swift    # wipe App Group VPN runtime on app/core bump
 │       ├── DemarNavigation.swift      # секции, demarPush, route IDs/deep links, demarDetailNavigationTitle
 │       └── Flight.swift               # keyed coalesce concurrent async callers
 │

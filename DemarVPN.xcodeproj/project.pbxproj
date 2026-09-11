@@ -53,6 +53,7 @@
 		B1000001000000000000002A /* VpnControlling.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000029 /* VpnControlling.swift */; };
 		B1000001000000000000002C /* VpnStatusMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002B /* VpnStatusMonitor.swift */; };
 		B1000001000000000000002E /* BundledCoreVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002D /* BundledCoreVersion.swift */; };
+		B1000001000000000000ARU /* AppRuntimeUpgrade.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000ARU /* AppRuntimeUpgrade.swift */; };
 		B10000010000000000000031 /* MacVpnDiag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000002E /* MacVpnDiag.swift */; };
 		B10000010000000000000032 /* DiagnosticsJournalTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000032 /* DiagnosticsJournalTextView.swift */; };
 		B10000010000000000000034 /* NativeVpnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000034 /* NativeVpnService.swift */; };
@@ -158,6 +159,7 @@
 		T40000091CF9000F007C117E /* TunBypassCidrsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */; };
 		T400000B1CF9000F007C117E /* AppVersionApiTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000B1CF9000F007C117E /* AppVersionApiTests.swift */; };
 		T400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift */; };
+		T400000F1CF9000F007C117E /* AppRuntimeUpgradeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000F1CF9000F007C117E /* AppRuntimeUpgradeTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -265,6 +267,7 @@
 		F10000010000000000000029 /* VpnControlling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnControlling.swift; sourceTree = "<group>"; };
 		F1000001000000000000002B /* VpnStatusMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnStatusMonitor.swift; sourceTree = "<group>"; };
 		F1000001000000000000002D /* BundledCoreVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledCoreVersion.swift; sourceTree = "<group>"; };
+		F10000010000000000000ARU /* AppRuntimeUpgrade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRuntimeUpgrade.swift; sourceTree = "<group>"; };
 		F1000001000000000000002E /* MacVpnDiag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacVpnDiag.swift; sourceTree = "<group>"; };
 		F10000010000000000000032 /* DiagnosticsJournalTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsJournalTextView.swift; sourceTree = "<group>"; };
 		F10000010000000000000034 /* NativeVpnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVpnService.swift; sourceTree = "<group>"; };
@@ -328,6 +331,7 @@
 		F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunBypassCidrsTests.swift; sourceTree = "<group>"; };
 		F400000B1CF9000F007C117E /* AppVersionApiTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersionApiTests.swift; sourceTree = "<group>"; };
 		F400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRefreshPolicyTests.swift; sourceTree = "<group>"; };
+		F400000F1CF9000F007C117E /* AppRuntimeUpgradeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRuntimeUpgradeTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -496,6 +500,7 @@
 				F1000001000000000000001F /* DemarNavigation.swift */,
 				F10000010000000000000020 /* AppPlatform.swift */,
 				F1000001000000000000002D /* BundledCoreVersion.swift */,
+				F10000010000000000000ARU /* AppRuntimeUpgrade.swift */,
 				F1000001000000000000005F /* Flight.swift */,
 			);
 			path = Utilities;
@@ -711,6 +716,7 @@
 				F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */,
 				F400000B1CF9000F007C117E /* AppVersionApiTests.swift */,
 				F400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift */,
+				F400000F1CF9000F007C117E /* AppRuntimeUpgradeTests.swift */,
 			);
 			path = DemarVPNTests;
 			sourceTree = "<group>";
@@ -979,6 +985,7 @@
 				B10000010000000000000034 /* NativeVpnService.swift in Sources */,
 				B1000001000000000000002C /* VpnStatusMonitor.swift in Sources */,
 				B1000001000000000000002E /* BundledCoreVersion.swift in Sources */,
+				B1000001000000000000ARU /* AppRuntimeUpgrade.swift in Sources */,
 				B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */,
 				B10000010000000000000043 /* LegalDocuments.swift in Sources */,
 				B10000010000000000000050 /* DemarHttp.swift in Sources */,
@@ -1067,6 +1074,7 @@
 				T40000091CF9000F007C117E /* TunBypassCidrsTests.swift in Sources */,
 				T400000B1CF9000F007C117E /* AppVersionApiTests.swift in Sources */,
 				T400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift in Sources */,
+				T400000F1CF9000F007C117E /* AppRuntimeUpgradeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1206,7 +1214,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 67;
+				CURRENT_PROJECT_VERSION = 68;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1244,7 +1252,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 67;
+				CURRENT_PROJECT_VERSION = 68;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1278,7 +1286,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 67;
+				CURRENT_PROJECT_VERSION = 68;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1325,7 +1333,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 67;
+				CURRENT_PROJECT_VERSION = 68;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1372,7 +1380,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 67;
+				CURRENT_PROJECT_VERSION = 68;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1399,7 +1407,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 67;
+				CURRENT_PROJECT_VERSION = 68;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1425,7 +1433,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 67;
+				CURRENT_PROJECT_VERSION = 68;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1463,7 +1471,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 67;
+				CURRENT_PROJECT_VERSION = 68;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;

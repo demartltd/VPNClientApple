@@ -123,6 +123,16 @@ final class AppState {
     }
 
     func bootstrapAuth() async {
+        let upgraded = AppRuntimeUpgrade.consumeIfUpgraded()
+        if upgraded {
+            AppLog.shared.append("[vpn] runtime upgrade — cleared connect artifacts")
+            #if os(iOS) || os(macOS)
+            try? await vpn.disconnect()
+            _ = await waitUntilSystemDisconnected(timeoutSeconds: 8)
+            vpnState = .disconnected
+            resetThroughput()
+            #endif
+        }
         refreshVersion()
         authSession = AuthSessionStore.session
         _ = await AuthSessionStore.refreshSession()
@@ -576,7 +586,13 @@ final class AppState {
             openAccountSheet(.traffic)
             return
         }
+        if isSignedIn, lastSessionDataRefreshAt == nil {
+            await refreshSessionData()
+            guard isCurrentVpnOperation(operationGeneration) else { return }
+            selectedServer = Self.restoreSelectedServer(from: servers)
+        }
         guard let server = selectedServer, server.canConnect else { return }
+        var shouldForce = force
         #if os(iOS) || os(macOS)
         let systemStatus = await withCheckedContinuation { (continuation: CheckedContinuation<NEVPNStatus, Never>) in
             VpnTunnelController.shared.currentStatus { status in
@@ -584,30 +600,36 @@ final class AppState {
             }
         }
         guard isCurrentVpnOperation(operationGeneration) else { return }
-        if !force, systemStatus == .connected || systemStatus == .connecting || systemStatus == .reasserting {
-            AppLog.shared.append("[ui] connect ignored: system tunnel already active (\(systemStatus.rawValue))")
-            statusMonitor?.refreshStatus(reason: "connect-noop", force: true, reloadPreferences: false)
-            return
+        let neActive = systemStatus == .connected || systemStatus == .connecting || systemStatus == .reasserting
+        if !shouldForce, neActive {
+            let hasPayload = (try? VpnSharedStore.loadConnectPayload()) != nil
+            if hasPayload {
+                AppLog.shared.append("[ui] connect ignored: system tunnel already active (\(systemStatus.rawValue))")
+                statusMonitor?.refreshStatus(reason: "connect-noop", force: true, reloadPreferences: false)
+                return
+            }
+            AppLog.shared.append("[ui] connect force: NE active without payload")
+            shouldForce = true
         }
-        if force, systemStatus == .connected || systemStatus == .connecting || systemStatus == .reasserting {
+        if shouldForce, neActive {
             AppLog.shared.append("[ui] connect force: stopping leftover NE status=\(systemStatus.rawValue)")
             try? await vpn.disconnect()
             _ = await waitUntilSystemDisconnected(timeoutSeconds: 8)
             guard isCurrentVpnOperation(operationGeneration) else { return }
         }
         #endif
-        if !force, vpnState.isConnected {
+        if !shouldForce, vpnState.isConnected {
             AppLog.shared.append("[ui] connect ignored: already connected")
             statusMonitor?.refreshStatus(reason: "connect-noop-ui", force: true, reloadPreferences: false)
             return
         }
-        if case .connecting = vpnState, !force { return }
-        guard force || !vpnState.isBusy else { return }
+        if case .connecting = vpnState, !shouldForce { return }
+        guard shouldForce || !vpnState.isBusy else { return }
 
         if case .disconnected = vpnState {
             vpnState = .connecting
             resetThroughput()
-        } else if force {
+        } else if shouldForce {
             vpnState = .connecting
             resetThroughput()
         }
