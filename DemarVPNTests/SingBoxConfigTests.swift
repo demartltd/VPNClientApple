@@ -195,7 +195,8 @@ final class SingBoxConfigTests: XCTestCase {
         let plan = SingBoxConnectPlan.hysteria2(TestServers.hysteria2[0])
         let json = try SingBoxConfigBuilder.buildTunConfigJson(
             plan: plan,
-            bypassHosts: ["instagram.com", "tiktok.com"]
+            bypassHosts: ["instagram.com", "tiktok.com"],
+            bypassExcludeIPs: ["203.0.113.50", "203.0.113.51"]
         )
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
 
@@ -204,6 +205,7 @@ final class SingBoxConfigTests: XCTestCase {
         let direct = try XCTUnwrap(dnsServers.first { ($0["tag"] as? String) == "dns-direct" })
         XCTAssertEqual(direct["type"] as? String, "local")
         XCTAssertNil(direct["server"])
+        XCTAssertEqual(dns["reverse_mapping"] as? Bool, true)
 
         let dnsRules = try XCTUnwrap(dns["rules"] as? [[String: Any]])
         XCTAssertTrue(dnsRules.contains {
@@ -213,13 +215,17 @@ final class SingBoxConfigTests: XCTestCase {
 
         let route = try XCTUnwrap(root["route"] as? [String: Any])
         let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
-        XCTAssertTrue(rules.contains {
-            ($0["domain_suffix"] as? [String]) == ["instagram.com", "tiktok.com"]
+        // Apple NE: no domain_suffix → outbound:direct (ENETUNREACH inside full tunnel).
+        XCTAssertFalse(rules.contains {
+            ($0["domain_suffix"] as? [String]) != nil
                 && ($0["outbound"] as? String) == "direct"
         })
 
         let tun = try XCTUnwrap((root["inbounds"] as? [[String: Any]])?.first { ($0["type"] as? String) == "tun" })
-        XCTAssertFalse((tun["route_exclude_address"] as? [String])?.contains("1.1.1.1/32") == true)
+        let excludes = try XCTUnwrap(tun["route_exclude_address"] as? [String])
+        XCTAssertTrue(excludes.contains("203.0.113.50/32"))
+        XCTAssertTrue(excludes.contains("203.0.113.51/32"))
+        XCTAssertFalse(excludes.contains("1.1.1.1/32"))
 
         try assertSingBoxCheckPasses(json: json)
     }

@@ -48,14 +48,23 @@ enum TunEffective {
         var out: [String] = []
         for group in catalog.siteGroups where isSiteGroupEnabled(settings, group: group, isFree: isFree) {
             for site in group.sites {
-                let host = site.host.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !host.isEmpty else { continue }
-                let key = host.lowercased()
-                guard seen.insert(key).inserted else { continue }
+                guard let host = normalizeHost(site.host), seen.insert(host).inserted else { continue }
                 out.append(host)
             }
         }
-        return out.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        return out.sorted()
+    }
+
+    /// Strip scheme/path/wildcards so `domain_suffix` matches cleanly.
+    static func normalizeHost(_ raw: String) -> String? {
+        var s = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if let r = s.range(of: "://") { s = String(s[r.upperBound...]) }
+        if let slash = s.firstIndex(of: "/") { s = String(s[..<slash]) }
+        if let q = s.firstIndex(of: "?") { s = String(s[..<q]) }
+        if s.hasPrefix("*.") { s = String(s.dropFirst(2)) }
+        while s.hasPrefix(".") { s.removeFirst() }
+        while s.hasSuffix(".") { s.removeLast() }
+        return s.isEmpty ? nil : s
     }
 
     static func fingerprint(settings: TunSettings, catalog: TunCatalog, isFree: Bool) -> String {

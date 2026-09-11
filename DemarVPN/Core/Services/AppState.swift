@@ -87,7 +87,6 @@ final class AppState {
             traffic = cached.traffic
             TunSettingsStore.hydrateFromCache(cached.tunRaw)
             AppLog.shared.append("[session] restored cache (servers=\(cached.servers.count), tun=\(cached.tunRaw != nil))")
-            applyTunDefaultsIfFree()
         } else {
             selectedServer = nil
         }
@@ -115,6 +114,7 @@ final class AppState {
         #else
         self.vpn = vpn ?? NativeVpnService()
         #endif
+        applyTunDefaultsIfFree()
     }
 
     var canToggleVpn: Bool {

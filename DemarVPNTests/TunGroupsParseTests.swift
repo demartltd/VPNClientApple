@@ -53,6 +53,35 @@ final class TunGroupsParseTests: XCTestCase {
         XCTAssertFalse(TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: true).isEmpty)
     }
 
+    func testNormalizeHostStripsSchemePathWildcard() {
+        XCTAssertEqual(TunEffective.normalizeHost("https://Instagram.com/path"), "instagram.com")
+        XCTAssertEqual(TunEffective.normalizeHost("*.TikTok.com."), "tiktok.com")
+        XCTAssertEqual(TunEffective.normalizeHost("  EXAMPLE.COM?x=1  "), "example.com")
+        XCTAssertNil(TunEffective.normalizeHost("://"))
+        XCTAssertNil(TunEffective.normalizeHost("   "))
+    }
+
+    func testBypassHostsNormalizesDirtyApiHosts() {
+        let catalog = TunCatalog(siteGroups: [
+            TunSiteGroup(
+                id: "dirty",
+                name: "Dirty",
+                sites: [
+                    TunSiteRef(host: "https://Instagram.com/foo", name: "IG"),
+                    TunSiteRef(host: "*.tiktok.com.", name: "TT"),
+                    TunSiteRef(host: "instagram.com", name: "IG2"),
+                ],
+                enabledByDefault: true
+            ),
+        ])
+        let hosts = TunEffective.bypassHosts(
+            settings: .empty,
+            catalog: catalog,
+            isFree: true
+        )
+        XCTAssertEqual(hosts, ["instagram.com", "tiktok.com"])
+    }
+
     func testSessionCacheTunRoundTrip() {
         let userId = "tun-cache-test-user"
         SessionCacheStore.clear()

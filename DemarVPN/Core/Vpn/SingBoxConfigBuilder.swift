@@ -9,7 +9,8 @@ enum SingBoxConfigBuilder {
         tunName: String = "utun0",
         mtu: Int = 1492,
         logLevel: String = "info",
-        bypassHosts: [String] = []
+        bypassHosts: [String] = [],
+        bypassExcludeIPs: [String] = []
     ) throws -> String {
         let config = buildTunConfig(
             proxyOutbound: plan.proxyOutbound,
@@ -21,7 +22,8 @@ enum SingBoxConfigBuilder {
             dnsBootstrapDomains: plan.tun.dnsBootstrapDomains,
             directDomains: plan.tun.directDomains,
             bypassRuleSets: plan.bypassRuleSets,
-            bypassHosts: bypassHosts
+            bypassHosts: bypassHosts,
+            bypassExcludeIPs: bypassExcludeIPs
         )
         return try SingBoxConfigEncoding.encodeConfigToJson(
             config,
@@ -104,7 +106,8 @@ enum SingBoxConfigBuilder {
         dnsBootstrapDomains: [String],
         directDomains: [String],
         bypassRuleSets: [ApiBypassRuleSet],
-        bypassHosts: [String]
+        bypassHosts: [String],
+        bypassExcludeIPs: [String]
     ) -> [String: Any] {
         let geosite = bypassRuleSets.filter(\.isGeosite)
         let hosts = cleanedDomains(bypassHosts)
@@ -120,6 +123,7 @@ enum SingBoxConfigBuilder {
                 tunName: tunName,
                 mtu: mtu,
                 directIPs: directIPs,
+                bypassExcludeIPs: bypassExcludeIPs,
                 excludeDNSResolver: !geosite.isEmpty
             ), [
                 "type": "mixed",
@@ -127,12 +131,13 @@ enum SingBoxConfigBuilder {
                 "listen": SingBoxConfigConstants.diagnosticHost,
                 "listen_port": SingBoxConfigConstants.diagnosticPort,
             ]],
+            // Site hosts: DNS → dns-direct only. Do NOT route → outbound:direct (ENETUNREACH
+            // inside Apple NE full tunnel). True bypass = NE excludedRoutes via bypassExcludeIPs.
             "route": SingBoxRouteBuilder.makeRoute(
                 inboundTag: SingBoxConfigConstants.tunInboundTag,
                 directIPs: directIPs,
                 directDomains: directDomains,
-                geositeRuleSets: geosite,
-                bypassHosts: hosts
+                geositeRuleSets: geosite
             ),
             "outbounds": [proxyOutbound, ["type": "direct", "tag": SingBoxConfigConstants.directTag]],
             "experimental": [
@@ -231,6 +236,8 @@ enum SingBoxDnsBuilder {
             "rules": rules,
             "final": dnsFinal,
             "strategy": "ipv4_only",
+            // Needed for domain_suffix route (site bypass) without FakeIP — else match is sniff-only.
+            "reverse_mapping": true,
         ]
     }
 }
@@ -249,8 +256,7 @@ enum SingBoxRouteBuilder {
         inboundTag: String,
         directIPs: [String],
         directDomains: [String] = [],
-        geositeRuleSets: [ApiBypassRuleSet] = [],
-        bypassHosts: [String] = []
+        geositeRuleSets: [ApiBypassRuleSet] = []
     ) -> [String: Any] {
         var rules: [[String: Any]] = [
             ["inbound": [inboundTag], "action": "sniff", "timeout": "300ms"],
@@ -273,13 +279,6 @@ enum SingBoxRouteBuilder {
             guard let cleanDomain = cleanedDomain(domain) else { continue }
             rules.append([
                 "domain": [cleanDomain],
-                "action": "route",
-                "outbound": SingBoxConfigConstants.directTag,
-            ])
-        }
-        if !bypassHosts.isEmpty {
-            rules.append([
-                "domain_suffix": bypassHosts,
                 "action": "route",
                 "outbound": SingBoxConfigConstants.directTag,
             ])
@@ -324,6 +323,7 @@ enum SingBoxTunInboundBuilder {
         tunName: String,
         mtu: Int,
         directIPs: [String],
+        bypassExcludeIPs: [String] = [],
         excludeDNSResolver: Bool = false
     ) -> [String: Any] {
         let effectiveMtu = min(mtu, 1400)
@@ -341,6 +341,11 @@ enum SingBoxTunInboundBuilder {
             "route_address": ["0.0.0.0/1", "128.0.0.0/1"],
         ]
         var exclude = Set(directIPs.map { "\($0)/32" })
+        for ip in bypassExcludeIPs {
+            let clean = ip.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !clean.isEmpty else { continue }
+            exclude.insert(clean.contains("/") ? clean : "\(clean)/32")
+        }
         if excludeDNSResolver {
             exclude.insert("\(SingBoxConfigConstants.dnsDirectResolver)/32")
         }

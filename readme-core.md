@@ -80,7 +80,7 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 
 ### Site-группы TUN (`GET /tun`)
 
-Каталог `sites[]` с API (массив `windows[]` на Apple игнорируется). Disk cache в `SessionCacheStore` рядом с servers (hydrate при старте, UI disk-first). Включённая группа → `domain_suffix` в DNS → `dns-direct` и в route → `outbound: direct` (исключение из VPN). `route.final` остаётся `proxy` (full tunnel). Free: все группы принудительно on; Plus/VIP — overrides + мастер-тоггл. Применение на следующем Connect.
+Каталог `sites[]` с API (массив `windows[]` на Apple игнорируется). Disk cache в `SessionCacheStore` рядом с servers (hydrate при старте, UI disk-first). Включённая группа → `domain_suffix` в DNS → `dns-direct`; A-записи резолвятся на Connect и кладутся в TUN `route_exclude_address` → NE `excludedRoutes` (как geoip). **Не** эмитим `route` → `outbound:direct` для site-hosts — внутри full tunnel на Apple NE это даёт `ENETUNREACH` на en0. Новые CDN IP вне exclude-списка идут в `proxy` и всё равно грузятся. `dns.reverse_mapping=true` оставлен. `route.final` = `proxy`. Free: все группы принудительно on; Plus/VIP — overrides + мастер-тоггл. Применение на следующем Connect.
 
 **Нельзя:** из‑за site-hosts переключать `dns-direct` на UDP `1.1.1.1` или добавлять `route_exclude` `1.1.1.1/32` — это **только** для geosite. Site-hosts идут в уже существующий `dns-direct` (`local` без geosite).
 
