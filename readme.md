@@ -12,7 +12,7 @@
 - Bundle ID: `com.demar.adblock` · SKU: `demar-adblock`
 - Extensions: `com.demar.adblock.packet-tunnel`, `com.demar.adblock.controls`
 - App Group: `group.com.demar.adblock`
-- **iOS:** SwiftUI + Network Extension (`DemarPacketTunnel`) + App Group + sing-box **1.13.14**
+- **iOS:** SwiftUI + Network Extension (`DemarPacketTunnel`) + App Group + sing-box **1.14.1**
 - **macOS:** Network Extension + Libbox in-process (как iOS)
 - См. [`readme-core.md`](readme-core.md)
 

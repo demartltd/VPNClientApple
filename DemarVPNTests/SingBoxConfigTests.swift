@@ -30,6 +30,7 @@ final class SingBoxConfigTests: XCTestCase {
 
         let dns = try XCTUnwrap(root["dns"] as? [String: Any])
         XCTAssertEqual(dns["final"] as? String, "dns-remote")
+        XCTAssertEqual(dns["optimistic"] as? Bool, true)
         let log = try XCTUnwrap(root["log"] as? [String: Any])
         XCTAssertEqual(log["level"] as? String, "info")
         XCTAssertEqual(log["timestamp"] as? Bool, true)
@@ -54,7 +55,10 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertEqual(tun["stack"] as? String, "gvisor")
         XCTAssertEqual(tun["mtu"] as? Int, 4064)
         XCTAssertEqual(tun["strict_route"] as? Bool, false)
-        XCTAssertEqual(tun["endpoint_independent_nat"] as? Bool, false)
+        XCTAssertNil(tun["endpoint_independent_nat"])
+        XCTAssertEqual(tun["udp_mapping"] as? String, "endpoint_independent")
+        XCTAssertEqual(tun["udp_filtering"] as? String, "endpoint_independent")
+        XCTAssertEqual(tun["udp_nat_max"] as? Int, 4096)
         XCTAssertEqual(tun["address"] as? [String], ["172.19.0.1/30"])
         XCTAssertEqual(tun["route_address"] as? [String], ["0.0.0.0/1", "128.0.0.0/1"])
 
@@ -86,7 +90,7 @@ final class SingBoxConfigTests: XCTestCase {
             contentsOf: repoRoot.appendingPathComponent("singbox-version.txt"),
             encoding: .utf8
         ).trimmingCharacters(in: .whitespacesAndNewlines)
-        XCTAssertEqual(version, "v1.13.14")
+        XCTAssertEqual(version, "v1.14.1")
         for relativePath in [
             "ios/Shared/singbox/bundled_version.txt",
             "macos/singbox_macos/bundled_version.txt",
@@ -237,7 +241,9 @@ final class SingBoxConfigTests: XCTestCase {
         let experimental = try XCTUnwrap(root["experimental"] as? [String: Any])
         let clash = try XCTUnwrap(experimental["clash_api"] as? [String: Any])
         XCTAssertEqual(clash["external_controller"] as? String, "127.0.0.1:19090")
-        XCTAssertEqual((experimental["cache_file"] as? [String: Any])?["enabled"] as? Bool, true)
+        let cache = try XCTUnwrap(experimental["cache_file"] as? [String: Any])
+        XCTAssertEqual(cache["enabled"] as? Bool, true)
+        XCTAssertEqual(cache["store_dns"] as? Bool, true)
     }
 
     func testClashTrafficParse() {

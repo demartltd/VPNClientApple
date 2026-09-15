@@ -2,7 +2,7 @@
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 15+** (`demar_vpn_apple`).
 
-Целевая версия core: **sing-box 1.13.14**, зафиксированная в [`singbox-version.txt`](singbox-version.txt). Оба build-скрипта и `bundled_version.txt` обязаны использовать эту версию.
+Целевая версия core: **sing-box 1.14.1**, зафиксированная в [`singbox-version.txt`](singbox-version.txt). Оба build-скрипта и `bundled_version.txt` обязаны использовать эту версию.
 
 Документация Sing-box:
 
@@ -21,7 +21,7 @@ Sing-box используется как proxy-core. **Device-wide VPN** стр�
 
 Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxConnectPlan.swift) → [`SingBoxConfigBuilder`](DemarVPN/Core/Vpn/SingBoxConfigBuilder.swift) → `config.json`. Extension мержит runtime-resolved uplink IPv4 в bypass rules перед стартом Libbox; TUN fd создаёт NE platform interface.
 
-Формат config.json соответствует sing-box **1.12+ / 1.13**:
+Формат config.json соответствует sing-box **1.12+ / 1.14** (legacy DNS `address:` удалён в 1.14):
 
 | Legacy (≤1.11) | Текущий формат |
 |----------------|----------------|
@@ -92,11 +92,12 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 | `dns-remote` | `https` DoH, `detour: proxy` | DNS через proxy |
 | `dns-direct` | `local` / UDP `1.1.1.1` | без bypass — Darwin; с geosite — вне TUN |
 | PTR | `action: reject` (`drop`) | отсев локальных reverse/DNS-SD floods в NE |
-| `experimental.cache_file` | `enabled: true` | кэш DNS/rule-set |
+| `experimental.cache_file` | `enabled` + `store_dns` | rule-set + persist DNS (1.14) |
 | DNS bootstrap | `[tlsServerName, server]` → direct DNS | SNI + uplink host |
 | `strict_route` | `false` (NE) | не конфликтует с excludedRoutes на iOS 26 |
 | `stack` | `gvisor` | как первый Hysteria2 (`9f0c3cc`) |
-| `endpoint_independent_nat` | `false` | как первый H2 |
+| `dns.optimistic` | `true` | stale-while-revalidate (1.14) |
+| UDP NAT | `udp_mapping`/`udp_filtering` = `endpoint_independent`, `udp_nat_max` 4096 | 1.14 fields; `endpoint_independent_nat` no-op |
 | `address` | IPv4 `/30` only | IPv4-only TUN |
 | `route_address` | v4 `/1` + `/1` | полный IPv4 tunnel |
 | AAAA DNS | нет отдельного reject | `strategy: ipv4_only` |

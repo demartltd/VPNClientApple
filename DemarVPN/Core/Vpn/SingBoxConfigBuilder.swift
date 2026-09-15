@@ -141,7 +141,7 @@ enum SingBoxConfigBuilder {
             ),
             "outbounds": [proxyOutbound, ["type": "direct", "tag": SingBoxConfigConstants.directTag]],
             "experimental": [
-                "cache_file": ["enabled": true],
+                "cache_file": ["enabled": true, "store_dns": true],
                 "clash_api": [
                     "external_controller":
                         "\(SingBoxConfigConstants.clashApiHost):\(SingBoxConfigConstants.clashApiPort)",
@@ -238,6 +238,8 @@ enum SingBoxDnsBuilder {
             "strategy": "ipv4_only",
             // Needed for domain_suffix route (site bypass) without FakeIP — else match is sniff-only.
             "reverse_mapping": true,
+            // 1.14: stale-while-revalidate; persist via cache_file.store_dns.
+            "optimistic": true,
         ]
     }
 }
@@ -337,7 +339,10 @@ enum SingBoxTunInboundBuilder {
             "address": ["172.19.0.1/30"],
             "stack": "gvisor",
             "udp_timeout": "5m",
-            "endpoint_independent_nat": false,
+            // 1.14 UDP NAT (endpoint_independent_nat is no-op since 1.11).
+            "udp_mapping": "endpoint_independent",
+            "udp_filtering": "endpoint_independent",
+            "udp_nat_max": 4096,
             "route_address": ["0.0.0.0/1", "128.0.0.0/1"],
         ]
         var exclude = Set(directIPs.map { "\($0)/32" })

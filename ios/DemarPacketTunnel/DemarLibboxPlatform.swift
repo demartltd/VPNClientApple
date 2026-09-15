@@ -123,8 +123,8 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         settings.mtu = NSNumber(value: options.getMTU())
 
         var dnsSettings: NEDNSSettings?
-        let dnsServer = try options.getDNSServerAddress()
-        let dns = NEDNSSettings(servers: [try Self.validatedIPv4DNS(dnsServer.value)])
+        let dnsServer = try Self.firstIPv4DNS(from: options)
+        let dns = NEDNSSettings(servers: [dnsServer])
         dnsSettings = dns
 
         var ipv4Addresses: [String] = []
@@ -221,6 +221,16 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         routes.contains { $0.destinationAddress == "0.0.0.0" && $0.destinationSubnetMask == "0.0.0.0" }
     }
 
+    private static func firstIPv4DNS(from options: LibboxTunOptionsProtocol) throws -> String {
+        let iterator = try options.getDNSServerAddress()
+        while iterator.hasNext() {
+            return try validatedIPv4DNS(iterator.next())
+        }
+        throw NSError(domain: "DemarLibbox", code: 7, userInfo: [
+            NSLocalizedDescriptionKey: "Missing synthetic IPv4 DNS address.",
+        ])
+    }
+
     private static func validatedIPv4DNS(_ value: String) throws -> String {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !trimmed.contains(":") else {
@@ -304,6 +314,54 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     }
 
     func useProcFS() -> Bool { false }
+    func usePlatformShell() -> Bool { false }
+    func usePlatformBridge() -> Bool { false }
+    func checkPlatformShell() throws {}
+    func tailscaleHostname() -> String { "" }
+    func registerMyInterface(_: String?) {}
+    func startNeighborMonitor(_: LibboxNeighborUpdateListenerProtocol?) throws {}
+    func closeNeighborMonitor(_: LibboxNeighborUpdateListenerProtocol?) throws {}
+    func cancelNotification(_: String?, typeID _: Int32) throws {}
+
+    // Nonnull NSString + NSError** imports as NSErrorPointer (not throws).
+    func lookupSFTPServer(_ error: NSErrorPointer) -> String {
+        error?.pointee = NSError(domain: "DemarLibbox", code: 8, userInfo: [
+            NSLocalizedDescriptionKey: "SFTP server lookup is not implemented.",
+        ])
+        return ""
+    }
+
+    func readSystemSSHHostKey(_ error: NSErrorPointer) -> String {
+        error?.pointee = NSError(domain: "DemarLibbox", code: 10, userInfo: [
+            NSLocalizedDescriptionKey: "System SSH host key is unavailable.",
+        ])
+        return ""
+    }
+
+    func lookupUser(_: String?) throws -> LibboxPlatformUser {
+        throw NSError(domain: "DemarLibbox", code: 11, userInfo: [
+            NSLocalizedDescriptionKey: "User lookup is not implemented.",
+        ])
+    }
+
+    func openShellSession(
+        _: LibboxPlatformUser?,
+        command _: String?,
+        environ _: (any LibboxStringIteratorProtocol)?,
+        term _: String?,
+        rows _: Int32,
+        cols _: Int32
+    ) throws -> any LibboxShellSessionProtocol {
+        throw NSError(domain: "DemarLibbox", code: 12, userInfo: [
+            NSLocalizedDescriptionKey: "Shell session is not implemented.",
+        ])
+    }
+
+    func createBridge(_: LibboxBridgeOptions?) throws -> any LibboxBridgeSessionProtocol {
+        throw NSError(domain: "DemarLibbox", code: 13, userInfo: [
+            NSLocalizedDescriptionKey: "Bridge is not implemented.",
+        ])
+    }
 
     func startDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListenerProtocol?) throws {
         guard let listener else { return }
@@ -460,16 +518,27 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
 
     func underNetworkExtension() -> Bool { true }
     func includeAllNetworks() -> Bool { false }
-    func clearDNSCache() {}
+    func clearDNSCache() {
+        Self.diag("clearDNSCache")
+    }
     func readWIFIState() -> LibboxWIFIState? { nil }
     func send(_: LibboxNotification?) throws {}
     func localDNSTransport() -> (any LibboxLocalDNSTransportProtocol)? { dnsTransport }
-    func systemCertificates() -> (any LibboxStringIteratorProtocol)? { nil }
 
     func getSystemProxyStatus() throws -> LibboxSystemProxyStatus { LibboxSystemProxyStatus() }
     func setSystemProxyEnabled(_: Bool) throws {}
     func serviceStop() throws {}
     func serviceReload() throws {}
+    func connectSSHAgent(_: UnsafeMutablePointer<Int32>?) throws {
+        throw NSError(domain: "DemarLibbox", code: 14, userInfo: [
+            NSLocalizedDescriptionKey: "SSH agent is not implemented.",
+        ])
+    }
+    func triggerNativeCrash() throws {
+        throw NSError(domain: "DemarLibbox", code: 15, userInfo: [
+            NSLocalizedDescriptionKey: "Native crash trigger is not implemented.",
+        ])
+    }
 
     func writeDebugMessage(_ message: String?) {
         guard let message, !message.isEmpty else { return }

@@ -35,13 +35,21 @@ enum IOSLibboxCore {
         } else {
             try platform?.reapplyExcludedIPv4(excludedIPv4)
         }
-        LibboxSetMemoryLimit(true)
         truncateCoreLog()
         let options = LibboxOverrideOptions()
-        try commandServer?.checkConfig(configJSON)
+        try checkConfig(configJSON)
         try commandServer?.startOrReloadService(configJSON, options: options)
         ClashTrafficMonitor.start()
         VpnSharedStore.appendPendingUiDiagLine("[core] started version=\(LibboxVersion())")
+    }
+
+    private static func checkConfig(_ configJSON: String) throws {
+        var error: NSError?
+        guard LibboxCheckConfig(configJSON, &error) else {
+            throw error ?? NSError(domain: "DemarLibbox", code: 16, userInfo: [
+                NSLocalizedDescriptionKey: "LibboxCheckConfig failed.",
+            ])
+        }
     }
 
     private static func verifyCoreVersion(assetDir: URL) throws {
@@ -67,7 +75,7 @@ enum IOSLibboxCore {
         }
         try platform?.reapplyExcludedIPv4(excludedIPv4)
         let options = LibboxOverrideOptions()
-        try commandServer?.checkConfig(configJSON)
+        try checkConfig(configJSON)
         try commandServer?.startOrReloadService(configJSON, options: options)
         ClashTrafficMonitor.start()
     }
@@ -115,6 +123,7 @@ enum IOSLibboxCore {
         options.tempPath = tempDir.path
         options.logMaxLines = 20_000
         options.debug = false
+        options.oomKillerEnabled = true
 
         var setupError: NSError?
         LibboxSetup(options, &setupError)

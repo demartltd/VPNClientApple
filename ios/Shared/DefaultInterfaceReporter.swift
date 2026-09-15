@@ -105,7 +105,7 @@ enum DefaultInterfaceResolver {
 }
 
 /// Filters default-interface updates before they reach libbox: duplicates are
-/// dropped and interface loss is debounced. Libbox v1.13.14 closes every
+/// dropped and interface loss is debounced. Libbox v1.14.1 closes every
 /// connection as soon as it sees an empty default interface, so the transient
 /// `unsatisfied` flaps NWPathMonitor emits inside a Network Extension
 /// (routes/DNS apply, Wi-Fi scan, sleep/wake) must never be forwarded raw.
