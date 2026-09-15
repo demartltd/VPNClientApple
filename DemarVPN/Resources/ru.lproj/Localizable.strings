@@ -17,7 +17,7 @@
 "Change language…" = "Сменить язык…";
 "Clear" = "Очистить";
 "Coming soon" = "Скоро";
-"Connect" = "Подключение";
+"Connect" = "Главная";
 "Connected" = "Подключено";
 "Connecting is unavailable for the Review account" = "Подключение недоступно для Review аккаунта";
 "Connection and app settings" = "Настройки подключения и приложения";
@@ -36,7 +36,6 @@
 "Couldn’t sign in. Try again" = "Не удалось войти. Попробуйте ещё раз";
 "Couldn’t sign out. Try again" = "Не удалось выйти. Попробуйте ещё раз";
 "Country" = "Страна";
-"Crash app" = "Краш приложения";
 "Create a new account for %@?" = "Создать новый аккаунт для %@?";
 "Create account" = "Создать аккаунт";
 "Current app language and supported languages." = "Текущий язык приложения и список поддерживаемых языков.";
@@ -48,12 +47,10 @@
 "Demar Proxy - %@ - %@" = "Demar Proxy - %1$@ - %2$@";
 "Demar Proxy — Hysteria2 / Sing-box client." = "Demar Proxy — клиент Hysteria2 / Sing-box.";
 "DemarPacketTunnel did not start. 1) Enable Demar Proxy in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar Proxy” profile in System Settings → VPN. 3) Relaunch the app and connect again." = "Туннель DemarPacketTunnel не запустился. 1) Включите Demar Proxy в System Settings → VPN (или Extensions/VPN). 2) Удалите старый профиль «Demar Proxy» в System Settings → VPN. 3) Перезапустите приложение и подключитесь снова.";
-"Demo: %@" = "Демо: %@";
 "Document is empty or corrupted" = "Документ пуст или повреждён";
 "Documents" = "Документы";
 "Done" = "Готово";
 "Empty for now" = "Пока пусто";
-"Enable IDFA" = "Включить IDFA";
 "Enable “Demar Proxy” in System Settings → VPN (or Extensions/VPN, if available on your macOS version)." = "Включите «Demar Proxy» в System Settings → VPN (или в разделе Extensions/VPN, если он доступен в вашей версии macOS).";
 "End session on this device" = "Завершить сессию на этом устройстве";
 "End the session on this device." = "Завершить сессию на этом устройстве.";
@@ -69,7 +66,6 @@
 "How data is handled" = "Как обрабатываются данные";
 "ID: %@" = "ID: %@";
 "ID copied" = "ID скопирован";
-"IDFA allowed" = "IDFA разрешён";
 "in %d day" = "%d день";
 "in %d days_few" = "%d дня";
 "in %d days" = "%d дней";
@@ -171,14 +167,12 @@
 "Refresh servers" = "Обновить серверы";
 "Rename" = "Переименовать";
 "Resend code" = "Отправить код снова";
-"Restart Sing-box" = "Перезапуск Sing-box";
 "Retry" = "Повторить";
 "Ask a question or get help with the app" = "Ответим на вопросы и поможем с приложением";
 "Sent to" = "Отправлено на";
 "Server selected" = "Сервер выбран";
 "Servers" = "Сервера";
 "Servers updated" = "Серверы обновлены";
-"Service menu" = "Служебное меню";
 "Service usage rules" = "Правила использования сервиса";
 "Settings" = "Настройки";
 "Share" = "Поделиться";
@@ -188,7 +182,6 @@
 "Sign in to sync your subscription and servers" = "Войдите, чтобы синхронизировать подписку и сервера";
 "Sign out" = "Выйти";
 "Sign out?" = "Выйти?";
-"Sing-box restarted" = "Sing-box перезапущен";
 "Supported languages" = "Поддерживаемые языки";
 "Support" = "Поддержка";
 "Create ticket" = "Создать тикет";

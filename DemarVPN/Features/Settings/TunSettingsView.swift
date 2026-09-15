@@ -22,6 +22,7 @@ struct TunSettingsView: View {
                     trailing: {
                         Toggle("", isOn: rulesBinding)
                             .labelsHidden()
+                            .toggleStyle(.switch)
                             .tint(Color.demarPrimary)
                             .disabled(isFree)
                     }
@@ -123,6 +124,7 @@ struct TunSettingsView: View {
                         }
                     ))
                     .labelsHidden()
+                    .toggleStyle(.switch)
                     .tint(Color.demarPrimary)
                     .disabled(isFree || !rulesOn)
                 }

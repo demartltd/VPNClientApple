@@ -44,22 +44,6 @@ final class VpnAccountApiParseTests: XCTestCase {
         XCTAssertEqual(t.servers[0].bytes, 1000)
     }
 
-    func testPieSlicesCollapse() {
-        let servers = (1...8).map { VpnTrafficServer(name: "S\($0)", bytes: Int64(100 - $0)) }
-        let slices = VpnAccountApi.pieSlices(servers, otherLabel: "Other")
-        XCTAssertEqual(slices.count, 6)
-        XCTAssertEqual(slices[5].name, "Other")
-        XCTAssertEqual(slices[5].bytes, servers.dropFirst(5).reduce(0) { $0 + $1.bytes })
-    }
-
-    func testPieSlicesNoCollapseWhenFew() {
-        let servers = [
-            VpnTrafficServer(name: "A", bytes: 10),
-            VpnTrafficServer(name: "B", bytes: 5),
-        ]
-        XCTAssertEqual(VpnAccountApi.pieSlices(servers, otherLabel: "Other"), servers)
-    }
-
     func testFormatBytes() {
         XCTAssertEqual(VpnAccountApi.formatBytes(500), "500 B")
         XCTAssertEqual(VpnAccountApi.formatBytes(1536), "1.5 KB")

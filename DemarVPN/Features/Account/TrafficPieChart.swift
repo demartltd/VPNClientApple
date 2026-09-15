@@ -2,7 +2,6 @@ import SwiftUI
 
 struct TrafficPieChart: View {
     let servers: [VpnTrafficServer]
-    let otherLabel: String
     let centerPrimary: String
     let accountId: String
 
@@ -21,12 +20,8 @@ struct TrafficPieChart: View {
         ]
     }
 
-    private var slices: [VpnTrafficServer] {
-        VpnAccountApi.pieSlices(servers, otherLabel: otherLabel)
-    }
-
     var body: some View {
-        let slices = self.slices
+        let slices = servers
         let hasData = slices.contains { $0.bytes > 0 }
 
         FloatEndFlow(spacing: 12, lineSpacing: 10, gap: 12) {

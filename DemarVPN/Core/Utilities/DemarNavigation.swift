@@ -165,18 +165,6 @@ enum DemarSection: CaseIterable, Hashable, Identifiable {
         }
     }
 
-    #if os(iOS)
-    /// iOS 26+: icon-only floating tab (Liquid Glass). Earlier: visible title — no floating chrome.
-    @ViewBuilder
-    func accountTabLabel(selected: Bool) -> some View {
-        if #available(iOS 26.0, *) {
-            Image(systemName: tabIcon(selected: selected))
-                .accessibilityLabel(title)
-        } else {
-            Label(title, systemImage: tabIcon(selected: selected))
-        }
-    }
-    #endif
 }
 
 extension View {
@@ -193,7 +181,7 @@ extension View {
     }
     #endif
 
-    /// iOS: title after scroll, no blur, soft top gradient. macOS: plain `navigationTitle` (as before).
+    /// iOS: title after scroll, no blur, soft top gradient. macOS: plain `navigationTitle`.
     /// Apply on the `ScrollView` so scroll tracking works.
     func demarDetailNavigationTitle(_ title: String) -> some View {
         #if os(iOS)

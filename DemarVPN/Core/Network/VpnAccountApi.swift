@@ -79,14 +79,6 @@ enum VpnAccountApi {
         )
     }
 
-    /// Collapse to ≤6 slices: all if ≤6, else top-5 + Other.
-    static func pieSlices(_ servers: [VpnTrafficServer], otherLabel: String) -> [VpnTrafficServer] {
-        guard servers.count > 6 else { return servers }
-        let top = Array(servers.prefix(5))
-        let rest = servers.dropFirst(5).reduce(Int64(0)) { $0 + $1.bytes }
-        return rest > 0 ? top + [VpnTrafficServer(name: otherLabel, bytes: rest)] : top
-    }
-
     static func formatBytes(_ bytes: Int64) -> String {
         if bytes < 1024 { return "\(bytes) B" }
         let exp = min(4, max(1, Int(log(Double(bytes)) / log(1024.0))))

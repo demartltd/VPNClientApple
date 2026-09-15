@@ -6,7 +6,7 @@ struct DemarVPNApp: App {
     @State private var snackBar = SnackBarController()
 
     init() {
-        // Apply stored AppleLanguages before UI reads Bundle localizations.
+        // iOS: Bundle preferredLocalizations (system per-app language). macOS: stored AppleLanguages.
         _ = AppLanguage.shared
         FontAwesomeBrands.register()
         AppTheme.configureAppearance()
@@ -51,7 +51,6 @@ struct DemarVPNApp: App {
     private var rootContent: some View {
         ContentView(appState: appState, snackBar: snackBar)
             .preferredColorScheme(.dark)
-            .demarSnackBar(snackBar)
             #if os(iOS)
             .demarDynamicIslandBadge()
             #endif

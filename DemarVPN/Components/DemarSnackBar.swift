@@ -17,10 +17,6 @@ private enum SnackBarLayout {
         return window.safeAreaInsets.bottom + tabH + spacing
     }
 }
-#else
-private enum SnackBarLayout {
-    static func bottomPadding() -> CGFloat { 16 }
-}
 #endif
 
 enum DemarSnackKind: CaseIterable {
@@ -85,38 +81,71 @@ struct DemarSnackBarModifier: ViewModifier {
     #if os(iOS)
     @State private var bottomPadding = SnackBarLayout.bottomPadding()
     #endif
+    #if os(macOS)
+    @State private var detailFrame: CGRect = .zero
+    #endif
 
     func body(content: Content) -> some View {
+        #if os(iOS)
         content.overlay {
             Color.clear
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .overlay(alignment: .bottom) {
                     if let message = controller.message {
-                        DemarToast(message: message, kind: controller.kind) {
-                            PlatformServices.copyToPasteboard(message)
-                            PlatformServices.lightImpact()
-                        } onDismiss: { controller.dismiss() }
-                        .padding(.horizontal, 16)
-                        #if os(iOS)
-                        .padding(.bottom, bottomPadding)
-                        #else
-                        .padding(.bottom, SnackBarLayout.bottomPadding())
-                        #endif
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        toast(message)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, bottomPadding)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
                 .ignoresSafeArea()
                 .allowsHitTesting(controller.message != nil)
         }
         .animation(.spring(response: 0.38, dampingFraction: 0.86), value: controller.message != nil)
-        #if os(iOS)
         .onAppear { bottomPadding = SnackBarLayout.bottomPadding() }
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             bottomPadding = SnackBarLayout.bottomPadding()
         }
+        #else
+        // Overlay on NavigationSplitView (above pushes). Width/X track detail; pin to bottom (avoid minY+height overflow).
+        content
+            .coordinateSpace(name: DemarSnackBarDetailFrame.space)
+            .onPreferenceChange(DemarSnackBarDetailFrame.self) { detailFrame = $0 }
+            .overlay(alignment: .bottomLeading) {
+                Group {
+                    if let message = controller.message {
+                        toast(message)
+                            .padding(16)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
+                .frame(width: max(0, detailFrame.width), alignment: .bottom)
+                .offset(x: detailFrame.minX)
+                .allowsHitTesting(controller.message != nil)
+            }
+            .animation(.spring(response: 0.38, dampingFraction: 0.86), value: controller.message != nil)
         #endif
     }
+
+    private func toast(_ message: String) -> some View {
+        DemarToast(message: message, kind: controller.kind) {
+            PlatformServices.copyToPasteboard(message)
+            PlatformServices.lightImpact()
+        } onDismiss: { controller.dismiss() }
+    }
 }
+
+#if os(macOS)
+/// Detail column frame in the snackbar coordinate space (updates when sidebar collapses).
+private enum DemarSnackBarDetailFrame: PreferenceKey {
+    static let space = "demarSnackBarSplit"
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        let next = nextValue()
+        if next.width > 1 { value = next }
+    }
+}
+#endif
 
 private struct DemarToast: View {
     let message: String
@@ -193,4 +222,18 @@ extension View {
     func demarSnackBar(_ controller: SnackBarController) -> some View {
         modifier(DemarSnackBarModifier(controller: controller))
     }
+
+    #if os(macOS)
+    /// Report detail column bounds for `demarSnackBar` on `NavigationSplitView`.
+    func demarSnackBarDetailAnchor() -> some View {
+        background {
+            GeometryReader { geo in
+                Color.clear.preference(
+                    key: DemarSnackBarDetailFrame.self,
+                    value: geo.frame(in: .named(DemarSnackBarDetailFrame.space))
+                )
+            }
+        }
+    }
+    #endif
 }

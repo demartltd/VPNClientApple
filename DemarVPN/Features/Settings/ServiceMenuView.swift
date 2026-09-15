@@ -17,15 +17,15 @@ struct ServiceMenuView: View {
         ScrollView {
             VStack(spacing: 12) {
                 SectionCard(
-                    title: String(localized: "About"),
+                    title: "About",
                     leading: { icon("info.circle") }
                 ) {
                     VStack(alignment: .leading, spacing: 8) {
-                        DemarKvRow(key: String(localized: "Name"), value: "Demar Proxy")
-                        DemarKvRow(key: String(localized: "Bundle"), value: Bundle.main.bundleIdentifier ?? "—")
-                        DemarKvRow(key: String(localized: "Version"), value: appState.appVersionDetailLabel)
-                        DemarKvRow(key: String(localized: "Actual version"), value: appState.actualVersionLabel)
-                        DemarKvRow(key: String(localized: "Platform"), value: AppPlatform.label)
+                        DemarKvRow(key: "Name", value: "Demar Proxy")
+                        DemarKvRow(key: "Bundle", value: Bundle.main.bundleIdentifier ?? "—")
+                        DemarKvRow(key: "Version", value: appState.appVersionDetailLabel)
+                        DemarKvRow(key: "Actual version", value: appState.actualVersionLabel)
+                        DemarKvRow(key: "Platform", value: AppPlatform.label)
                         DemarKvRow(
                             key: "Core",
                             value: appState.coreVersionToken.isEmpty ? "…" : appState.coreVersionToken
@@ -69,15 +69,15 @@ struct ServiceMenuView: View {
                 }
 
                 #if os(iOS) || os(macOS)
-                SectionCard(title: String(localized: "Debug"), leading: { icon("wrench.and.screwdriver") }) {
+                SectionCard(title: "Debug", leading: { icon("wrench.and.screwdriver") }) {
                     VStack(spacing: 8) {
                         ServiceMenuOutlinedButton(
-                            title: String(localized: "Restart Sing-box"),
+                            title: "Restart Sing-box",
                             busy: coreRestartBusy
                         ) {
                             Task { await restartSingBoxCore() }
                         }
-                        ServiceMenuOutlinedButton(title: String(localized: "Crash app"), destructive: true) {
+                        ServiceMenuOutlinedButton(title: "Crash app", destructive: true) {
                             fatalError("service menu crash")
                         }
                     }
@@ -94,10 +94,10 @@ struct ServiceMenuView: View {
             }
         }
         #if os(iOS)
-        .demarDetailNavigationTitle(String(localized: "Service menu"))
+        .demarDetailNavigationTitle("Service menu")
         #else
         .background(Color.demarSurface)
-        .navigationTitle(String(localized: "Service menu"))
+        .navigationTitle("Service menu" as String)
         #endif
         .task {
             guard route == nil, let initialRoute else { return }
@@ -130,7 +130,7 @@ struct ServiceMenuView: View {
         }
         switch result {
         case .success:
-            snackBar.showSuccess(String(localized: "Sing-box restarted"))
+            snackBar.showSuccess("Sing-box restarted")
             appState.syncVpnStatusFromSystem()
         case let .failure(error):
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -145,7 +145,7 @@ struct ServiceMenuView: View {
         defer { idfaBusy = false }
         let ok = await IDFATracking.requestPermission()
         await reloadDevice()
-        if ok { snackBar.showSuccess(String(localized: "IDFA allowed")) }
+        if ok { snackBar.showSuccess("IDFA allowed") }
     }
     #endif
 }
@@ -177,13 +177,13 @@ private struct ServiceEgressDiagnosticsCard: View {
 
     var body: some View {
         SectionCard(
-            title: String(localized: "Internet"),
+            title: "Internet",
             leading: { icon("cloud") },
             trailing: { headerActions }
         ) {
             VStack(alignment: .leading, spacing: 8) {
                 DemarKvRow(key: "IP", value: ipCell)
-                DemarKvRow(key: String(localized: "Country"), value: countryCell)
+                DemarKvRow(key: "Country", value: countryCell)
                 if !userHosts.isEmpty {
                     ForEach(Array(userHosts.enumerated()), id: \.offset) { index, host in
                         DemarKvRow(
@@ -223,7 +223,7 @@ private struct ServiceEgressDiagnosticsCard: View {
                     .foregroundStyle(Color.demarPrimary)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(String(localized: "Custom checks"))
+            .accessibilityLabel("Custom checks")
             refreshButton
         }
     }
@@ -236,7 +236,7 @@ private struct ServiceEgressDiagnosticsCard: View {
         }
         .buttonStyle(.plain)
         .disabled(inFlight)
-        .accessibilityLabel(String(localized: "Refresh"))
+        .accessibilityLabel("Refresh")
     }
 
     private var ipCell: String {
@@ -369,7 +369,7 @@ private struct IDFAPermissionButton: View {
     let action: () -> Void
 
     var body: some View {
-        ServiceMenuOutlinedButton(title: String(localized: "Enable IDFA"), busy: busy, action: action)
+        ServiceMenuOutlinedButton(title: "Enable IDFA", busy: busy, action: action)
     }
 }
 #endif
@@ -387,7 +387,7 @@ private struct FlowChipRow: View {
     }
 
     private func chip(_ label: String, kind: DemarSnackKind) -> some View {
-        Button(label) { snackBar.show(String(localized: "Demo: \(label)"), kind: kind) }
+        Button(label) { snackBar.show("Demo: \(label)", kind: kind) }
             .font(.demarLabelLarge)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)

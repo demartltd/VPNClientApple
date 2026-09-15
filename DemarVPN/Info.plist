@@ -9,6 +9,8 @@
 		<string>en</string>
 		<string>ru</string>
 	</array>
+	<key>UIPrefersShowingLanguageSettings</key>
+	<true/>
 	<key>CFBundleDisplayName</key>
 	<string>Demar Proxy</string>
 	<key>CFBundleExecutable</key>
@@ -24,7 +26,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.0.6</string>
 	<key>CFBundleVersion</key>
-	<string>68</string>
+	<string>69</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

@@ -8,24 +8,25 @@ import AppKit
 
 /// App language preference.
 ///
-/// Apple: on Mac, localization takes effect only after the app relaunches
-/// (Language & Region / per-app language). We persist `AppleLanguages` and relaunch.
+/// iOS: system per-app language (`Bundle.preferredLocalizations`) — do not override `AppleLanguages`.
+/// macOS: in-app picker persists `AppleLanguages` and relaunches (Language & Region takes effect after relaunch).
 @Observable
 final class AppLanguage {
     static let shared = AppLanguage()
     static let supported = ["en", "ru"]
-
-    private static let defaultsKey = "demar_app_language"
 
     private(set) var code: String
 
     var displayName: String { Self.displayName(for: code) }
 
     private init() {
+        #if os(iOS)
+        code = Self.bundleCode()
+        #else
         let resolved = Self.resolveCode()
-        // Keep AppleLanguages in sync so Bundle.main.preferredLocalizations matches on launch.
         Self.persist(resolved)
         code = resolved
+        #endif
     }
 
     static func displayName(for code: String) -> String {
@@ -36,15 +37,15 @@ final class AppLanguage {
         return String(first).uppercased(with: Locale(identifier: code)) + raw.dropFirst()
     }
 
+    #if os(macOS)
     func select(_ code: String) {
         let next = code.lowercased()
         guard Self.supported.contains(next), next != self.code else { return }
         Self.persist(next)
         self.code = next
-        #if os(macOS)
         Self.relaunch()
-        #endif
     }
+    #endif
 
     static func openSystemLanguageSettings() {
         #if os(iOS)
@@ -57,6 +58,18 @@ final class AppLanguage {
         }
         #endif
     }
+
+    private static func bundleCode() -> String {
+        if let preferred = Bundle.main.preferredLocalizations.first.map({
+            String($0.prefix(2)).lowercased()
+        }), supported.contains(preferred) {
+            return preferred
+        }
+        return "en"
+    }
+
+    #if os(macOS)
+    private static let defaultsKey = "demar_app_language"
 
     private static func resolveCode() -> String {
         if let stored = UserDefaults.standard.string(forKey: defaultsKey)?.lowercased(),
@@ -71,12 +84,7 @@ final class AppLanguage {
         {
             return apple
         }
-        if let preferred = Bundle.main.preferredLocalizations.first.map({
-            String($0.prefix(2)).lowercased()
-        }), supported.contains(preferred) {
-            return preferred
-        }
-        return "en"
+        return bundleCode()
     }
 
     private static func persist(_ code: String) {
@@ -85,7 +93,6 @@ final class AppLanguage {
         UserDefaults.standard.synchronize()
     }
 
-    #if os(macOS)
     private static func relaunch() {
         let url = Bundle.main.bundleURL
         let config = NSWorkspace.OpenConfiguration()

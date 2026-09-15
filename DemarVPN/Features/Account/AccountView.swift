@@ -363,7 +363,6 @@ struct AccountView: View {
 
                 TrafficPieChart(
                     servers: t.servers,
-                    otherLabel: String(localized: "Other"),
                     centerPrimary: VpnAccountApi.formatBytes(t.total),
                     accountId: appState.authSession?.userId ?? ""
                 )

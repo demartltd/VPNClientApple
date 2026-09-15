@@ -16,6 +16,7 @@ struct ContentView: View {
             #else
             iosRoot
                 .payFlowSheets(appState: appState, snackBar: snackBar)
+                .demarSnackBar(snackBar)
             #endif
         }
         .loginSheet(isPresented: $showLogin) {
@@ -99,10 +100,11 @@ struct ContentView: View {
                     .demarMacWindowTitle(section ?? .home)
             }
             .id(section ?? .home)
-            // Detail-scoped overlay: same width as traffic/notify (not over sidebar).
             .payFlowSheets(appState: appState, snackBar: snackBar)
+            .demarSnackBarDetailAnchor()
         }
         .tint(Color.demarPrimary)
+        .demarSnackBar(snackBar)
     }
 
     private func sidebarRow(_ item: DemarSection) -> some View {
@@ -114,15 +116,10 @@ struct ContentView: View {
     #if os(iOS)
     private var iosRoot: some View {
         TabView(selection: $section) {
-            ForEach(DemarSection.main) { item in
+            ForEach(DemarSection.main + [.account]) { item in
                 Tab(item.title, systemImage: item.tabIcon(selected: section == item), value: item) {
                     iosTab(item)
                 }
-            }
-            Tab(value: DemarSection.account, role: .search) {
-                iosTab(.account)
-            } label: {
-                DemarSection.account.accountTabLabel(selected: section == .account)
             }
         }
         .tint(Color.demarPrimary)

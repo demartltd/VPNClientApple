@@ -125,10 +125,11 @@ final class AppState {
     func bootstrapAuth() async {
         let upgraded = AppRuntimeUpgrade.consumeIfUpgraded()
         if upgraded {
-            AppLog.shared.append("[vpn] runtime upgrade — cleared connect artifacts")
+            AppLog.shared.append("[vpn] runtime upgrade — cleared connect artifacts + NE profile")
             #if os(iOS) || os(macOS)
             try? await vpn.disconnect()
             _ = await waitUntilSystemDisconnected(timeoutSeconds: 8)
+            await removeAllDemarVPNProfiles()
             vpnState = .disconnected
             resetThroughput()
             #endif
@@ -646,7 +647,7 @@ final class AppState {
         }
         if MacVpnDiag.consumeVPNProfileResetFlag() {
             AppLog.shared.append("[vpn] host bundle changed — resetting VPN profile")
-            await resetDemarVPNProfileForNewHostBundle()
+            await removeAllDemarVPNProfiles()
         }
         #endif
 
@@ -710,16 +711,8 @@ final class AppState {
             }
         }
     }
-    #endif
 
-    func beginServersRefresh() -> Bool {
-        guard !isRefreshingServers else { return false }
-        isRefreshingServers = true
-        return true
-    }
-
-    #if os(macOS)
-    private func resetDemarVPNProfileForNewHostBundle() async {
+    private func removeAllDemarVPNProfiles() async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             VpnTunnelController.shared.removeAllDemarVPNProfiles {
                 continuation.resume()
@@ -727,6 +720,12 @@ final class AppState {
         }
     }
     #endif
+
+    func beginServersRefresh() -> Bool {
+        guard !isRefreshingServers else { return false }
+        isRefreshingServers = true
+        return true
+    }
 
     #if os(iOS) || os(macOS)
     func syncVpnStatusFromSystem() {
