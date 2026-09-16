@@ -25,7 +25,7 @@ struct SubscriptionCheckoutSheet: View {
     @State private var catalog: PayCatalog? = PayApi.cachedPlans
     @State private var tier = "plus"
     @State private var period = "month"
-    @State private var currency = "RUB"
+    @State private var currency = AppLanguage.shared.code == "ru" ? "RUB" : "EUR"
     @State private var paying = false
     @State private var loadingPlans = PayApi.cachedPlans == nil
     @State private var plansError: String?
