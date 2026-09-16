@@ -26,12 +26,14 @@ enum DemarHttp {
     private static let session: URLSession = makeSession(request: 15, resource: 25)
     private static let mediaSession: URLSession = makeSession(request: 180, resource: 180)
 
-    /// e.g. `iPhone (18.0) - DemarVPN (1.0.2) (iOS)` — ASCII, max 120.
+    /// e.g. `iPhone (18.0) - DemarVPN (1.0.2 (42)) (iOS)` — ASCII, max 120.
     static var userAgent: String {
         let model = sanitize(deviceModel(), allowSpace: true, fallback: "Apple")
         let os = sanitize(osVersion(), allowSpace: false, fallback: "?")
-        let ver = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
-        return "\(model) (\(os)) - DemarVPN (\(ver)) (\(AppPlatform.label))".prefix(120).description
+        let info = Bundle.main.infoDictionary
+        let ver = info?["CFBundleShortVersionString"] as? String ?? "0"
+        let build = info?["CFBundleVersion"] as? String ?? "0"
+        return "\(model) (\(os)) - DemarVPN (\(ver) (\(build))) (\(AppPlatform.label))".prefix(120).description
     }
 
     static func vpnURL(_ path: String) -> URL {
