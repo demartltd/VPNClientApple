@@ -19,6 +19,28 @@ enum ServerTier: String, CaseIterable, Equatable, Hashable, Sendable {
         }
     }
 
+    var paywallRank: Int {
+        switch self {
+        case .free: 0
+        case .tester: 1
+        case .plus: 2
+        case .vip, .dev: 3
+        }
+    }
+
+    static func subscriptionRank(_ raw: String?) -> Int {
+        switch (raw ?? "free").lowercased() {
+        case "tester": 1
+        case "plus": 2
+        case "vip", "dev": 3
+        default: 0
+        }
+    }
+
+    func requiresUpgrade(subscription raw: String?) -> Bool {
+        Self.subscriptionRank(raw) < paywallRank
+    }
+
     static func fromTag(_ tag: String) -> Self {
         let mid = tag.split(separator: "-").dropFirst().first.map(String.init)?.uppercased() ?? ""
         return Self(rawValue: mid) ?? .free

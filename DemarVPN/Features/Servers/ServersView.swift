@@ -96,7 +96,14 @@ struct ServersView: View {
                 selectedID: selectedTier?.rawValue ?? "all",
                 font: .demarLabelLarge
             ) { id in
-                selectedTier = id == "all" ? nil : ServerTier(rawValue: id)
+                let next = id == "all" ? nil : ServerTier(rawValue: id)
+                let sub = appState.account?.vpnSubscription ?? appState.authSession?.vpnSubscription
+                if let next, next.requiresUpgrade(subscription: sub) {
+                    // Outside SegmentBar's disablesAnimations transaction so the sheet can animate.
+                    Task { @MainActor in appState.openCheckout(.buy) }
+                    return
+                }
+                selectedTier = next
             }
             Divider()
                 .overlay(Color.demarOutline.opacity(0.25))
