@@ -101,7 +101,7 @@ extension AppState {
     /// Stops tunnel, clears reconnect payload/config, removes NE profile (CC/Settings cannot reconnect).
     func revokeVpnAccess() async {
         #if os(iOS) || os(macOS)
-        beginVpnOperation()
+        _ = beginVpnOperation()
         statusMonitor?.endConnectAttempt()
         if vpnState.isConnected || vpnState == .connecting {
             vpnState = .disconnecting
