@@ -69,6 +69,21 @@ final class TunGroupsParseTests: XCTestCase {
         XCTAssertNil(TunEffective.normalizeHost("   "))
     }
 
+    func testExcludeResolveHostsAddsWww() {
+        XCTAssertEqual(
+            TunEffective.excludeResolveHosts(["twitch.tv"]),
+            ["twitch.tv", "www.twitch.tv"]
+        )
+        XCTAssertEqual(
+            TunEffective.excludeResolveHosts(["www.twitch.tv"]),
+            ["www.twitch.tv"]
+        )
+        XCTAssertEqual(
+            TunEffective.excludeResolveHosts(["twitch.tv", "www.twitch.tv"]),
+            ["twitch.tv", "www.twitch.tv"]
+        )
+    }
+
     func testBypassHostsNormalizesDirtyApiHosts() {
         let catalog = TunCatalog(siteGroups: [
             TunSiteGroup(

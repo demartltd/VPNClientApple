@@ -66,6 +66,20 @@ enum TunEffective {
         return s.isEmpty ? nil : s
     }
 
+    /// Names to A-lookup for NE exclude. Apex alone misses CDN IPs of www.*.
+    static func excludeResolveHosts(_ hosts: [String]) -> [String] {
+        var seen = Set<String>()
+        var out: [String] = []
+        for h in hosts {
+            guard seen.insert(h).inserted else { continue }
+            out.append(h)
+            guard !h.hasPrefix("www.") else { continue }
+            let www = "www.\(h)"
+            if seen.insert(www).inserted { out.append(www) }
+        }
+        return out
+    }
+
     static func fingerprint(settings: TunSettings, catalog: TunCatalog, isFree: Bool) -> String {
         let hosts = bypassHosts(settings: settings, catalog: catalog, isFree: isFree)
         let groups = catalog.siteGroups

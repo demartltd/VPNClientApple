@@ -101,11 +101,12 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
     /// Best-effort A records for NE `excludedRoutes`. Failures skipped; CDN IPs that
     /// miss the list fall through to proxy (still load — no ENETUNREACH).
     private static func resolveBypassExcludeIPs(_ hosts: [String], maxIPs: Int = 128) -> [String] {
-        guard !hosts.isEmpty else { return [] }
+        let names = TunEffective.excludeResolveHosts(hosts)
+        guard !names.isEmpty else { return [] }
         let lock = NSLock()
         var out = Set<String>()
-        DispatchQueue.concurrentPerform(iterations: hosts.count) { index in
-            guard let ips = try? UplinkIPv4Resolver.resolve(hosts[index]) else { return }
+        DispatchQueue.concurrentPerform(iterations: names.count) { index in
+            guard let ips = try? UplinkIPv4Resolver.resolve(names[index]) else { return }
             lock.lock()
             defer { lock.unlock() }
             for ip in ips where out.count < maxIPs {
