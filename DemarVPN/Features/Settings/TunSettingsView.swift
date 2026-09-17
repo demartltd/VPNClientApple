@@ -119,8 +119,16 @@ struct TunSettingsView: View {
                         get: { on },
                         set: { value in
                             guard !isFree, rulesOn else { return }
-                            overrides[group.id] = value
-                            TunSettingsStore.setSiteGroupEnabled(group.id, enabled: value)
+                            if value == group.enabledByDefault {
+                                overrides.removeValue(forKey: group.id)
+                            } else {
+                                overrides[group.id] = value
+                            }
+                            TunSettingsStore.setSiteGroupEnabled(
+                                group.id,
+                                enabled: value,
+                                defaultEnabled: group.enabledByDefault
+                            )
                         }
                     ))
                     .labelsHidden()
@@ -174,8 +182,7 @@ struct TunSettingsView: View {
     private func groupEnabled(_ group: TunSiteGroup) -> Bool {
         TunEffective.isSiteGroupEnabled(
             TunSettings(siteGroupOverrides: overrides, rulesEnabled: rulesEnabled),
-            group: group,
-            isFree: isFree
+            group: group
         )
     }
 

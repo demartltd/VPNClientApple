@@ -91,6 +91,7 @@ extension AppState {
         showPlanCompare = false
         SessionCacheStore.clear()
         TunSettingsStore.clearCatalog()
+        TunSettingsStore.resetToDefaults()
         SupportStore.clearOnSignOut()
         clearServers()
         clearAccount()

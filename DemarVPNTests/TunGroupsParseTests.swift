@@ -32,11 +32,19 @@ final class TunGroupsParseTests: XCTestCase {
         XCTAssertEqual(catalog.siteGroups[1].enabledByDefault, false)
     }
 
-    func testFreeForcesAllGroupsOn() {
+    func testUntouchedGroupsFollowApiDefaults() {
+        let catalog = TunGroupsApi.parse(sampleJSON)
+        let settings = TunSettings(siteGroupOverrides: [:], rulesEnabled: true)
+        let expected = ["instagram.com", "tiktok.com"]
+        XCTAssertEqual(TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: false), expected)
+        XCTAssertEqual(TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: true), expected)
+    }
+
+    func testFreeRespectsOverridesLikePaid() {
         let catalog = TunGroupsApi.parse(sampleJSON)
         let settings = TunSettings(siteGroupOverrides: ["social": false], rulesEnabled: true)
-        let hosts = TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: true)
-        XCTAssertEqual(hosts, ["example.com", "instagram.com", "tiktok.com"])
+        XCTAssertTrue(TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: true).isEmpty)
+        XCTAssertTrue(TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: false).isEmpty)
     }
 
     func testPaidRespectsOverridesAndDefaults() {

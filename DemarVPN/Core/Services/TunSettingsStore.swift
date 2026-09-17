@@ -80,12 +80,16 @@ enum TunSettingsStore {
         lock.unlock()
     }
 
-    static func setSiteGroupEnabled(_ groupId: String, enabled: Bool) {
+    static func setSiteGroupEnabled(_ groupId: String, enabled: Bool, defaultEnabled: Bool) {
         let id = groupId.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !id.isEmpty else { return }
         loadIfNeeded()
         lock.lock()
-        settings.siteGroupOverrides[id] = enabled
+        if enabled == defaultEnabled {
+            settings.siteGroupOverrides.removeValue(forKey: id)
+        } else {
+            settings.siteGroupOverrides[id] = enabled
+        }
         persistPrefsLocked()
         lock.unlock()
     }

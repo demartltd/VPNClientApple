@@ -50,12 +50,12 @@ struct SettingsView: View {
             case .appSettings:
                 AppSettingsView(
                     isFree: appState.isFreeSubscription,
-                    onBuySubscription: { appState.openCheckout(.buy) }
+                    onBuySubscription: buySubscription
                 )
             case .tunSettings:
                 TunSettingsView(
                     isFree: appState.isFreeSubscription,
-                    onBuySubscription: { appState.openCheckout(.buy) }
+                    onBuySubscription: buySubscription
                 )
             case .serviceMenu(let initialRoute):
                 ServiceMenuView(appState: appState, snackBar: snackBar, initialRoute: initialRoute)
@@ -100,6 +100,15 @@ struct SettingsView: View {
         #if os(iOS)
         .demarNavigationRoot(backHistoryLabel: String(localized: "Settings"))
         #endif
+    }
+
+    private func buySubscription() {
+        if appState.isSignedIn {
+            appState.openCheckout(.buy)
+        } else {
+            appState.pendingAccountSheet = .buy
+            onNeedSignIn?()
+        }
     }
 
     private func perform(_ item: SettingsMenuItem) {

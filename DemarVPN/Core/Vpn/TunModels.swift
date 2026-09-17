@@ -33,9 +33,8 @@ enum TunEffective {
         isFree || settings.rulesEnabled
     }
 
-    static func isSiteGroupEnabled(_ settings: TunSettings, group: TunSiteGroup, isFree: Bool) -> Bool {
-        if isFree { return true }
-        return settings.siteGroupOverrides[group.id] ?? group.enabledByDefault
+    static func isSiteGroupEnabled(_ settings: TunSettings, group: TunSiteGroup) -> Bool {
+        settings.siteGroupOverrides[group.id] ?? group.enabledByDefault
     }
 
     static func bypassHosts(
@@ -46,7 +45,7 @@ enum TunEffective {
         guard isRulesEnabled(settings, isFree: isFree) else { return [] }
         var seen = Set<String>()
         var out: [String] = []
-        for group in catalog.siteGroups where isSiteGroupEnabled(settings, group: group, isFree: isFree) {
+        for group in catalog.siteGroups where isSiteGroupEnabled(settings, group: group) {
             for site in group.sites {
                 guard let host = normalizeHost(site.host), seen.insert(host).inserted else { continue }
                 out.append(host)
@@ -70,7 +69,7 @@ enum TunEffective {
     static func fingerprint(settings: TunSettings, catalog: TunCatalog, isFree: Bool) -> String {
         let hosts = bypassHosts(settings: settings, catalog: catalog, isFree: isFree)
         let groups = catalog.siteGroups
-            .filter { isSiteGroupEnabled(settings, group: $0, isFree: isFree) }
+            .filter { isSiteGroupEnabled(settings, group: $0) }
             .map(\.id)
             .sorted()
         let on = isRulesEnabled(settings, isFree: isFree)
