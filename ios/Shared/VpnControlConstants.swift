@@ -9,6 +9,7 @@ enum VpnControlConstants {
 
 enum VpnTunnelProviderKeys {
   static let uplinkHost = "uplinkHost"
+  static let uplinkIPv4s = "uplinkIPv4s"
   static let sessionId = "vpnSessionId"
   static let connectSource = "connectTriggerSource"
 }

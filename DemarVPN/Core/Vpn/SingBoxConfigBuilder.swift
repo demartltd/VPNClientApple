@@ -111,7 +111,7 @@ enum SingBoxConfigBuilder {
     ) -> [String: Any] {
         let geosite = bypassRuleSets.filter(\.isGeosite)
         let hosts = cleanedDomains(bypassHosts)
-        return [
+        var config: [String: Any] = [
             "log": ["level": logLevel, "timestamp": true],
             "dns": SingBoxDnsBuilder.makeDns(
                 final: dnsFinal,
@@ -148,6 +148,14 @@ enum SingBoxConfigBuilder {
                 ],
             ],
         ]
+        // 1.14: remote rule-set download via http_clients (download_detour deprecated).
+        if !geosite.isEmpty {
+            config["http_clients"] = [[
+                "tag": SingBoxConfigConstants.httpRuleSetDownloadTag,
+                "detour": SingBoxConfigConstants.proxyTag,
+            ]]
+        }
+        return config
     }
 }
 
@@ -157,6 +165,7 @@ enum SingBoxConfigConstants {
     static let directTag = "direct"
     static let dnsDirectTag = "dns-direct"
     static let dnsRemoteTag = "dns-remote"
+    static let httpRuleSetDownloadTag = "rs-dl"
     static let diagnosticInboundTag = "diag-in"
     static let diagnosticHost = "127.0.0.1"
     static let diagnosticPort = 10808
@@ -167,7 +176,7 @@ enum SingBoxConfigConstants {
 
 enum SingBoxConfigEncoding {
     static func encodeConfigToJson(_ config: [String: Any], errorCode: Int, description: String) throws -> String {
-        let data = try JSONSerialization.data(withJSONObject: config, options: [.prettyPrinted, .sortedKeys])
+        let data = try JSONSerialization.data(withJSONObject: config, options: [.sortedKeys])
         guard let json = String(data: data, encoding: .utf8) else {
             throw NSError(
                 domain: "SingBoxConfigBuilder",
@@ -303,6 +312,7 @@ enum SingBoxRouteBuilder {
             "rules": rules,
         ]
         if !geositeRuleSets.isEmpty {
+            route["default_http_client"] = SingBoxConfigConstants.httpRuleSetDownloadTag
             route["rule_set"] = geositeRuleSets.map { remoteRuleSet($0) }
         }
         return route
@@ -314,7 +324,6 @@ enum SingBoxRouteBuilder {
             "type": "remote",
             "format": "binary",
             "url": rs.url,
-            "download_detour": SingBoxConfigConstants.proxyTag,
         ]
     }
 }

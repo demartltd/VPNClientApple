@@ -16,6 +16,9 @@
 		B10000010000000000000007 /* TestServers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000007 /* TestServers.swift */; };
 		B10000010000000000000008 /* AppLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000008 /* AppLog.swift */; };
 		B1000001000000000000000A /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000A /* AppState.swift */; };
+		A11000010000000000000032 /* AppState+AuthSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000101CF9000F007C117D /* AppState+AuthSession.swift */; };
+		A11000010000000000000033 /* AppState+AccountPay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000111CF9000F007C117D /* AppState+AccountPay.swift */; };
+		A11000010000000000000034 /* AppState+Vpn.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000121CF9000F007C117D /* AppState+Vpn.swift */; };
 		B1000001000000000000000B /* ThroughputFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000B /* ThroughputFormatter.swift */; };
 		B1000001000000000000000C /* VpnMainToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000C /* VpnMainToggle.swift */; };
 		B1000001000000000000000D /* SectionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000D /* SectionCard.swift */; };
@@ -47,7 +50,31 @@
 		B10000010000000000000022 /* ios/Shared/singbox in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000025 /* ios/Shared/singbox */; platformFilter = ios; };
 		B10000010000000000000023 /* ios/Shared/VpnAppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */; };
 		B10000010000000000000024 /* ios/Shared/VpnSharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */; };
+		A10000010000000000000030 /* ios/Shared/VpnSharedStore+Heartbeat.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20001101CF9000F007C117D /* ios/Shared/VpnSharedStore+Heartbeat.swift */; };
+		A20000101CF9000F007C117D /* ios/Shared/VpnSharedStore+Heartbeat.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20001101CF9000F007C117D /* ios/Shared/VpnSharedStore+Heartbeat.swift */; };
+		A30000201CF9000F007C117D /* ios/Shared/VpnSharedStore+Heartbeat.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20001101CF9000F007C117D /* ios/Shared/VpnSharedStore+Heartbeat.swift */; };
+		A10000010000000000000031 /* ios/Shared/VpnSharedStore+Journal.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20001111CF9000F007C117D /* ios/Shared/VpnSharedStore+Journal.swift */; };
+		A20000111CF9000F007C117D /* ios/Shared/VpnSharedStore+Journal.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20001111CF9000F007C117D /* ios/Shared/VpnSharedStore+Journal.swift */; };
+		A30000211CF9000F007C117D /* ios/Shared/VpnSharedStore+Journal.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20001111CF9000F007C117D /* ios/Shared/VpnSharedStore+Journal.swift */; };
 		B10000010000000000000025 /* ios/Shared/VpnTunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */; };
+		A1000001000000000000002A /* ios/Shared/VpnTunnelError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift */; };
+		A200000A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift */; };
+		A300001A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift */; };
+		A1000001000000000000002B /* ios/Shared/UplinkIPv4Resolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift */; };
+		A200000B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift */; };
+		A300001B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift */; };
+		A1000001000000000000002C /* ios/Shared/VpnTunnelController+Connect.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift */; };
+		A200000C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift */; };
+		A300001C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift */; };
+		A1000001000000000000002D /* ios/Shared/VpnTunnelController+Readiness.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift */; };
+		A200000D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift */; };
+		A300001D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift */; };
+		A1000001000000000000002E /* ios/Shared/VpnTunnelController+MacDiag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010E1CF9000F007C117D /* ios/Shared/VpnTunnelController+MacDiag.swift */; };
+		A200000E1CF9000F007C117D /* ios/Shared/VpnTunnelController+MacDiag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010E1CF9000F007C117D /* ios/Shared/VpnTunnelController+MacDiag.swift */; };
+		A300001E1CF9000F007C117D /* ios/Shared/VpnTunnelController+MacDiag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010E1CF9000F007C117D /* ios/Shared/VpnTunnelController+MacDiag.swift */; };
+		A1000001000000000000002F /* ios/Shared/VpnTunnelController+Lifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010F1CF9000F007C117D /* ios/Shared/VpnTunnelController+Lifecycle.swift */; };
+		A200000F1CF9000F007C117D /* ios/Shared/VpnTunnelController+Lifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010F1CF9000F007C117D /* ios/Shared/VpnTunnelController+Lifecycle.swift */; };
+		A300001F1CF9000F007C117D /* ios/Shared/VpnTunnelController+Lifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010F1CF9000F007C117D /* ios/Shared/VpnTunnelController+Lifecycle.swift */; };
 		B10000010000000000000026 /* ios/Shared/VpnControlConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */; };
 		B10000010000000000000029 /* SingBoxConfigBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000028 /* SingBoxConfigBuilder.swift */; };
 		B1000001000000000000002A /* VpnControlling.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000029 /* VpnControlling.swift */; };
@@ -160,6 +187,7 @@
 		T400000B1CF9000F007C117E /* AppVersionApiTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000B1CF9000F007C117E /* AppVersionApiTests.swift */; };
 		T400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift */; };
 		T400000F1CF9000F007C117E /* AppRuntimeUpgradeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000F1CF9000F007C117E /* AppRuntimeUpgradeTests.swift */; };
+		T40000101CF9000F007C117E /* ConnectHotPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000101CF9000F007C117E /* ConnectHotPathTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -207,7 +235,15 @@
 		E20000A41CF9000F007C117D /* ios/Shared/ClashTraffic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/ClashTraffic.swift; sourceTree = SOURCE_ROOT; };
 		E20001011CF9000F007C117D /* ios/Shared/VpnAppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnAppGroup.swift; sourceTree = SOURCE_ROOT; };
 		E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnSharedStore.swift; sourceTree = SOURCE_ROOT; };
+		A20001101CF9000F007C117D /* ios/Shared/VpnSharedStore+Heartbeat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ios/Shared/VpnSharedStore+Heartbeat.swift"; sourceTree = SOURCE_ROOT; };
+		A20001111CF9000F007C117D /* ios/Shared/VpnSharedStore+Journal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ios/Shared/VpnSharedStore+Journal.swift"; sourceTree = SOURCE_ROOT; };
 		E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnTunnelController.swift; sourceTree = SOURCE_ROOT; };
+		A200010A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnTunnelError.swift; sourceTree = SOURCE_ROOT; };
+		A200010B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/UplinkIPv4Resolver.swift; sourceTree = SOURCE_ROOT; };
+		A200010C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ios/Shared/VpnTunnelController+Connect.swift"; sourceTree = SOURCE_ROOT; };
+		A200010D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ios/Shared/VpnTunnelController+Readiness.swift"; sourceTree = SOURCE_ROOT; };
+		A200010E1CF9000F007C117D /* ios/Shared/VpnTunnelController+MacDiag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ios/Shared/VpnTunnelController+MacDiag.swift"; sourceTree = SOURCE_ROOT; };
+		A200010F1CF9000F007C117D /* ios/Shared/VpnTunnelController+Lifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ios/Shared/VpnTunnelController+Lifecycle.swift"; sourceTree = SOURCE_ROOT; };
 		E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnControlConstants.swift; sourceTree = SOURCE_ROOT; };
 		E20001051CF9000F007C117D /* ios/Frameworks/Libbox.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = ios/Frameworks/Libbox.xcframework; sourceTree = SOURCE_ROOT; };
 		E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnControlIntent.swift; sourceTree = SOURCE_ROOT; };
@@ -230,6 +266,9 @@
 		F10000010000000000000007 /* TestServers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestServers.swift; sourceTree = "<group>"; };
 		F10000010000000000000008 /* AppLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLog.swift; sourceTree = "<group>"; };
 		F1000001000000000000000A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		A10000101CF9000F007C117D /* AppState+AuthSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppState+AuthSession.swift"; sourceTree = "<group>"; };
+		A10000111CF9000F007C117D /* AppState+AccountPay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppState+AccountPay.swift"; sourceTree = "<group>"; };
+		A10000121CF9000F007C117D /* AppState+Vpn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppState+Vpn.swift"; sourceTree = "<group>"; };
 		F1000001000000000000000B /* ThroughputFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThroughputFormatter.swift; sourceTree = "<group>"; };
 		F1000001000000000000000C /* VpnMainToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnMainToggle.swift; sourceTree = "<group>"; };
 		F1000001000000000000000D /* SectionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionCard.swift; sourceTree = "<group>"; };
@@ -332,6 +371,7 @@
 		F400000B1CF9000F007C117E /* AppVersionApiTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersionApiTests.swift; sourceTree = "<group>"; };
 		F400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRefreshPolicyTests.swift; sourceTree = "<group>"; };
 		F400000F1CF9000F007C117E /* AppRuntimeUpgradeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRuntimeUpgradeTests.swift; sourceTree = "<group>"; };
+		F40000101CF9000F007C117E /* ConnectHotPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectHotPathTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -477,6 +517,9 @@
 				F10000010000000000000008 /* AppLog.swift */,
 				F100000100000000000000L3 /* AppLanguage.swift */,
 				F1000001000000000000000A /* AppState.swift */,
+				A10000101CF9000F007C117D /* AppState+AuthSession.swift */,
+				A10000111CF9000F007C117D /* AppState+AccountPay.swift */,
+				A10000121CF9000F007C117D /* AppState+Vpn.swift */,
 				F10000010000000000000053 /* AuthSessionStore.swift */,
 				F1000001000000000000005A /* SessionCacheStore.swift */,
 				F1000001000000000000TS1 /* TunSettingsStore.swift */,
@@ -657,11 +700,19 @@
 				E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */,
 				E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */,
 				E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */,
+				A20001101CF9000F007C117D /* ios/Shared/VpnSharedStore+Heartbeat.swift */,
+				A20001111CF9000F007C117D /* ios/Shared/VpnSharedStore+Journal.swift */,
 				E20000A41CF9000F007C117D /* ios/Shared/ClashTraffic.swift */,
 				E20001DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift */,
 				E20001DF1CF9000F007C117D /* ios/Shared/DemarLogTime.swift */,
 				E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */,
 				E20001031CF9000F007C117D /* ios/Shared/VpnTunnelController.swift */,
+				A200010A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift */,
+				A200010B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift */,
+				A200010C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift */,
+				A200010D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift */,
+				A200010E1CF9000F007C117D /* ios/Shared/VpnTunnelController+MacDiag.swift */,
+				A200010F1CF9000F007C117D /* ios/Shared/VpnTunnelController+Lifecycle.swift */,
 				F10000010000000000000025 /* ios/Shared/singbox */,
 			);
 			path = Shared;
@@ -717,6 +768,7 @@
 				F400000B1CF9000F007C117E /* AppVersionApiTests.swift */,
 				F400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift */,
 				F400000F1CF9000F007C117E /* AppRuntimeUpgradeTests.swift */,
+				F40000101CF9000F007C117E /* ConnectHotPathTests.swift */,
 			);
 			path = DemarVPNTests;
 			sourceTree = "<group>";
@@ -937,6 +989,9 @@
 				B10000010000000000000007 /* TestServers.swift in Sources */,
 				B10000010000000000000008 /* AppLog.swift in Sources */,
 				B1000001000000000000000A /* AppState.swift in Sources */,
+				A11000010000000000000032 /* AppState+AuthSession.swift in Sources */,
+				A11000010000000000000033 /* AppState+AccountPay.swift in Sources */,
+				A11000010000000000000034 /* AppState+Vpn.swift in Sources */,
 				B100000100000000000000L3 /* AppLanguage.swift in Sources */,
 				B1000001000000000000000B /* ThroughputFormatter.swift in Sources */,
 				B1000001000000000000001B /* PlatformServices.swift in Sources */,
@@ -970,9 +1025,17 @@
 				B10000010000000000000023 /* ios/Shared/VpnAppGroup.swift in Sources */,
 				B1000001000000000000TB1 /* ios/Shared/TunBypassCidrs.swift in Sources */,
 				B10000010000000000000024 /* ios/Shared/VpnSharedStore.swift in Sources */,
+				A10000010000000000000030 /* ios/Shared/VpnSharedStore+Heartbeat.swift in Sources */,
+				A10000010000000000000031 /* ios/Shared/VpnSharedStore+Journal.swift in Sources */,
 				B100000100000000000000DE /* ios/Shared/DefaultInterfaceReporter.swift in Sources */,
 				B100000100000000000000DF /* ios/Shared/DemarLogTime.swift in Sources */,
 				B10000010000000000000025 /* ios/Shared/VpnTunnelController.swift in Sources */,
+				A1000001000000000000002A /* ios/Shared/VpnTunnelError.swift in Sources */,
+				A1000001000000000000002B /* ios/Shared/UplinkIPv4Resolver.swift in Sources */,
+				A1000001000000000000002C /* ios/Shared/VpnTunnelController+Connect.swift in Sources */,
+				A1000001000000000000002D /* ios/Shared/VpnTunnelController+Readiness.swift in Sources */,
+				A1000001000000000000002E /* ios/Shared/VpnTunnelController+MacDiag.swift in Sources */,
+				A1000001000000000000002F /* ios/Shared/VpnTunnelController+Lifecycle.swift in Sources */,
 				B10000010000000000000038 /* ios/Shared/VpnStatusSignal.swift in Sources */,
 				B10000010000000000000026 /* ios/Shared/VpnControlConstants.swift in Sources */,
 				B10000010000000000000037 /* ios/Shared/VpnControlIntent.swift in Sources */,
@@ -1033,10 +1096,18 @@
 				E20000051CF9000F007C117D /* ios/Shared/VpnAppGroup.swift in Sources */,
 				E20000TB1CF9000F007C117D /* ios/Shared/TunBypassCidrs.swift in Sources */,
 				E20000061CF9000F007C117D /* ios/Shared/VpnSharedStore.swift in Sources */,
+				A20000101CF9000F007C117D /* ios/Shared/VpnSharedStore+Heartbeat.swift in Sources */,
+				A20000111CF9000F007C117D /* ios/Shared/VpnSharedStore+Journal.swift in Sources */,
 				E20000A31CF9000F007C117D /* ios/Shared/ClashTraffic.swift in Sources */,
 				E20000DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift in Sources */,
 				E20000DF1CF9000F007C117D /* ios/Shared/DemarLogTime.swift in Sources */,
 				E20000071CF9000F007C117D /* ios/Shared/VpnTunnelController.swift in Sources */,
+				A200000A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift in Sources */,
+				A200000B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift in Sources */,
+				A200000C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift in Sources */,
+				A200000D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift in Sources */,
+				A200000E1CF9000F007C117D /* ios/Shared/VpnTunnelController+MacDiag.swift in Sources */,
+				A200000F1CF9000F007C117D /* ios/Shared/VpnTunnelController+Lifecycle.swift in Sources */,
 				E20001081CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift in Sources */,
 				E20000081CF9000F007C117D /* ios/Shared/VpnControlConstants.swift in Sources */,
 			);
@@ -1049,8 +1120,16 @@
 				E30000121CF9000F007C117D /* ios/Shared/VpnAppGroup.swift in Sources */,
 				E30000151CF9000F007C117D /* ios/Shared/VpnControlConstants.swift in Sources */,
 				E30000131CF9000F007C117D /* ios/Shared/VpnSharedStore.swift in Sources */,
+				A30000201CF9000F007C117D /* ios/Shared/VpnSharedStore+Heartbeat.swift in Sources */,
+				A30000211CF9000F007C117D /* ios/Shared/VpnSharedStore+Journal.swift in Sources */,
 				E30000181CF9000F007C117D /* ios/Shared/DemarLogTime.swift in Sources */,
 				E30000141CF9000F007C117D /* ios/Shared/VpnTunnelController.swift in Sources */,
+				A300001A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift in Sources */,
+				A300001B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift in Sources */,
+				A300001C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift in Sources */,
+				A300001D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift in Sources */,
+				A300001E1CF9000F007C117D /* ios/Shared/VpnTunnelController+MacDiag.swift in Sources */,
+				A300001F1CF9000F007C117D /* ios/Shared/VpnTunnelController+Lifecycle.swift in Sources */,
 				E30000171CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift in Sources */,
 				E30000161CF9000F007C117D /* ios/Shared/VpnControlIntent.swift in Sources */,
 				E30000081CF9000F007C117D /* ios/DemarControls/DemarControlsBundle.swift in Sources */,
@@ -1075,6 +1154,7 @@
 				T400000B1CF9000F007C117E /* AppVersionApiTests.swift in Sources */,
 				T400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift in Sources */,
 				T400000F1CF9000F007C117E /* AppRuntimeUpgradeTests.swift in Sources */,
+				T40000101CF9000F007C117E /* ConnectHotPathTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

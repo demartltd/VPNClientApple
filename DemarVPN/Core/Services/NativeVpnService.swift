@@ -19,6 +19,7 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
         }
         let bypassHosts = TunSettingsStore.effectiveBypassHosts(isFree: isFree)
         let tunFp = TunSettingsStore.fingerprint(isFree: isFree)
+        let refreshAssets = Self.shouldRefreshAssets()
         let prepared = try await Task.detached(priority: .userInitiated) {
             let basePlan = server.connectPlan
             let endpointAddresses = try UplinkIPv4Resolver.resolve(basePlan.uplinkHost)
@@ -32,6 +33,7 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
             let plan = basePlan.pinEndpoint(to: endpointAddresses)
             return (
                 plan,
+                endpointAddresses,
                 bypassExcludeIPs,
                 try SingBoxConfigBuilder.buildTunConfigJson(
                     plan: plan,
@@ -42,14 +44,16 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
             )
         }.value
         let plan = prepared.0
-        let bypassExcludeIPs = prepared.1
-        let configJson = prepared.2
+        let endpointAddresses = prepared.1
+        let bypassExcludeIPs = prepared.2
+        let configJson = prepared.3
         try VpnSharedStore.saveBypassGeoipTags(plan.geoipBypassTags)
         let sessionId = Self.newSessionId()
         await MainActor.run {
             AppLog.shared.append(
                 "[vpn] connect tun=\(tunFp) hosts=\(bypassHosts.count) "
-                    + "excludeIPs=\(bypassExcludeIPs.count) rs=\(plan.bypassRuleSets.count)"
+                    + "excludeIPs=\(bypassExcludeIPs.count) rs=\(plan.bypassRuleSets.count) "
+                    + "assetsRefresh=\(refreshAssets)"
             )
         }
 
@@ -57,9 +61,10 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
             controller.connect(
                 configJson: configJson,
                 uplinkHost: plan.uplinkHost,
+                uplinkIPv4s: endpointAddresses,
                 vpnSessionId: sessionId,
                 connectTriggerSource: "swiftApp",
-                refreshAssetsFromBundle: true,
+                refreshAssetsFromBundle: refreshAssets,
                 savePayload: true
             ) { result in
                 continuation.resume(with: result)
@@ -73,6 +78,12 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
                 continuation.resume(with: result)
             }
         }
+    }
+
+    /// After upgrade wipe, `bundled_version.txt` is gone → first connect always refreshes.
+    private static func shouldRefreshAssets() -> Bool {
+        guard let assetDir = try? VpnAppGroup.assetDirectoryURL() else { return true }
+        return CoreBundleAssets.needsRefresh(in: assetDir)
     }
 
     @MainActor

@@ -83,14 +83,19 @@ final class SingBoxConfigTests: XCTestCase {
     }
 
     func testCoreVersionIsPinnedToValidatedRelease() throws {
+        let expected = "v1.14.1"
+        // Device tests can't read the checkout tree; assert the host-bundled marker.
+        XCTAssertEqual(BundledCoreVersion.label, expected)
+
         let repoRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-        let version = try String(
-            contentsOf: repoRoot.appendingPathComponent("singbox-version.txt"),
-            encoding: .utf8
-        ).trimmingCharacters(in: .whitespacesAndNewlines)
-        XCTAssertEqual(version, "v1.14.1")
+        let pinURL = repoRoot.appendingPathComponent("singbox-version.txt")
+        guard FileManager.default.isReadableFile(atPath: pinURL.path) else { return }
+
+        let version = try String(contentsOf: pinURL, encoding: .utf8)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        XCTAssertEqual(version, expected)
         for relativePath in [
             "ios/Shared/singbox/bundled_version.txt",
             "macos/singbox_macos/bundled_version.txt",
@@ -148,9 +153,13 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertFalse(json.contains("inet4_route_address"))
         XCTAssertFalse(json.contains("network_strategy"))
         XCTAssertFalse(json.contains("domain_strategy"))
-        XCTAssertFalse(json.contains("\"sniff\" : true") || json.contains("\"sniff\": true"))
+        XCTAssertFalse(json.contains("\"sniff\" : true") || json.contains("\"sniff\": true") || json.contains("\"sniff\":true"))
         XCTAssertTrue(json.contains("default_domain_resolver"))
-        XCTAssertTrue(json.contains("\"action\" : \"sniff\"") || json.contains("\"action\": \"sniff\""))
+        XCTAssertTrue(
+            json.contains("\"action\" : \"sniff\"")
+                || json.contains("\"action\": \"sniff\"")
+                || json.contains("\"action\":\"sniff\"")
+        )
         XCTAssertFalse(json.contains("\"evaluate\""))
         XCTAssertFalse(json.contains("\"disable_optimistic_cache\""))
         try assertSingBoxCheckPasses(json: json)
@@ -176,7 +185,12 @@ final class SingBoxConfigTests: XCTestCase {
         let ruleSets = try XCTUnwrap(route["rule_set"] as? [[String: Any]])
         XCTAssertEqual(ruleSets.count, 1)
         XCTAssertEqual(ruleSets[0]["tag"] as? String, "geosite-category-ru")
-        XCTAssertEqual(ruleSets[0]["download_detour"] as? String, "proxy")
+        XCTAssertNil(ruleSets[0]["download_detour"])
+        XCTAssertEqual(route["default_http_client"] as? String, "rs-dl")
+        let httpClients = try XCTUnwrap(root["http_clients"] as? [[String: Any]])
+        XCTAssertEqual(httpClients.count, 1)
+        XCTAssertEqual(httpClients[0]["tag"] as? String, "rs-dl")
+        XCTAssertEqual(httpClients[0]["detour"] as? String, "proxy")
         let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
         XCTAssertFalse(rules.contains { ($0["rule_set"] as? [String])?.contains("geoip-ru") == true })
         XCTAssertFalse(rules.contains { ($0["rule_set"] as? [String])?.contains("geosite-category-ru") == true })

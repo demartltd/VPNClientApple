@@ -20,6 +20,7 @@ private func appendDiagLine(_ message: String) {
 
 private struct TunnelStartContext {
   let uplinkHost: String?
+  let uplinkIPv4s: [String]
   let sessionId: String
   let connectSource: String
 
@@ -42,12 +43,22 @@ private struct TunnelStartContext {
     let configuredSource =
       (protocolConfiguration?.providerConfiguration?[VpnTunnelProviderKeys.connectSource] as? String)?
       .trimmingCharacters(in: .whitespacesAndNewlines)
+    let optionIPs = Self.parseIPv4List(options?[VpnTunnelProviderKeys.uplinkIPv4s] as? String)
 
     return TunnelStartContext(
       uplinkHost: optionUplinkHost?.isEmpty == false ? optionUplinkHost : configuredUplinkHost,
+      uplinkIPv4s: optionIPs,
       sessionId: (optionSessionId?.isEmpty == false ? optionSessionId : configuredSessionId) ?? "",
       connectSource: (optionSource?.isEmpty == false ? optionSource : configuredSource) ?? "unknown"
     )
+  }
+
+  private static func parseIPv4List(_ raw: String?) -> [String] {
+    guard let raw, !raw.isEmpty else { return [] }
+    return raw
+      .split(separator: ",")
+      .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty }
   }
 }
 
@@ -171,10 +182,16 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         currentSessionId = sessionId
         VpnSharedStore.saveActiveSession(sessionId: sessionId, triggerSource: connectSource)
       }
-      let excludedIPv4 = try UplinkIPv4Resolver.resolve(uplinkHost)
+      let excludedIPv4: [String]
+      if !startContext.uplinkIPv4s.isEmpty {
+        excludedIPv4 = startContext.uplinkIPv4s
+      } else {
+        excludedIPv4 = try UplinkIPv4Resolver.resolve(uplinkHost)
+      }
       Self.diag(
         "start tunnel: uplinkHost=\(uplinkHost ?? "<none>") "
           + "excludedIPv4=\(excludedIPv4.isEmpty ? "<empty>" : excludedIPv4.joined(separator: ",")) "
+          + "ipsFromOptions=\(!startContext.uplinkIPv4s.isEmpty) "
           + "session=\(sessionId.isEmpty ? "<none>" : sessionId) source=\(connectSource)")
 
       self.startLibboxTunnel(

@@ -76,4 +76,15 @@ enum CoreBundleAssets {
     let fm = FileManager.default
     return geoFiles.allSatisfy { fm.fileExists(atPath: directory.appendingPathComponent($0).path) }
   }
+
+  /// True when App Group geo is missing or `bundled_version.txt` differs from the host bundle
+  /// (including after `AppRuntimeUpgrade.wipeStaleRuntime`, which deletes the version file).
+  static func needsRefresh(in directory: URL) -> Bool {
+    if !hasGeo(in: directory) { return true }
+    guard let bundled = bundledURL(for: "bundled_version.txt"),
+          let bundledData = try? Data(contentsOf: bundled)
+    else { return true }
+    let existing = try? Data(contentsOf: directory.appendingPathComponent("bundled_version.txt"))
+    return existing != bundledData
+  }
 }

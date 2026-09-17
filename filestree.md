@@ -13,7 +13,7 @@ DemarVPN/                              # SwiftUI target
 │
 ├── Core/
 │   ├── Theme/
-│   │   ├── DemarTheme.swift           # цвета, шрифты M3
+│   │   ├── DemarTheme.swift           # цвета, шрифты
 │   │   └── AppTheme.swift             # UIKit nav/tab (iOS)
 │   ├── Icons/
 │   │   └── FontAwesomeBrands.swift    # FA brands, соцссылки
@@ -39,7 +39,10 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun; DemarControlPlane hosts
 │   │   └── SingBoxConfigBuilder.swift # Sing-box JSON TUN
 │   ├── Services/
-│   │   ├── AppState.swift             # UI state, auth, servers, toggle VPN, checkout
+│   │   ├── AppState.swift             # @Observable state, init, bootstrap helpers
+│   │   ├── AppState+Vpn.swift         # connect/disconnect/switch/status/throughput
+│   │   ├── AppState+AuthSession.swift # auth, session refresh, sign-out, version
+│   │   ├── AppState+AccountPay.swift  # checkout / pay deeplink / account sheets
 │   │   ├── AuthSessionStore.swift     # UserDefaults session + auth orchestration
 │   │   ├── SessionCacheStore.swift    # servers/account/traffic/tun disk cache
 │   │   ├── TunSettingsStore.swift     # site-group prefs + in-memory catalog
@@ -109,7 +112,7 @@ DemarVPN/                              # SwiftUI target
             ├── SupportAttach.swift    # gallery photo ingest / WebP compress
             └── SupportHelpers.swift   # errors, time, linkify
 
-DemarVPNTests/                         # unit tests (Sing-box, TUN sites, servers/account/pay parse, interface, legal docs)
+DemarVPNTests/                         # unit tests (Sing-box, connect hot-path, TUN sites, servers/account/pay parse, interface, legal docs)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка
@@ -134,11 +137,19 @@ ios/
 ├── Shared/
 │   ├── VpnAppGroup.swift              # App Group paths
 │   ├── DemarLogTime.swift             # journal stamp yyyy-MM-dd-HH-mm-ss (UTC)
-│   ├── VpnSharedStore.swift           # journal, payload, state, Clash throughput
+│   ├── VpnSharedStore.swift           # payload, control state, session/stop
+│   ├── VpnSharedStore+Journal.swift   # journal append / import / mirror
+│   ├── VpnSharedStore+Heartbeat.swift # heartbeat, throughput, start failure
 │   ├── TunBypassCidrs.swift           # geoip CIDR sidecars → NEIPv4Route (cached)
 │   ├── ClashTraffic.swift             # parse Clash /traffic NDJSON sample
 │   ├── DefaultInterfaceReporter.swift # sticky default iface + debounce для libbox
-│   ├── VpnTunnelController.swift      # NETunnelProviderManager
+│   ├── UplinkIPv4Resolver.swift       # getaddrinfo + TTL DNS cache
+│   ├── VpnTunnelError.swift           # NE connect errors
+│   ├── VpnTunnelController.swift      # NE manager cache / status / commands
+│   ├── VpnTunnelController+Connect.swift    # connect / startTunnel / prefs fast-path
+│   ├── VpnTunnelController+Lifecycle.swift  # disconnect / revoke / remove profiles
+│   ├── VpnTunnelController+Readiness.swift  # wait connected + heartbeat
+│   ├── VpnTunnelController+MacDiag.swift    # macOS preflight / post-start probes
 │   ├── VpnControlConstants.swift      # kind CC widget
 │   ├── VpnControlIntent.swift         # CC toggle intent
 │   ├── VpnStatusSignal.swift          # Darwin notify
@@ -161,9 +172,3 @@ ios/
     ├── README.md                      # Libbox build инструкции
     └── Libbox.xcframework/            # sing-box gomobile (gitignore; libbox-build.py)
 ```
-
-## Связь с demar_vpn
-
-Эталон UI: `demar_vpn/lib/presentation/`.  
-VPN iOS: `demar_vpn/ios/`.  
-Assets: `python3 scripts/singbox-download-auto.py`.
