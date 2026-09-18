@@ -17,8 +17,8 @@ private final class DarwinLocalDNSTransport: NSObject, LibboxLocalDNSTransportPr
             ctx?.errorCode(3)
             return
         }
-        // IPv4-only uplink resolver: AAAA asked via local transport → empty (NXDOMAIN-ish).
-        // Dual-stack TUN still proxies hardcoded Telegram DC IPv6 literals via Hysteria2.
+        // IPv4-only uplink resolver: AAAA via local transport → empty (NXDOMAIN-ish).
+        // IPv4-only TUN: Telegram DC IPv6 stays on physical; IPv4 DC goes through proxy.
         if network?.hasSuffix("6") == true {
             ctx?.success("")
             return
@@ -35,7 +35,6 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
     private var configuredBypassRoutes: [NEIPv4Route] = []
     private var configuredIncludedIPv4Routes: [NEIPv4Route] = []
     private var configuredDNSSettings: NEDNSSettings?
-    private var configuredIPv6Settings: NEIPv6Settings?
     private var networkSettings: NEPacketTunnelNetworkSettings?
     private let dnsTransport = DarwinLocalDNSTransport()
     private var nwMonitor: NWPathMonitor?
@@ -89,7 +88,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             allowUnsatisfiedDefaultReport = false
             ipv4.includedRoutes = configuredIncludedIPv4Routes
             settings.dnsSettings = configuredDNSSettings
-            settings.ipv6Settings = configuredIPv6Settings
+            settings.ipv6Settings = nil
             try await provider.setTunnelNetworkSettings(settings)
             Self.diag("traffic capture activated routes=\(configuredIncludedIPv4Routes.count)")
         }
@@ -122,10 +121,11 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
 
         settings.mtu = NSNumber(value: options.getMTU())
 
-        var dnsSettings: NEDNSSettings?
         let dnsServer = try Self.firstIPv4DNS(from: options)
         let dns = NEDNSSettings(servers: [dnsServer])
-        dnsSettings = dns
+        // Split /1+/1 is not 0.0.0.0/0 — force DNS match so system DNS hits the tunnel.
+        dns.matchDomains = [""]
+        dns.matchDomainsNoSearch = true
 
         var ipv4Addresses: [String] = []
         var ipv4Masks: [String] = []
@@ -164,14 +164,8 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         ipv4Settings.excludedRoutes = ipv4ExcludedRoutes
         settings.ipv4Settings = ipv4Settings
         // IPv4-only TUN (first Hysteria2): no inet6 in config → ipv6=off.
-        configuredIPv6Settings = Self.makeIPv6Settings(from: options)
-        settings.ipv6Settings = configuredIPv6Settings
-
-        if !Self.hasDefaultIPv4Route(ipv4Routes) {
-            dnsSettings?.matchDomains = [""]
-            dnsSettings?.matchDomainsNoSearch = true
-        }
-        configuredDNSSettings = dnsSettings
+        settings.ipv6Settings = nil
+        configuredDNSSettings = dns
 
         networkSettings = settings
         try await provider.setTunnelNetworkSettings(settings)
@@ -179,7 +173,7 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             "openTun mtu=\(options.getMTU()) dns=\(dns.servers.joined(separator: ",")) "
                 + "routes=\(ipv4Routes.count) excluded=\(ipv4ExcludedRoutes.count) "
                 + "bypassCidrs=\(configuredBypassRoutes.count) "
-                + "ipv6=\(configuredIPv6Settings == nil ? "off" : "on") capture=deferred"
+                + "ipv6=off capture=deferred"
         )
 
         if let tunFd = provider.packetFlow.value(forKeyPath: "socket.fileDescriptor") as? Int32 {
@@ -215,10 +209,6 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             let prefix = iterator.next()!
             routes.append(NEIPv4Route(destinationAddress: prefix.address(), subnetMask: prefix.mask()))
         }
-    }
-
-    private static func hasDefaultIPv4Route(_ routes: [NEIPv4Route]) -> Bool {
-        routes.contains { $0.destinationAddress == "0.0.0.0" && $0.destinationSubnetMask == "0.0.0.0" }
     }
 
     private static func firstIPv4DNS(from options: LibboxTunOptionsProtocol) throws -> String {
@@ -259,42 +249,6 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
             routes.append(route)
         }
         return routes
-    }
-
-    private static func makeIPv6Settings(from options: LibboxTunOptionsProtocol) -> NEIPv6Settings? {
-        var addresses: [String] = []
-        var prefixes: [NSNumber] = []
-        let addressIterator = options.getInet6Address()!
-        while addressIterator.hasNext() {
-            let prefix = addressIterator.next()!
-            addresses.append(prefix.address())
-            prefixes.append(NSNumber(value: prefix.prefix()))
-        }
-        guard !addresses.isEmpty else { return nil }
-
-        let settings = NEIPv6Settings(addresses: addresses, networkPrefixLengths: prefixes)
-        var included: [NEIPv6Route] = []
-        let routeIterator = options.getInet6RouteAddress()!
-        while routeIterator.hasNext() {
-            let prefix = routeIterator.next()!
-            included.append(NEIPv6Route(
-                destinationAddress: prefix.address(),
-                networkPrefixLength: NSNumber(value: prefix.prefix())
-            ))
-        }
-        settings.includedRoutes = included.isEmpty ? [NEIPv6Route.default()] : included
-
-        var excluded: [NEIPv6Route] = []
-        let excludeIterator = options.getInet6RouteExcludeAddress()!
-        while excludeIterator.hasNext() {
-            let prefix = excludeIterator.next()!
-            excluded.append(NEIPv6Route(
-                destinationAddress: prefix.address(),
-                networkPrefixLength: NSNumber(value: prefix.prefix())
-            ))
-        }
-        settings.excludedRoutes = excluded
-        return settings
     }
 
     func usePlatformAutoDetectControl() -> Bool { false }
@@ -557,7 +511,6 @@ final class DemarLibboxPlatform: NSObject, LibboxPlatformInterfaceProtocol, Libb
         configuredBypassRoutes = []
         configuredIncludedIPv4Routes = []
         configuredDNSSettings = nil
-        configuredIPv6Settings = nil
         lastGoodInterface = nil
         lastKnownPhysicalInterfaces = []
     }

@@ -5,8 +5,8 @@ import Darwin
 
 struct SingBoxTunOptions {
     var dnsFinal: String
-    var dnsBootstrapDomains: [String]
-    var directDomains: [String]
+    /// SNI + uplink host: DNS bootstrap → dns-direct and route → direct.
+    var uplinkDomains: [String]
 }
 
 struct SingBoxConnectPlan {
@@ -64,8 +64,7 @@ struct SingBoxConnectPlan {
             directIPs: directIPs(forHost: profile.server),
             tun: SingBoxTunOptions(
                 dnsFinal: SingBoxConfigConstants.dnsRemoteTag,
-                dnsBootstrapDomains: Array(Set([profile.tlsServerName, profile.server])).sorted(),
-                directDomains: Array(Set([profile.tlsServerName, profile.server])).sorted()
+                uplinkDomains: Array(Set([profile.tlsServerName, profile.server])).sorted()
             ),
             bypassRuleSets: bypassRuleSets.uniquedByTag()
         )

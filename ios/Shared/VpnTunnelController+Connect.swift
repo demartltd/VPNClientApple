@@ -593,10 +593,8 @@ extension VpnTunnelController {
     proto.providerBundleIdentifier = packetTunnelBundleId
     proto.serverAddress = Self.normalizedServerAddress(uplinkHost)
     proto.disconnectOnSleep = false
+    // excludeAPNs/Cellular/Local require includeAllNetworks=true (Apple NE) — unused on purpose.
     proto.includeAllNetworks = false
-    proto.excludeAPNs = true
-    proto.excludeCellularServices = true
-    proto.excludeLocalNetworks = false
     proto.enforceRoutes = false
     proto.providerConfiguration = mergedProviderConfiguration(
       current: proto.providerConfiguration,

@@ -66,7 +66,6 @@ final class SingBoxConfigTests: XCTestCase {
         let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
         XCTAssertEqual(rules.first?["action"] as? String, "sniff")
         XCTAssertEqual(rules.first?["timeout"] as? String, "300ms")
-        XCTAssertEqual(rules.first?["timeout"] as? String, "300ms")
         XCTAssertTrue(rules.contains {
             ($0["network"] as? [String]) == ["udp"]
                 && ($0["port"] as? [Int]) == [443]

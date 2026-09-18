@@ -12,21 +12,15 @@ enum SingBoxConfigBuilder {
         bypassHosts: [String] = [],
         bypassExcludeIPs: [String] = []
     ) throws -> String {
-        let config = buildTunConfig(
-            proxyOutbound: plan.proxyOutbound,
-            directIPs: plan.directIPs,
-            tunName: tunName,
-            mtu: mtu,
-            logLevel: logLevel,
-            dnsFinal: plan.tun.dnsFinal,
-            dnsBootstrapDomains: plan.tun.dnsBootstrapDomains,
-            directDomains: plan.tun.directDomains,
-            bypassRuleSets: plan.bypassRuleSets,
-            bypassHosts: bypassHosts,
-            bypassExcludeIPs: bypassExcludeIPs
-        )
-        return try SingBoxConfigEncoding.encodeConfigToJson(
-            config,
+        try SingBoxConfigEncoding.encodeConfigToJson(
+            buildTunConfig(
+                plan: plan,
+                tunName: tunName,
+                mtu: mtu,
+                logLevel: logLevel,
+                bypassHosts: bypassHosts,
+                bypassExcludeIPs: bypassExcludeIPs
+            ),
             errorCode: 1,
             description: "Failed to encode sing-box config JSON."
         )
@@ -48,10 +42,10 @@ enum SingBoxConfigBuilder {
             for index in inbounds.indices where (inbounds[index]["type"] as? String) == "tun" {
                 var tun = inbounds[index]
                 var exclude = Set((tun["route_exclude_address"] as? [String]) ?? [])
-                merged.forEach { exclude.insert("\($0)/32") }
+                merged.forEach { exclude.insert(asCIDR32($0)) }
                 tun["route_exclude_address"] = exclude.sorted()
                 if tun["route_address"] == nil {
-                    tun["route_address"] = ["0.0.0.0/1", "128.0.0.0/1"]
+                    tun["route_address"] = SingBoxConfigConstants.ipv4SplitRoutes
                 }
                 inbounds[index] = tun
                 break
@@ -63,7 +57,7 @@ enum SingBoxConfigBuilder {
             var existing = Set(rules.flatMap { ($0["ip_cidr"] as? [String]) ?? [] })
             let insertAt = rules.firstIndex { ($0["ip_version"] as? Int) == 6 } ?? rules.count
             for ip in merged {
-                let cidr = "\(ip)/32"
+                let cidr = asCIDR32(ip)
                 guard !existing.contains(cidr) else { continue }
                 rules.insert([
                     "ip_cidr": [cidr],
@@ -97,32 +91,28 @@ enum SingBoxConfigBuilder {
     }
 
     private static func buildTunConfig(
-        proxyOutbound: [String: Any],
-        directIPs: [String],
+        plan: SingBoxConnectPlan,
         tunName: String,
         mtu: Int,
         logLevel: String,
-        dnsFinal: String,
-        dnsBootstrapDomains: [String],
-        directDomains: [String],
-        bypassRuleSets: [ApiBypassRuleSet],
         bypassHosts: [String],
         bypassExcludeIPs: [String]
     ) -> [String: Any] {
-        let geosite = bypassRuleSets.filter(\.isGeosite)
+        let geosite = plan.bypassRuleSets.filter(\.isGeosite)
         let hosts = cleanedDomains(bypassHosts)
+        let uplink = plan.tun.uplinkDomains
         var config: [String: Any] = [
             "log": ["level": logLevel, "timestamp": true],
             "dns": SingBoxDnsBuilder.makeDns(
-                final: dnsFinal,
-                bootstrapDomains: dnsBootstrapDomains,
+                final: plan.tun.dnsFinal,
+                bootstrapDomains: uplink,
                 geositeRuleSets: geosite,
                 bypassHosts: hosts
             ),
             "inbounds": [SingBoxTunInboundBuilder.makeTunInbound(
                 tunName: tunName,
                 mtu: mtu,
-                directIPs: directIPs,
+                directIPs: plan.directIPs,
                 bypassExcludeIPs: bypassExcludeIPs,
                 excludeDNSResolver: !geosite.isEmpty
             ), [
@@ -135,11 +125,11 @@ enum SingBoxConfigBuilder {
             // inside Apple NE full tunnel). True bypass = NE excludedRoutes via bypassExcludeIPs.
             "route": SingBoxRouteBuilder.makeRoute(
                 inboundTag: SingBoxConfigConstants.tunInboundTag,
-                directIPs: directIPs,
-                directDomains: directDomains,
+                directIPs: plan.directIPs,
+                uplinkDomains: uplink,
                 geositeRuleSets: geosite
             ),
-            "outbounds": [proxyOutbound, ["type": "direct", "tag": SingBoxConfigConstants.directTag]],
+            "outbounds": [plan.proxyOutbound, ["type": "direct", "tag": SingBoxConfigConstants.directTag]],
             "experimental": [
                 "cache_file": ["enabled": true, "store_dns": true],
                 "clash_api": [
@@ -172,6 +162,7 @@ enum SingBoxConfigConstants {
     static let clashApiHost = "127.0.0.1"
     static let clashApiPort = 19090
     static let dnsDirectResolver = "1.1.1.1"
+    static let ipv4SplitRoutes = ["0.0.0.0/1", "128.0.0.0/1"]
 }
 
 enum SingBoxConfigEncoding {
@@ -266,7 +257,7 @@ enum SingBoxRouteBuilder {
     static func makeRoute(
         inboundTag: String,
         directIPs: [String],
-        directDomains: [String] = [],
+        uplinkDomains: [String] = [],
         geositeRuleSets: [ApiBypassRuleSet] = []
     ) -> [String: Any] {
         var rules: [[String: Any]] = [
@@ -281,12 +272,12 @@ enum SingBoxRouteBuilder {
         ]
         for ip in directIPs {
             rules.append([
-                "ip_cidr": ["\(ip)/32"],
+                "ip_cidr": [asCIDR32(ip)],
                 "action": "route",
                 "outbound": SingBoxConfigConstants.directTag,
             ])
         }
-        for domain in directDomains {
+        for domain in uplinkDomains {
             guard let cleanDomain = cleanedDomain(domain) else { continue }
             rules.append([
                 "domain": [cleanDomain],
@@ -352,22 +343,41 @@ enum SingBoxTunInboundBuilder {
             "udp_mapping": "endpoint_independent",
             "udp_filtering": "endpoint_independent",
             "udp_nat_max": 4096,
-            "route_address": ["0.0.0.0/1", "128.0.0.0/1"],
+            "route_address": SingBoxConfigConstants.ipv4SplitRoutes,
         ]
-        var exclude = Set(directIPs.map { "\($0)/32" })
-        for ip in bypassExcludeIPs {
-            let clean = ip.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !clean.isEmpty else { continue }
-            exclude.insert(clean.contains("/") ? clean : "\(clean)/32")
-        }
-        if excludeDNSResolver {
-            exclude.insert("\(SingBoxConfigConstants.dnsDirectResolver)/32")
-        }
+        let exclude = routeExcludeAddresses(
+            directIPs: directIPs,
+            bypassExcludeIPs: bypassExcludeIPs,
+            excludeDNSResolver: excludeDNSResolver
+        )
         if !exclude.isEmpty {
-            tunInbound["route_exclude_address"] = exclude.sorted()
+            tunInbound["route_exclude_address"] = exclude
         }
         return tunInbound
     }
+}
+
+/// Host or bare IP → `/32`; leaves existing CIDR untouched.
+private func asCIDR32(_ raw: String) -> String {
+    let clean = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    return clean.contains("/") ? clean : "\(clean)/32"
+}
+
+private func routeExcludeAddresses(
+    directIPs: [String],
+    bypassExcludeIPs: [String],
+    excludeDNSResolver: Bool
+) -> [String] {
+    var exclude = Set(directIPs.map { asCIDR32($0) })
+    for ip in bypassExcludeIPs {
+        let clean = ip.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { continue }
+        exclude.insert(asCIDR32(clean))
+    }
+    if excludeDNSResolver {
+        exclude.insert(asCIDR32(SingBoxConfigConstants.dnsDirectResolver))
+    }
+    return exclude.sorted()
 }
 
 private func cleanedDomain(_ raw: String) -> String? {

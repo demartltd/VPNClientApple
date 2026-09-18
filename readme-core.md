@@ -105,7 +105,7 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 | UDP/443 | `reject` + `method: default` | форс TCP: QUIC-in-QUIC над H2 вешает App Store; bare reject = blackhole |
 | Hysteria2 `udp_fragment` | `true` | QUIC/MTU на Apple NE |
 | TUN `mtu` | `4064` | Apple utun default; low 1400 cap starved bulk TCP |
-| `directDomains` | `[tlsServerName, server]` | SNI / uplink → direct |
+| `uplinkDomains` | `[tlsServerName, server]` | SNI / uplink → DNS bootstrap + route direct |
 | `directIPs` | IPv4 literal или runtime merge | exclude/route bypass |
 
 На Apple endpoint IP сначала исключается из `NEPacketTunnelNetworkSettings`, затем применяется новый config. Hysteria2 (UDP/QUIC) dial'ит uplink напрямую — без TCP hairpin/relay. Libbox Apple уже с `with_quic`.
@@ -124,6 +124,7 @@ Libbox закрывает **все** соединения при пустом de
 - macOS: transient `.unsatisfied` не потеря, пока в `availableInterfaces` есть phys iface.
 - `TunnelLifecycle`: soft-restart только после реального empty-phys outage → `pathRecoveredAfterLoss` (≥3s) или смены excluded-маршрутов; `.unsatisfied` при живом `en0` **не** arm'ит recovery (иначе reload убивает MTProto). Wake здоровый туннель не перезапускает.
 - `includeAllNetworks` выключен; IPv4-only TUN (`ipv6=off`) — как первый Hysteria2 `9f0c3cc`.
+- `excludeAPNs` / `excludeCellularServices` / `excludeLocalNetworks` **no-op** без `includeAllNetworks` ([Apple NE](https://developer.apple.com/documentation/networkextension/nevpnprotocol/excludeapns)) — не выставляем; bypass только через NE `excludedRoutes`.
 - Endpoint резолвится до старта NE и пинится в dial-outbound; TLS SNI остаётся доменным; `udp_fragment: true` на Hysteria2.
 - `dns-direct: local` — Darwin `getaddrinfo` (ipv4_only). PTR → drop; IPv6 / UDP/443 → reject `method: default` (ICMP/RST → App Store TCP fallback).
 - Core log: `log.level=info` + timestamp; `./scripts/journal.sh -p ios --core --tg`.
