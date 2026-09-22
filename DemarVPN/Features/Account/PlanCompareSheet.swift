@@ -8,7 +8,7 @@ struct PlanCompareSheet: View {
             (String(localized: "Speed"), .text(String(localized: "10 Mbps")), .text(String(localized: "100 Mbps")), .text(String(localized: "300 Mbps"))),
             (String(localized: "Traffic"), .text(String(localized: "5 GB")), .text(String(localized: "500 GB")), .text(String(localized: "3000 GB"))),
             (String(localized: "Family invites*"), .bool(false), .text("2"), .text("4")),
-            (String(localized: "Ad blocking*"), .bool(false), .bool(true), .bool(true)),
+            (String(localized: "Ad block"), .bool(false), .bool(true), .bool(true)),
             (String(localized: "TUN settings"), .bool(false), .bool(true), .bool(true)),
             (String(localized: "Dedicated IP*"), .bool(false), .bool(false), .bool(true)),
         ]

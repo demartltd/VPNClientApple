@@ -21,9 +21,11 @@ struct TunCatalog: Sendable {
     static let empty = TunCatalog(siteGroups: [])
 }
 
-struct TunSettings: Sendable {
+struct TunSettings: Sendable, Equatable {
     var siteGroupOverrides: [String: Bool]
     var rulesEnabled: Bool
+    /// `nil` = plan default (free off, paid on); non-nil = user preference (paid only).
+    var adBlockEnabled: Bool? = nil
 
     static let empty = TunSettings(siteGroupOverrides: [:], rulesEnabled: true)
 }
@@ -31,6 +33,11 @@ struct TunSettings: Sendable {
 enum TunEffective {
     static func isRulesEnabled(_ settings: TunSettings, isFree: Bool) -> Bool {
         isFree || settings.rulesEnabled
+    }
+
+    static func isAdBlockEnabled(_ settings: TunSettings, isFree: Bool) -> Bool {
+        guard !isFree else { return false }
+        return settings.adBlockEnabled ?? true
     }
 
     static func isSiteGroupEnabled(_ settings: TunSettings, group: TunSiteGroup) -> Bool {

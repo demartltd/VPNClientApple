@@ -84,6 +84,10 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 
 **Нельзя:** из‑за site-hosts переключать `dns-direct` на UDP `1.1.1.1` или добавлять `route_exclude` `1.1.1.1/32` — это **только** для geosite. Site-hosts идут в уже существующий `dns-direct` (`local` без geosite).
 
+### Ad block (DNS)
+
+Отдельный тоггл в TUN settings. Free: всегда off. Plus/VIP: default **on**, иначе сохранённый выбор пользователя. При on: remote `geosite-category-ads` + DNS `action: reject`. **Не** флипает `dns-direct`. Применение на следующем Connect.
+
 ### TUN / DNS / route
 
 | Параметр | Значение | Эффект |

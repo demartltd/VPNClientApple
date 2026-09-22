@@ -142,15 +142,13 @@
 "Couldn’t load plans" = "Couldn’t load plans";
 "Compare plans" = "Compare plans";
 "Family invites*" = "Family invites*";
-"Ad blocking*" = "Ad block*";
+"Ad block" = "Ad block";
+"Block ads via DNS" = "Block ads via DNS";
 "*Not available yet." = "*Not available yet.";
 "Speed" = "Speed";
 "Traffic" = "Traffic";
 "TUN settings" = "TUN settings";
 "TUN rules" = "TUN rules";
-"Bypass rules" = "Bypass rules";
-"Enable rules" = "Enable rules";
-"Exclude from VPN" = "Exclude from VPN";
 "Exclude selected site groups from the VPN tunnel" = "Exclude selected site groups from the VPN tunnel";
 "Exclude site groups from the tunnel" = "Exclude site groups from the tunnel";
 "Excluded from the VPN tunnel" = "Excluded from the VPN tunnel";

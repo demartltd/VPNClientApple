@@ -18,6 +18,7 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
             }
         }
         let bypassHosts = TunSettingsStore.effectiveBypassHosts(isFree: isFree)
+        let adBlock = TunSettingsStore.effectiveAdBlockEnabled(isFree: isFree)
         let tunFp = TunSettingsStore.fingerprint(isFree: isFree)
         let refreshAssets = Self.shouldRefreshAssets()
         let (plan, endpointAddresses, bypassExcludeIPs, configJson) = try await Task.detached(priority: .userInitiated) {
@@ -31,7 +32,11 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
             let exclude = BypassExcludeIPCache.load(fingerprint: tunFp) ?? []
             let plan = base.pinEndpoint(to: ips)
             let json = try SingBoxConfigBuilder.buildTunConfigJson(
-                plan: plan, tunName: tunName, bypassHosts: bypassHosts, bypassExcludeIPs: exclude
+                plan: plan,
+                tunName: tunName,
+                bypassHosts: bypassHosts,
+                bypassExcludeIPs: exclude,
+                adBlockEnabled: adBlock
             )
             return (plan, ips, exclude, json)
         }.value
@@ -41,7 +46,7 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
             AppLog.shared.append(
                 "[vpn] connect tun=\(tunFp) hosts=\(bypassHosts.count) "
                     + "excludeIPs=\(bypassExcludeIPs.count) rs=\(plan.bypassRuleSets.count) "
-                    + "assetsRefresh=\(refreshAssets)"
+                    + "adblock=\(adBlock) assetsRefresh=\(refreshAssets)"
             )
         }
         try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in

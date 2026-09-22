@@ -138,15 +138,13 @@
 "Couldn’t load plans" = "Не удалось загрузить тарифы";
 "Compare plans" = "Сравнить тарифы";
 "Family invites*" = "Семейная подписка*";
-"Ad blocking*" = "Ad block*";
+"Ad block" = "Ad block";
+"Block ads via DNS" = "Блокировка рекламы через DNS";
 "*Not available yet." = "*На данный момент не реализовано.";
 "Speed" = "Скорость";
 "Traffic" = "Трафик";
 "TUN settings" = "Настройки TUN";
 "TUN rules" = "Правила TUN";
-"Bypass rules" = "Правила обхода";
-"Enable rules" = "Включить правила";
-"Exclude from VPN" = "Исключить из VPN";
 "Exclude selected site groups from the VPN tunnel" = "Исключать выбранные группы сайтов из туннеля VPN";
 "Exclude site groups from the tunnel" = "Исключения групп сайтов из туннеля";
 "Excluded from the VPN tunnel" = "Вне VPN-туннеля";

@@ -10,7 +10,8 @@ enum SingBoxConfigBuilder {
         mtu: Int = 4064,
         logLevel: String = "info",
         bypassHosts: [String] = [],
-        bypassExcludeIPs: [String] = []
+        bypassExcludeIPs: [String] = [],
+        adBlockEnabled: Bool = false
     ) throws -> String {
         try SingBoxConfigEncoding.encodeConfigToJson(
             buildTunConfig(
@@ -19,7 +20,8 @@ enum SingBoxConfigBuilder {
                 mtu: mtu,
                 logLevel: logLevel,
                 bypassHosts: bypassHosts,
-                bypassExcludeIPs: bypassExcludeIPs
+                bypassExcludeIPs: bypassExcludeIPs,
+                adBlockEnabled: adBlockEnabled
             ),
             errorCode: 1,
             description: "Failed to encode sing-box config JSON."
@@ -96,7 +98,8 @@ enum SingBoxConfigBuilder {
         mtu: Int,
         logLevel: String,
         bypassHosts: [String],
-        bypassExcludeIPs: [String]
+        bypassExcludeIPs: [String],
+        adBlockEnabled: Bool
     ) -> [String: Any] {
         let geosite = plan.bypassRuleSets.filter(\.isGeosite)
         let hosts = cleanedDomains(bypassHosts)
@@ -107,7 +110,8 @@ enum SingBoxConfigBuilder {
                 final: plan.tun.dnsFinal,
                 bootstrapDomains: uplink,
                 geositeRuleSets: geosite,
-                bypassHosts: hosts
+                bypassHosts: hosts,
+                adBlockEnabled: adBlockEnabled
             ),
             "inbounds": [SingBoxTunInboundBuilder.makeTunInbound(
                 tunName: tunName,
@@ -127,7 +131,8 @@ enum SingBoxConfigBuilder {
                 inboundTag: SingBoxConfigConstants.tunInboundTag,
                 directIPs: plan.directIPs,
                 uplinkDomains: uplink,
-                geositeRuleSets: geosite
+                geositeRuleSets: geosite,
+                adBlockEnabled: adBlockEnabled
             ),
             "outbounds": [plan.proxyOutbound, ["type": "direct", "tag": SingBoxConfigConstants.directTag]],
             "experimental": [
@@ -139,7 +144,7 @@ enum SingBoxConfigBuilder {
             ],
         ]
         // 1.14: remote rule-set download via http_clients (download_detour deprecated).
-        if !geosite.isEmpty {
+        if adBlockEnabled || !geosite.isEmpty {
             config["http_clients"] = [[
                 "tag": SingBoxConfigConstants.httpRuleSetDownloadTag,
                 "detour": SingBoxConfigConstants.proxyTag,
@@ -156,6 +161,9 @@ enum SingBoxConfigConstants {
     static let dnsDirectTag = "dns-direct"
     static let dnsRemoteTag = "dns-remote"
     static let httpRuleSetDownloadTag = "rs-dl"
+    static let adsRuleSetTag = "geosite-category-ads"
+    static let adsRuleSetURL =
+        "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads.srs"
     static let diagnosticInboundTag = "diag-in"
     static let diagnosticHost = "127.0.0.1"
     static let diagnosticPort = 10808
@@ -188,7 +196,8 @@ enum SingBoxDnsBuilder {
         final dnsFinal: String,
         bootstrapDomains: [String] = [],
         geositeRuleSets: [ApiBypassRuleSet] = [],
-        bypassHosts: [String] = []
+        bypassHosts: [String] = [],
+        adBlockEnabled: Bool = false
     ) -> [String: Any] {
         var rules: [[String: Any]] = [
             ["query_type": ["PTR"], "action": "reject", "method": "drop"],
@@ -208,6 +217,12 @@ enum SingBoxDnsBuilder {
                 "server": SingBoxConfigConstants.dnsDirectTag,
             ])
         }
+        if adBlockEnabled {
+            rules.append([
+                "rule_set": [SingBoxConfigConstants.adsRuleSetTag],
+                "action": "reject",
+            ])
+        }
         for rs in geositeRuleSets {
             rules.append([
                 "rule_set": [rs.tag],
@@ -215,7 +230,7 @@ enum SingBoxDnsBuilder {
                 "server": SingBoxConfigConstants.dnsDirectTag,
             ])
         }
-        // UDP 1.1.1.1 + route_exclude only for geosite — site hosts must not flip dns-direct.
+        // UDP 1.1.1.1 + route_exclude only for geosite — site hosts / ads must not flip dns-direct.
         let dnsDirect: [String: Any] = geositeRuleSets.isEmpty
             ? ["type": "local", "tag": SingBoxConfigConstants.dnsDirectTag]
             : [
@@ -258,7 +273,8 @@ enum SingBoxRouteBuilder {
         inboundTag: String,
         directIPs: [String],
         uplinkDomains: [String] = [],
-        geositeRuleSets: [ApiBypassRuleSet] = []
+        geositeRuleSets: [ApiBypassRuleSet] = [],
+        adBlockEnabled: Bool = false
     ) -> [String: Any] {
         var rules: [[String: Any]] = [
             ["inbound": [inboundTag], "action": "sniff", "timeout": "300ms"],
@@ -302,20 +318,22 @@ enum SingBoxRouteBuilder {
             "final": SingBoxConfigConstants.proxyTag,
             "rules": rules,
         ]
-        if !geositeRuleSets.isEmpty {
+        var ruleSets = geositeRuleSets.map { remoteRuleSet(tag: $0.tag, url: $0.url) }
+        if adBlockEnabled {
+            ruleSets.append(remoteRuleSet(
+                tag: SingBoxConfigConstants.adsRuleSetTag,
+                url: SingBoxConfigConstants.adsRuleSetURL
+            ))
+        }
+        if !ruleSets.isEmpty {
             route["default_http_client"] = SingBoxConfigConstants.httpRuleSetDownloadTag
-            route["rule_set"] = geositeRuleSets.map { remoteRuleSet($0) }
+            route["rule_set"] = ruleSets
         }
         return route
     }
 
-    private static func remoteRuleSet(_ rs: ApiBypassRuleSet) -> [String: Any] {
-        [
-            "tag": rs.tag,
-            "type": "remote",
-            "format": "binary",
-            "url": rs.url,
-        ]
+    private static func remoteRuleSet(tag: String, url: String) -> [String: Any] {
+        ["tag": tag, "type": "remote", "format": "binary", "url": url]
     }
 }
 

@@ -5,6 +5,7 @@ struct TunSettingsView: View {
     var onBuySubscription: (() -> Void)?
 
     @State private var rulesEnabled = TunSettingsStore.currentSettings.rulesEnabled
+    @State private var adBlockOverride = TunSettingsStore.currentSettings.adBlockEnabled
     @State private var catalog = TunSettingsStore.currentCatalog
     @State private var overrides = TunSettingsStore.currentSettings.siteGroupOverrides
     @State private var expanded = Set<String>()
@@ -15,18 +16,30 @@ struct TunSettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 SettingsActionButton(
+                    systemImage: "hand.raised",
+                    title: String(localized: "Ad block"),
+                    subtitle: String(localized: "Block ads via DNS"),
+                    action: nil,
+                    trailing: {
+                        paidSwitch(Binding(
+                            get: { isFree ? false : (adBlockOverride ?? true) },
+                            set: { value in
+                                guard !isFree else { return }
+                                adBlockOverride = value
+                                TunSettingsStore.setAdBlockEnabled(value)
+                            }
+                        ))
+                    }
+                )
+
+                SettingsActionButton(
                     systemImage: "lock.shield",
                     title: String(localized: "TUN rules"),
                     subtitle: String(localized: "Exclude selected site groups from the VPN tunnel"),
                     action: nil,
-                    trailing: {
-                        Toggle("", isOn: rulesBinding)
-                            .labelsHidden()
-                            .toggleStyle(.switch)
-                            .tint(Color.demarPrimary)
-                            .disabled(isFree)
-                    }
+                    trailing: { paidSwitch(paidBinding($rulesEnabled, free: true, TunSettingsStore.setRulesEnabled)) }
                 )
+                .padding(.top, 12)
 
                 if isFree {
                     Button {
@@ -87,31 +100,43 @@ struct TunSettingsView: View {
         .onChange(of: isFree) { _, free in
             guard free else { return }
             rulesEnabled = true
+            adBlockOverride = nil
             overrides = [:]
         }
     }
 
-    private var rulesBinding: Binding<Bool> {
+    private func paidBinding(
+        _ value: Binding<Bool>,
+        free freeValue: Bool,
+        _ persist: @escaping (Bool) -> Void
+    ) -> Binding<Bool> {
         Binding(
-            get: { isFree ? true : rulesEnabled },
-            set: { value in
+            get: { isFree ? freeValue : value.wrappedValue },
+            set: { new in
                 guard !isFree else { return }
-                rulesEnabled = value
-                TunSettingsStore.setRulesEnabled(value)
+                value.wrappedValue = new
+                persist(new)
             }
         )
     }
 
+    private func paidSwitch(_ isOn: Binding<Bool>) -> some View {
+        Toggle("", isOn: isOn)
+            .labelsHidden()
+            .toggleStyle(.switch)
+            .tint(Color.demarPrimary)
+            .disabled(isFree)
+    }
+
     @ViewBuilder
     private func siteGroupBlock(_ group: TunSiteGroup) -> some View {
-        let on = groupEnabled(group)
+        let on = overrides[group.id] ?? group.enabledByDefault
         let open = expanded.contains(group.id)
-        let title = "\(group.name) (\(group.sites.count))"
 
         VStack(alignment: .leading, spacing: 4) {
             SettingsActionButton(
                 systemImage: "globe",
-                title: title,
+                title: "\(group.name) (\(group.sites.count))",
                 subtitle: String(localized: "Excluded from the VPN tunnel"),
                 action: { toggleExpanded(group.id) },
                 trailing: {
@@ -179,13 +204,6 @@ struct TunSettingsView: View {
         .padding(.vertical, 8)
     }
 
-    private func groupEnabled(_ group: TunSiteGroup) -> Bool {
-        TunEffective.isSiteGroupEnabled(
-            TunSettings(siteGroupOverrides: overrides, rulesEnabled: rulesEnabled),
-            group: group
-        )
-    }
-
     private func toggleExpanded(_ id: String) {
         withAnimation(.snappy(duration: 0.22)) {
             if expanded.contains(id) { expanded.remove(id) } else { expanded.insert(id) }
@@ -198,6 +216,7 @@ struct TunSettingsView: View {
         TunSettingsStore.loadIfNeeded()
         let settings = TunSettingsStore.currentSettings
         rulesEnabled = settings.rulesEnabled
+        adBlockOverride = settings.adBlockEnabled
         overrides = settings.siteGroupOverrides
         catalog = TunSettingsStore.currentCatalog
 

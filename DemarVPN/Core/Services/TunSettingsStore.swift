@@ -3,6 +3,7 @@ import Foundation
 enum TunSettingsStore {
     private enum Key {
         static let rulesEnabled = "tun_rules_enabled"
+        static let adBlockEnabled = "tun_ad_block_enabled"
         static let siteOverrides = "tun_site_group_overrides"
         /// Legacy key — migrated once into SessionCacheStore / memory.
         static let legacyGroupsJson = "tun_groups_json"
@@ -20,7 +21,8 @@ enum TunSettingsStore {
         guard !ready else { return }
         settings = TunSettings(
             siteGroupOverrides: (defaults.dictionary(forKey: Key.siteOverrides) as? [String: Bool]) ?? [:],
-            rulesEnabled: defaults.object(forKey: Key.rulesEnabled) as? Bool ?? true
+            rulesEnabled: defaults.object(forKey: Key.rulesEnabled) as? Bool ?? true,
+            adBlockEnabled: defaults.object(forKey: Key.adBlockEnabled) as? Bool
         )
         if let legacy = defaults.string(forKey: Key.legacyGroupsJson)?.nilIfBlank {
             catalog = TunGroupsApi.parse(legacy)
@@ -69,15 +71,16 @@ enum TunSettingsStore {
     }
 
     static func setRulesEnabled(_ enabled: Bool) {
+        setFlag(\.rulesEnabled, enabled)
+    }
+
+    static func setAdBlockEnabled(_ enabled: Bool) {
         loadIfNeeded()
         lock.lock()
-        guard settings.rulesEnabled != enabled else {
-            lock.unlock()
-            return
-        }
-        settings.rulesEnabled = enabled
+        defer { lock.unlock() }
+        guard settings.adBlockEnabled != enabled else { return }
+        settings.adBlockEnabled = enabled
         persistPrefsLocked()
-        lock.unlock()
     }
 
     static func setSiteGroupEnabled(_ groupId: String, enabled: Bool, defaultEnabled: Bool) {
@@ -99,7 +102,7 @@ enum TunSettingsStore {
         loadIfNeeded()
         lock.lock()
         defer { lock.unlock() }
-        guard settings.rulesEnabled != true || !settings.siteGroupOverrides.isEmpty else { return }
+        guard settings != .empty else { return }
         settings = .empty
         persistPrefsLocked()
     }
@@ -111,6 +114,10 @@ enum TunSettingsStore {
         return TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: isFree)
     }
 
+    static func effectiveAdBlockEnabled(isFree: Bool) -> Bool {
+        TunEffective.isAdBlockEnabled(currentSettings, isFree: isFree)
+    }
+
     static func fingerprint(isFree: Bool) -> String {
         loadIfNeeded()
         lock.lock()
@@ -118,8 +125,22 @@ enum TunSettingsStore {
         return TunEffective.fingerprint(settings: settings, catalog: catalog, isFree: isFree)
     }
 
+    private static func setFlag(_ keyPath: WritableKeyPath<TunSettings, Bool>, _ enabled: Bool) {
+        loadIfNeeded()
+        lock.lock()
+        defer { lock.unlock() }
+        guard settings[keyPath: keyPath] != enabled else { return }
+        settings[keyPath: keyPath] = enabled
+        persistPrefsLocked()
+    }
+
     private static func persistPrefsLocked() {
         defaults.set(settings.rulesEnabled, forKey: Key.rulesEnabled)
+        if let adBlock = settings.adBlockEnabled {
+            defaults.set(adBlock, forKey: Key.adBlockEnabled)
+        } else {
+            defaults.removeObject(forKey: Key.adBlockEnabled)
+        }
         defaults.set(settings.siteGroupOverrides, forKey: Key.siteOverrides)
     }
 }

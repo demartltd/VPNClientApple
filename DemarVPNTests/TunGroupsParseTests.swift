@@ -84,6 +84,17 @@ final class TunGroupsParseTests: XCTestCase {
         )
     }
 
+    func testAdBlockDefaultOffAndFreeForcedOff() {
+        XCTAssertNil(TunSettings.empty.adBlockEnabled)
+        XCTAssertFalse(TunEffective.isAdBlockEnabled(.empty, isFree: true))
+        XCTAssertTrue(TunEffective.isAdBlockEnabled(.empty, isFree: false))
+        let off = TunSettings(siteGroupOverrides: [:], rulesEnabled: true, adBlockEnabled: false)
+        XCTAssertFalse(TunEffective.isAdBlockEnabled(off, isFree: false))
+        let on = TunSettings(siteGroupOverrides: [:], rulesEnabled: true, adBlockEnabled: true)
+        XCTAssertTrue(TunEffective.isAdBlockEnabled(on, isFree: false))
+        XCTAssertFalse(TunEffective.isAdBlockEnabled(on, isFree: true))
+    }
+
     func testBypassHostsNormalizesDirtyApiHosts() {
         let catalog = TunCatalog(siteGroups: [
             TunSiteGroup(
