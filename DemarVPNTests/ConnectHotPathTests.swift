@@ -44,6 +44,30 @@ final class ConnectHotPathTests: XCTestCase {
         XCTAssertEqual(try UplinkIPv4Resolver.resolve("  "), [])
     }
 
+    func testBypassExcludeIPCacheRoundTrip() {
+        let fp = "test-fp-\(UUID().uuidString)"
+        XCTAssertNil(BypassExcludeIPCache.load(fingerprint: fp))
+        BypassExcludeIPCache.save(fingerprint: fp, ips: ["203.0.113.1", "203.0.113.2"])
+        XCTAssertEqual(BypassExcludeIPCache.load(fingerprint: fp), ["203.0.113.1", "203.0.113.2"])
+    }
+
+    func testParseARecordsFromFixture() {
+        // Minimal DNS response: id=0x1234, QR=1 RCODE=0, QD=1 AN=1, A=203.0.113.10
+        // Question: a.example / A IN; Answer: pointer to QNAME + A 203.0.113.10
+        let bytes: [UInt8] = [
+            0x12, 0x34, 0x81, 0x80, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+            0x01, 0x61, 0x07, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x00,
+            0x00, 0x01, 0x00, 0x01,
+            0xC0, 0x0C, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x3C, 0x00, 0x04,
+            203, 0, 113, 10,
+        ]
+        XCTAssertEqual(
+            UplinkIPv4Resolver.parseARecords(Data(bytes), expectedID: 0x1234),
+            ["203.0.113.10"]
+        )
+        XCTAssertEqual(UplinkIPv4Resolver.parseARecords(Data(bytes), expectedID: 0x0001), [])
+    }
+
     func testParseUplinkIPv4OptionsList() {
         let raw = "1.2.3.4, 5.6.7.8,, "
         let ips = raw

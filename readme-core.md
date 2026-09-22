@@ -125,7 +125,7 @@ Libbox закрывает **все** соединения при пустом de
 - `TunnelLifecycle`: soft-restart только после реального empty-phys outage → `pathRecoveredAfterLoss` (≥3s) или смены excluded-маршрутов; `.unsatisfied` при живом `en0` **не** arm'ит recovery (иначе reload убивает MTProto). Wake здоровый туннель не перезапускает.
 - `includeAllNetworks` выключен; IPv4-only TUN (`ipv6=off`) — как первый Hysteria2 `9f0c3cc`.
 - `excludeAPNs` / `excludeCellularServices` / `excludeLocalNetworks` **no-op** без `includeAllNetworks` ([Apple NE](https://developer.apple.com/documentation/networkextension/nevpnprotocol/excludeapns)) — не выставляем; bypass только через NE `excludedRoutes`.
-- Endpoint резолвится до старта NE и пинится в dial-outbound; TLS SNI остаётся доменным; `udp_fragment: true` на Hysteria2.
+- Endpoint резолвится до старта NE (`getaddrinfo` ∥ UDP A `1.1.1.1`, затем `8.8.8.8`) и пинится в dial-outbound; site exclude IPs — cache-first + async reapply (не блокируют startTunnel); TLS SNI остаётся доменным; `udp_fragment: true` на Hysteria2.
 - `dns-direct: local` — Darwin `getaddrinfo` (ipv4_only). PTR → drop; IPv6 / UDP/443 → reject `method: default` (ICMP/RST → App Store TCP fallback).
 - Core log: `log.level=info` + timestamp; `./scripts/journal.sh -p ios --core --tg`.
 

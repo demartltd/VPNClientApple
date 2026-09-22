@@ -20,33 +20,21 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
         let bypassHosts = TunSettingsStore.effectiveBypassHosts(isFree: isFree)
         let tunFp = TunSettingsStore.fingerprint(isFree: isFree)
         let refreshAssets = Self.shouldRefreshAssets()
-        let prepared = try await Task.detached(priority: .userInitiated) {
-            let basePlan = server.connectPlan
-            let endpointAddresses = try UplinkIPv4Resolver.resolve(basePlan.uplinkHost)
-            guard !endpointAddresses.isEmpty else {
+        let (plan, endpointAddresses, bypassExcludeIPs, configJson) = try await Task.detached(priority: .userInitiated) {
+            let base = server.connectPlan
+            let ips = try UplinkIPv4Resolver.resolve(base.uplinkHost)
+            guard !ips.isEmpty else {
                 throw NSError(domain: "DemarVpn", code: 10, userInfo: [
                     NSLocalizedDescriptionKey: "VPN endpoint has no IPv4 address.",
                 ])
             }
-            // Site bypass on Apple NE = route_exclude (like geoip), not outbound:direct.
-            let bypassExcludeIPs = Self.resolveBypassExcludeIPs(bypassHosts)
-            let plan = basePlan.pinEndpoint(to: endpointAddresses)
-            return (
-                plan,
-                endpointAddresses,
-                bypassExcludeIPs,
-                try SingBoxConfigBuilder.buildTunConfigJson(
-                    plan: plan,
-                    tunName: tunName,
-                    bypassHosts: bypassHosts,
-                    bypassExcludeIPs: bypassExcludeIPs
-                )
+            let exclude = BypassExcludeIPCache.load(fingerprint: tunFp) ?? []
+            let plan = base.pinEndpoint(to: ips)
+            let json = try SingBoxConfigBuilder.buildTunConfigJson(
+                plan: plan, tunName: tunName, bypassHosts: bypassHosts, bypassExcludeIPs: exclude
             )
+            return (plan, ips, exclude, json)
         }.value
-        let plan = prepared.0
-        let endpointAddresses = prepared.1
-        let bypassExcludeIPs = prepared.2
-        let configJson = prepared.3
         try VpnSharedStore.saveBypassGeoipTags(plan.geoipBypassTags)
         let sessionId = Self.newSessionId()
         await MainActor.run {
@@ -56,8 +44,7 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
                     + "assetsRefresh=\(refreshAssets)"
             )
         }
-
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
             controller.connect(
                 configJson: configJson,
                 uplinkHost: plan.uplinkHost,
@@ -66,24 +53,20 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
                 connectTriggerSource: "swiftApp",
                 refreshAssetsFromBundle: refreshAssets,
                 savePayload: true
-            ) { result in
-                continuation.resume(with: result)
-            }
+            ) { c.resume(with: $0) }
         }
+        Self.refreshBypassExcludes(hosts: bypassHosts, fingerprint: tunFp, uplinkIPs: endpointAddresses)
     }
 
     func disconnect() async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            controller.disconnect(triggerSource: "swiftApp") { result in
-                continuation.resume(with: result)
-            }
+        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+            controller.disconnect(triggerSource: "swiftApp") { c.resume(with: $0) }
         }
     }
 
-    /// After upgrade wipe, `bundled_version.txt` is gone → first connect always refreshes.
     private static func shouldRefreshAssets() -> Bool {
-        guard let assetDir = try? VpnAppGroup.assetDirectoryURL() else { return true }
-        return CoreBundleAssets.needsRefresh(in: assetDir)
+        guard let dir = try? VpnAppGroup.assetDirectoryURL() else { return true }
+        return CoreBundleAssets.needsRefresh(in: dir)
     }
 
     @MainActor
@@ -94,24 +77,41 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
     }
 
     private static func newSessionId() -> String {
-        let bytes = (0..<8).map { _ in UInt8.random(in: 0...255) }
-        return bytes.map { String(format: "%02x", $0) }.joined()
+        (0..<8).map { _ in String(format: "%02x", UInt8.random(in: 0...255)) }.joined()
     }
 
-    /// Best-effort A records for NE `excludedRoutes`. Failures skipped; CDN IPs that
-    /// miss the list fall through to proxy (still load — no ENETUNREACH).
+    /// Off hot path: resolve site A → cache → reapply NE excludes if still connected.
+    private static func refreshBypassExcludes(hosts: [String], fingerprint: String, uplinkIPs: [String]) {
+        guard !hosts.isEmpty else { return }
+        let ctrl = VpnTunnelController.shared
+        Task.detached(priority: .utility) {
+            let fresh = resolveBypassExcludeIPs(hosts)
+            BypassExcludeIPCache.save(fingerprint: fingerprint, ips: fresh)
+            let merged = Array(Set(uplinkIPs + fresh)).sorted()
+            guard !merged.isEmpty else { return }
+            ctrl.sendProviderCommand("reapplyExcludes:" + merged.joined(separator: ",")) { result in
+                Task { @MainActor in
+                    switch result {
+                    case .success:
+                        AppLog.shared.append("[vpn] bypass reapply excludeIPs=\(fresh.count)")
+                    case .failure(let e):
+                        AppLog.shared.append("[vpn] bypass reapply skip: \(e.localizedDescription)")
+                    }
+                }
+            }
+        }
+    }
+
     private static func resolveBypassExcludeIPs(_ hosts: [String], maxIPs: Int = 128) -> [String] {
         let names = TunEffective.excludeResolveHosts(hosts)
         guard !names.isEmpty else { return [] }
         let lock = NSLock()
         var out = Set<String>()
-        DispatchQueue.concurrentPerform(iterations: names.count) { index in
-            guard let ips = try? UplinkIPv4Resolver.resolve(names[index]) else { return }
+        DispatchQueue.concurrentPerform(iterations: names.count) { i in
+            guard let ips = try? UplinkIPv4Resolver.resolve(names[i]) else { return }
             lock.lock()
-            defer { lock.unlock() }
-            for ip in ips where out.count < maxIPs {
-                out.insert(ip)
-            }
+            for ip in ips where out.count < maxIPs { out.insert(ip) }
+            lock.unlock()
         }
         return out.sorted()
     }

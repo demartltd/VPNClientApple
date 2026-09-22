@@ -123,3 +123,21 @@ enum TunSettingsStore {
         defaults.set(settings.siteGroupOverrides, forKey: Key.siteOverrides)
     }
 }
+
+/// Site-host A-records for NE excludes. Hot path = cache; refresh async.
+enum BypassExcludeIPCache {
+    private static let defaults = UserDefaults.standard
+    private static let ttl: TimeInterval = 3600
+
+    static func load(fingerprint: String) -> [String]? {
+        let ips = defaults.stringArray(forKey: "bex|\(fingerprint)") ?? []
+        let at = defaults.double(forKey: "bexAt|\(fingerprint)")
+        guard !ips.isEmpty, at > 0, Date().timeIntervalSince1970 - at < ttl else { return nil }
+        return ips
+    }
+
+    static func save(fingerprint: String, ips: [String]) {
+        defaults.set(ips, forKey: "bex|\(fingerprint)")
+        defaults.set(Date().timeIntervalSince1970, forKey: "bexAt|\(fingerprint)")
+    }
+}

@@ -92,6 +92,10 @@ enum IOSLibboxCore {
         try? Data().write(to: url, options: .atomic)
     }
 
+    static func reapplyExcludedIPv4(_ addresses: [String]) throws {
+        try platform?.reapplyExcludedIPv4(addresses)
+    }
+
     static func activateTrafficCapture() throws {
         try platform?.activateTrafficCapture()
     }

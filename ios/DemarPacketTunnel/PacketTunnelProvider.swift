@@ -519,17 +519,35 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   }
 
   override func handleAppMessage(_ messageData: Data, completionHandler: ((Data?) -> Void)? = nil) {
-    guard String(data: messageData, encoding: .utf8) == "hardRestartCore" else {
-      completionHandler?(nil)
-      return
-    }
-    hardRestartCore { error in
-      if let error {
-        completionHandler?(Data("err:\(error.localizedDescription)".utf8))
+    let text = String(data: messageData, encoding: .utf8) ?? ""
+    func reply(_ err: Error?) {
+      if let err {
+        completionHandler?(Data("err:\(err.localizedDescription)".utf8))
       } else {
         completionHandler?(Data("ok".utf8))
       }
     }
+    if text == "hardRestartCore" {
+      hardRestartCore(completion: reply)
+      return
+    }
+    if text.hasPrefix("reapplyExcludes:") {
+      let ips = text.dropFirst("reapplyExcludes:".count)
+        .split(separator: ",")
+        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        .filter { !$0.isEmpty }
+      coreQueue.async {
+        do {
+          try IOSLibboxCore.reapplyExcludedIPv4(ips)
+          Self.diag("reapplyExcludes count=\(ips.count)")
+          DispatchQueue.main.async { reply(nil) }
+        } catch {
+          DispatchQueue.main.async { reply(error) }
+        }
+      }
+      return
+    }
+    completionHandler?(nil)
   }
 
   private func hardRestartCore(completion: @escaping (Error?) -> Void) {
