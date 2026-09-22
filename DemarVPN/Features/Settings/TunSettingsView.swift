@@ -71,13 +71,6 @@ struct TunSettingsView: View {
                         .foregroundStyle(Color.demarOnSurface)
                         .padding(.top, 24)
 
-                    if isFree {
-                        Text(String(localized: "Site groups can be changed after buying a subscription"))
-                            .font(.demarBodySmall)
-                            .foregroundStyle(Color.demarOnSurfaceVariant)
-                            .padding(.top, 4)
-                    }
-
                     VStack(spacing: 12) {
                         ForEach(catalog.siteGroups) { group in
                             siteGroupBlock(group)
