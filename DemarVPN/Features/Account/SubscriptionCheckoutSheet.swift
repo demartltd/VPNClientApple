@@ -180,7 +180,7 @@ struct SubscriptionCheckoutSheet: View {
                     featured: true,
                     perks: [
                         String(localized: "Premium servers"),
-                        String(localized: "100 Mbps"),
+                        "100 Mbps",
                         String(localized: "500 GB traffic"),
                     ]
                 )
@@ -191,7 +191,7 @@ struct SubscriptionCheckoutSheet: View {
                     featured: false,
                     perks: [
                         String(localized: "Dedicated servers"),
-                        String(localized: "300 Mbps"),
+                        "300 Mbps",
                         String(localized: "3000 GB traffic"),
                     ]
                 )

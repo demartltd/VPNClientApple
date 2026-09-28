@@ -13,7 +13,11 @@ import AppKit
 @Observable
 final class AppLanguage {
     static let shared = AppLanguage()
-    static let supported = ["en", "ru"]
+    static let supported = [
+        "en", "ru", "uk", "tr", "uz",
+        "zh-Hans", "zh-Hant", "ko", "ja",
+        "es", "de", "fr", "hi",
+    ]
 
     private(set) var code: String
 
@@ -30,17 +34,22 @@ final class AppLanguage {
     }
 
     static func displayName(for code: String) -> String {
-        let raw = Locale(identifier: code).localizedString(forLanguageCode: code)
-            ?? Locale.current.localizedString(forLanguageCode: code)
+        let locale = Locale.current
+        let raw = locale.localizedString(forIdentifier: code)
+            ?? locale.localizedString(forLanguageCode: Locale(identifier: code).language.languageCode?.identifier ?? code)
             ?? code
         guard let first = raw.first else { return raw }
-        return String(first).uppercased(with: Locale(identifier: code)) + raw.dropFirst()
+        return String(first).uppercased(with: locale) + raw.dropFirst()
+    }
+
+    /// Canonical code from `supported`, or nil.
+    static func match(_ raw: String) -> String? {
+        Bundle.preferredLocalizations(from: supported, forPreferences: [raw]).first
     }
 
     #if os(macOS)
     func select(_ code: String) {
-        let next = code.lowercased()
-        guard Self.supported.contains(next), next != self.code else { return }
+        guard let next = Self.match(code), next != self.code else { return }
         Self.persist(next)
         self.code = next
         Self.relaunch()
@@ -52,7 +61,6 @@ final class AppLanguage {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         UIApplication.shared.open(url)
         #elseif os(macOS)
-        // System Settings → Language & Region (per-app languages live here).
         if let url = URL(string: "x-apple.systempreferences:com.apple.Localization-Settings") {
             NSWorkspace.shared.open(url)
         }
@@ -60,29 +68,22 @@ final class AppLanguage {
     }
 
     private static func bundleCode() -> String {
-        if let preferred = Bundle.main.preferredLocalizations.first.map({
-            String($0.prefix(2)).lowercased()
-        }), supported.contains(preferred) {
-            return preferred
-        }
-        return "en"
+        match(Bundle.main.preferredLocalizations.first ?? "en") ?? "en"
     }
 
     #if os(macOS)
     private static let defaultsKey = "demar_app_language"
 
     private static func resolveCode() -> String {
-        if let stored = UserDefaults.standard.string(forKey: defaultsKey)?.lowercased(),
-           supported.contains(stored)
+        if let stored = UserDefaults.standard.string(forKey: defaultsKey),
+           let hit = match(stored)
         {
-            return stored
+            return hit
         }
-        if let apple = (UserDefaults.standard.array(forKey: "AppleLanguages") as? [String])?
-            .first
-            .map({ String($0.prefix(2)).lowercased() }),
-           supported.contains(apple)
+        if let apple = (UserDefaults.standard.array(forKey: "AppleLanguages") as? [String])?.first,
+           let hit = match(apple)
         {
-            return apple
+            return hit
         }
         return bundleCode()
     }

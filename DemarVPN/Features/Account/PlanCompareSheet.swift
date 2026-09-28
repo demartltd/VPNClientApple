@@ -5,8 +5,8 @@ struct PlanCompareSheet: View {
 
     private var rows: [(label: String, free: CompareCell, plus: CompareCell, vip: CompareCell)] {
         [
-            (String(localized: "Speed"), .text(String(localized: "10 Mbps")), .text(String(localized: "100 Mbps")), .text(String(localized: "300 Mbps"))),
-            (String(localized: "Traffic"), .text(String(localized: "5 GB")), .text(String(localized: "500 GB")), .text(String(localized: "3000 GB"))),
+            (String(localized: "Speed"), .text("10 Mbps"), .text("100 Mbps"), .text("300 Mbps")),
+            (String(localized: "Traffic"), .text("5 GB"), .text("500 GB"), .text("3000 GB")),
             (String(localized: "Family invites*"), .bool(false), .text("2"), .text("4")),
             (String(localized: "Ad block"), .bool(false), .bool(true), .bool(true)),
             (String(localized: "TUN settings"), .bool(false), .bool(true), .bool(true)),

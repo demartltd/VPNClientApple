@@ -80,7 +80,18 @@ DemarVPN/                              # SwiftUI target
 ├── Resources/
 │   ├── en.lproj/Localizable.strings   # UI strings (en)
 │   ├── ru.lproj/Localizable.strings   # UI strings (ru)
-│   ├── InfoPlist.xcstrings            # privacy / NE usage ru/en
+│   ├── uk.lproj/Localizable.strings   # UI strings (uk)
+│   ├── tr.lproj/Localizable.strings   # UI strings (tr)
+│   ├── uz.lproj/Localizable.strings   # UI strings (uz, Latin)
+│   ├── zh-Hans.lproj/Localizable.strings  # Simplified Chinese
+│   ├── zh-Hant.lproj/Localizable.strings  # Traditional Chinese
+│   ├── ko.lproj/Localizable.strings   # Korean
+│   ├── ja.lproj/Localizable.strings   # Japanese
+│   ├── es.lproj/Localizable.strings   # Spanish
+│   ├── de.lproj/Localizable.strings   # German
+│   ├── fr.lproj/Localizable.strings   # French
+│   ├── hi.lproj/Localizable.strings   # Hindi
+│   ├── InfoPlist.xcstrings            # privacy / NE usage (all locales)
 │   ├── TunBypass/                     # geoip-*.cidrs.json (aggregated ≤/20) → NE excludedRoutes
 │   └── Fonts/
 │       ├── fa-brands-400.ttf

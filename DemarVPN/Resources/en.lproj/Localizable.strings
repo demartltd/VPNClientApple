@@ -126,8 +126,6 @@
 "Maximum features" = "Maximum features";
 "Premium servers" = "Premium servers";
 "Dedicated servers" = "Dedicated servers";
-"100 Mbps" = "100 Mbps";
-"300 Mbps" = "300 Mbps";
 "500 GB traffic" = "500 GB traffic";
 "3000 GB traffic" = "3000 GB traffic";
 "per week" = "per week";
@@ -248,10 +246,4 @@
 "VPN tunnel error (%@)." = "VPN tunnel error (%@).";
 "Yes" = "Yes";
 "You signed out" = "You signed out";
-"10 Mbps" = "10 Mbps";
-"100 Mbps" = "100 Mbps";
-"300 Mbps" = "300 Mbps";
-"5 GB" = "5 GB";
-"500 GB" = "500 GB";
-"3000 GB" = "3000 GB";
 
