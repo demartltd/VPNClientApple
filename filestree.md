@@ -4,7 +4,7 @@
 
 ```
 DemarVPN/                              # SwiftUI target
-├── DemarVPNApp.swift                  # @main, тема, macOS окно зондов
+├── DemarVPNApp.swift                  # @main, тема, macOS размер окна + зонды
 ├── ContentView.swift                  # TabView / NavigationSplitView
 ├── Info.plist                         # iOS, ATT
 ├── Info-macOS.plist                   # macOS bundle

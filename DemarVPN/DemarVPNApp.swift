@@ -26,8 +26,10 @@ struct DemarVPNApp: App {
         // Reuse existing main window for demarvpn://; hide File → New Window.
         WindowGroup {
             rootContent
+                .frame(minWidth: 900, minHeight: 420)
                 .handlesExternalEvents(preferring: Set(arrayLiteral: "*"), allowing: Set(arrayLiteral: "*"))
         }
+        .windowResizability(.contentMinSize)
         .handlesExternalEvents(matching: Set(arrayLiteral: "*"))
         .commands {
             CommandGroup(replacing: .newItem) {}
