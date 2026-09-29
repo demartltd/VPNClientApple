@@ -113,6 +113,7 @@ DemarVPN/                              # SwiftUI target
         ├── TunSettingsView.swift      # site-group bypass (из App settings)
         ├── ServiceMenuView.swift      # служебное меню
         ├── DocumentsMenuSheet.swift   # ToS/PP через demarBottomSheet
+        ├── LanguageMenuSheet.swift    # macOS: выбор языка флагами
         ├── LegalDocumentView.swift    # MarkdownUI viewer
         ├── CustomEgressProbes.swift   # свои хосты зондов
         └── Support/

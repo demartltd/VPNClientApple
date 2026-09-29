@@ -34,12 +34,41 @@ final class AppLanguage {
     }
 
     static func displayName(for code: String) -> String {
-        let locale = Locale.current
-        let raw = locale.localizedString(forIdentifier: code)
-            ?? locale.localizedString(forLanguageCode: Locale(identifier: code).language.languageCode?.identifier ?? code)
-            ?? code
-        guard let first = raw.first else { return raw }
-        return String(first).uppercased(with: locale) + raw.dropFirst()
+        switch code {
+        case "en": "English"
+        case "ru": "Русский"
+        case "uk": "Українська"
+        case "tr": "Türkçe"
+        case "uz": "Oʻzbekcha"
+        case "zh-Hans": "简体中文"
+        case "zh-Hant": "繁體中文"
+        case "ko": "한국어"
+        case "ja": "日本語"
+        case "es": "Español"
+        case "de": "Deutsch"
+        case "fr": "Français"
+        case "hi": "हिन्दी"
+        default: code
+        }
+    }
+
+    static func flag(for code: String) -> String {
+        switch code {
+        case "en": "🇺🇸"
+        case "ru": "🇷🇺"
+        case "uk": "🇺🇦"
+        case "tr": "🇹🇷"
+        case "uz": "🇺🇿"
+        case "zh-Hans": "🇨🇳"
+        case "zh-Hant": "🇹🇼"
+        case "ko": "🇰🇷"
+        case "ja": "🇯🇵"
+        case "es": "🇪🇸"
+        case "de": "🇩🇪"
+        case "fr": "🇫🇷"
+        case "hi": "🇮🇳"
+        default: "🏳️"
+        }
     }
 
     /// Canonical code from `supported`, or nil.

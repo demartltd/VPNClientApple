@@ -35,26 +35,11 @@ struct AppSettingsView: View {
         .navigationDestination(isPresented: $showTunSettings) {
             TunSettingsView(isFree: isFree, onBuySubscription: onBuySubscription)
         }
-        .confirmationDialog(
-            String(localized: "Change language"),
-            isPresented: $showLanguagePicker,
-            titleVisibility: .visible
-        ) {
-            ForEach(languagePickerCodes, id: \.self) { code in
-                let name = AppLanguage.displayName(for: code)
-                Button(language.code == code ? "✓ \(name)" : name) {
-                    language.select(code)
-                }
-            }
+        .languageMenu(isPresented: $showLanguagePicker, currentCode: language.code) { code in
+            language.select(code)
         }
         #endif
     }
-
-    #if os(macOS)
-    private var languagePickerCodes: [String] {
-        AppLanguage.supported.sorted { lhs, _ in lhs == language.code }
-    }
-    #endif
 
     private func settingsBody(maxLogPanelHeight: CGFloat) -> some View {
         VStack(spacing: 12) {

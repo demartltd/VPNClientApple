@@ -95,6 +95,7 @@
 		B10000010000000000000042 /* geosite.db in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000042 /* geosite.db */; };
 		B10000010000000000000043 /* LegalDocuments.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000043 /* LegalDocuments.swift */; };
 		B10000010000000000000044 /* DocumentsMenuSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000044 /* DocumentsMenuSheet.swift */; };
+		B100000100000000000000LM /* LanguageMenuSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000LM /* LanguageMenuSheet.swift */; };
 		B10000010000000000000045 /* LegalDocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000045 /* LegalDocumentView.swift */; };
 		B10000010000000000000046 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = P10000010000000000000046 /* MarkdownUI */; };
 		B100000100000000000000WP /* webp in Frameworks */ = {isa = PBXBuildFile; productRef = P100000100000000000000WP /* webp */; };
@@ -319,6 +320,7 @@
 		F10000010000000000000042 /* geosite.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = geosite.db; sourceTree = "<group>"; };
 		F10000010000000000000043 /* LegalDocuments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocuments.swift; sourceTree = "<group>"; };
 		F10000010000000000000044 /* DocumentsMenuSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentsMenuSheet.swift; sourceTree = "<group>"; };
+		F100000100000000000000LM /* LanguageMenuSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageMenuSheet.swift; sourceTree = "<group>"; };
 		F10000010000000000000045 /* LegalDocumentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentView.swift; sourceTree = "<group>"; };
 		F10000010000000000000050 /* DemarHttp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarHttp.swift; sourceTree = "<group>"; };
 		F10000010000000000000051 /* AuthApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthApi.swift; sourceTree = "<group>"; };
@@ -596,6 +598,7 @@
 				F10000010000000000000015 /* ServiceMenuView.swift */,
 				F10000010000000000000039 /* CustomEgressProbes.swift */,
 				F10000010000000000000044 /* DocumentsMenuSheet.swift */,
+				F100000100000000000000LM /* LanguageMenuSheet.swift */,
 				F10000010000000000000045 /* LegalDocumentView.swift */,
 				G10000010000000000000016 /* Support */,
 			);
@@ -1107,6 +1110,7 @@
 				B10000010000000000000061 /* SessionRefreshPolicy.swift in Sources */,
 				B10000010000000000000054 /* LoginSheet.swift in Sources */,
 				B10000010000000000000044 /* DocumentsMenuSheet.swift in Sources */,
+				B100000100000000000000LM /* LanguageMenuSheet.swift in Sources */,
 				B10000010000000000000045 /* LegalDocumentView.swift in Sources */,
 				B100000100000000000000CF /* ios/Shared/ClashTraffic.swift in Sources */,
 			);
@@ -1327,7 +1331,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 83;
+				CURRENT_PROJECT_VERSION = 84;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1365,7 +1369,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 83;
+				CURRENT_PROJECT_VERSION = 84;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1399,7 +1403,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 83;
+				CURRENT_PROJECT_VERSION = 84;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1446,7 +1450,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 83;
+				CURRENT_PROJECT_VERSION = 84;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1493,7 +1497,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 83;
+				CURRENT_PROJECT_VERSION = 84;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1520,7 +1524,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 83;
+				CURRENT_PROJECT_VERSION = 84;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1546,7 +1550,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 83;
+				CURRENT_PROJECT_VERSION = 84;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1584,7 +1588,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 83;
+				CURRENT_PROJECT_VERSION = 84;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
