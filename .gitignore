@@ -10,17 +10,12 @@ xcuserdata/
 **/singbox_macos/
 
 # Local tooling scripts (tracked: sing-box downloader + iOS appex signing + libbox builder + TestFlight upload)
-scripts/*
-!scripts/singbox-download-auto.py
-!scripts/sign-singbox-in-appex.sh
-!scripts/libbox-build.py
-!scripts/upload-testflight.ps1
-!scripts/increment_version_common.ps1
-!scripts/ios-export-options.plist
-!scripts/macos-export-options.plist
-!scripts/journal.sh
+
 scripts/.env
 scripts/AuthKey_*.p8
+scripts/rendered/*
+scripts/demar_vpn_client_apple.p12
+scripts/logo_clear.png
 
 # Libbox (scripts/libbox-build.py)
 ios/Frameworks/Libbox.xcframework/
