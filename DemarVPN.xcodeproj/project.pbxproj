@@ -181,6 +181,7 @@
 		B1000001000000000000BRU /* geoip-ru.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BRU /* geoip-ru.cidrs.json */; };
 		B1000001000000000000BIR /* geoip-ir.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BIR /* geoip-ir.cidrs.json */; };
 		B1000001000000000000BCN /* geoip-cn.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BCN /* geoip-cn.cidrs.json */; };
+		B1000001000000000000ADS /* geosite-category-ads.srs in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000ADS /* geosite-category-ads.srs */; };
 		E20000BRUCF9000F007C117D /* geoip-ru.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BRU /* geoip-ru.cidrs.json */; };
 		E20000BIRCF9000F007C117D /* geoip-ir.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BIR /* geoip-ir.cidrs.json */; };
 		E20000BCNCF9000F007C117D /* geoip-cn.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BCN /* geoip-cn.cidrs.json */; };
@@ -391,6 +392,7 @@
 		F1000001000000000000BRU /* geoip-ru.cidrs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "geoip-ru.cidrs.json"; sourceTree = "<group>"; };
 		F1000001000000000000BIR /* geoip-ir.cidrs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "geoip-ir.cidrs.json"; sourceTree = "<group>"; };
 		F1000001000000000000BCN /* geoip-cn.cidrs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "geoip-cn.cidrs.json"; sourceTree = "<group>"; };
+		F1000001000000000000ADS /* geosite-category-ads.srs */ = {isa = PBXFileReference; lastKnownFileType = file; path = "geosite-category-ads.srs"; sourceTree = "<group>"; };
 		F40000081CF9000F007C117E /* TunBypassCidrsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunBypassCidrsTests.swift; sourceTree = "<group>"; };
 		F400000B1CF9000F007C117E /* AppVersionApiTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersionApiTests.swift; sourceTree = "<group>"; };
 		F400000D1CF9000F007C117E /* SessionRefreshPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRefreshPolicyTests.swift; sourceTree = "<group>"; };
@@ -632,9 +634,18 @@
 				F100000100000000000000L1 /* Localizable.strings */,
 				F100000100000000000000L2 /* InfoPlist.xcstrings */,
 				G1000001000000000000TBY /* TunBypass */,
+				G1000001000000000000ADS /* RuleSets */,
 				G10000010000000000000010 /* Fonts */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		G1000001000000000000ADS /* RuleSets */ = {
+			isa = PBXGroup;
+			children = (
+				F1000001000000000000ADS /* geosite-category-ads.srs */,
+			);
+			path = RuleSets;
 			sourceTree = "<group>";
 		};
 		G10000010000000000000010 /* Fonts */ = {
@@ -963,6 +974,7 @@
 				B1000001000000000000BRU /* geoip-ru.cidrs.json in Resources */,
 				B1000001000000000000BIR /* geoip-ir.cidrs.json in Resources */,
 				B1000001000000000000BCN /* geoip-cn.cidrs.json in Resources */,
+				B1000001000000000000ADS /* geosite-category-ads.srs in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1331,7 +1343,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 85;
+				CURRENT_PROJECT_VERSION = 86;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1369,7 +1381,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 85;
+				CURRENT_PROJECT_VERSION = 86;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1403,7 +1415,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 85;
+				CURRENT_PROJECT_VERSION = 86;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1450,7 +1462,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 85;
+				CURRENT_PROJECT_VERSION = 86;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1497,7 +1509,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 85;
+				CURRENT_PROJECT_VERSION = 86;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1524,7 +1536,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 85;
+				CURRENT_PROJECT_VERSION = 86;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1550,7 +1562,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 85;
+				CURRENT_PROJECT_VERSION = 86;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1588,7 +1600,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 85;
+				CURRENT_PROJECT_VERSION = 86;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;

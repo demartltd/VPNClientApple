@@ -46,6 +46,14 @@ extension AppState {
         vpnState = .disconnecting
         resetThroughput()
         do {
+            #if os(iOS) || os(macOS)
+            // Resolve new uplink while network is still stable (before TUN tear-down).
+            // connect(force) must not clear this cache.
+            let uplink = server.connectPlan.uplinkHost
+            _ = try? await Task.detached(priority: .userInitiated) {
+                try UplinkIPv4Resolver.resolve(uplink)
+            }.value
+            #endif
             try await vpn.disconnect()
             let idle = await waitUntilSystemDisconnected(timeoutSeconds: 10)
             guard isCurrentVpnOperation(generation) else { return }
@@ -53,9 +61,6 @@ extension AppState {
                 AppLog.shared.append("[vpn] switch: NE still busy after disconnect wait")
             }
             vpnState = .disconnected
-            #if os(iOS) || os(macOS)
-            UplinkIPv4Resolver.clear()
-            #endif
             await connect(force: true, operationGeneration: generation)
         } catch is CancellationError {
             return
@@ -111,9 +116,6 @@ extension AppState {
             try? await vpn.disconnect()
             _ = await waitUntilSystemDisconnected(timeoutSeconds: 8)
             guard isCurrentVpnOperation(operationGeneration) else { return }
-        }
-        if shouldForce {
-            UplinkIPv4Resolver.clear()
         }
         #endif
         if !shouldForce, vpnState.isConnected {

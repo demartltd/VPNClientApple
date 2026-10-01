@@ -22,12 +22,18 @@ enum UplinkIPv4Resolver {
     }
     lock.unlock()
 
-    guard let ips = raceA(clean), !ips.isEmpty else {
-      throw NSError(domain: "DemarVpn", code: 10, userInfo: [
-        NSLocalizedDescriptionKey: "DNS lookup failed for \(clean).",
-      ])
+    // Post-VPN-teardown DNS is flaky; retry like Android resolveUplinkIpv4s(attempts=2).
+    for attempt in 0..<2 {
+      if let ips = raceA(clean), !ips.isEmpty {
+        return store(clean, ips)
+      }
+      if attempt == 0 {
+        Thread.sleep(forTimeInterval: 0.15)
+      }
     }
-    return store(clean, ips)
+    throw NSError(domain: "DemarVpn", code: 10, userInfo: [
+      NSLocalizedDescriptionKey: "DNS lookup failed for \(clean).",
+    ])
   }
 
   /// DNS answer → A records (testable).

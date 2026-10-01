@@ -84,9 +84,9 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 
 **Нельзя:** из‑за site-hosts переключать `dns-direct` на UDP `1.1.1.1` или добавлять `route_exclude` `1.1.1.1/32` — это **только** для geosite. Site-hosts идут в уже существующий `dns-direct` (`local` без geosite).
 
-### Ad block (DNS)
+### Ad block (DNS + route)
 
-Отдельный тоггл в TUN settings. Free: всегда off. Plus/VIP: default **on**, иначе сохранённый выбор пользователя. При on: remote `geosite-category-ads` + DNS `action: reject`. **Не** флипает `dns-direct`. Применение на следующем Connect.
+Отдельный тоггл в TUN settings. Free: всегда off. Plus/VIP: default **on**, иначе сохранённый выбор пользователя. При on: bundled ads rule-set (`type: local`, tag `geosite-category-ads`) + DNS и route `action: reject`. Sync качает полный [DustinWin `ads.srs`](https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/ads.srs) → `DemarVPN/Resources/RuleSets/geosite-category-ads.srs` (`scripts/sync_ads_ruleset.ps1`, также из `upload-testflight.ps1`). Runtime — `CoreBundleAssets.ensureAds` (copy bundle → App Group `core_assets`), без сети. Path-реклама на first-party хосте (напр. `yandex.ru/ads/...`) DNS не режет. **Не** флипает `dns-direct`. Ads **не** в `plan.bypassRuleSets`. Применение на следующем Connect.
 
 ### TUN / DNS / route
 

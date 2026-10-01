@@ -248,26 +248,36 @@ final class SingBoxConfigTests: XCTestCase {
         try assertSingBoxCheckPasses(json: json)
     }
 
-    func testAdBlockDnsReject() throws {
+    func testAdBlockDnsAndRouteRejectLocalRuleSet() throws {
         let base = SingBoxConnectPlan.hysteria2(TestServers.hysteria2[0])
-        XCTAssertFalse(try SingBoxConfigBuilder.buildTunConfigJson(plan: base).contains("geosite-category-ads"))
+        XCTAssertFalse(try SingBoxConfigBuilder.buildTunConfigJson(plan: base).contains(SingBoxConfigConstants.adsRuleSetTag))
 
-        let onJson = try SingBoxConfigBuilder.buildTunConfigJson(plan: base, adBlockEnabled: true)
+        let adsPath = try Self.adsRuleSetPathForTests()
+        let onJson = try SingBoxConfigBuilder.buildTunConfigJson(plan: base, adsPath: adsPath)
         let on = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(onJson.data(using: .utf8))) as? [String: Any])
+        XCTAssertNil(on["http_clients"])
         let onRoute = try XCTUnwrap(on["route"] as? [String: Any])
+        XCTAssertNil(onRoute["default_http_client"])
         let onSets = try XCTUnwrap(onRoute["rule_set"] as? [[String: Any]])
-        XCTAssertEqual(onSets.map { $0["tag"] as? String }, ["geosite-category-ads"])
-        XCTAssertEqual(onSets[0]["url"] as? String, SingBoxConfigConstants.adsRuleSetURL)
-        XCTAssertEqual(onRoute["default_http_client"] as? String, "rs-dl")
-        XCTAssertEqual((on["http_clients"] as? [[String: Any]])?.first?["tag"] as? String, "rs-dl")
+        XCTAssertEqual(onSets.map { $0["tag"] as? String }, [SingBoxConfigConstants.adsRuleSetTag])
+        XCTAssertEqual(onSets[0]["type"] as? String, "local")
+        XCTAssertEqual(onSets[0]["path"] as? String, adsPath)
+        XCTAssertNil(onSets[0]["url"])
         let onDns = try XCTUnwrap(on["dns"] as? [String: Any])
         XCTAssertEqual(
             (onDns["servers"] as? [[String: Any]])?.first { ($0["tag"] as? String) == "dns-direct" }?["type"] as? String,
             "local"
         )
-        XCTAssertTrue((onDns["rules"] as? [[String: Any]])?.contains {
-            ($0["rule_set"] as? [String]) == ["geosite-category-ads"] && ($0["action"] as? String) == "reject" && $0["server"] == nil
-        } == true)
+        XCTAssertTrue(Self.rulesMatch(
+            onDns["rules"] as? [[String: Any]],
+            tag: SingBoxConfigConstants.adsRuleSetTag,
+            action: "reject"
+        ) { $0["server"] == nil })
+        XCTAssertTrue(Self.rulesMatch(
+            onRoute["rules"] as? [[String: Any]],
+            tag: SingBoxConfigConstants.adsRuleSetTag,
+            action: "reject"
+        ) { _ in true })
         let onTun = try XCTUnwrap((on["inbounds"] as? [[String: Any]])?.first { ($0["type"] as? String) == "tun" })
         XCTAssertFalse((onTun["route_exclude_address"] as? [String])?.contains("1.1.1.1/32") == true)
         try assertSingBoxCheckPasses(json: onJson)
@@ -280,24 +290,58 @@ final class SingBoxConfigTests: XCTestCase {
         ]
         let bothJson = try SingBoxConfigBuilder.buildTunConfigJson(
             plan: .hysteria2(TestServers.hysteria2[0], bypassRuleSets: bypass),
-            adBlockEnabled: true
+            adsPath: adsPath
         )
         let both = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(bothJson.data(using: .utf8))) as? [String: Any])
-        let tags = ((both["route"] as? [String: Any])?["rule_set"] as? [[String: Any]])?.compactMap { $0["tag"] as? String } ?? []
-        XCTAssertEqual(Set(tags), Set(["geosite-category-ru", "geosite-category-ads"]))
+        XCTAssertEqual((both["http_clients"] as? [[String: Any]])?.first?["tag"] as? String, "rs-dl")
+        let bothRoute = try XCTUnwrap(both["route"] as? [String: Any])
+        XCTAssertEqual(bothRoute["default_http_client"] as? String, "rs-dl")
+        let tags = (bothRoute["rule_set"] as? [[String: Any]])?.compactMap { $0["tag"] as? String } ?? []
+        XCTAssertEqual(Set(tags), Set(["geosite-category-ru", SingBoxConfigConstants.adsRuleSetTag]))
         let bothDns = try XCTUnwrap(both["dns"] as? [String: Any])
         let bothRules = try XCTUnwrap(bothDns["rules"] as? [[String: Any]])
-        XCTAssertTrue(bothRules.contains {
-            ($0["rule_set"] as? [String]) == ["geosite-category-ads"] && ($0["action"] as? String) == "reject"
-        })
+        XCTAssertTrue(Self.rulesMatch(bothRules, tag: SingBoxConfigConstants.adsRuleSetTag, action: "reject") { $0["server"] == nil })
         XCTAssertTrue(bothRules.contains {
             ($0["rule_set"] as? [String]) == ["geosite-category-ru"] && ($0["server"] as? String) == "dns-direct"
         })
+        XCTAssertTrue(Self.rulesMatch(
+            bothRoute["rules"] as? [[String: Any]],
+            tag: SingBoxConfigConstants.adsRuleSetTag,
+            action: "reject"
+        ) { _ in true })
         XCTAssertEqual(
             (bothDns["servers"] as? [[String: Any]])?.first { ($0["tag"] as? String) == "dns-direct" }?["type"] as? String,
             "udp"
         )
         try assertSingBoxCheckPasses(json: bothJson)
+    }
+
+    private static func adsRuleSetPathForTests() throws -> String {
+        let repoRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let path = repoRoot
+            .appendingPathComponent("DemarVPN/Resources/RuleSets/\(CoreBundleAssets.adsFile)")
+            .path
+        guard FileManager.default.fileExists(atPath: path) else {
+            throw XCTSkip("ads rule-set missing; run pwsh scripts/sync_ads_ruleset.ps1")
+        }
+        return path
+    }
+
+    private static func rulesMatch(
+        _ rules: [[String: Any]]?,
+        tag: String,
+        action: String,
+        pred: ([String: Any]) -> Bool
+    ) -> Bool {
+        guard let rules else { return false }
+        return rules.contains { rule in
+            guard (rule["action"] as? String) == action,
+                  (rule["rule_set"] as? [String])?.contains(tag) == true
+            else { return false }
+            return pred(rule)
+        }
     }
 
     func testClashApiExternalController() throws {

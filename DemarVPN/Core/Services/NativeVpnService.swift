@@ -21,7 +21,7 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
         let adBlock = TunSettingsStore.effectiveAdBlockEnabled(isFree: isFree)
         let tunFp = TunSettingsStore.fingerprint(isFree: isFree)
         let refreshAssets = Self.shouldRefreshAssets()
-        let (plan, endpointAddresses, bypassExcludeIPs, configJson) = try await Task.detached(priority: .userInitiated) {
+        let (plan, endpointAddresses, bypassExcludeIPs, configJson, adsPath) = try await Task.detached(priority: .userInitiated) {
             let base = server.connectPlan
             let ips = try UplinkIPv4Resolver.resolve(base.uplinkHost)
             guard !ips.isEmpty else {
@@ -31,22 +31,31 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
             }
             let exclude = BypassExcludeIPCache.load(fingerprint: tunFp) ?? []
             let plan = base.pinEndpoint(to: ips)
+            var adsPath: String?
+            if adBlock {
+                let assetDir = try VpnAppGroup.assetDirectoryURL()
+                try FileManager.default.createDirectory(at: assetDir, withIntermediateDirectories: true)
+                adsPath = CoreBundleAssets.ensureAds(in: assetDir)
+            }
             let json = try SingBoxConfigBuilder.buildTunConfigJson(
                 plan: plan,
                 tunName: tunName,
                 bypassHosts: bypassHosts,
                 bypassExcludeIPs: exclude,
-                adBlockEnabled: adBlock
+                adsPath: adsPath
             )
-            return (plan, ips, exclude, json)
+            return (plan, ips, exclude, json, adsPath)
         }.value
         try VpnSharedStore.saveBypassGeoipTags(plan.geoipBypassTags)
         let sessionId = Self.newSessionId()
         await MainActor.run {
+            if adBlock, adsPath == nil {
+                AppLog.shared.append("[app] ads rule-set asset missing")
+            }
             AppLog.shared.append(
                 "[vpn] connect tun=\(tunFp) hosts=\(bypassHosts.count) "
                     + "excludeIPs=\(bypassExcludeIPs.count) rs=\(plan.bypassRuleSets.count) "
-                    + "adblock=\(adBlock) assetsRefresh=\(refreshAssets)"
+                    + "adblock=\(adsPath != nil) assetsRefresh=\(refreshAssets)"
             )
         }
         try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in

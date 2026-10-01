@@ -34,8 +34,9 @@ enum VpnAppGroup {
 }
 
 enum CoreBundleAssets {
-  static let subdirectories = ["singbox", "singbox_macos"]
+  static let subdirectories = ["singbox", "singbox_macos", "RuleSets"]
   static let geoFiles = ["geoip.db", "geosite.db"]
+  static let adsFile = "geosite-category-ads.srs" // basename == SingBoxConfigConstants.adsRuleSetTag + ".srs"
   static let runtimeFiles = geoFiles + ["bundled_version.txt"]
 
   static func bundledURL(for filename: String) -> URL? {
@@ -69,6 +70,30 @@ enum CoreBundleAssets {
         try fm.removeItem(at: dst)
       }
       try fm.copyItem(at: src, to: dst)
+    }
+  }
+
+  /// Copy bundled ads rule-set into App Group working dir; returns absolute path or nil.
+  static func ensureAds(in destinationDir: URL) -> String? {
+    let fm = FileManager.default
+    let dst = destinationDir.appendingPathComponent(adsFile)
+    guard let src = bundledURL(for: adsFile) else {
+      // Extension / Control Center: host already copied into App Group.
+      let size = (try? fm.attributesOfItem(atPath: dst.path)[.size] as? NSNumber)?.int64Value ?? 0
+      return size > 0 ? dst.path : nil
+    }
+    do {
+      try fm.createDirectory(at: destinationDir, withIntermediateDirectories: true)
+      let sourceSize = (try? fm.attributesOfItem(atPath: src.path)[.size] as? NSNumber)?.int64Value ?? 0
+      guard sourceSize > 0 else { return nil }
+      let destinationSize = (try? fm.attributesOfItem(atPath: dst.path)[.size] as? NSNumber)?.int64Value
+      if destinationSize != sourceSize {
+        if fm.fileExists(atPath: dst.path) { try fm.removeItem(at: dst) }
+        try fm.copyItem(at: src, to: dst)
+      }
+      return dst.path
+    } catch {
+      return nil
     }
   }
 

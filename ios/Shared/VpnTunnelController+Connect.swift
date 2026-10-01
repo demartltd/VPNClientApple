@@ -279,6 +279,7 @@ extension VpnTunnelController {
     if refreshAssetsFromBundle {
       try CoreBundleAssets.copyGeoIfPresent(to: assetDir)
     }
+    _ = CoreBundleAssets.ensureAds(in: assetDir)
     if !CoreBundleAssets.hasGeo(in: assetDir) {
       throw VpnTunnelError.missingAssets
     }

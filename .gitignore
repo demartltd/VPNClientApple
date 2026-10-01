@@ -19,3 +19,7 @@ scripts/logo_clear.png
 
 # Libbox (scripts/libbox-build.py)
 ios/Frameworks/Libbox.xcframework/
+
+# Ads rule-set — fetched by scripts/sync_ads_ruleset.ps1 (also from upload-testflight.ps1)
+DemarVPN/Resources/RuleSets/*.srs
+
