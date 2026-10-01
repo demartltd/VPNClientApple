@@ -163,8 +163,8 @@ enum SingBoxConfigConstants {
     static let dnsDirectTag = "dns-direct"
     static let dnsRemoteTag = "dns-remote"
     static let httpRuleSetDownloadTag = "rs-dl"
-    /// Must match `CoreBundleAssets.adsFile` basename (stable tag + asset path).
-    static let adsRuleSetTag = "geosite-category-ads"
+    /// Must match `CoreBundleAssets.adsFile` basename without `.srs`.
+    static let adsRuleSetTag = CoreBundleAssets.adsRuleSetTag
     static let diagnosticInboundTag = "diag-in"
     static let diagnosticHost = "127.0.0.1"
     static let diagnosticPort = 10808
@@ -211,15 +211,16 @@ enum SingBoxDnsBuilder {
                 "server": SingBoxConfigConstants.dnsDirectTag,
             ])
         }
+        // Ads before site-bypass suffixes: otherwise `yandex.ru` bypass skips `an.yandex.ru` / metrica.
+        if adsPath != nil {
+            rules.append(adsRejectRule())
+        }
         if !bypassHosts.isEmpty {
             rules.append([
                 "domain_suffix": bypassHosts,
                 "action": "route",
                 "server": SingBoxConfigConstants.dnsDirectTag,
             ])
-        }
-        if adsPath != nil {
-            rules.append(adsRejectRule())
         }
         for rs in geositeRuleSets {
             rules.append([
@@ -320,12 +321,12 @@ enum SingBoxRouteBuilder {
             "rules": rules,
         ]
         var ruleSets = geositeRuleSets.map { remoteRuleSet(tag: $0.tag, url: $0.url) }
-        if let adsPath {
+        if adsPath != nil {
             ruleSets.append([
                 "tag": SingBoxConfigConstants.adsRuleSetTag,
                 "type": "local",
                 "format": "binary",
-                "path": adsPath,
+                "path": CoreBundleAssets.adsFile,
             ])
         }
         if !ruleSets.isEmpty {

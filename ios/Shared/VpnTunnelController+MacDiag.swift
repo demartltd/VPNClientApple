@@ -6,14 +6,11 @@ extension VpnTunnelController {
   static func logConnectPreflight(cfgURL: URL, assetDir: URL) {
     let fm = FileManager.default
     let cfgSize = (try? fm.attributesOfItem(atPath: cfgURL.path)[.size] as? Int64) ?? -1
-    let geoip = assetDir.appendingPathComponent("geoip.db")
-    let geosite = assetDir.appendingPathComponent("geosite.db")
-    let geoipSize = fm.fileExists(atPath: geoip.path)
-      ? ((try? fm.attributesOfItem(atPath: geoip.path)[.size] as? Int64) ?? -1) : -1
-    let geositeSize = fm.fileExists(atPath: geosite.path)
-      ? ((try? fm.attributesOfItem(atPath: geosite.path)[.size] as? Int64) ?? -1) : -1
     VpnSharedStore.appendPendingUiDiagLine(
-      "[vpn] preflight: config=\(cfgSize)B geoip=\(geoipSize)B geosite=\(geositeSize)B"
+      "[vpn] preflight: config=\(cfgSize)B "
+        + "geoip=\(CoreBundleAssets.fileSize("geoip.db", in: assetDir))B "
+        + "geosite=\(CoreBundleAssets.fileSize("geosite.db", in: assetDir))B "
+        + "ads=\(CoreBundleAssets.fileSize(CoreBundleAssets.adsFile, in: assetDir))B"
     )
     let appexExe = Bundle.main.builtInPlugInsURL?
       .appendingPathComponent("DemarPacketTunnel.appex/Contents/MacOS/DemarPacketTunnel")

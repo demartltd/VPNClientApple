@@ -86,7 +86,7 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 
 ### Ad block (DNS + route)
 
-Отдельный тоггл в TUN settings. Free: всегда off. Plus/VIP: default **on**, иначе сохранённый выбор пользователя. При on: bundled ads rule-set (`type: local`, tag `geosite-category-ads`) + DNS и route `action: reject`. Sync качает полный [DustinWin `ads.srs`](https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/ads.srs) → `DemarVPN/Resources/RuleSets/geosite-category-ads.srs` (`scripts/sync_ads_ruleset.ps1`, также из `upload-testflight.ps1`). Runtime — `CoreBundleAssets.ensureAds` (copy bundle → App Group `core_assets`), без сети. Path-реклама на first-party хосте (напр. `yandex.ru/ads/...`) DNS не режет. **Не** флипает `dns-direct`. Ads **не** в `plan.bypassRuleSets`. Применение на следующем Connect.
+Отдельный тоггл в TUN settings. Free: всегда off. Plus/VIP: default **on**, иначе сохранённый выбор пользователя. При on: bundled ads rule-set (`type: local`, tag `geosite-category-ads`, relative `path` к App Group `core_assets`) + DNS и route `action: reject`. Sync качает полный [DustinWin `ads.srs`](https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/ads.srs) → `DemarVPN/Resources/RuleSets/geosite-category-ads.srs` (`scripts/sync_ads_ruleset.ps1`, также из `upload-testflight.ps1`). Runtime — `CoreBundleAssets.ensureAds` (bundle → App Group). DNS: ads `reject` **раньше** site-bypass `domain_suffix` (иначе bypass `yandex.ru` пропускает `an.yandex.ru` / metrica). Path-реклама на first-party URL (напр. `yandex.ru/ads/...`) DNS не режет. **Не** флипает `dns-direct`. Ads **не** в `plan.bypassRuleSets`. Применение на следующем Connect.
 
 ### TUN / DNS / route
 

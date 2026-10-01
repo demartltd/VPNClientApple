@@ -252,8 +252,8 @@ final class SingBoxConfigTests: XCTestCase {
         let base = SingBoxConnectPlan.hysteria2(TestServers.hysteria2[0])
         XCTAssertFalse(try SingBoxConfigBuilder.buildTunConfigJson(plan: base).contains(SingBoxConfigConstants.adsRuleSetTag))
 
-        let adsPath = try Self.adsRuleSetPathForTests()
-        let onJson = try SingBoxConfigBuilder.buildTunConfigJson(plan: base, adsPath: adsPath)
+        let adsDir = try Self.adsRuleSetDirectoryForTests()
+        let onJson = try SingBoxConfigBuilder.buildTunConfigJson(plan: base, adsPath: CoreBundleAssets.adsFile)
         let on = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(onJson.data(using: .utf8))) as? [String: Any])
         XCTAssertNil(on["http_clients"])
         let onRoute = try XCTUnwrap(on["route"] as? [String: Any])
@@ -261,7 +261,7 @@ final class SingBoxConfigTests: XCTestCase {
         let onSets = try XCTUnwrap(onRoute["rule_set"] as? [[String: Any]])
         XCTAssertEqual(onSets.map { $0["tag"] as? String }, [SingBoxConfigConstants.adsRuleSetTag])
         XCTAssertEqual(onSets[0]["type"] as? String, "local")
-        XCTAssertEqual(onSets[0]["path"] as? String, adsPath)
+        XCTAssertEqual(onSets[0]["path"] as? String, CoreBundleAssets.adsFile)
         XCTAssertNil(onSets[0]["url"])
         let onDns = try XCTUnwrap(on["dns"] as? [String: Any])
         XCTAssertEqual(
@@ -280,7 +280,7 @@ final class SingBoxConfigTests: XCTestCase {
         ) { _ in true })
         let onTun = try XCTUnwrap((on["inbounds"] as? [[String: Any]])?.first { ($0["type"] as? String) == "tun" })
         XCTAssertFalse((onTun["route_exclude_address"] as? [String])?.contains("1.1.1.1/32") == true)
-        try assertSingBoxCheckPasses(json: onJson)
+        try assertSingBoxCheckPasses(json: onJson, workingDirectory: adsDir)
 
         let bypass = [
             ApiBypassRuleSet(
@@ -290,7 +290,7 @@ final class SingBoxConfigTests: XCTestCase {
         ]
         let bothJson = try SingBoxConfigBuilder.buildTunConfigJson(
             plan: .hysteria2(TestServers.hysteria2[0], bypassRuleSets: bypass),
-            adsPath: adsPath
+            adsPath: CoreBundleAssets.adsFile
         )
         let both = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(bothJson.data(using: .utf8))) as? [String: Any])
         XCTAssertEqual((both["http_clients"] as? [[String: Any]])?.first?["tag"] as? String, "rs-dl")
@@ -313,20 +313,39 @@ final class SingBoxConfigTests: XCTestCase {
             (bothDns["servers"] as? [[String: Any]])?.first { ($0["tag"] as? String) == "dns-direct" }?["type"] as? String,
             "udp"
         )
-        try assertSingBoxCheckPasses(json: bothJson)
+        try assertSingBoxCheckPasses(json: bothJson, workingDirectory: adsDir)
     }
 
-    private static func adsRuleSetPathForTests() throws -> String {
+    func testAdBlockDnsRejectBeforeSiteBypassHosts() throws {
+        let adsDir = try Self.adsRuleSetDirectoryForTests()
+        let json = try SingBoxConfigBuilder.buildTunConfigJson(
+            plan: .hysteria2(TestServers.hysteria2[0]),
+            bypassHosts: ["yandex.ru", "mail.ru"],
+            adsPath: CoreBundleAssets.adsFile
+        )
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
+        let rules = try XCTUnwrap((root["dns"] as? [String: Any])?["rules"] as? [[String: Any]])
+        let adsIdx = try XCTUnwrap(rules.firstIndex {
+            ($0["rule_set"] as? [String]) == [SingBoxConfigConstants.adsRuleSetTag]
+                && ($0["action"] as? String) == "reject"
+        })
+        let bypassIdx = try XCTUnwrap(rules.firstIndex {
+            ($0["domain_suffix"] as? [String]) == ["yandex.ru", "mail.ru"]
+        })
+        XCTAssertLessThan(adsIdx, bypassIdx)
+        try assertSingBoxCheckPasses(json: json, workingDirectory: adsDir)
+    }
+
+    private static func adsRuleSetDirectoryForTests() throws -> URL {
         let repoRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-        let path = repoRoot
-            .appendingPathComponent("DemarVPN/Resources/RuleSets/\(CoreBundleAssets.adsFile)")
-            .path
+        let dir = repoRoot.appendingPathComponent("DemarVPN/Resources/RuleSets")
+        let path = dir.appendingPathComponent(CoreBundleAssets.adsFile).path
         guard FileManager.default.fileExists(atPath: path) else {
             throw XCTSkip("ads rule-set missing; run pwsh scripts/sync_ads_ruleset.ps1")
         }
-        return path
+        return dir
     }
 
     private static func rulesMatch(
@@ -392,7 +411,7 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertTrue(VpnReconfigurePolicy.shouldSoftRestartWhenRoutesUnchanged(reason: "pathRecoveredAfterLoss"))
     }
 
-    private func assertSingBoxCheckPasses(json: String) throws {
+    private func assertSingBoxCheckPasses(json: String, workingDirectory: URL? = nil) throws {
         #if os(macOS)
         let repoRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -415,7 +434,11 @@ final class SingBoxConfigTests: XCTestCase {
 
         let process = Process()
         process.executableURL = singboxURL
-        process.arguments = ["check", "-c", configURL.path]
+        var args = ["check", "-c", configURL.path]
+        if let workingDirectory {
+            args += ["-D", workingDirectory.path]
+        }
+        process.arguments = args
         let errPipe = Pipe()
         process.standardError = errPipe
         process.standardOutput = errPipe
@@ -429,6 +452,7 @@ final class SingBoxConfigTests: XCTestCase {
         )
         #else
         _ = json
+        _ = workingDirectory
         #endif
     }
 }

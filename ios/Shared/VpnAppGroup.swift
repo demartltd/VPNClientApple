@@ -36,7 +36,9 @@ enum VpnAppGroup {
 enum CoreBundleAssets {
   static let subdirectories = ["singbox", "singbox_macos", "RuleSets"]
   static let geoFiles = ["geoip.db", "geosite.db"]
-  static let adsFile = "geosite-category-ads.srs" // basename == SingBoxConfigConstants.adsRuleSetTag + ".srs"
+  /// Basename == rule-set tag + `.srs` (sync script / libbox `workingPath`).
+  static let adsFile = "geosite-category-ads.srs"
+  static let adsRuleSetTag = "geosite-category-ads"
   static let runtimeFiles = geoFiles + ["bundled_version.txt"]
 
   static func bundledURL(for filename: String) -> URL? {
@@ -51,6 +53,12 @@ enum CoreBundleAssets {
       }
     }
     return nil
+  }
+
+  static func fileSize(_ name: String, in directory: URL) -> Int64 {
+    let path = directory.appendingPathComponent(name).path
+    guard FileManager.default.fileExists(atPath: path) else { return -1 }
+    return (try? FileManager.default.attributesOfItem(atPath: path)[.size] as? NSNumber)?.int64Value ?? -1
   }
 
   static func copyGeoIfPresent(to destinationDir: URL) throws {
@@ -73,33 +81,30 @@ enum CoreBundleAssets {
     }
   }
 
-  /// Copy bundled ads rule-set into App Group working dir; returns absolute path or nil.
+  /// Copy bundled ads `.srs` into App Group `core_assets`.
+  /// Returns relative basename for sing-box (`workingPath` = `core_assets`).
   static func ensureAds(in destinationDir: URL) -> String? {
     let fm = FileManager.default
     let dst = destinationDir.appendingPathComponent(adsFile)
-    guard let src = bundledURL(for: adsFile) else {
-      // Extension / Control Center: host already copied into App Group.
-      let size = (try? fm.attributesOfItem(atPath: dst.path)[.size] as? NSNumber)?.int64Value ?? 0
-      return size > 0 ? dst.path : nil
-    }
-    do {
-      try fm.createDirectory(at: destinationDir, withIntermediateDirectories: true)
-      let sourceSize = (try? fm.attributesOfItem(atPath: src.path)[.size] as? NSNumber)?.int64Value ?? 0
-      guard sourceSize > 0 else { return nil }
-      let destinationSize = (try? fm.attributesOfItem(atPath: dst.path)[.size] as? NSNumber)?.int64Value
-      if destinationSize != sourceSize {
-        if fm.fileExists(atPath: dst.path) { try fm.removeItem(at: dst) }
-        try fm.copyItem(at: src, to: dst)
+    if let src = bundledURL(for: adsFile) {
+      do {
+        try fm.createDirectory(at: destinationDir, withIntermediateDirectories: true)
+        let sourceSize = (try? fm.attributesOfItem(atPath: src.path)[.size] as? NSNumber)?.int64Value ?? 0
+        guard sourceSize > 0 else { return nil }
+        let destinationSize = (try? fm.attributesOfItem(atPath: dst.path)[.size] as? NSNumber)?.int64Value
+        if destinationSize != sourceSize {
+          if fm.fileExists(atPath: dst.path) { try fm.removeItem(at: dst) }
+          try fm.copyItem(at: src, to: dst)
+        }
+      } catch {
+        return nil
       }
-      return dst.path
-    } catch {
-      return nil
     }
+    return fileSize(adsFile, in: destinationDir) > 0 ? adsFile : nil
   }
 
   static func hasGeo(in directory: URL) -> Bool {
-    let fm = FileManager.default
-    return geoFiles.allSatisfy { fm.fileExists(atPath: directory.appendingPathComponent($0).path) }
+    geoFiles.allSatisfy { fileSize($0, in: directory) > 0 }
   }
 
   /// True when App Group geo is missing or `bundled_version.txt` differs from the host bundle

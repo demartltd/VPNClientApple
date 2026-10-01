@@ -238,7 +238,8 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       assetDir = try VpnAppGroup.assetDirectoryURL()
       Self.diag(
         "core assets: \(Self.assetFileDescription(named: "geoip.db", in: assetDir)), "
-          + "\(Self.assetFileDescription(named: "geosite.db", in: assetDir))"
+          + "\(Self.assetFileDescription(named: "geosite.db", in: assetDir)), "
+          + "\(Self.assetFileDescription(named: CoreBundleAssets.adsFile, in: assetDir))"
       )
     } catch {
       fail(
@@ -721,14 +722,8 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
   }
 
   private static func assetFileDescription(named name: String, in dir: URL) -> String {
-    let fileURL = dir.appendingPathComponent(name, isDirectory: false)
-    let path = fileURL.path
-    guard FileManager.default.fileExists(atPath: path) else {
-      return "\(name)=missing"
-    }
-    let attrs = try? FileManager.default.attributesOfItem(atPath: path)
-    let size = (attrs?[.size] as? NSNumber)?.int64Value ?? -1
-    return "\(name)=present:\(size)B"
+    let size = CoreBundleAssets.fileSize(name, in: dir)
+    return size > 0 ? "\(name)=present:\(size)B" : "\(name)=missing"
   }
 
   private static func diag(_ message: String) {
