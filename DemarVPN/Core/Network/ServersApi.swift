@@ -50,29 +50,59 @@ enum ServersApi {
               let name = (item["name"] as? String)?.nilIfBlank
         else { return nil }
         let city = (item["city"] as? String)?.nilIfBlank
-        let protocolName = ((item["protocol"] as? String) ?? "").lowercased()
-        guard protocolName == "hysteria2" || protocolName.isEmpty else { return nil }
+        guard let protocolKind = ServerProtocol.fromApi((item["protocol"] as? String) ?? "") else { return nil }
 
         if let configRaw = (item["clientConfigJson"] as? String)?.nilIfBlank,
            let configData = configRaw.data(using: .utf8),
-           let config = try? JSONSerialization.jsonObject(with: configData) as? [String: Any],
-           let profile = parseHysteria2(id: id, name: name, city: city, config: config)
+           let config = try? JSONSerialization.jsonObject(with: configData) as? [String: Any]
         {
-            return profile
+            switch protocolKind {
+            case .hysteria2: return parseHysteria2(id: id, name: name, city: city, config: config)
+            case .trojan: return parseTrojan(id: id, name: name, city: city, config: config)
+            case .vlessReality: return parseVlessReality(id: id, name: name, city: city, config: config)
+            }
         }
 
-        // Preview / guest list: metadata only, no credentials — show in UI, block connect.
-        return ServerProfile(
-            hysteria2: Hysteria2Profile(
+        return preview(protocolKind, id: id, name: name, city: city)
+    }
+
+    private static func preview(
+        _ protocolKind: ServerProtocol,
+        id: String,
+        name: String,
+        city: String?
+    ) -> ServerProfile {
+        let empty: ProxyProfile = switch protocolKind {
+        case .hysteria2:
+            .hysteria2(Hysteria2Profile(
                 displayName: name,
                 city: city,
                 server: "preview",
                 port: 443,
                 password: "",
                 tlsServerName: "preview"
-            ),
-            id: id
-        )
+            ))
+        case .trojan:
+            .trojan(TrojanProfile(
+                displayName: name,
+                server: "",
+                port: 443,
+                password: "",
+                tlsServerName: ""
+            ))
+        case .vlessReality:
+            .vlessReality(VlessRealityProfile(
+                displayName: name,
+                server: "",
+                port: 443,
+                uuid: "",
+                tlsServerName: "",
+                publicKey: "",
+                shortId: "",
+                flow: nil
+            ))
+        }
+        return ServerProfile(profile: empty, id: id, city: city)
     }
 
     private static func parseHysteria2(
@@ -81,17 +111,10 @@ enum ServersApi {
         city: String?,
         config: [String: Any]
     ) -> ServerProfile? {
-        guard let outbounds = config["outbounds"] as? [[String: Any]],
-              let hy2 = outbounds.first(where: { ($0["type"] as? String) == "hysteria2" })
+        guard let hy2 = firstOutbound(config, type: "hysteria2"),
+              let (server, port) = dialFields(hy2)
         else { return nil }
-        guard let server = (hy2["server"] as? String)?.nilIfBlank else { return nil }
         let password = (hy2["password"] as? String) ?? ""
-        let port: Int = {
-            if let i = hy2["server_port"] as? Int { return i }
-            if let n = hy2["server_port"] as? NSNumber { return n.intValue }
-            return 0
-        }()
-        guard port > 0 else { return nil }
         let tls = hy2["tls"] as? [String: Any]
         let tlsName = (tls?["server_name"] as? String)?.nilIfBlank ?? server
         let alpn: [String] = {
@@ -101,7 +124,7 @@ enum ServersApi {
         let obfs = ((hy2["obfs"] as? [String: Any])?["password"] as? String)?.nilIfBlank
         let outboundCity = (hy2["city"] as? String)?.nilIfBlank ?? city
         return ServerProfile(
-            hysteria2: Hysteria2Profile(
+            profile: .hysteria2(Hysteria2Profile(
                 displayName: name,
                 city: outboundCity,
                 server: server,
@@ -112,10 +135,94 @@ enum ServersApi {
                 obfsPassword: obfs,
                 upMbps: positiveMbps(hy2["up_mbps"]),
                 downMbps: positiveMbps(hy2["down_mbps"])
-            ),
+            )),
             id: id,
+            city: outboundCity,
             bypassRuleSets: parseBypassRuleSets(config)
         )
+    }
+
+    private static func parseTrojan(
+        id: String,
+        name: String,
+        city: String?,
+        config: [String: Any]
+    ) -> ServerProfile? {
+        guard let trojan = firstOutbound(config, type: "trojan"),
+              let (server, port) = dialFields(trojan)
+        else { return nil }
+        let password = (trojan["password"] as? String) ?? ""
+        let tls = trojan["tls"] as? [String: Any]
+        let tlsName = (tls?["server_name"] as? String)?.nilIfBlank ?? server
+        let outboundCity = (trojan["city"] as? String)?.nilIfBlank ?? city
+        return ServerProfile(
+            profile: .trojan(TrojanProfile(
+                displayName: name,
+                server: server,
+                port: port,
+                password: password,
+                tlsServerName: tlsName
+            )),
+            id: id,
+            city: outboundCity,
+            bypassRuleSets: parseBypassRuleSets(config)
+        )
+    }
+
+    private static func parseVlessReality(
+        id: String,
+        name: String,
+        city: String?,
+        config: [String: Any]
+    ) -> ServerProfile? {
+        guard let vless = firstOutbound(config, type: "vless"),
+              let (server, port) = dialFields(vless)
+        else { return nil }
+        let tls = vless["tls"] as? [String: Any]
+        let reality = tls?["reality"] as? [String: Any]
+        // optString-compatible: String or number (Android JSONObject.optString).
+        guard let publicKey = optString(reality?["public_key"]),
+              let shortId = optString(reality?["short_id"])
+        else { return nil }
+        let flow = optString(vless["flow"])
+        let outboundCity = optString(vless["city"]) ?? city
+        return ServerProfile(
+            profile: .vlessReality(VlessRealityProfile(
+                displayName: name,
+                server: server,
+                port: port,
+                uuid: optString(vless["uuid"]) ?? "",
+                tlsServerName: optString(tls?["server_name"]) ?? "www.cloudflare.com",
+                publicKey: publicKey,
+                shortId: shortId,
+                flow: flow ?? "xtls-rprx-vision"
+            )),
+            id: id,
+            city: outboundCity,
+            bypassRuleSets: parseBypassRuleSets(config)
+        )
+    }
+
+    private static func optString(_ raw: Any?) -> String? {
+        if let s = raw as? String { return s.nilIfBlank }
+        if let n = raw as? NSNumber { return n.stringValue.nilIfBlank }
+        return nil
+    }
+
+    private static func firstOutbound(_ config: [String: Any], type: String) -> [String: Any]? {
+        guard let outbounds = config["outbounds"] as? [[String: Any]] else { return nil }
+        return outbounds.first { ($0["type"] as? String) == type }
+    }
+
+    private static func dialFields(_ outbound: [String: Any]) -> (String, Int)? {
+        guard let server = (outbound["server"] as? String)?.nilIfBlank else { return nil }
+        let port: Int = {
+            if let i = outbound["server_port"] as? Int { return i }
+            if let n = outbound["server_port"] as? NSNumber { return n.intValue }
+            return 0
+        }()
+        guard port > 0 else { return nil }
+        return (server, port)
     }
 
     /// Positive Mbps for Hysteria CC; 0 / negative / garbage → nil (BBR).

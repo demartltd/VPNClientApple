@@ -52,6 +52,9 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
             if adBlock, adsPath == nil {
                 AppLog.shared.append("[app] ads rule-set asset missing")
             }
+            if case .vlessReality(let v) = server.profile {
+                AppLog.shared.append("[vpn] vless sni=\(v.tlsServerName) flow=\(v.flow ?? "-")")
+            }
             AppLog.shared.append(
                 "[vpn] connect tun=\(tunFp) hosts=\(bypassHosts.count) "
                     + "excludeIPs=\(bypassExcludeIPs.count) rs=\(plan.bypassRuleSets.count) "

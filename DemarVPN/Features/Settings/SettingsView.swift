@@ -135,7 +135,7 @@ struct SettingsView: View {
                 userId: session.userId,
                 loginAt: session.loginAt
             )
-            if result.isActivated { await appState.refreshSessionData() }
+            if result.isActivated { await appState.refreshSessionData(force: true) }
             promoResultMessage = result.localizedMessage
         } catch {
             promoResultMessage = error.localizedDescription

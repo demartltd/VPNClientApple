@@ -35,7 +35,7 @@ extension AppState {
     func onAuthSuccess() async {
         authSession = AuthSessionStore.session
         refreshVersion()
-        await refreshSessionData()
+        await refreshSessionData(force: true)
         presentPendingAccountSheetIfNeeded()
     }
 
@@ -96,6 +96,7 @@ extension AppState {
         clearServers()
         clearAccount()
         lastSessionDataRefreshAt = nil
+        lastSessionRefreshAttemptAt = nil
         await revokeVpnAccess()
     }
 
@@ -122,8 +123,19 @@ extension AppState {
     }
 
     /// Session data — app start, sign-in, pull-to-refresh, promo activation.
-    func refreshSessionData() async {
+    /// - Parameter force: bypass failure cooldown (pull-to-refresh / sign-in).
+    func refreshSessionData(force: Bool = false) async {
+        if !force,
+           SessionRefreshPolicy.inFailureCooldown(
+            success: lastSessionDataRefreshAt,
+            attempt: lastSessionRefreshAttemptAt
+           )
+        {
+            AppLog.shared.append("[session] refresh skipped — cooldown after API failure")
+            return
+        }
         await Flight.run("session.refresh") {
+            self.lastSessionRefreshAttemptAt = Date()
             async let servers: Bool = self.refreshServers()
             async let account: Bool = self.refreshAccount()
             async let unread: Void = self.refreshSupportUnread()
@@ -133,6 +145,10 @@ extension AppState {
             _ = await (unread, tun, plans)
             if serversOk || accountOk {
                 self.lastSessionDataRefreshAt = Date()
+            } else {
+                AppLog.shared.append(
+                    "[session] refresh failed — next auto retry in \(Int(SessionRefreshPolicy.failureCooldown))s"
+                )
             }
         }
     }
@@ -140,6 +156,13 @@ extension AppState {
     func refreshSessionDataIfStale() async {
         guard isSignedIn else { return }
         guard SessionRefreshPolicy.isStale(since: lastSessionDataRefreshAt) else { return }
+        if SessionRefreshPolicy.inFailureCooldown(
+            success: lastSessionDataRefreshAt,
+            attempt: lastSessionRefreshAttemptAt
+        ) {
+            AppLog.shared.append("[session] stale refresh deferred — cooldown after API failure")
+            return
+        }
         _ = await AuthSessionStore.refreshSession()
         authSession = AuthSessionStore.session
         guard isSignedIn else { return }
@@ -259,7 +282,7 @@ extension AppState {
         guard beginServersRefresh() else { return false }
         defer { isRefreshingServers = false }
         async let sleep: Void = { try? await Task.sleep(for: minimumVisibleDuration) }()
-        await refreshSessionData()
+        await refreshSessionData(force: true)
         await sleep
         return !Task.isCancelled && serversError == nil
     }

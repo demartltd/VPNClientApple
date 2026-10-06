@@ -86,11 +86,7 @@ extension AppState {
             openAccountSheet(.traffic)
             return
         }
-        if isSignedIn, lastSessionDataRefreshAt == nil {
-            await refreshSessionData()
-            guard isCurrentVpnOperation(operationGeneration) else { return }
-            selectedServer = Self.restoreSelectedServer(from: servers)
-        }
+        // Connect from cache — never gate VPN start on API (avoids spam when API is down / rate-limited).
         guard let server = selectedServer, server.canConnect else { return }
         var shouldForce = force
         #if os(iOS) || os(macOS)

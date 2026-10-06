@@ -5,7 +5,7 @@ import Darwin
 
 struct SingBoxTunOptions {
     var dnsFinal: String
-    /// SNI + uplink host: DNS bootstrap → dns-direct and route → direct.
+    /// Domains for DNS bootstrap → dns-direct and route → direct.
     var uplinkDomains: [String]
 }
 
@@ -58,16 +58,98 @@ struct SingBoxConnectPlan {
         // Hysteria CC: floor tiny API values so uploads are not throttled to a few Mbps.
         if let up = profile.upMbps { outbound["up_mbps"] = max(up, 10) }
         if let down = profile.downMbps { outbound["down_mbps"] = max(down, 10) }
-        return SingBoxConnectPlan(
-            uplinkHost: profile.server,
+        return of(
+            uplink: profile.server,
+            outbound: outbound,
+            domains: bootstrapDomains(server: profile.server, tlsServerName: profile.tlsServerName),
+            bypass: bypassRuleSets
+        )
+    }
+
+    static func trojan(
+        _ profile: TrojanProfile,
+        bypassRuleSets: [ApiBypassRuleSet] = []
+    ) -> SingBoxConnectPlan {
+        let outbound: [String: Any] = [
+            "type": "trojan",
+            "tag": SingBoxConfigConstants.proxyTag,
+            "server": profile.server,
+            "server_port": profile.port,
+            "password": profile.password,
+            "tls": ["enabled": true, "server_name": profile.tlsServerName],
+            "multiplex": ["enabled": true],
+            "domain_resolver": SingBoxDnsBuilder.domainResolver(server: SingBoxConfigConstants.dnsDirectTag),
+        ]
+        return of(
+            uplink: profile.server,
+            outbound: outbound,
+            domains: bootstrapDomains(server: profile.server, tlsServerName: profile.tlsServerName),
+            bypass: bypassRuleSets
+        )
+    }
+
+    static func vlessReality(
+        _ profile: VlessRealityProfile,
+        bypassRuleSets: [ApiBypassRuleSet] = []
+    ) -> SingBoxConnectPlan {
+        // Mirror Android: bootstrap = uplink host only; no network/mux (Vision = TCP command).
+        // https://sing-box.sagernet.org/configuration/outbound/vless/
+        let domains = isHostname(profile.server) ? [profile.server.trimmingCharacters(in: .whitespacesAndNewlines)] : []
+        let flow = profile.flow?.trimmingCharacters(in: .whitespacesAndNewlines)
+        var outbound: [String: Any] = [
+            "type": "vless",
+            "tag": SingBoxConfigConstants.proxyTag,
+            "server": profile.server,
+            "server_port": profile.port,
+            "uuid": profile.uuid,
+            "tls": [
+                "enabled": true,
+                "server_name": profile.tlsServerName,
+                "utls": ["enabled": true, "fingerprint": "chrome"],
+                "reality": [
+                    "enabled": true,
+                    "public_key": profile.publicKey,
+                    "short_id": profile.shortId,
+                ],
+            ],
+            "domain_resolver": SingBoxDnsBuilder.domainResolver(server: SingBoxConfigConstants.dnsDirectTag),
+        ]
+        if let flow, !flow.isEmpty { outbound["flow"] = flow }
+        return of(uplink: profile.server, outbound: outbound, domains: domains, bypass: bypassRuleSets)
+    }
+
+    private static func of(
+        uplink: String,
+        outbound: [String: Any],
+        domains: [String],
+        bypass: [ApiBypassRuleSet]
+    ) -> SingBoxConnectPlan {
+        SingBoxConnectPlan(
+            uplinkHost: uplink,
             proxyOutbound: outbound,
-            directIPs: directIPs(forHost: profile.server),
+            directIPs: directIPs(forHost: uplink),
             tun: SingBoxTunOptions(
                 dnsFinal: SingBoxConfigConstants.dnsRemoteTag,
-                uplinkDomains: Array(Set([profile.tlsServerName, profile.server])).sorted()
+                uplinkDomains: domains
             ),
-            bypassRuleSets: bypassRuleSets.uniquedByTag()
+            bypassRuleSets: bypass.uniquedByTag()
         )
+    }
+
+    private static func bootstrapDomains(server: String, tlsServerName: String) -> [String] {
+        var domains = Set<String>()
+        let sni = tlsServerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !sni.isEmpty { domains.insert(sni) }
+        if isHostname(server) {
+            domains.insert(server.trimmingCharacters(in: .whitespacesAndNewlines))
+        }
+        return domains.sorted()
+    }
+
+    private static func isHostname(_ host: String) -> Bool {
+        let trimmed = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        return directIPs(forHost: trimmed).isEmpty
     }
 
     private static func directIPs(forHost host: String) -> [String] {

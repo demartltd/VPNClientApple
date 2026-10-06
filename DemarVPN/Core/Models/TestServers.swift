@@ -20,6 +20,6 @@ enum TestServers {
     ]
 
     static var profiles: [ServerProfile] {
-        hysteria2.map { ServerProfile(hysteria2: $0) }
+        hysteria2.map { ServerProfile(profile: .hysteria2($0)) }
     }
 }

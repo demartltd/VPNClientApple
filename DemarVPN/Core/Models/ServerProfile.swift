@@ -48,19 +48,34 @@ enum ServerTier: String, CaseIterable, Equatable, Hashable, Sendable {
 }
 
 enum ServerProtocol: String, CaseIterable, Equatable, Hashable, Sendable {
-    case hysteria2 = "Hysteria2"
+    case hysteria2 = "HY2"
+    case trojan = "Trojan"
+    case vlessReality = "VLESS"
+
+    var apiKey: String {
+        switch self {
+        case .hysteria2: "hysteria2"
+        case .trojan: "trojan"
+        case .vlessReality: "vless_reality"
+        }
+    }
+
+    static func fromApi(_ raw: String) -> ServerProtocol? {
+        let key = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return allCases.first { $0.apiKey == key }
+    }
 }
 
 struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
     let id: String
     let displayName: String
-    let profile: Hysteria2Profile
+    let profile: ProxyProfile
+    let city: String?
     let bypassRuleSets: [ApiBypassRuleSet]
 
-    var connectPlan: SingBoxConnectPlan { .hysteria2(profile, bypassRuleSets: bypassRuleSets) }
-    var canConnect: Bool { profile.canConnect }
-
-    var serverProtocol: ServerProtocol { .hysteria2 }
+    var connectPlan: SingBoxConnectPlan { profile.toConnectPlan(bypassRuleSets: bypassRuleSets) }
+    var canConnect: Bool { profile.hasCredentials }
+    var serverProtocol: ServerProtocol { profile.serverProtocol }
 
     var tier: ServerTier { .fromTag(displayName) }
 
@@ -77,8 +92,6 @@ struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
         guard let countryCode else { return nil }
         return Locale.current.localizedString(forRegionCode: countryCode)
     }
-
-    var city: String? { profile.city }
 
     var listTitle: String {
         guard let countryName, !countryName.isEmpty else { return displayName }
@@ -101,13 +114,18 @@ struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
     }
 
     init(
-        hysteria2 profile: Hysteria2Profile,
+        profile: ProxyProfile,
         id: String? = nil,
+        city: String? = nil,
         bypassRuleSets: [ApiBypassRuleSet] = []
     ) {
         self.profile = profile
-        self.id = id ?? "hysteria2:\(profile.displayName)"
+        self.id = id ?? "\(profile.serverProtocol.apiKey):\(profile.displayName)"
         displayName = profile.displayName
+        self.city = city ?? {
+            if case .hysteria2(let hy2) = profile { return hy2.city }
+            return nil
+        }()
         self.bypassRuleSets = bypassRuleSets.uniquedByTag()
     }
 }
@@ -116,6 +134,12 @@ extension Array where Element == ServerProfile {
     func visibleTiers() -> [ServerTier] {
         ServerTier.allCases.filter { tier in
             (tier != .dev && tier != .tester) || contains { $0.tier == tier }
+        }
+    }
+
+    func visibleProtocols() -> [ServerProtocol] {
+        ServerProtocol.allCases.filter { proto in
+            contains { $0.serverProtocol == proto }
         }
     }
 

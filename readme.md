@@ -1,4 +1,4 @@
-**Demar Proxy (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **latest sing-box** (Hysteria2 через Libbox).
+**Demar Proxy (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **latest sing-box** (Hysteria2 / Trojan / VLESS Reality через Libbox).
 
 Поддерживаются **iOS 18+** и **macOS 15+** (нативное приложение, один target).
 
@@ -120,7 +120,7 @@ Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На devi
 
 ### Сервера
 
-Список профилей с API по подписке (после входа). SegmentBar: Hysteria2 + All/Free/Plus/Vip (+ Dev/Tester если есть). Pull-to-refresh обновляет список. Гость — CTA «Войти».
+Список профилей с API по подписке (после входа). SegmentBar: протоколы из ответа API (HY2 / Trojan / VLESS) + All/Free/Plus/Vip (+ Dev/Tester если есть). Pull-to-refresh обновляет список. Гость — CTA «Войти».
 
 ### Настройки
 

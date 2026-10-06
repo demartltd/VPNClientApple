@@ -70,6 +70,8 @@ final class AppState {
     var shownUpdateTokenInSession: String?
     var backgroundRefreshTask: Task<Void, Never>?
     var lastSessionDataRefreshAt: Date?
+    /// Last `refreshSessionData` start (success or fail) — used for API failure cooldown.
+    var lastSessionRefreshAttemptAt: Date?
     static let sessionDataTTL: TimeInterval = SessionRefreshPolicy.ttl
     static let backgroundRefreshInterval: Duration = .seconds(sessionDataTTL)
 
@@ -115,11 +117,6 @@ final class AppState {
         self.vpn = vpn ?? NativeVpnService()
         #endif
         applyTunDefaultsIfFree()
-    }
-
-    var canToggleVpn: Bool {
-        if case .disconnecting = vpnState { return false }
-        return vpnState.isConnected || vpnState == .connecting || selectedServer != nil
     }
 
     static func restoreSelectedServer(from servers: [ServerProfile]) -> ServerProfile? {

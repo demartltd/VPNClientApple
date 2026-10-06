@@ -40,14 +40,18 @@ final class ServersApiParseTests: XCTestCase {
         XCTAssertEqual(profile.displayName, "FI-FREE-2")
         XCTAssertEqual(profile.city, "Helsinki")
         XCTAssertEqual(profile.tier, .free)
-        XCTAssertEqual(profile.profile.server, "fi.example.com")
-        XCTAssertEqual(profile.profile.port, 8443)
-        XCTAssertEqual(profile.profile.password, "secret")
-        XCTAssertEqual(profile.profile.tlsServerName, "sni.example.com")
-        XCTAssertEqual(profile.profile.alpn, ["h3", "h2"])
-        XCTAssertEqual(profile.profile.obfsPassword, "obfs-pass")
-        XCTAssertEqual(profile.profile.upMbps, 10)
-        XCTAssertEqual(profile.profile.downMbps, 10)
+        XCTAssertEqual(profile.serverProtocol, .hysteria2)
+        guard case .hysteria2(let hy2) = profile.profile else {
+            return XCTFail("expected hysteria2")
+        }
+        XCTAssertEqual(hy2.server, "fi.example.com")
+        XCTAssertEqual(hy2.port, 8443)
+        XCTAssertEqual(hy2.password, "secret")
+        XCTAssertEqual(hy2.tlsServerName, "sni.example.com")
+        XCTAssertEqual(hy2.alpn, ["h3", "h2"])
+        XCTAssertEqual(hy2.obfsPassword, "obfs-pass")
+        XCTAssertEqual(hy2.upMbps, 10)
+        XCTAssertEqual(hy2.downMbps, 10)
     }
 
     func testSkipUnsupportedProtocol() {
@@ -81,10 +85,13 @@ final class ServersApiParseTests: XCTestCase {
             "clientConfigJson": configJSON,
         ]
         let profile = try XCTUnwrap(ServersApi.parseServerItem(item))
-        XCTAssertEqual(profile.profile.alpn, ["h3"])
-        XCTAssertNil(profile.profile.obfsPassword)
-        XCTAssertNil(profile.profile.upMbps)
-        XCTAssertNil(profile.profile.downMbps)
+        guard case .hysteria2(let hy2) = profile.profile else {
+            return XCTFail("expected hysteria2")
+        }
+        XCTAssertEqual(hy2.alpn, ["h3"])
+        XCTAssertNil(hy2.obfsPassword)
+        XCTAssertNil(hy2.upMbps)
+        XCTAssertNil(hy2.downMbps)
         XCTAssertEqual(profile.tier, .plus)
         XCTAssertEqual(profile.city, "Amsterdam")
     }
@@ -109,7 +116,10 @@ final class ServersApiParseTests: XCTestCase {
             "clientConfigJson": configJSON,
         ]
         let profile = try XCTUnwrap(ServersApi.parseServerItem(item))
-        XCTAssertEqual(profile.profile.password, "")
+        guard case .hysteria2(let hy2) = profile.profile else {
+            return XCTFail("expected hysteria2")
+        }
+        XCTAssertEqual(hy2.password, "")
         XCTAssertFalse(profile.canConnect)
         XCTAssertEqual(profile.tier, .free)
     }
@@ -129,25 +139,199 @@ final class ServersApiParseTests: XCTestCase {
         XCTAssertFalse(profile.canConnect)
     }
 
+    func testParseTrojan() throws {
+        let config: [String: Any] = [
+            "outbounds": [
+                [
+                    "type": "trojan",
+                    "server": "tr.example.com",
+                    "server_port": 443,
+                    "password": "trojan-secret",
+                    "tls": ["server_name": "cdn.example.com"],
+                    "city": "Helsinki",
+                ] as [String: Any],
+            ],
+        ]
+        let configJSON = String(data: try JSONSerialization.data(withJSONObject: config), encoding: .utf8)!
+        let item: [String: Any] = [
+            "id": "tr-1",
+            "name": "FI-PLUS-3",
+            "protocol": "trojan",
+            "clientConfigJson": configJSON,
+        ]
+        let profile = try XCTUnwrap(ServersApi.parseServerItem(item))
+        XCTAssertEqual(profile.serverProtocol, .trojan)
+        XCTAssertEqual(profile.city, "Helsinki")
+        XCTAssertTrue(profile.canConnect)
+        guard case .trojan(let trojan) = profile.profile else {
+            return XCTFail("expected trojan")
+        }
+        XCTAssertEqual(trojan.server, "tr.example.com")
+        XCTAssertEqual(trojan.password, "trojan-secret")
+        XCTAssertEqual(trojan.tlsServerName, "cdn.example.com")
+
+        let plan = profile.connectPlan
+        XCTAssertEqual(plan.proxyOutbound["type"] as? String, "trojan")
+        let mux = try XCTUnwrap(plan.proxyOutbound["multiplex"] as? [String: Any])
+        XCTAssertEqual(mux["enabled"] as? Bool, true)
+        let tls = try XCTUnwrap(plan.proxyOutbound["tls"] as? [String: Any])
+        XCTAssertEqual(tls["server_name"] as? String, "cdn.example.com")
+        XCTAssertTrue(plan.tun.uplinkDomains.contains("cdn.example.com"))
+        XCTAssertTrue(plan.tun.uplinkDomains.contains("tr.example.com"))
+    }
+
+    func testParseVlessReality() throws {
+        let config: [String: Any] = [
+            "outbounds": [
+                [
+                    "type": "vless",
+                    "server": "vl.example.com",
+                    "server_port": 443,
+                    "uuid": "bf000d23-0752-40b4-affe-68f7707a9661",
+                    "flow": "xtls-rprx-vision",
+                    "tls": [
+                        "server_name": "www.cloudflare.com",
+                        "reality": [
+                            "public_key": "pub-key",
+                            "short_id": "abcd",
+                        ],
+                    ],
+                ] as [String: Any],
+            ],
+        ]
+        let configJSON = String(data: try JSONSerialization.data(withJSONObject: config), encoding: .utf8)!
+        let item: [String: Any] = [
+            "id": "vl-1",
+            "name": "DE-VIP-1",
+            "city": "Frankfurt",
+            "protocol": "vless_reality",
+            "clientConfigJson": configJSON,
+        ]
+        let profile = try XCTUnwrap(ServersApi.parseServerItem(item))
+        XCTAssertEqual(profile.serverProtocol, .vlessReality)
+        XCTAssertTrue(profile.canConnect)
+        guard case .vlessReality(let vless) = profile.profile else {
+            return XCTFail("expected vless")
+        }
+        XCTAssertEqual(vless.uuid, "bf000d23-0752-40b4-affe-68f7707a9661")
+        XCTAssertEqual(vless.publicKey, "pub-key")
+        XCTAssertEqual(vless.shortId, "abcd")
+        XCTAssertEqual(vless.flow, "xtls-rprx-vision")
+
+        let plan = profile.connectPlan
+        XCTAssertEqual(plan.proxyOutbound["type"] as? String, "vless")
+        XCTAssertEqual(plan.proxyOutbound["flow"] as? String, "xtls-rprx-vision")
+        XCTAssertNil(plan.proxyOutbound["network"])
+        XCTAssertNil(plan.proxyOutbound["multiplex"])
+        let tls = try XCTUnwrap(plan.proxyOutbound["tls"] as? [String: Any])
+        let utls = try XCTUnwrap(tls["utls"] as? [String: Any])
+        XCTAssertEqual(utls["fingerprint"] as? String, "chrome")
+        let reality = try XCTUnwrap(tls["reality"] as? [String: Any])
+        XCTAssertEqual(reality["public_key"] as? String, "pub-key")
+        XCTAssertEqual(reality["short_id"] as? String, "abcd")
+        // Reality SNI must not enter bootstrap domains.
+        XCTAssertEqual(plan.tun.uplinkDomains, ["vl.example.com"])
+        XCTAssertFalse(plan.tun.uplinkDomains.contains("www.cloudflare.com"))
+    }
+
+    func testParseVlessRealityCoercesNumericShortId() throws {
+        let config: [String: Any] = [
+            "outbounds": [
+                [
+                    "type": "vless",
+                    "server": "89.22.230.136",
+                    "server_port": 8443,
+                    "uuid": "bf000d23-0752-40b4-affe-68f7707a9661",
+                    "flow": "xtls-rprx-vision",
+                    "tls": [
+                        "server_name": "www.microsoft.com",
+                        "reality": [
+                            "public_key": "pub-key",
+                            "short_id": 12345678,
+                        ],
+                    ],
+                ] as [String: Any],
+            ],
+        ]
+        let configJSON = String(data: try JSONSerialization.data(withJSONObject: config), encoding: .utf8)!
+        let profile = try XCTUnwrap(ServersApi.parseServerItem([
+            "id": "vl-num",
+            "name": "SE-VIP-71",
+            "protocol": "vless_reality",
+            "clientConfigJson": configJSON,
+        ]))
+        guard case .vlessReality(let vless) = profile.profile else {
+            return XCTFail("expected vless")
+        }
+        XCTAssertEqual(vless.shortId, "12345678")
+        XCTAssertEqual(vless.port, 8443)
+        XCTAssertEqual(profile.connectPlan.proxyOutbound["server_port"] as? Int, 8443)
+        XCTAssertEqual(profile.connectPlan.tun.uplinkDomains, [])
+    }
+
+    func testParsePreviewTrojanAndVless() throws {
+        let trojan = try XCTUnwrap(ServersApi.parseServerItem([
+            "id": "tr-prev",
+            "name": "FI-FREE-1",
+            "protocol": "trojan",
+            "city": "Helsinki",
+        ]))
+        XCTAssertEqual(trojan.serverProtocol, .trojan)
+        XCTAssertFalse(trojan.canConnect)
+
+        let vless = try XCTUnwrap(ServersApi.parseServerItem([
+            "id": "vl-prev",
+            "name": "DE-FREE-1",
+            "protocol": "vless_reality",
+        ]))
+        XCTAssertEqual(vless.serverProtocol, .vlessReality)
+        XCTAssertFalse(vless.canConnect)
+    }
+
+    func testVisibleProtocolsFromList() {
+        let hy2 = ServerProfile(
+            profile: .hysteria2(Hysteria2Profile(
+                displayName: "FI-FREE-1",
+                server: "a.example.com",
+                port: 1,
+                password: "p",
+                tlsServerName: "a.example.com"
+            )),
+            id: "h1"
+        )
+        let trojan = ServerProfile(
+            profile: .trojan(TrojanProfile(
+                displayName: "FI-PLUS-1",
+                server: "b.example.com",
+                port: 1,
+                password: "p",
+                tlsServerName: "b.example.com"
+            )),
+            id: "t1"
+        )
+        XCTAssertEqual([hy2, trojan].visibleProtocols(), [.hysteria2, .trojan])
+        XCTAssertEqual([hy2].visibleProtocols(), [.hysteria2])
+    }
+
     func testTesterTierVisible() {
         let tester = ServerProfile(
-            hysteria2: Hysteria2Profile(
+            profile: .hysteria2(Hysteria2Profile(
                 displayName: "FI-TESTER-1",
                 server: "a.example.com",
                 port: 1,
                 password: "p",
                 tlsServerName: "a.example.com"
-            ),
+            )),
             id: "t1"
         )
         let free = ServerProfile(
-            hysteria2: Hysteria2Profile(
+            profile: .hysteria2(Hysteria2Profile(
                 displayName: "FI-FREE-1",
                 server: "b.example.com",
                 port: 1,
                 password: "p",
                 tlsServerName: "b.example.com"
-            ),
+            )),
             id: "f1"
         )
         let tiers = [tester, free].visibleTiers()

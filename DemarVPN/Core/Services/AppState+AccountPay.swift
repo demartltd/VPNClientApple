@@ -29,7 +29,7 @@ extension AppState {
         let now = Date()
         if let last = lastPayReturnRefreshAt, now.timeIntervalSince(last) < 5 { return }
         lastPayReturnRefreshAt = now
-        Task { await refreshSessionData() }
+        Task { await refreshSessionData(force: true) }
     }
 
     func dismissPayResult() {

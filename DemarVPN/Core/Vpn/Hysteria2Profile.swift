@@ -12,7 +12,7 @@ struct Hysteria2Profile: Equatable, Hashable, Sendable {
     let upMbps: Int?
     let downMbps: Int?
 
-    var canConnect: Bool { !password.isEmpty }
+    var hasCredentials: Bool { !password.isEmpty }
 
     init(
         displayName: String,

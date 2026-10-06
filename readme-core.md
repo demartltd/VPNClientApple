@@ -1,14 +1,19 @@
-# Ядро VPN: Sing-box (Hysteria2) — Demar Proxy (Apple)
+# Ядро VPN: Sing-box (мультипротокол) — Demar Proxy (Apple)
 
 Сокращённая версия [`demar_vpn/readme-core.md`](../demar_vpn/readme-core.md) для нативного клиента **iOS 18+ / macOS 15+** (`demar_vpn_apple`).
 
 Целевая версия core: **sing-box 1.14.1**, зафиксированная в [`singbox-version.txt`](singbox-version.txt). Оба build-скрипта и `bundled_version.txt` обязаны использовать эту версию.
 
+Поддерживаемые протоколы (API `protocol` → outbound): **Hysteria2** (`hysteria2`), **Trojan** (`trojan`), **VLESS Reality** (`vless_reality` → type `vless`).
+
 Документация Sing-box:
 
 - [Hysteria2 outbound](https://sing-box.sagernet.org/configuration/outbound/hysteria2/)
+- [Trojan outbound](https://sing-box.sagernet.org/configuration/outbound/trojan/)
+- [VLESS outbound](https://sing-box.sagernet.org/configuration/outbound/vless/)
 - [TUN inbound](https://sing-box.sagernet.org/configuration/inbound/tun/)
-- [TLS outbound](https://sing-box.sagernet.org/configuration/shared/tls/)
+- [TLS outbound](https://sing-box.sagernet.org/configuration/shared/tls/) (uTLS / Reality)
+- [Multiplex](https://sing-box.sagernet.org/configuration/shared/multiplex/)
 - [Dial fields](https://sing-box.sagernet.org/configuration/shared/dial/)
 - [DNS rule action](https://sing-box.sagernet.org/configuration/dns/rule_action/)
 - [CLI](https://sing-box.sagernet.org/command/)
@@ -19,7 +24,7 @@
 
 Sing-box используется как proxy-core. **Device-wide VPN** строится через **TUN inbound** в `config.json`; маршруты и utun создаёт **Network Extension** (`NEPacketTunnelProvider`), extension запускает Libbox in-process.
 
-Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxConnectPlan.swift) → [`SingBoxConfigBuilder`](DemarVPN/Core/Vpn/SingBoxConfigBuilder.swift) → `config.json`. Extension мержит runtime-resolved uplink IPv4 в bypass rules перед стартом Libbox; TUN fd создаёт NE platform interface.
+Pipeline: `ServerProfile` → [`ProxyProfile`](DemarVPN/Core/Vpn/ProxyProfile.swift) → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxConnectPlan.swift) → [`SingBoxConfigBuilder`](DemarVPN/Core/Vpn/SingBoxConfigBuilder.swift) → `config.json`. Extension мержит runtime-resolved uplink IPv4 в bypass rules перед стартом Libbox; TUN fd создаёт NE platform interface. TUN/DNS/route/NE протокольно-нейтральны — меняется только `proxy` outbound.
 
 Формат config.json соответствует sing-box **1.12+ / 1.14** (legacy DNS `address:` удалён в 1.14):
 
@@ -37,28 +42,27 @@ Pipeline: `ServerProfile` → [`SingBoxConnectPlan`](DemarVPN/Core/Vpn/SingBoxCo
 
 ---
 
-## Hysteria2: профиль и config.json
+## Профили и outbounds
 
-### App model — `Hysteria2Profile`
+### App model — `ProxyProfile`
 
-[`Hysteria2Profile`](DemarVPN/Core/Vpn/Hysteria2Profile.swift) — структурированный профиль (без URI-парсера). Тестовые значения: [`TestServers.swift`](DemarVPN/Core/Models/TestServers.swift).
+[`ProxyProfile`](DemarVPN/Core/Vpn/ProxyProfile.swift) — enum `hysteria2` / `trojan` / `vlessReality`. API key в [`ServerProtocol`](DemarVPN/Core/Models/ServerProfile.swift): `hysteria2` / `trojan` / `vless_reality`. Parse: [`ServersApi`](DemarVPN/Core/Network/ServersApi.swift). Тестовые HY2: [`TestServers.swift`](DemarVPN/Core/Models/TestServers.swift).
 
-| App field | sing-box | Required |
-|-----------|----------|----------|
-| `server` | `server` | yes |
-| `port` | `server_port` | yes |
-| `password` | `password` | yes |
-| `tlsServerName` | `tls.server_name` | yes |
-| `upMbps` / `downMbps` | `up_mbps` / `down_mbps` | no (empty → BBR; set values floored to ≥10) |
-| `displayName` / `city` | — | UI only |
+| Протокол | App model | Outbound type | Ключевые поля |
+|----------|-----------|---------------|---------------|
+| Hysteria2 | `Hysteria2Profile` | `hysteria2` | password, tls+alpn h3, optional obfs, up/down_mbps (≥10 floor) |
+| Trojan | `TrojanProfile` | `trojan` | password, tls.server_name, `multiplex.enabled` |
+| VLESS Reality | `VlessRealityProfile` | `vless` | uuid, flow `xtls-rprx-vision`, tls.utls chrome, tls.reality public_key/short_id |
 
-### Outbound (`SingBoxConnectPlan.hysteria2`)
+**VLESS:** bootstrap DNS/route domains = только uplink host (Reality SNI вроде `www.cloudflare.com` — не dial target). Не эмитить `network` / `multiplex` (Vision ∌ mux). Libbox Apple уже с `with_utls`.
 
-Один outbound + `direct`:
+### Outbound factories (`SingBoxConnectPlan`)
+
+Один `proxy` outbound + `direct`:
 
 | Outbound | tag | Role |
 |----------|-----|------|
-| hysteria2 | `proxy` | route final / DoH detour; dial host/port; `tls` + `alpn: ["h3"]`; `domain_resolver` → `dns-direct` |
+| hysteria2 / trojan / vless | `proxy` | route final / DoH detour; `domain_resolver` → `dns-direct` |
 | direct | `direct` | bypass |
 
 Pin endpoint / `mergeDirectIPs` целят **`proxy`**.
@@ -97,7 +101,7 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 | `dns-direct` | `local` / UDP `1.1.1.1` | без bypass — Darwin; с geosite — вне TUN |
 | PTR | `action: reject` (`drop`) | отсев локальных reverse/DNS-SD floods в NE |
 | `experimental.cache_file` | `enabled` + `store_dns` | rule-set + persist DNS (1.14) |
-| DNS bootstrap | `[tlsServerName, server]` → direct DNS | SNI + uplink host |
+| DNS bootstrap | HY2/Trojan: `[tlsServerName, server]`; VLESS: uplink host only | Reality SNI не в bootstrap |
 | `strict_route` | `false` (NE) | не конфликтует с excludedRoutes на iOS 26 |
 | `stack` | `gvisor` | как первый Hysteria2 (`9f0c3cc`) |
 | `dns.optimistic` | `true` | stale-while-revalidate (1.14) |
@@ -109,7 +113,7 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 | UDP/443 | `reject` + `method: default` | форс TCP: QUIC-in-QUIC над H2 вешает App Store; bare reject = blackhole |
 | Hysteria2 `udp_fragment` | `true` | QUIC/MTU на Apple NE |
 | TUN `mtu` | `4064` | Apple utun default; low 1400 cap starved bulk TCP |
-| `uplinkDomains` | `[tlsServerName, server]` | SNI / uplink → DNS bootstrap + route direct |
+| `uplinkDomains` | HY2/Trojan: SNI+host; VLESS: host only | DNS bootstrap + route direct |
 | `directIPs` | IPv4 literal или runtime merge | exclude/route bypass |
 
 На Apple endpoint IP сначала исключается из `NEPacketTunnelNetworkSettings`, затем применяется новый config. Hysteria2 (UDP/QUIC) dial'ит uplink напрямую — без TCP hairpin/relay. Libbox Apple уже с `with_quic`.
@@ -200,7 +204,7 @@ Connect: `NativeVpnService` → `VpnTunnelController` → extension → Libbox (
 ## Чеклист интеграции
 
 - [x] `DemarPacketTunnel` + `NativeVpnService`
-- [x] Hysteria2 → config (`Hysteria2Profile`, `SingBoxConnectPlan.hysteria2`)
+- [x] Multi-protocol → config (`ProxyProfile`, HY2 / Trojan / VLESS Reality)
 - [x] Geo в bundle iOS / macOS
 - [x] `AppState` + `VpnStatusMonitor` (iOS + macOS)
 - [x] macOS Network Extension + Libbox in-process

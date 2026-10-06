@@ -33,7 +33,10 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
 │   │   └── LegalDocuments.swift       # ToS/PP via DemarHttp Markdown fetch
 │   ├── Vpn/
+│   │   ├── ProxyProfile.swift         # enum HY2 / Trojan / VLESS Reality → connectPlan
 │   │   ├── Hysteria2Profile.swift     # Hysteria2 профиль (+ alpn/obfs)
+│   │   ├── TrojanProfile.swift        # Trojan (password + TLS)
+│   │   ├── VlessRealityProfile.swift  # VLESS Reality (uuid + utls + reality)
 │   │   ├── ApiBypassRuleSet.swift     # API route.rule_set (geoip/geosite)
 │   │   ├── TunModels.swift            # site groups / TunSettings / effective bypass hosts
 │   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun; DemarControlPlane hosts

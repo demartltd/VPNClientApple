@@ -90,6 +90,9 @@
 		B10000010000000000000039 /* CustomEgressProbes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000039 /* CustomEgressProbes.swift */; };
 		B1000001000000000000003C /* SingBoxConnectPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000003D /* SingBoxConnectPlan.swift */; };
 		B1000001000000000000003E /* Hysteria2Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000003E /* Hysteria2Profile.swift */; };
+		B1000001000000000000PP1 /* ProxyProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000PP1 /* ProxyProfile.swift */; };
+		B1000001000000000000TP1 /* TrojanProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000TP1 /* TrojanProfile.swift */; };
+		B1000001000000000000VP1 /* VlessRealityProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000VP1 /* VlessRealityProfile.swift */; };
 		B10000010000000000000040 /* bundled_version.txt in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000040 /* bundled_version.txt */; };
 		B10000010000000000000041 /* geoip.db in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000041 /* geoip.db */; };
 		B10000010000000000000042 /* geosite.db in Resources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000042 /* geosite.db */; };
@@ -147,6 +150,8 @@
 		E20000221CF9000F007C117D /* SingBoxConfigBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000028 /* SingBoxConfigBuilder.swift */; };
 		E20000231CF9000F007C117D /* SingBoxConnectPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000003D /* SingBoxConnectPlan.swift */; };
 		E20000251CF9000F007C117D /* Hysteria2Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000003E /* Hysteria2Profile.swift */; };
+		E20000TP1CF9000F007C117D /* TrojanProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000TP1 /* TrojanProfile.swift */; };
+		E20000VP1CF9000F007C117D /* VlessRealityProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000VP1 /* VlessRealityProfile.swift */; };
 		E20000DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001DE1CF9000F007C117D /* ios/Shared/DefaultInterfaceReporter.swift */; };
 		E20000DF1CF9000F007C117D /* ios/Shared/DemarLogTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001DF1CF9000F007C117D /* ios/Shared/DemarLogTime.swift */; };
 		E20001081CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */; };
@@ -316,6 +321,9 @@
 		F10000010000000000000039 /* CustomEgressProbes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomEgressProbes.swift; sourceTree = "<group>"; };
 		F1000001000000000000003D /* SingBoxConnectPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConnectPlan.swift; sourceTree = "<group>"; };
 		F1000001000000000000003E /* Hysteria2Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hysteria2Profile.swift; sourceTree = "<group>"; };
+		F1000001000000000000PP1 /* ProxyProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyProfile.swift; sourceTree = "<group>"; };
+		F1000001000000000000TP1 /* TrojanProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrojanProfile.swift; sourceTree = "<group>"; };
+		F1000001000000000000VP1 /* VlessRealityProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VlessRealityProfile.swift; sourceTree = "<group>"; };
 		F10000010000000000000040 /* bundled_version.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = bundled_version.txt; sourceTree = "<group>"; };
 		F10000010000000000000041 /* geoip.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = geoip.db; sourceTree = "<group>"; };
 		F10000010000000000000042 /* geosite.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = geosite.db; sourceTree = "<group>"; };
@@ -659,7 +667,10 @@
 		G10000010000000000000011 /* Vpn */ = {
 			isa = PBXGroup;
 			children = (
+				F1000001000000000000PP1 /* ProxyProfile.swift */,
 				F1000001000000000000003E /* Hysteria2Profile.swift */,
+				F1000001000000000000TP1 /* TrojanProfile.swift */,
+				F1000001000000000000VP1 /* VlessRealityProfile.swift */,
 				F100000100000000000000B1 /* ApiBypassRuleSet.swift */,
 				F1000001000000000000TM1 /* TunModels.swift */,
 				F1000001000000000000003D /* SingBoxConnectPlan.swift */,
@@ -1087,7 +1098,10 @@
 				B10000010000000000000038 /* ios/Shared/VpnStatusSignal.swift in Sources */,
 				B10000010000000000000026 /* ios/Shared/VpnControlConstants.swift in Sources */,
 				B10000010000000000000037 /* ios/Shared/VpnControlIntent.swift in Sources */,
+				B1000001000000000000PP1 /* ProxyProfile.swift in Sources */,
 				B1000001000000000000003E /* Hysteria2Profile.swift in Sources */,
+				B1000001000000000000TP1 /* TrojanProfile.swift in Sources */,
+				B1000001000000000000VP1 /* VlessRealityProfile.swift in Sources */,
 				B100000100000000000000B1 /* ApiBypassRuleSet.swift in Sources */,
 				B1000001000000000000TM1 /* TunModels.swift in Sources */,
 				B1000001000000000000003C /* SingBoxConnectPlan.swift in Sources */,
@@ -1139,6 +1153,8 @@
 				E200001C1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift in Sources */,
 				E20000A11CF9000F007C117D /* ios/DemarPacketTunnel/ClashTrafficMonitor.swift in Sources */,
 				E20000251CF9000F007C117D /* Hysteria2Profile.swift in Sources */,
+				E20000TP1CF9000F007C117D /* TrojanProfile.swift in Sources */,
+				E20000VP1CF9000F007C117D /* VlessRealityProfile.swift in Sources */,
 				E20000B11CF9000F007C117D /* ApiBypassRuleSet.swift in Sources */,
 				E20000231CF9000F007C117D /* SingBoxConnectPlan.swift in Sources */,
 				E20000221CF9000F007C117D /* SingBoxConfigBuilder.swift in Sources */,
@@ -1343,7 +1359,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 89;
+				CURRENT_PROJECT_VERSION = 91;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1381,7 +1397,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 89;
+				CURRENT_PROJECT_VERSION = 91;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1415,7 +1431,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 89;
+				CURRENT_PROJECT_VERSION = 91;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1462,7 +1478,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 89;
+				CURRENT_PROJECT_VERSION = 91;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1509,7 +1525,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 89;
+				CURRENT_PROJECT_VERSION = 91;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1536,7 +1552,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 89;
+				CURRENT_PROJECT_VERSION = 91;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1562,7 +1578,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 89;
+				CURRENT_PROJECT_VERSION = 91;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1600,7 +1616,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 89;
+				CURRENT_PROJECT_VERSION = 91;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;

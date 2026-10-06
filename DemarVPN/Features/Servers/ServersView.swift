@@ -18,14 +18,22 @@ struct ServersView: View {
         }
         .task(id: isActive) {
             guard isActive else { return }
-            selectedProtocol = appState.selectedServer?.serverProtocol ?? .hysteria2
+            syncSelectedProtocol()
             guard appState.isSignedIn else { return }
             guard appState.servers.isEmpty || appState.serversError != nil else { return }
             await appState.refreshSessionData()
         }
         .onChange(of: appState.selectedServer?.id) { _, _ in
-            selectedProtocol = appState.selectedServer?.serverProtocol ?? selectedProtocol
+            syncSelectedProtocol()
         }
+        .onChange(of: appState.servers.map(\.id)) { _, _ in
+            syncSelectedProtocol()
+        }
+    }
+
+    private var visibleProtocols: [ServerProtocol] {
+        let present = appState.servers.visibleProtocols()
+        return present.isEmpty ? [.hysteria2] : present
     }
 
     private var filteredServers: [ServerProfile] {
@@ -35,6 +43,15 @@ struct ServersView: View {
     private var tierOptions: [SegmentOption] {
         [SegmentOption(id: "all", title: "All")]
             + appState.servers.visibleTiers().map { SegmentOption(id: $0.rawValue, title: $0.title) }
+    }
+
+    private func syncSelectedProtocol() {
+        let visible = visibleProtocols
+        if let selected = appState.selectedServer?.serverProtocol, visible.contains(selected) {
+            selectedProtocol = selected
+        } else if !visible.contains(selectedProtocol), let first = visible.first {
+            selectedProtocol = first
+        }
     }
 
     private var content: some View {
@@ -85,7 +102,7 @@ struct ServersView: View {
     private var signedInContent: some View {
         VStack(spacing: 0) {
             SegmentBar(
-                options: ServerProtocol.allCases.map { SegmentOption(id: $0.rawValue, title: $0.rawValue) },
+                options: visibleProtocols.map { SegmentOption(id: $0.rawValue, title: $0.rawValue) },
                 selectedID: selectedProtocol.rawValue,
                 font: .demarTitleMediumBold
             ) { id in
@@ -121,7 +138,7 @@ struct ServersView: View {
                                 .foregroundStyle(Color.demarOnSurfaceVariant)
                                 .multilineTextAlignment(.center)
                             Button(String(localized: "Retry")) {
-                                Task { await appState.refreshSessionData() }
+                                Task { await appState.refreshSessionData(force: true) }
                             }
                             .buttonStyle(.borderedProminent)
                             .tint(Color.demarPrimary)
