@@ -218,3 +218,58 @@ private struct FloatEndFlow: Layout {
         return (CGSize(width: width, height: maxY), origins)
     }
 }
+
+/// Global traffic pie sheet (ContentView host — no Account tab required).
+struct TrafficBottomSheet: View {
+    @Bindable var appState: AppState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if let t = appState.traffic {
+                let remaining = max(Int64(0), t.limitBytes - t.total)
+                Text(
+                    String(
+                        format: String(localized: "Traffic remaining: %@"),
+                        VpnAccountApi.formatBytes(remaining)
+                    )
+                )
+                .font(.demarHeadlineMedium)
+                .foregroundStyle(Color.demarOnSurface)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                TrafficPieChart(
+                    servers: t.servers,
+                    centerPrimary: VpnAccountApi.formatBytes(t.total),
+                    accountId: appState.authSession?.username ?? ""
+                )
+                Button {
+                    appState.dismissAccountSheet()
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(400))
+                        appState.openCheckout(.upgradeTraffic)
+                    }
+                } label: {
+                    Text(String(localized: "Increase limits"))
+                        .font(.demarTitleMedium)
+                        .foregroundStyle(Color.demarOnPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.demarPrimary)
+                        )
+                }
+                .buttonStyle(.plain)
+            } else if appState.accountLoading {
+                Text(String(localized: "Loading…"))
+                    .font(.demarBodySmall)
+                    .foregroundStyle(Color.demarOnSurfaceVariant)
+            } else {
+                Text(String(localized: "Traffic unavailable"))
+                    .font(.demarBodySmall)
+                    .foregroundStyle(Color.demarOnSurfaceVariant)
+            }
+        }
+        .demarSheetChrome(bottomPadding: 8)
+    }
+}

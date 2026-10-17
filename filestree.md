@@ -45,11 +45,12 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── AppState.swift             # @Observable state, init, bootstrap helpers
 │   │   ├── AppState+Vpn.swift         # connect/disconnect/switch/status/throughput
 │   │   ├── AppState+AuthSession.swift # auth, session refresh, sign-out, version
-│   │   ├── AppState+AccountPay.swift  # checkout / pay deeplink / account sheets
+│   │   ├── AppState+AccountPay.swift  # AccountFlowSheet host (checkout/pay/traffic/alerts)
 │   │   ├── AuthSessionStore.swift     # UserDefaults session + auth orchestration
 │   │   ├── SessionCacheStore.swift    # servers/account/traffic/tun disk cache
 │   │   ├── TunSettingsStore.swift     # site-group prefs + in-memory catalog
 │   │   ├── SupportStore.swift         # ticket cache + unread badge
+│   │   ├── SubscriptionAlertStore.swift # Expiry / FreeTraffic cooldown + windows
 │   │   ├── AppLanguage.swift          # open system per-app language settings
 │   │   ├── VpnControlling.swift       # connect/disconnect API
 │   │   ├── NativeVpnService.swift     # → VpnTunnelController
@@ -109,7 +110,8 @@ DemarVPN/                              # SwiftUI target
     │   ├── SubscriptionCheckoutSheet.swift # Plus/VIP × period × currency + pay
     │   ├── PlanCompareSheet.swift       # compare table (separate sheet)
     │   ├── PayResultSheet.swift         # pay deeplink ok/fail → icon + OK
-    │   └── TrafficPieChart.swift      # donut + legend по серверам
+    │   ├── SubscriptionInfoSheet.swift  # Expiry / FreeTraffic upsell sheets
+    │   └── TrafficPieChart.swift        # donut + TrafficBottomSheet
     ├── Auth/LoginSheet.swift          # Email OTP + TOTP + Telegram OAuth
     └── Settings/
         ├── SettingsView.swift         # настройки, 3 тапа → service

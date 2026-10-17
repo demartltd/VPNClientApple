@@ -26,12 +26,9 @@ struct SettingsActionButton<Trailing: View, Extra: View>: View {
         }
         .padding(16)
         .background(
+            // Border only (Android parity) — works on surface and inside SectionCard.
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.demarSurface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(Color.demarOutline.opacity(0.20), lineWidth: 1)
-                )
+                .strokeBorder(Color.demarOutline.opacity(0.20), lineWidth: 1)
         )
     }
 

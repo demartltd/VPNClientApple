@@ -36,17 +36,12 @@ final class AppState {
     /// Pending settings route requested by incoming URL / public link.
     var pendingSettingsRoute: SettingsRoute?
     var settingsRouteRequestTick: Int = 0
-    /// Traffic sheet request for AccountView (`demarvpn://…/traffic`).
-    var pendingOpenTrafficSheet = false
     /// Deeplink / in-app account sheet when guest must sign in first.
     var pendingAccountSheet: DemarDeepLink.AccountSheet?
     var lastPayReturnRefreshAt: Date?
     var accountRouteRequestTick: Int = 0
-    /// Subscription checkout sheet intent (`nil` = closed).
-    var checkoutIntent: CheckoutIntent?
-    var showPlanCompare = false
-    /// Pay deeplink result sheet (`nil` = closed).
-    var payResult: PayFeedback?
+    /// Active account/pay bottom sheet (`nil` = none).
+    var accountSheet: AccountFlowSheet?
     var latestAppVersion: AppVersionInfo?
     var shouldShowUpdateAlert = false
     var versionCheckError: String?

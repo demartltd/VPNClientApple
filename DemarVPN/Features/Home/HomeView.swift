@@ -73,7 +73,7 @@ struct HomeView: View {
             return
         }
         if appState.isTrafficConnectBlocked() {
-            appState.openAccountSheet(.traffic)
+            appState.openTrafficOrFreeAlert()
             return
         }
         guard appState.selectedServer?.canConnect == true else {

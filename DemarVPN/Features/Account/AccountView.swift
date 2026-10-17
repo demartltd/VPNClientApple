@@ -8,7 +8,6 @@ struct AccountView: View {
 
     @State private var signingOut = false
     @State private var notifyBusy = false
-    @State private var showTraffic = false
     @State private var showNotify = false
     @State private var showSignOutConfirm = false
 
@@ -42,14 +41,6 @@ struct AccountView: View {
         }
         .background(Color.demarSurface)
         .demarBottomSheet(isPresented: $showNotify) { notifySheet }
-        .demarBottomSheet(isPresented: $showTraffic) { trafficSheet }
-        .task(id: appState.accountRouteRequestTick) {
-            applyPendingTrafficSheet()
-        }
-        .onChange(of: isActive) { _, active in
-            guard active else { return }
-            applyPendingTrafficSheet()
-        }
         .alert(
             String(localized: "Sign out?"),
             isPresented: $showSignOutConfirm
@@ -67,12 +58,6 @@ struct AccountView: View {
 
     private var soon: () -> Void {
         { snackBar.showInfo(String(localized: "Coming soon")) }
-    }
-
-    private func applyPendingTrafficSheet() {
-        guard isActive, appState.isSignedIn else { return }
-        guard appState.consumeOpenTrafficSheetRequest() else { return }
-        showTraffic = true
     }
 
     // MARK: - Header
@@ -129,7 +114,7 @@ struct AccountView: View {
                 subtitle: trafficSubtitle,
                 danger: trafficFull,
                 showsChevron: true,
-                action: { showTraffic = true },
+                action: { appState.openTrafficSheet() },
                 extra: {
                     if let progress {
                         ProgressView(value: Double(progress))
@@ -340,45 +325,6 @@ struct AccountView: View {
                 }
             } else if loading {
                 Text(String(localized: "Loading…"))
-                    .font(.demarBodySmall)
-                    .foregroundStyle(Color.demarOnSurfaceVariant)
-            }
-        }
-        .demarSheetChrome(bottomPadding: 8)
-    }
-
-    private var trafficSheet: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            if let t = traffic {
-                let remaining = max(Int64(0), t.limitBytes - t.total)
-                Text(
-                    String(
-                        format: String(localized: "Traffic remaining: %@"),
-                        VpnAccountApi.formatBytes(remaining)
-                    )
-                )
-                .font(.demarHeadlineMedium)
-                .foregroundStyle(Color.demarOnSurface)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                TrafficPieChart(
-                    servers: t.servers,
-                    centerPrimary: VpnAccountApi.formatBytes(t.total),
-                    accountId: appState.authSession?.username ?? ""
-                )
-                primaryButton(String(localized: "Increase limits")) {
-                    showTraffic = false
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(400))
-                        appState.openCheckout(.upgradeTraffic)
-                    }
-                }
-            } else if loading {
-                Text(String(localized: "Loading…"))
-                    .font(.demarBodySmall)
-                    .foregroundStyle(Color.demarOnSurfaceVariant)
-            } else {
-                Text(String(localized: "Traffic unavailable"))
                     .font(.demarBodySmall)
                     .foregroundStyle(Color.demarOnSurfaceVariant)
             }

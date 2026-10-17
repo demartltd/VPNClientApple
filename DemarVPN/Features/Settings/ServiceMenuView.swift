@@ -68,6 +68,8 @@ struct ServiceMenuView: View {
                     FlowChipRow(snackBar: snackBar)
                 }
 
+                infoSheetsSection
+
                 #if os(iOS) || os(macOS)
                 SectionCard(title: "Debug", leading: { icon("wrench.and.screwdriver") }) {
                     VStack(spacing: 8) {
@@ -109,6 +111,43 @@ struct ServiceMenuView: View {
             if phase == .active { Task { await reloadDevice() } }
         }
         #endif
+    }
+
+    private var infoSheetsSection: some View {
+        SectionCard(title: "Info sheets", leading: { icon("info.circle") }) {
+            VStack(spacing: 12) {
+                SettingsActionButton(
+                    systemImage: "calendar.badge.exclamationmark",
+                    title: "Subscription is expiring!",
+                    subtitle: "Renew subscription",
+                    action: { appState.openSubscriptionAlert(.expiry) }
+                )
+                SettingsActionButton(
+                    systemImage: "chart.pie.fill",
+                    title: "Buy subscription",
+                    subtitle: "Free traffic upsell",
+                    action: { appState.openSubscriptionAlert(.freeTraffic) }
+                )
+                SettingsActionButton(
+                    systemImage: "chart.pie",
+                    title: "Traffic this month",
+                    subtitle: "Increase limits",
+                    action: { appState.openTrafficSheet() }
+                )
+                SettingsActionButton(
+                    systemImage: "checkmark.circle.fill",
+                    title: "Pay result — success",
+                    subtitle: "demarvpn://pay/ok",
+                    action: { appState.presentPayResult(success: true) }
+                )
+                SettingsActionButton(
+                    systemImage: "xmark.circle.fill",
+                    title: "Pay result — fail",
+                    subtitle: "demarvpn://pay/fail",
+                    action: { appState.presentPayResult(success: false) }
+                )
+            }
+        }
     }
 
     private func icon(_ name: String) -> some View {

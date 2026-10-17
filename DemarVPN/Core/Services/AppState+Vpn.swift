@@ -83,7 +83,7 @@ extension AppState {
     func connect(force: Bool, operationGeneration: UInt64) async {
         if isTrafficConnectBlocked() {
             AppLog.shared.append("[vpn] connect blocked: traffic limit")
-            openAccountSheet(.traffic)
+            openTrafficOrFreeAlert()
             return
         }
         // Connect from cache — never gate VPN start on API (avoids spam when API is down / rate-limited).

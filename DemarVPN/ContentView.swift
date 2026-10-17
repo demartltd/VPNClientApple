@@ -15,7 +15,7 @@ struct ContentView: View {
             macRoot
             #else
             iosRoot
-                .payFlowSheets(appState: appState, snackBar: snackBar)
+                .accountFlowSheets(appState: appState, snackBar: snackBar)
                 .demarSnackBar(snackBar)
             #endif
         }
@@ -100,7 +100,7 @@ struct ContentView: View {
                     .demarMacWindowTitle(section ?? .home)
             }
             .id(section ?? .home)
-            .payFlowSheets(appState: appState, snackBar: snackBar)
+            .accountFlowSheets(appState: appState, snackBar: snackBar)
             .demarSnackBarDetailAnchor()
         }
         .tint(Color.demarPrimary)
@@ -162,6 +162,7 @@ struct ContentView: View {
             guard !Task.isCancelled, scenePhase == .active else { return }
             appState.syncVpnStatusFromSystem()
             appState.presentCachedUpdateAlertIfNeeded()
+            appState.evaluateSubscriptionAlerts()
             appState.refreshVersion()
             appState.setAppActive(true)
             #if os(iOS)
@@ -210,45 +211,43 @@ struct ContentView: View {
 }
 
 private extension View {
-    /// Pay / compare sheets. On macOS attach to the split detail so width matches traffic overlays.
-    func payFlowSheets(appState: AppState, snackBar: SnackBarController) -> some View {
-        demarBottomSheet(
-            isPresented: Binding(
-                get: { appState.payResult != nil },
-                set: { if !$0 { appState.dismissPayResult() } }
-            )
-        ) {
-            if let result = appState.payResult {
-                PayResultSheet(
-                    success: result == .success,
-                    onDismiss: { appState.dismissPayResult() }
-                )
+    /// Account / pay sheets. On macOS attach to the split detail so width matches traffic overlays.
+    func accountFlowSheets(appState: AppState, snackBar: SnackBarController) -> some View {
+        demarBottomSheet(isPresented: appState.accountSheetBinding { if case .payResult = $0 { true } else { false } }) {
+            if case .payResult(let result) = appState.accountSheet {
+                PayResultSheet(success: result == .success, onDismiss: appState.dismissAccountSheet)
             }
         }
-        .demarBottomSheet(
-            isPresented: Binding(
-                get: { appState.showPlanCompare },
-                set: { appState.showPlanCompare = $0 }
-            )
-        ) {
-            PlanCompareSheet(
-                onBuy: { appState.openCheckout(.buy) }
-            )
+        .demarBottomSheet(isPresented: appState.accountSheetBinding { if case .plans = $0 { true } else { false } }) {
+            PlanCompareSheet(onBuy: { appState.openCheckout(.buy) })
         }
-        .demarBottomSheet(
-            isPresented: Binding(
-                get: { appState.checkoutIntent != nil },
-                set: { if !$0 { appState.dismissCheckout() } }
-            )
-        ) {
-            if let intent = appState.checkoutIntent {
+        .demarBottomSheet(isPresented: appState.accountSheetBinding { if case .checkout = $0 { true } else { false } }) {
+            if case .checkout(let intent) = appState.accountSheet {
                 SubscriptionCheckoutSheet(
                     appState: appState,
                     snackBar: snackBar,
                     intent: intent,
-                    onDismiss: { appState.dismissCheckout() }
+                    onDismiss: appState.dismissAccountSheet
                 )
             }
+        }
+        .demarBottomSheet(isPresented: appState.accountSheetBinding { if case .alert = $0 { true } else { false } }) {
+            if case .alert(let kind) = appState.accountSheet {
+                SubscriptionInfoSheet(
+                    kind: kind,
+                    highlight: appState.subscriptionAlertHighlight(for: kind),
+                    onAction: {
+                        appState.dismissAccountSheet()
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(400))
+                            appState.openCheckout(kind == .expiry ? .renew : .buy)
+                        }
+                    }
+                )
+            }
+        }
+        .demarBottomSheet(isPresented: appState.accountSheetBinding { if case .traffic = $0 { true } else { false } }) {
+            TrafficBottomSheet(appState: appState)
         }
     }
 }

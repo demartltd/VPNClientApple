@@ -87,8 +87,7 @@ extension AppState {
     func applyLocalSignOut() async {
         authSession = nil
         pendingAccountSheet = nil
-        dismissCheckout()
-        showPlanCompare = false
+        dismissAccountSheet()
         SessionCacheStore.clear()
         TunSettingsStore.clearCatalog()
         TunSettingsStore.resetToDefaults()
