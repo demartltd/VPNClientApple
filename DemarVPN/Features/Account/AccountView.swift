@@ -364,7 +364,7 @@ struct AccountView: View {
                 TrafficPieChart(
                     servers: t.servers,
                     centerPrimary: VpnAccountApi.formatBytes(t.total),
-                    accountId: appState.authSession?.userId ?? ""
+                    accountId: appState.authSession?.username ?? ""
                 )
                 primaryButton(String(localized: "Increase limits")) {
                     showTraffic = false

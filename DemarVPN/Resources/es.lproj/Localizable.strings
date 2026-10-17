@@ -151,7 +151,7 @@
 "Exclude site groups from the tunnel" = "Excluir grupos de sitios del túnel";
 "Excluded from the VPN tunnel" = "Excluido del túnel VPN";
 "No site groups yet. Pull to refresh servers while signed in." = "Aún no hay grupos de sitios. Desliza para actualizar servidores tras iniciar sesión.";
-"Preset groups" = "Grupos predefinidos";
+"Site Groups" = "Grupos de sitios";
 "Site groups" = "Grupos de sitios";
 "%d sites" = "%d sitios";
 "Dedicated IP*" = "IP dedicada*";

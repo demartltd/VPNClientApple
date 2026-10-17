@@ -5,13 +5,12 @@ import SwiftUI
 enum FontAwesomeBrands {
     static let fontName = "FontAwesome6Brands-Regular"
 
-    /// Order matches Flutter `SettingsLinksStrip`.
+    /// Order matches Android `SettingsLinksStrip`.
     static let links: [(glyph: String, url: URL)] = [
-        ("\u{e61b}", URL(string: "https://x.com/demargames")!),
-        ("\u{e671}", URL(string: "https://bsky.app/profile/demargames.bsky.social")!),
-        ("\u{f16d}", URL(string: "https://www.instagram.com/demargames/")!),
-        ("\u{e07b}", URL(string: "https://www.tiktok.com/@demargames")!),
-        ("\u{f2c6}", URL(string: "https://t.me/demargames")!),
+        ("\u{e61b}", URL(string: "https://x.com/DemarLtd")!),
+        ("\u{e671}", URL(string: "https://bsky.app/profile/demarltd.bsky.social/")!),
+        ("\u{e618}", URL(string: "https://www.threads.com/@demarltd")!),
+        ("\u{f2c6}", URL(string: "https://t.me/demarproxy")!),
     ]
 
     static func register() {

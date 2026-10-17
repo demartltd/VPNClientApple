@@ -151,7 +151,7 @@
 "Exclude site groups from the tunnel" = "Site gruplarını tünelden hariç tut";
 "Excluded from the VPN tunnel" = "VPN tüneli dışında";
 "No site groups yet. Pull to refresh servers while signed in." = "Henüz site grubu yok. Giriş yaptıktan sonra sunucuları yenileyin.";
-"Preset groups" = "Hazır gruplar";
+"Site Groups" = "Site grupları";
 "Site groups" = "Site grupları";
 "%d sites" = "%d site";
 "Dedicated IP*" = "Özel IP*";

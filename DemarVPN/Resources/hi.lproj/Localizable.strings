@@ -151,7 +151,7 @@
 "Exclude site groups from the tunnel" = "साइट समूहों को टनल से बाहर रखें";
 "Excluded from the VPN tunnel" = "VPN टनल से बाहर";
 "No site groups yet. Pull to refresh servers while signed in." = "अभी कोई साइट समूह नहीं। साइन इन के बाद सर्वर रीफ़्रेश करें।";
-"Preset groups" = "प्रीसेट समूह";
+"Site Groups" = "साइट समूह";
 "Site groups" = "साइट समूह";
 "%d sites" = "%d साइटें";
 "Dedicated IP*" = "समर्पित IP*";

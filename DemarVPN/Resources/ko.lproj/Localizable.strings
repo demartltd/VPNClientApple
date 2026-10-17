@@ -151,7 +151,7 @@
 "Exclude site groups from the tunnel" = "사이트 그룹을 터널에서 제외";
 "Excluded from the VPN tunnel" = "VPN 터널에서 제외됨";
 "No site groups yet. Pull to refresh servers while signed in." = "사이트 그룹이 아직 없습니다. 로그인 후 서버를 새로고침하세요.";
-"Preset groups" = "기본 그룹";
+"Site Groups" = "사이트 그룹";
 "Site groups" = "사이트 그룹";
 "%d sites" = "%d개 사이트";
 "Dedicated IP*" = "전용 IP*";

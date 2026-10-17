@@ -65,7 +65,7 @@ struct TunSettingsView: View {
                         .foregroundStyle(Color.demarOnSurfaceVariant)
                         .padding(.top, 24)
                 } else {
-                    Text(String(localized: "Preset groups"))
+                    Text(String(localized: "Site Groups"))
                         .font(.demarTitleMedium)
                         .fontWeight(.semibold)
                         .foregroundStyle(Color.demarOnSurface)

@@ -151,7 +151,7 @@
 "Exclude site groups from the tunnel" = "將網站群組排除出通道";
 "Excluded from the VPN tunnel" = "已排除於 VPN 通道外";
 "No site groups yet. Pull to refresh servers while signed in." = "尚無網站群組。登入後下拉重新整理伺服器。";
-"Preset groups" = "預設群組";
+"Site Groups" = "網站群組";
 "Site groups" = "網站群組";
 "%d sites" = "%d 個網站";
 "Dedicated IP*" = "專用 IP*";

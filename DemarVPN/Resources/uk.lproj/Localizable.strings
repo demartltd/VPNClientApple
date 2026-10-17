@@ -151,7 +151,7 @@
 "Exclude site groups from the tunnel" = "Виключення груп сайтів із тунелю";
 "Excluded from the VPN tunnel" = "Поза VPN-тунелем";
 "No site groups yet. Pull to refresh servers while signed in." = "Груп сайтів поки немає. Оновіть сервери після входу.";
-"Preset groups" = "Системні групи";
+"Site Groups" = "Групи сайтів";
 "Site groups" = "Групи сайтів";
 "%d sites" = "%d сайтів";
 "Dedicated IP*" = "Виділений IP*";
