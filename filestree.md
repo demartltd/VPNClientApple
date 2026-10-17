@@ -30,7 +30,7 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── PayApi.swift               # GET /vpn/pay/plans, POST create|status
 │   │   ├── PromoApi.swift             # POST /vpn/promo/activate|apply
 │   │   ├── SupportApi.swift           # csauth.example.invalid tickets / themes / media
-│   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS
+│   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS/TLS (+ QUIC API)
 │   │   └── LegalDocuments.swift       # ToS/PP via DemarHttp Markdown fetch
 │   ├── Vpn/
 │   │   ├── ProxyProfile.swift         # enum HY2 / Trojan / VLESS Reality → connectPlan

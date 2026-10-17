@@ -203,9 +203,7 @@ private struct ServiceEgressDiagnosticsCard: View {
     @State private var inFlight = false
     @State private var refreshSpinAngle: Double = 0
     @State private var geo: PublicEgressInfo?
-    @State private var probes = PublicEgressDiagnostics.probeHosts.map { _ in
-        EgressHostProbe(tcpMs: 0, httpsMs: 0)
-    }
+    @State private var probes = PublicEgressDiagnostics.probeHosts.map { _ in EgressHostProbe() }
     @State private var probesReady = Set<Int>()
     @State private var userHosts = CustomEgressProbeStore.hosts
     @State private var userProbes: [EgressHostProbe] = []
@@ -299,7 +297,7 @@ private struct ServiceEgressDiagnosticsCard: View {
 
     private func syncUserHosts() {
         userHosts = CustomEgressProbeStore.hosts
-        userProbes = userHosts.map { _ in EgressHostProbe(tcpMs: 0, httpsMs: 0) }
+        userProbes = userHosts.map { _ in EgressHostProbe() }
         userProbesReady = []
     }
 
@@ -316,8 +314,8 @@ private struct ServiceEgressDiagnosticsCard: View {
         probesReady = []
         userProbesReady = []
         userHosts = CustomEgressProbeStore.hosts
-        userProbes = userHosts.map { _ in EgressHostProbe(tcpMs: 0, httpsMs: 0) }
-        probes = PublicEgressDiagnostics.probeHosts.map { _ in EgressHostProbe(tcpMs: 0, httpsMs: 0) }
+        userProbes = userHosts.map { _ in EgressHostProbe() }
+        probes = PublicEgressDiagnostics.probeHosts.map { _ in EgressHostProbe() }
         async let spin: Void = runRefreshSpin()
         async let geoLoad: Void = fetchGeo()
         async let probesLoad: Void = fetchHostProbes()

@@ -1,14 +1,20 @@
 import Foundation
 import Network
+import Security
 
 struct PublicEgressInfo: Sendable {
     let ip: String
     let country: String
 }
 
+enum ProbeKind: CaseIterable, Sendable {
+    case tcp, https, tls
+}
+
 struct EgressHostProbe: Sendable {
-    let tcpMs: Int
-    let httpsMs: Int
+    var tcpMs: Int = 0
+    var httpsMs: Int = 0
+    var tlsMs: Int = 0
 }
 
 enum PublicEgressDiagnostics {
@@ -16,6 +22,7 @@ enum PublicEgressDiagnostics {
         "github.com", "bing.com", "ya.ru", "vk.ru", "x.com", "bbc.com", "www.gov.cn",
     ]
     static let probeTimeout: TimeInterval = 2.5
+    private static let attempts = 3
 
     static let fallback = PublicEgressInfo(ip: "localhost", country: "None 🏳️")
 
@@ -28,9 +35,8 @@ enum PublicEgressDiagnostics {
     }()
 
     static func egressHostProbeLabel(_ probe: EgressHostProbe) -> String {
-        let t = probe.tcpMs > 0 ? "\(probe.tcpMs)" : "0"
-        let h = probe.httpsMs > 0 ? "\(probe.httpsMs)" : "0"
-        return "TCP \(t) · HTTPS \(h)"
+        func ms(_ v: Int) -> String { v > 0 ? "\(v)" : "0" }
+        return "TCP \(ms(probe.tcpMs)) · HTTPS \(ms(probe.httpsMs)) · TLS \(ms(probe.tlsMs))"
     }
 
     /// `example.com`, `https://host/path`, `203.0.113.1` → hostname for probes.
@@ -83,7 +89,7 @@ enum PublicEgressDiagnostics {
                     return (index, probe)
                 }
             }
-            var ordered = Array(repeating: EgressHostProbe(tcpMs: 0, httpsMs: 0), count: hosts.count)
+            var ordered = Array(repeating: EgressHostProbe(), count: hosts.count)
             for await (index, probe) in group {
                 ordered[index] = probe
             }
@@ -91,37 +97,89 @@ enum PublicEgressDiagnostics {
         }
     }
 
-    static func probeEgressHost(_ host: String) async -> EgressHostProbe {
-        let zero = EgressHostProbe(tcpMs: 0, httpsMs: 0)
-        return await withTaskGroup(of: EgressHostProbe.self) { group in
-            group.addTask {
-                async let tcp = tcp443Ms(host)
-                async let https = httpsSiteMs(host)
-                return EgressHostProbe(tcpMs: await tcp, httpsMs: await https)
-            }
-            group.addTask {
-                try? await Task.sleep(for: .seconds(probeTimeout))
-                return zero
-            }
-            let result = await group.next() ?? zero
-            group.cancelAll()
-            return result
+    /// Selected kinds in parallel. Skipped kinds stay 0. (parity Android `InternetProbe.probeHost`)
+    static func probeEgressHost(
+        _ host: String,
+        port: UInt16 = 443,
+        kinds: Set<ProbeKind> = Set(ProbeKind.allCases)
+    ) async -> EgressHostProbe {
+        async let tcp = kinds.contains(.tcp) ? max(0, await probeTcpMs(host, port: port)) : 0
+        async let https = kinds.contains(.https) ? max(0, await probeHttpsMs(host)) : 0
+        async let tls = kinds.contains(.tls) ? max(0, await probeTlsMs(host, port: port)) : 0
+        return EgressHostProbe(tcpMs: await tcp, httpsMs: await https, tlsMs: await tls)
+    }
+
+    // MARK: - Per-kind probes (best-of-3; -1 = fail)
+
+    static func probeTcpMs(_ host: String, port: UInt16 = 443) async -> Int {
+        await bestOf {
+            await nwReadyMs(host: host, port: port, using: .tcp)
         }
     }
 
-    // MARK: - Probes
-
-    private static func tcp443Ms(_ host: String) async -> Int {
-        await probeMs { finish in
+    static func probeHttpsMs(_ host: String) async -> Int {
+        await bestOf {
+            guard let url = URL(string: "https://\(host)/") else { return -1 }
             let started = Date()
-            let conn = NWConnection(host: .init(host), port: 443, using: .tcp)
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.timeoutInterval = probeTimeout
+            do {
+                let (_, response) = try await session.data(for: request)
+                guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode)
+                else { return -1 }
+                return max(0, Int(Date().timeIntervalSince(started) * 1000))
+            } catch {
+                return -1
+            }
+        }
+    }
+
+    /// TLS handshake only (no HTTP). Trusts any cert — latency probe only.
+    static func probeTlsMs(_ host: String, port: UInt16 = 443) async -> Int {
+        await bestOf {
+            await nwReadyMs(host: host, port: port, using: tlsTrustAllParams())
+        }
+    }
+
+    /// QUIC Version Negotiation RTT (RFC 9000 §6). For HY2 uplink; Service Menu does not call this.
+    static func probeQuicMs(_ host: String, port: UInt16 = 443) async -> Int {
+        await bestOf {
+            await quicOnceMs(host: host, port: port)
+        }
+    }
+
+    // MARK: - Probe helpers
+
+    private static func bestOf(_ attempt: () async -> Int) async -> Int {
+        var best = -1
+        for _ in 0..<attempts {
+            let ms = await attempt()
+            if ms >= 0, best < 0 || ms < best { best = ms }
+        }
+        return best
+    }
+
+    private static func tlsTrustAllParams() -> NWParameters {
+        let tls = NWProtocolTLS.Options()
+        sec_protocol_options_set_verify_block(tls.securityProtocolOptions, { _, _, done in
+            done(true)
+        }, .global())
+        return NWParameters(tls: tls, tcp: NWProtocolTCP.Options())
+    }
+
+    private static func nwReadyMs(host: String, port: UInt16, using parameters: NWParameters) async -> Int {
+        guard let nwPort = NWEndpoint.Port(rawValue: port) else { return -1 }
+        return await probeMs { finish in
+            let started = Date()
+            let conn = NWConnection(host: .init(host), port: nwPort, using: parameters)
             conn.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
                     conn.cancel()
                     finish(max(0, Int(Date().timeIntervalSince(started) * 1000)))
                 case .failed, .cancelled:
-                    finish(0)
+                    finish(-1)
                 default:
                     break
                 }
@@ -130,19 +188,50 @@ enum PublicEgressDiagnostics {
         }
     }
 
-    private static func httpsSiteMs(_ host: String) async -> Int {
-        guard let url = URL(string: "https://\(host)/") else { return 0 }
-        let started = Date()
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.timeoutInterval = probeTimeout
-        do {
-            let (_, response) = try await session.data(for: request)
-            guard let http = response as? HTTPURLResponse, http.statusCode >= 100 else { return 0 }
-            return max(0, Int(Date().timeIntervalSince(started) * 1000))
-        } catch {
-            return 0
+    private static func quicOnceMs(host: String, port: UInt16) async -> Int {
+        guard let nwPort = NWEndpoint.Port(rawValue: port) else { return -1 }
+        return await probeMs { finish in
+            let started = Date()
+            let conn = NWConnection(host: .init(host), port: nwPort, using: .udp)
+            conn.stateUpdateHandler = { state in
+                switch state {
+                case .ready:
+                    conn.send(content: quicGreaseInitial(), completion: .contentProcessed { error in
+                        if error != nil {
+                            conn.cancel()
+                            finish(-1)
+                            return
+                        }
+                        conn.receive(minimumIncompleteLength: 1, maximumLength: 1500) { data, _, _, error in
+                            conn.cancel()
+                            if error != nil || data == nil {
+                                finish(-1)
+                            } else {
+                                finish(max(0, Int(Date().timeIntervalSince(started) * 1000)))
+                            }
+                        }
+                    })
+                case .failed, .cancelled:
+                    finish(-1)
+                default:
+                    break
+                }
+            }
+            conn.start(queue: .global(qos: .utility))
         }
+    }
+
+    /// Long-header Initial, GREASE version `0x0a0a0a0a`, padded to 1200 bytes.
+    private static func quicGreaseInitial() -> Data {
+        var out = Data(count: 1200)
+        out[0] = 0xc0
+        out[1] = 0x0a; out[2] = 0x0a; out[3] = 0x0a; out[4] = 0x0a
+        out[5] = 8
+        for i in 6..<14 { out[i] = UInt8.random(in: 0...255) }
+        out[14] = 8
+        for i in 15..<23 { out[i] = UInt8.random(in: 0...255) }
+        out[23] = 0x00
+        return out
     }
 
     private static func probeMs(
@@ -156,7 +245,7 @@ enum PublicEgressDiagnostics {
             }
             start(finish)
             DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + probeTimeout) {
-                finish(0)
+                finish(-1)
             }
         }
     }
