@@ -20,6 +20,7 @@
 		B1000001000000000000SD1 /* ServerDetailsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000SD1 /* ServerDetailsSheet.swift */; };
 		B10000010000000000000007 /* TestServers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000007 /* TestServers.swift */; };
 		T40000111CF9000F007C117E /* ServerFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000111CF9000F007C117E /* ServerFilterTests.swift */; };
+		T40000121CF9000F007C117E /* UplinkProbeRttTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000121CF9000F007C117E /* UplinkProbeRttTests.swift */; };
 		B10000010000000000000008 /* AppLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000008 /* AppLog.swift */; };
 		B1000001000000000000000A /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000A /* AppState.swift */; };
 		A11000010000000000000032 /* AppState+AuthSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000101CF9000F007C117D /* AppState+AuthSession.swift */; };
@@ -283,6 +284,7 @@
 		F1000001000000000000SF1 /* ServerFiltersSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerFiltersSheet.swift; sourceTree = "<group>"; };
 		F1000001000000000000SD1 /* ServerDetailsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerDetailsSheet.swift; sourceTree = "<group>"; };
 		F40000111CF9000F007C117E /* ServerFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerFilterTests.swift; sourceTree = "<group>"; };
+		F40000121CF9000F007C117E /* UplinkProbeRttTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UplinkProbeRttTests.swift; sourceTree = "<group>"; };
 		F10000010000000000000007 /* TestServers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestServers.swift; sourceTree = "<group>"; };
 		F10000010000000000000008 /* AppLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLog.swift; sourceTree = "<group>"; };
 		F1000001000000000000000A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -829,6 +831,7 @@
 				F40000061CF9000F007C117E /* LegalDocumentsTests.swift */,
 				F40000071CF9000F007C117E /* ServersApiParseTests.swift */,
 				F40000111CF9000F007C117E /* ServerFilterTests.swift */,
+				F40000121CF9000F007C117E /* UplinkProbeRttTests.swift */,
 				F400000E1CF9000F007C117E /* TunGroupsParseTests.swift */,
 				F400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift */,
 				F400000C1CF9000F007C117E /* PayApiParseTests.swift */,
@@ -1240,6 +1243,7 @@
 				T40000071CF9000F007C117E /* LegalDocumentsTests.swift in Sources */,
 				T40000081CF9000F007C117E /* ServersApiParseTests.swift in Sources */,
 				T40000111CF9000F007C117E /* ServerFilterTests.swift in Sources */,
+				T40000121CF9000F007C117E /* UplinkProbeRttTests.swift in Sources */,
 				T400000E1CF9000F007C117E /* TunGroupsParseTests.swift in Sources */,
 				T400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift in Sources */,
 				T400000C1CF9000F007C117E /* PayApiParseTests.swift in Sources */,
@@ -1387,7 +1391,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 92;
+				CURRENT_PROJECT_VERSION = 94;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1425,7 +1429,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 92;
+				CURRENT_PROJECT_VERSION = 94;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1459,7 +1463,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 92;
+				CURRENT_PROJECT_VERSION = 94;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1506,7 +1510,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 92;
+				CURRENT_PROJECT_VERSION = 94;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1553,7 +1557,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 92;
+				CURRENT_PROJECT_VERSION = 94;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1580,7 +1584,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 92;
+				CURRENT_PROJECT_VERSION = 94;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1606,7 +1610,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 92;
+				CURRENT_PROJECT_VERSION = 94;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1644,7 +1648,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 92;
+				CURRENT_PROJECT_VERSION = 94;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;

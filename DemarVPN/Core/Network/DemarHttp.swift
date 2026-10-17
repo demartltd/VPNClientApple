@@ -23,7 +23,8 @@ enum DemarHttp {
     static let clientID = "demar-vpn"
     static let vpnBase = URL(string: "https://vpn.example.invalid")!
 
-    private static let session: URLSession = makeSession(request: 15, resource: 25)
+    /// Fail fast when offline — do not wait for path restoration (`waitsForConnectivity`).
+    private static let session: URLSession = makeSession(request: 8, resource: 12)
     private static let mediaSession: URLSession = makeSession(request: 180, resource: 180)
 
     /// e.g. `iPhone (18.0) - DemarVPN (1.0.2 (42)) (iOS)` — ASCII, max 120.
@@ -117,7 +118,7 @@ enum DemarHttp {
 
     private static func makeSession(request: TimeInterval, resource: TimeInterval) -> URLSession {
         let cfg = URLSessionConfiguration.ephemeral
-        cfg.waitsForConnectivity = true
+        cfg.waitsForConnectivity = false
         cfg.timeoutIntervalForRequest = request
         cfg.timeoutIntervalForResource = resource
         return URLSession(configuration: cfg)

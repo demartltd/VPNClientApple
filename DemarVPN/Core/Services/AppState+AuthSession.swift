@@ -277,8 +277,8 @@ extension AppState {
         }
     }
 
-    /// User pull/toolbar refresh: network fetch + reachability (min visible duration). Ping always runs.
-    func pullRefreshServers(minimumVisibleDuration: Duration = .seconds(1.5)) async -> Bool {
+    /// User pull/toolbar refresh: network fetch + reachability (min visible duration).
+    func pullRefreshServers(minimumVisibleDuration: Duration = .seconds(1)) async -> Bool {
         guard beginServersRefresh() else { return false }
         defer { isRefreshingServers = false }
         async let sleep: Void = { try? await Task.sleep(for: minimumVisibleDuration) }()

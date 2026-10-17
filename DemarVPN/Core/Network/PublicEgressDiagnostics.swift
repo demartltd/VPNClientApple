@@ -104,19 +104,24 @@ enum PublicEgressDiagnostics {
         return EgressHostProbe(tcpMs: await tcp, httpsMs: await https, tlsMs: await tls)
     }
 
-    // MARK: - Per-kind probes (best-of-3; -1 = fail)
+    // MARK: - Per-kind probes (best-of-N; -1 = fail)
 
-    static func probeTcpMs(_ host: String, port: UInt16 = 443) async -> Int {
-        await bestOf {
+    static func probeTcpMs(
+        _ host: String,
+        port: UInt16 = 443,
+        timeout: TimeInterval = probeTimeout,
+        attempts attemptCount: Int = attempts
+    ) async -> Int {
+        await bestOf(attemptCount) {
             // BSD connect — parity Android Socket(); ECONNREFUSED counts as RTT (HY2 UDP ports).
             await Task.detached(priority: .utility) {
-                Self.posixTcpConnectOnce(host: host, port: port)
+                Self.posixTcpConnectOnce(host: host, port: port, timeout: timeout)
             }.value
         }
     }
 
     static func probeHttpsMs(_ host: String) async -> Int {
-        await bestOf {
+        await bestOf(attempts) {
             guard let url = URL(string: "https://\(host)/") else { return -1 }
             let started = Date()
             var request = URLRequest(url: url)
@@ -134,27 +139,37 @@ enum PublicEgressDiagnostics {
     }
 
     /// TLS handshake only (no HTTP). Trusts any cert — latency probe only.
-    static func probeTlsMs(_ host: String, port: UInt16 = 443) async -> Int {
-        await bestOf {
-            await nwReadyMs(host: host, port: port, using: tlsTrustAllParams())
+    static func probeTlsMs(
+        _ host: String,
+        port: UInt16 = 443,
+        timeout: TimeInterval = probeTimeout,
+        attempts attemptCount: Int = attempts
+    ) async -> Int {
+        await bestOf(attemptCount) {
+            await nwReadyMs(host: host, port: port, using: tlsTrustAllParams(), timeout: timeout)
         }
     }
 
     /// QUIC Version Negotiation RTT (RFC 9000 §6). For HY2 uplink; Service Menu does not call this.
-    static func probeQuicMs(_ host: String, port: UInt16 = 443) async -> Int {
-        await bestOf {
+    static func probeQuicMs(
+        _ host: String,
+        port: UInt16 = 443,
+        timeout: TimeInterval = probeTimeout,
+        attempts attemptCount: Int = attempts
+    ) async -> Int {
+        await bestOf(attemptCount) {
             // DatagramSocket parity (Android InternetProbe); NWConnection UDP misses some HY2 hosts.
             await Task.detached(priority: .utility) {
-                Self.posixQuicOnce(host: host, port: port)
+                Self.posixQuicOnce(host: host, port: port, timeout: timeout)
             }.value
         }
     }
 
     // MARK: - Probe helpers
 
-    private static func bestOf(_ attempt: () async -> Int) async -> Int {
+    private static func bestOf(_ count: Int, _ attempt: () async -> Int) async -> Int {
         var best = -1
-        for _ in 0..<attempts {
+        for _ in 0..<max(1, count) {
             let ms = await attempt()
             if ms >= 0, best < 0 || ms < best { best = ms }
         }
@@ -169,9 +184,14 @@ enum PublicEgressDiagnostics {
         return NWParameters(tls: tls, tcp: NWProtocolTCP.Options())
     }
 
-    private static func nwReadyMs(host: String, port: UInt16, using parameters: NWParameters) async -> Int {
+    private static func nwReadyMs(
+        host: String,
+        port: UInt16,
+        using parameters: NWParameters,
+        timeout: TimeInterval = probeTimeout
+    ) async -> Int {
         guard let nwPort = NWEndpoint.Port(rawValue: port) else { return -1 }
-        return await probeMs { finish in
+        return await probeMs(timeout: timeout) { finish in
             let started = Date()
             let conn = NWConnection(host: .init(host), port: nwPort, using: parameters)
             conn.stateUpdateHandler = { state in
@@ -189,14 +209,15 @@ enum PublicEgressDiagnostics {
         }
     }
 
-    /// Android `Socket().connect` + `ConnectException` → RTT.
-    private static func posixTcpConnectOnce(host: String, port: UInt16) -> Int {
+    /// Android `Socket().connect(InetSocketAddress)` + `ConnectException` → RTT (DNS inside timer).
+    private static func posixTcpConnectOnce(host: String, port: UInt16, timeout: TimeInterval) -> Int {
+        // Parity Android measureOnce: clock starts before DNS (InetSocketAddress ctor).
+        let started = Date()
         guard let first = resolveAddr(host: host, port: port, socktype: SOCK_STREAM, proto: IPPROTO_TCP) else {
             return -1
         }
         defer { freeaddrinfo(first) }
-        let timeoutMs = Int32(probeTimeout * 1000)
-        let started = Date()
+        let timeoutMs = Int32(timeout * 1000)
         var cursor: UnsafeMutablePointer<addrinfo>? = first
         while let info = cursor {
             defer { cursor = info.pointee.ai_next }
@@ -233,8 +254,9 @@ enum PublicEgressDiagnostics {
         return -1
     }
 
-    /// Android `DatagramSocket` QUIC VN probe.
-    private static func posixQuicOnce(host: String, port: UInt16) -> Int {
+    /// Android `DatagramSocket` QUIC VN probe (DNS inside timer).
+    private static func posixQuicOnce(host: String, port: UInt16, timeout: TimeInterval) -> Int {
+        let started = Date()
         guard let info = resolveAddr(host: host, port: port, socktype: SOCK_DGRAM, proto: IPPROTO_UDP) else {
             return -1
         }
@@ -243,12 +265,11 @@ enum PublicEgressDiagnostics {
         guard fd >= 0 else { return -1 }
         defer { close(fd) }
         var tv = timeval(
-            tv_sec: time_t(probeTimeout),
-            tv_usec: suseconds_t((probeTimeout.truncatingRemainder(dividingBy: 1)) * 1_000_000)
+            tv_sec: time_t(timeout),
+            tv_usec: suseconds_t((timeout.truncatingRemainder(dividingBy: 1)) * 1_000_000)
         )
         _ = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
         let packet = quicGreaseInitial()
-        let started = Date()
         let sent = packet.withUnsafeBytes { raw -> Int in
             guard let base = raw.bindMemory(to: UInt8.self).baseAddress else { return -1 }
             return sendto(fd, base, packet.count, 0, info.pointee.ai_addr, info.pointee.ai_addrlen)
@@ -280,8 +301,11 @@ enum PublicEgressDiagnostics {
         return result
     }
 
+    /// Successful probe RTT in ms. Sub-ms floors to 1 — `0ms` is not a real network RTT.
     private static func elapsedMs(since started: Date) -> Int {
-        max(0, Int(Date().timeIntervalSince(started) * 1000))
+        let ms = Date().timeIntervalSince(started) * 1000
+        if ms <= 0 { return 1 }
+        return max(1, Int(ms.rounded()))
     }
 
     /// Long-header Initial, GREASE version `0x0a0a0a0a`, padded to 1200 bytes.
@@ -298,6 +322,7 @@ enum PublicEgressDiagnostics {
     }
 
     private static func probeMs(
+        timeout: TimeInterval = probeTimeout,
         _ start: @escaping @Sendable (@escaping @Sendable (Int) -> Void) -> Void
     ) async -> Int {
         await withCheckedContinuation { cont in
@@ -307,7 +332,7 @@ enum PublicEgressDiagnostics {
                 cont.resume(returning: ms)
             }
             start(finish)
-            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + probeTimeout) {
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + timeout) {
                 finish(-1)
             }
         }

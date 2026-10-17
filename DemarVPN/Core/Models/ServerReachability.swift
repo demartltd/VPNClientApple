@@ -96,8 +96,9 @@ enum UplinkProbe {
         async let hs = hy2
             ? PublicEgressDiagnostics.probeQuicMs(host, port: port)
             : PublicEgressDiagnostics.probeTlsMs(host, port: port)
-        let tcpMs = await tcp
-        let hsMs = await hs
+        // Sub-ms success floors to 1 — UI must never show ~0ms for a real probe.
+        let tcpMs = clampRtt(await tcp)
+        let hsMs = clampRtt(await hs)
         let pingMs = hsMs >= 0 ? hsMs : (hy2 && tcpMs >= 0 ? tcpMs : hsMs)
         let tcpText = tcpMs >= 0 ? "\(tcpMs)ms" : "fail"
         let hsText = hsMs >= 0 ? "\(hsMs)ms" : "fail"
@@ -109,5 +110,9 @@ enum UplinkProbe {
             )
         }
         return .fromProbes(tcpMs: tcpMs, tlsMs: pingMs)
+    }
+
+    private static func clampRtt(_ ms: Int) -> Int {
+        ms < 0 ? ms : max(1, ms)
     }
 }
