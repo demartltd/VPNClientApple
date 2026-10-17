@@ -7,6 +7,7 @@ enum SessionCacheStore {
         static let account = "session_cache_account"
         static let traffic = "session_cache_traffic"
         static let tun = "session_cache_tun"
+        static let reachability = "session_cache_reachability"
     }
 
     struct Snapshot: Sendable {
@@ -14,6 +15,7 @@ enum SessionCacheStore {
         let account: VpnAccount?
         let traffic: VpnTraffic?
         let tunRaw: String?
+        let reachability: [String: ServerReachState]
     }
 
     static func load(userId: String) -> Snapshot? {
@@ -34,11 +36,14 @@ enum SessionCacheStore {
                 return VpnAccountApi.parseTraffic(json)
             }
             let tunRaw = d.string(forKey: Key.tun)?.nilIfBlank
+            let reachability = d.string(forKey: Key.reachability)
+                .map(ServerReachState.decodeCache) ?? [:]
             return Snapshot(
                 servers: serversResult.servers,
                 account: account,
                 traffic: traffic,
-                tunRaw: tunRaw
+                tunRaw: tunRaw,
+                reachability: reachability
             )
         } catch {
             return nil
@@ -87,6 +92,12 @@ enum SessionCacheStore {
         d.set(data, forKey: Key.traffic)
     }
 
+    static func saveReachability(_ map: [String: ServerReachState], userId: String) {
+        let d = UserDefaults.standard
+        d.set(userId, forKey: Key.userId)
+        d.set(ServerReachState.encodeCache(map), forKey: Key.reachability)
+    }
+
     static func clear() {
         let d = UserDefaults.standard
         d.removeObject(forKey: Key.userId)
@@ -94,5 +105,6 @@ enum SessionCacheStore {
         d.removeObject(forKey: Key.account)
         d.removeObject(forKey: Key.traffic)
         d.removeObject(forKey: Key.tun)
+        d.removeObject(forKey: Key.reachability)
     }
 }

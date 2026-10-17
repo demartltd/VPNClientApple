@@ -2,7 +2,7 @@
 
 Поддерживаются **iOS 18+** и **macOS 15+** (нативное приложение, один target).
 
-Все доступные сервера и их конфиги получаются удалённо после входа (`POST https://vpn.example.invalid/vpn/servers`). Без сессии вкладки **Сервера** и **Аккаунт** открывают login bottom sheet.
+Все доступные сервера и их конфиги получаются удалённо после входа (`POST https://vpn.example.invalid/vpn/servers`). Вкладка **Servers**: единый список с бейджами tier/protocol, toolbar Refresh/Filters, favorites, ping (TCP/TLS/QUIC), details sheet, locked → Premium. Без сессии вкладки **Сервера** и **Аккаунт** открывают login bottom sheet.
 
 ## Сборка
 

@@ -342,7 +342,8 @@ private struct ServiceEgressDiagnosticsCard: View {
     }
 
     private func fetchHostProbes() async {
-        let hostProbes = await PublicEgressDiagnostics.probeAllHosts { index, probe in
+        let defaults = PublicEgressDiagnostics.probeHosts
+        let hostProbes = await PublicEgressDiagnostics.probeHosts(defaults) { index, probe in
             Task { @MainActor in
                 probes[index] = probe
                 probesReady.insert(index)

@@ -256,6 +256,7 @@ extension AppState {
             applyServerList(result.servers)
             trafficExceeded = result.trafficExceeded
             SessionCacheStore.saveServers(result.rawJson, userId: session.userId)
+            if serversTabActive { scheduleProbeAllServers() }
             AppLog.shared.append("[servers] loaded \(result.servers.count) (sub=\(result.vpnSubscription ?? "—"))")
             return true
         } catch is CancellationError {
@@ -276,14 +277,75 @@ extension AppState {
         }
     }
 
-    /// Pull-to-refresh: banner + network fetch (min visible duration).
+    /// User pull/toolbar refresh: network fetch + reachability (min visible duration). Ping always runs.
     func pullRefreshServers(minimumVisibleDuration: Duration = .seconds(1.5)) async -> Bool {
         guard beginServersRefresh() else { return false }
         defer { isRefreshingServers = false }
         async let sleep: Void = { try? await Task.sleep(for: minimumVisibleDuration) }()
         await refreshSessionData(force: true)
+        await scheduleProbeAllServers()?.value
         await sleep
         return !Task.isCancelled && serversError == nil
+    }
+
+    func setServersTabActive(_ active: Bool) {
+        serversTabActive = active
+        if !active {
+            reachabilityTask?.cancel()
+            reachabilityTask = nil
+            return
+        }
+        guard !initialReachabilityDone, !servers.isEmpty else { return }
+        initialReachabilityDone = true
+        scheduleProbeAllServers()
+    }
+
+    @discardableResult
+    private func scheduleProbeAllServers() -> Task<Void, Never>? {
+        guard !servers.isEmpty else { return nil }
+        initialReachabilityDone = true
+        reachabilityTask?.cancel()
+        let task = Task { await probeAllServers() }
+        reachabilityTask = task
+        return task
+    }
+
+    private func probeAllServers() async {
+        let profiles = servers.filter { !$0.isLocked }
+        guard !profiles.isEmpty else { return }
+        markServersChecking()
+        var collected: [String: ServerReachState] = [:]
+        await withTaskGroup(of: (String, ServerReachState).self) { group in
+            for profile in profiles {
+                group.addTask {
+                    let state = await UplinkProbe.probe(profile)
+                    return (profile.id, state)
+                }
+            }
+            for await (id, state) in group {
+                guard !Task.isCancelled else { break }
+                collected[id] = state
+            }
+        }
+        guard !Task.isCancelled else { return }
+        serverReachability.merge(collected) { _, new in new }
+        persistReachability()
+    }
+
+    private func markServersChecking() {
+        for p in servers where !p.isLocked {
+            let old = serverReachability[p.id]
+            serverReachability[p.id] = ServerReachState(
+                status: .checking,
+                latencyMs: old?.latencyMs,
+                tlsMs: old?.tlsMs
+            )
+        }
+    }
+
+    private func persistReachability() {
+        guard let userId = authSession?.userId else { return }
+        SessionCacheStore.saveReachability(serverReachability, userId: userId)
     }
 
     func clearAccount() {
@@ -299,7 +361,21 @@ extension AppState {
 
     func applyServerList(_ list: [ServerProfile]) {
         servers = list
-        selectedServer = Self.restoreSelectedServer(from: list)
+        selectedServer = list.pickSelected(
+            currentId: selectedServer?.id,
+            lastId: UserDefaults.standard.string(forKey: StorageKey.selectedServerId)
+        )
+        if let id = selectedServer?.id { Self.persistSelectedServerId(id) }
+        // Probe is scheduled by callers (refreshServers / tab / pull) — not here.
+        initialReachabilityDone = false
+        if list.isEmpty {
+            reachabilityTask?.cancel()
+            reachabilityTask = nil
+            serverReachability = [:]
+        } else {
+            let ids = Set(list.map(\.id))
+            serverReachability = serverReachability.filter { ids.contains($0.key) }
+        }
     }
 
     func clearServers() {
@@ -308,6 +384,10 @@ extension AppState {
         serversError = nil
         serversLoading = false
         trafficExceeded = false
+        reachabilityTask?.cancel()
+        reachabilityTask = nil
+        serverReachability = [:]
+        initialReachabilityDone = false
         UserDefaults.standard.removeObject(forKey: StorageKey.selectedServerId)
     }
 

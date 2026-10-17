@@ -5,12 +5,16 @@ struct ServersView: View {
     let isActive: Bool
     var snackBar: SnackBarController
     var onNeedSignIn: (() -> Void)?
-    @State private var selectedProtocol: ServerProtocol = .hysteria2
-    @State private var selectedTier: ServerTier?
-    #if os(iOS)
-    @State private var pullArmed = false
-    private let refreshPullThreshold: CGFloat = 16
-    #endif
+    @State private var detailsProfile: ServerProfile?
+    @State private var showFilters = false
+
+    private var filteredServers: [ServerProfile] {
+        appState.servers.filterServers(
+            tiers: appState.filterTiers,
+            protocols: appState.filterProtocols,
+            favoriteIds: appState.favoriteServerIds
+        )
+    }
 
     var body: some View {
         Group {
@@ -18,39 +22,37 @@ struct ServersView: View {
         }
         .task(id: isActive) {
             guard isActive else { return }
-            syncSelectedProtocol()
-            guard appState.isSignedIn else { return }
-            guard appState.servers.isEmpty || appState.serversError != nil else { return }
+            appState.setServersTabActive(true)
+            guard appState.isSignedIn, appState.servers.isEmpty else { return }
             await appState.refreshSessionData()
         }
-        .onChange(of: appState.selectedServer?.id) { _, _ in
-            syncSelectedProtocol()
+        .onChange(of: isActive) { _, active in
+            if !active {
+                appState.setServersTabActive(false)
+                detailsProfile = nil
+            }
         }
-        .onChange(of: appState.servers.map(\.id)) { _, _ in
-            syncSelectedProtocol()
+        .onChange(of: appState.servers.map(\.id)) { _, ids in
+            if let id = detailsProfile?.id, !ids.contains(id) {
+                detailsProfile = nil
+            }
         }
-    }
-
-    private var visibleProtocols: [ServerProtocol] {
-        let present = appState.servers.visibleProtocols()
-        return present.isEmpty ? [.hysteria2] : present
-    }
-
-    private var filteredServers: [ServerProfile] {
-        appState.servers.filterServers(protocol: selectedProtocol, tier: selectedTier)
-    }
-
-    private var tierOptions: [SegmentOption] {
-        [SegmentOption(id: "all", title: "All")]
-            + appState.servers.visibleTiers().map { SegmentOption(id: $0.rawValue, title: $0.title) }
-    }
-
-    private func syncSelectedProtocol() {
-        let visible = visibleProtocols
-        if let selected = appState.selectedServer?.serverProtocol, visible.contains(selected) {
-            selectedProtocol = selected
-        } else if !visible.contains(selectedProtocol), let first = visible.first {
-            selectedProtocol = first
+        .demarBottomSheet(isPresented: Binding(
+            get: { detailsProfile != nil },
+            set: { if !$0 { detailsProfile = nil } }
+        )) {
+            if let profile = detailsProfile {
+                ServerDetailsSheet(
+                    profile: profile,
+                    reachState: appState.serverReachability[profile.id] ?? .checking,
+                    trafficBytes: appState.traffic?.bytesForServer(profile.displayName),
+                    favorite: appState.favoriteServerIds.contains(profile.id),
+                    onToggleFavorite: { appState.toggleFavoriteServer(profile.id) }
+                )
+            }
+        }
+        .demarBottomSheet(isPresented: $showFilters) {
+            ServerFiltersSheet(appState: appState)
         }
     }
 
@@ -63,137 +65,163 @@ struct ServersView: View {
             }
         }
         .background(Color.demarSurface)
-        #if os(macOS)
+        .navigationTitle("")
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        #endif
+        .tint(.white)
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItemGroup(placement: .primaryAction) {
                 Button {
                     Task { await pullRefresh() }
                 } label: {
                     if appState.isRefreshingServers || (appState.serversLoading && appState.servers.isEmpty) {
                         ProgressView()
                             .controlSize(.small)
+                            .tint(.white)
                     } else {
                         Image(systemName: "arrow.clockwise")
+                            .foregroundStyle(.white)
                     }
                 }
                 .help(String(localized: "Refresh servers"))
                 .disabled(!appState.isSignedIn || appState.isRefreshingServers || appState.serversLoading)
+
+                Button {
+                    showFilters = true
+                } label: {
+                    Image(systemName: appState.filtersActive
+                        ? "line.3.horizontal.decrease.circle.fill"
+                        : "line.3.horizontal.decrease.circle")
+                        .foregroundStyle(.white)
+                }
+                .help(String(localized: "Server filters"))
             }
         }
-        #endif
+    }
+
+    private var serversHeroTitle: some View {
+        Text(String(localized: "Servers"))
+            .font(.largeTitle.bold())
+            .foregroundStyle(Color.demarOnSurface)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 4)
+            .padding(.bottom, 8)
     }
 
     private var guestState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 0) {
+            serversHeroTitle
+                .padding(.horizontal, 16)
             Spacer()
-            Text("Sign in to see available servers")
+            Text(String(localized: "Sign in to see available servers"))
                 .font(.demarBodyMedium)
                 .foregroundStyle(Color.demarOnSurfaceVariant)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
-            Button("Sign in") { onNeedSignIn?() }
+            Button(String(localized: "Sign in")) { onNeedSignIn?() }
                 .buttonStyle(.borderedProminent)
                 .tint(Color.demarPrimary)
+                .padding(.top, 16)
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var signedInContent: some View {
-        VStack(spacing: 0) {
-            SegmentBar(
-                options: visibleProtocols.map { SegmentOption(id: $0.rawValue, title: $0.rawValue) },
-                selectedID: selectedProtocol.rawValue,
-                font: .demarTitleMediumBold
-            ) { id in
-                if let proto = ServerProtocol(rawValue: id) { selectedProtocol = proto }
-            }
-            SegmentBar(
-                options: tierOptions,
-                selectedID: selectedTier?.rawValue ?? "all",
-                font: .demarLabelLarge
-            ) { id in
-                let next = id == "all" ? nil : ServerTier(rawValue: id)
-                let sub = appState.account?.vpnSubscription ?? appState.authSession?.vpnSubscription
-                if let next, next.requiresUpgrade(subscription: sub) {
-                    // Outside SegmentBar's disablesAnimations transaction so the sheet can animate.
-                    Task { @MainActor in appState.openCheckout(.buy) }
-                    return
-                }
-                selectedTier = next
-            }
-            Divider()
-                .overlay(Color.demarOutline.opacity(0.25))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+        // List (UITableView) — ScrollView + refresh inset breaks SwiftUI hit-testing mid-animation.
+        List {
+            Section {
+                serversHeroTitle
+                    .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
 
-            ScrollView {
-                LazyVStack(spacing: 10) {
-                    if appState.serversLoading, appState.servers.isEmpty {
-                        ProgressView().padding(.top, 40)
-                    } else if let err = appState.serversError, appState.servers.isEmpty {
-                        VStack(spacing: 12) {
-                            Text(err.isEmpty ? String(localized: "Couldn’t load servers") : err)
-                                .font(.demarBodyMedium)
-                                .foregroundStyle(Color.demarOnSurfaceVariant)
-                                .multilineTextAlignment(.center)
-                            Button(String(localized: "Retry")) {
-                                Task { await appState.refreshSessionData(force: true) }
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(Color.demarPrimary)
-                        }
+                if appState.serversLoading, appState.servers.isEmpty {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
                         .padding(.top, 40)
-                        .padding(.horizontal, 24)
-                    } else if filteredServers.isEmpty {
-                        Text("No servers available for your subscription")
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                } else if let err = appState.serversError, appState.servers.isEmpty {
+                    VStack(spacing: 12) {
+                        Text(err.isEmpty ? String(localized: "Couldn’t load servers") : err)
                             .font(.demarBodyMedium)
                             .foregroundStyle(Color.demarOnSurfaceVariant)
                             .multilineTextAlignment(.center)
-                            .padding(.top, 40)
-                            .padding(.horizontal, 24)
-                    } else {
-                        ForEach(filteredServers) { server in
-                            ServerRow(
-                                profile: server,
-                                selected: appState.selectedServer?.id == server.id
-                            ) {
-                                Task {
-                                    let wouldReconnect =
-                                        appState.vpnState.isConnected
-                                        || appState.vpnState.isBusy
-                                        || appState.vpnState.hasError
-                                    await appState.switchServer(to: server)
-                                    if !server.canConnect, wouldReconnect {
-                                        snackBar.showWarning(String(localized: "Connecting is unavailable for the Review account"))
-                                    } else {
-                                        snackBar.showSuccess(String(localized: "Server selected"))
-                                    }
-                                }
-                            }
+                        Button(String(localized: "Retry")) {
+                            Task { await appState.refreshSessionData(force: true) }
                         }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Color.demarPrimary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 40)
+                    .padding(.horizontal, 8)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                } else if filteredServers.isEmpty {
+                    Text(String(localized: "No servers available for your subscription"))
+                        .font(.demarBodyMedium)
+                        .foregroundStyle(Color.demarOnSurfaceVariant)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                } else {
+                    ForEach(filteredServers) { server in
+                        ServerRow(
+                            profile: server,
+                            selected: appState.selectedServer?.id == server.id,
+                            favorite: appState.favoriteServerIds.contains(server.id),
+                            reachState: appState.serverReachability[server.id] ?? .checking,
+                            onSelect: { selectServer(byId: server.id) },
+                            onDetails: { detailsProfile = server },
+                            onNeedUpgrade: { appState.openCheckout(.buy) }
+                        )
+                        .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 24)
-                .animation(.none, value: filteredServers.map(\.id))
             }
-            .contentMargins(0)
-            .scrollBounceBehavior(.always)
-            #if os(iOS)
-            .demarScrollPullDistance { handlePull($0) }
-            #endif
-            .demarScrollScreen()
+        }
+        .listStyle(.plain)
+        .listSectionSeparator(.hidden)
+        .environment(\.defaultMinListRowHeight, 1)
+        .scrollContentBackground(.hidden)
+        .scrollBounceBehavior(.always)
+        .background(Color.demarSurface)
+        #if os(iOS)
+        .refreshable { await pullRefresh() }
+        #endif
+        .scrollIndicators(.hidden)
+        .animation(.none, value: filteredServers.map(\.id))
+    }
+
+    private func selectServer(byId id: String) {
+        guard let server = appState.servers.first(where: { $0.id == id })
+            ?? filteredServers.first(where: { $0.id == id })
+        else { return }
+        Task {
+            let wouldReconnect =
+                appState.vpnState.isConnected
+                || appState.vpnState.isBusy
+                || appState.vpnState.hasError
+            await appState.switchServer(to: server)
+            if !server.canConnect, wouldReconnect {
+                snackBar.showWarning(String(localized: "Connecting is unavailable for the Review account"))
+            } else {
+                snackBar.showSuccess(String(localized: "Server selected"))
+            }
         }
     }
 
     private func pullRefresh() async {
         guard appState.isSignedIn else { return }
-        #if os(macOS)
-        AppLog.shared.append("[ui] servers toolbar refresh")
-        #else
-        AppLog.shared.append("[ui] servers pull-to-refresh")
-        #endif
+        AppLog.shared.append("[ui] servers refresh")
         let ok = await appState.pullRefreshServers()
         if ok {
             snackBar.showSuccess(String(localized: "Servers updated"))
@@ -201,149 +229,112 @@ struct ServersView: View {
             snackBar.showInfo(appState.serversError ?? String(localized: "Couldn’t refresh"))
         }
     }
-
-    #if os(iOS)
-    private func handlePull(_ pull: CGFloat) {
-        if pull < 8 {
-            if !appState.isRefreshingServers { pullArmed = false }
-            return
-        }
-        guard appState.isSignedIn else { return }
-        guard !appState.isRefreshingServers, !pullArmed else { return }
-        guard pull >= refreshPullThreshold else { return }
-        pullArmed = true
-        PlatformServices.lightImpact()
-        Task { await pullRefresh() }
-    }
-    #endif
-}
-
-private struct SegmentOption: Identifiable, Hashable {
-    let id: String
-    let title: String
-}
-
-private struct SegmentBar: View {
-    let options: [SegmentOption]
-    let selectedID: String
-    let font: Font
-    let onSelect: (String) -> Void
-
-    var body: some View {
-        GeometryReader { geo in
-            HStack(spacing: 0) {
-                ForEach(options) { option in
-                    let isSelected = option.id == selectedID
-                    Text(option.title)
-                        .font(font)
-                        .foregroundStyle(isSelected ? Color.demarOnSurface : Color.demarOnSurfaceVariant)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(isSelected ? Color.demarPrimary.opacity(0.18) : Color.clear)
-                }
-            }
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0, coordinateSpace: .local)
-                    .onChanged { value in
-                        select(at: value.location.x, width: geo.size.width)
-                    }
-            )
-        }
-        .frame(height: 48)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.demarSurfaceContainerHighest)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Color.demarOutline.opacity(0.2), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .padding(.horizontal, 16)
-        .padding(.top, 12)
-        .transaction { $0.disablesAnimations = true }
-    }
-
-    private func select(at x: CGFloat, width: CGFloat) {
-        guard width > 0, !options.isEmpty else { return }
-        let index = min(max(Int((x / width) * CGFloat(options.count)), 0), options.count - 1)
-        let id = options[index].id
-        guard id != selectedID else { return }
-        var t = Transaction()
-        t.disablesAnimations = true
-        withTransaction(t) { onSelect(id) }
-        PlatformServices.lightImpact()
-    }
 }
 
 private struct ServerRow: View {
     let profile: ServerProfile
     let selected: Bool
-    let onTap: () -> Void
+    let favorite: Bool
+    let reachState: ServerReachState
+    let onSelect: () -> Void
+    let onDetails: () -> Void
+    let onNeedUpgrade: () -> Void
+
+    private let rowMinHeight: CGFloat = 72
+    private let trailingMinWidth: CGFloat = 72
 
     var body: some View {
-        Button(action: onTap) {
+        let locked = profile.isLocked
+        let highlight = !locked && selected
+        let muted = highlight ? Color.demarOnPrimaryContainer.opacity(0.75) : Color.demarOnSurfaceVariant
+        let subtitle = profile.listSubtitle
+
+        // No nested Buttons — List + Button hit-testing drifts during refresh animation.
+        HStack(spacing: 12) {
             HStack(spacing: 12) {
-                CountryFlag(profile: profile)
+                CountryFlagView(code: profile.countryCode, emoji: profile.flagEmoji)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(profile.listTitle)
-                        .font(.demarTitleMediumBold)
-                        .foregroundStyle(selected ? Color.demarOnPrimaryContainer : Color.demarOnSurface)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    if !profile.listSubtitle.isEmpty {
-                        Text(profile.listSubtitle)
-                            .font(.demarBodySmall)
-                            .foregroundStyle(
-                                selected
-                                    ? Color.demarOnPrimaryContainer.opacity(0.75)
-                                    : Color.demarOnSurfaceVariant
-                            )
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(spacing: 4) {
+                        if favorite, !locked {
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color.demarError)
+                        }
+                        Text(profile.titleName)
+                            .font(.demarTitleMediumBold)
+                            .foregroundStyle(highlight ? Color.demarOnPrimaryContainer : Color.demarOnSurface)
+                            .lineLimit(1)
+                        ServerBadge(label: profile.tier.label, tier: profile.tier)
+                        ServerBadge(label: profile.protocolLabel)
                     }
+                    Text(subtitle.isEmpty ? " " : subtitle)
+                        .font(.demarBodySmall)
+                        .foregroundStyle(muted)
+                        .opacity(subtitle.isEmpty ? 0 : 1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxWidth: .infinity, minHeight: rowMinHeight, alignment: .center)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: locked ? onNeedUpgrade : onSelect)
+
+            if locked {
+                Text("Premium")
+                    .font(.demarLabelLarge)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.demarOnPrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.demarPrimary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .frame(minWidth: trailingMinWidth, minHeight: rowMinHeight, alignment: .trailing)
+                    .contentShape(Rectangle())
+                    .onTapGesture(perform: onNeedUpgrade)
+            } else {
+                HStack(spacing: 4) {
+                    Text(ServerReachState.formatMs(reachState.tlsMs))
+                        .font(.system(size: 10, weight: .medium).monospacedDigit())
+                        .foregroundStyle(muted)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(muted)
+                }
+                .frame(minWidth: trailingMinWidth, minHeight: rowMinHeight, alignment: .trailing)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: onDetails)
+            }
+        }
+        .padding(.horizontal, 16)
+        .frame(minHeight: rowMinHeight)
+        .background {
+            ZStack {
+                (highlight ? Color.demarPrimaryContainer : Color.demarSurfaceContainerHighest)
+                if locked {
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.28),
+                            Color.black.opacity(0.14),
+                            Color.black.opacity(0.04),
+                            .clear,
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .allowsHitTesting(false)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(selected ? Color.demarPrimaryContainer : Color.demarSurfaceContainerHighest)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(selected ? Color.demarPrimary.opacity(0.35) : Color.demarOutline.opacity(0.2), lineWidth: 1)
-            )
         }
-        .buttonStyle(.plain)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(
+                    highlight ? Color.demarPrimary.opacity(0.35) : Color.demarOutline.opacity(0.2),
+                    lineWidth: 1
+                )
+        )
         .transaction { $0.disablesAnimations = true }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(profile.displayName)
     }
-}
-
-private struct CountryFlag: View {
-    let profile: ServerProfile
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.demarPrimary.opacity(0.1))
-            if profile.flagEmoji.isEmpty {
-                Text(profile.countryCode ?? "?")
-                    .font(.demarBodySmall.weight(.bold))
-                    .foregroundStyle(Color.demarPrimary)
-            } else {
-                Text(profile.flagEmoji)
-                    .font(.system(size: 22))
-            }
-        }
-        .frame(width: 36, height: 36)
-    }
-}
-
-private extension View {
-    #if os(iOS)
-    func demarScrollPullDistance(_ onPull: @escaping (CGFloat) -> Void) -> some View {
-        onScrollGeometryChange(for: CGFloat.self) { geo in
-            max(0, -geo.contentOffset.y)
-        } action: { _, pull in
-            onPull(pull)
-        }
-    }
-    #endif
 }

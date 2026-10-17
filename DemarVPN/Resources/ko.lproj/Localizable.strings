@@ -77,6 +77,7 @@
 "Demar Proxy - %@ - %@" = "Demar Proxy - %1$@ - %2$@";
 "Demar Proxy — Hysteria2 / Sing-box client." = "Demar Proxy — Hysteria2 / Sing-box 클라이언트.";
 "DemarPacketTunnel did not start. 1) Enable Demar Proxy in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar Proxy” profile in System Settings → VPN. 3) Relaunch the app and connect again." = "DemarPacketTunnel이 시작되지 않았습니다. 1) 시스템 설정 → VPN(또는 확장/VPN)에서 Demar Proxy를 켜세요. 2) 시스템 설정 → VPN에서 이전 “Demar Proxy” 프로필을 제거하세요. 3) 앱을 다시 실행한 뒤 다시 연결하세요.";
+"Direct" = "직접";
 "Discount promo for this purchase" = "이번 구매용 할인 프로모";
 "Document is empty or corrupted" = "문서가 비어 있거나 손상됨";
 "Documents" = "문서";
@@ -97,6 +98,8 @@
 "Feedback" = "피드백";
 "File must not exceed 25 MB" = "파일은 25 MB를 초과할 수 없습니다";
 "Fix email" = "이메일 수정";
+"Load" = "부하";
+"Server filters" = "서버 필터";
 "for 3 months" = "3개월";
 "For everyday use" = "일상 사용에 적합";
 "Free version expires in" = "무료 버전 만료까지";
@@ -226,8 +229,6 @@
 "Tunnel stopped (core). Open the journal — [mac] and [core] lines." = "터널이 중지됨(core). 저널을 여세요 — [mac] 및 [core] 줄.";
 "Update" = "업데이트";
 "Update the app." = "앱을 업데이트하세요.";
-"Updating" = "업데이트 중";
-"Updating servers" = "서버 업데이트 중";
 "Version" = "버전";
 "VPN configuration error. Check the profile and permission in System Settings → VPN." = "VPN 구성 오류. 시스템 설정 → VPN에서 프로필과 권한을 확인하세요.";
 "VPN connection timed out. Open the journal ([mac]/[core]) or remove the profile in System Settings → VPN." = "VPN 연결 시간 초과. 저널을 열거나([mac]/[core]) 시스템 설정 → VPN에서 프로필을 제거하세요.";

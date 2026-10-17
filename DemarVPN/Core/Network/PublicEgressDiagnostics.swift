@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import Network
 import Security
@@ -70,12 +71,6 @@ enum PublicEgressDiagnostics {
         return fallback
     }
 
-    static func probeAllHosts(
-        onHostReady: (@Sendable (Int, EgressHostProbe) -> Void)? = nil
-    ) async -> [EgressHostProbe] {
-        await probeHosts(probeHosts, onHostReady: onHostReady)
-    }
-
     static func probeHosts(
         _ hosts: [String],
         onHostReady: (@Sendable (Int, EgressHostProbe) -> Void)? = nil
@@ -113,7 +108,10 @@ enum PublicEgressDiagnostics {
 
     static func probeTcpMs(_ host: String, port: UInt16 = 443) async -> Int {
         await bestOf {
-            await nwReadyMs(host: host, port: port, using: .tcp)
+            // BSD connect — parity Android Socket(); ECONNREFUSED counts as RTT (HY2 UDP ports).
+            await Task.detached(priority: .utility) {
+                Self.posixTcpConnectOnce(host: host, port: port)
+            }.value
         }
     }
 
@@ -145,7 +143,10 @@ enum PublicEgressDiagnostics {
     /// QUIC Version Negotiation RTT (RFC 9000 §6). For HY2 uplink; Service Menu does not call this.
     static func probeQuicMs(_ host: String, port: UInt16 = 443) async -> Int {
         await bestOf {
-            await quicOnceMs(host: host, port: port)
+            // DatagramSocket parity (Android InternetProbe); NWConnection UDP misses some HY2 hosts.
+            await Task.detached(priority: .utility) {
+                Self.posixQuicOnce(host: host, port: port)
+            }.value
         }
     }
 
@@ -188,37 +189,99 @@ enum PublicEgressDiagnostics {
         }
     }
 
-    private static func quicOnceMs(host: String, port: UInt16) async -> Int {
-        guard let nwPort = NWEndpoint.Port(rawValue: port) else { return -1 }
-        return await probeMs { finish in
-            let started = Date()
-            let conn = NWConnection(host: .init(host), port: nwPort, using: .udp)
-            conn.stateUpdateHandler = { state in
-                switch state {
-                case .ready:
-                    conn.send(content: quicGreaseInitial(), completion: .contentProcessed { error in
-                        if error != nil {
-                            conn.cancel()
-                            finish(-1)
-                            return
-                        }
-                        conn.receive(minimumIncompleteLength: 1, maximumLength: 1500) { data, _, _, error in
-                            conn.cancel()
-                            if error != nil || data == nil {
-                                finish(-1)
-                            } else {
-                                finish(max(0, Int(Date().timeIntervalSince(started) * 1000)))
-                            }
-                        }
-                    })
-                case .failed, .cancelled:
-                    finish(-1)
-                default:
-                    break
-                }
-            }
-            conn.start(queue: .global(qos: .utility))
+    /// Android `Socket().connect` + `ConnectException` → RTT.
+    private static func posixTcpConnectOnce(host: String, port: UInt16) -> Int {
+        guard let first = resolveAddr(host: host, port: port, socktype: SOCK_STREAM, proto: IPPROTO_TCP) else {
+            return -1
         }
+        defer { freeaddrinfo(first) }
+        let timeoutMs = Int32(probeTimeout * 1000)
+        let started = Date()
+        var cursor: UnsafeMutablePointer<addrinfo>? = first
+        while let info = cursor {
+            defer { cursor = info.pointee.ai_next }
+            let fd = socket(info.pointee.ai_family, info.pointee.ai_socktype, info.pointee.ai_protocol)
+            guard fd >= 0 else { continue }
+            let flags = fcntl(fd, F_GETFL, 0)
+            _ = fcntl(fd, F_SETFL, flags | O_NONBLOCK)
+            let rc = connect(fd, info.pointee.ai_addr, info.pointee.ai_addrlen)
+            if rc == 0 {
+                close(fd)
+                return elapsedMs(since: started)
+            }
+            if errno == EINPROGRESS {
+                var pfd = pollfd(fd: fd, events: Int16(POLLOUT), revents: 0)
+                if poll(&pfd, 1, timeoutMs) > 0 {
+                    var soError: Int32 = 0
+                    var len = socklen_t(MemoryLayout<Int32>.size)
+                    _ = getsockopt(fd, SOL_SOCKET, SO_ERROR, &soError, &len)
+                    close(fd)
+                    if soError == 0 || soError == ECONNREFUSED || soError == ECONNRESET {
+                        return elapsedMs(since: started)
+                    }
+                } else {
+                    close(fd)
+                }
+                continue
+            }
+            if errno == ECONNREFUSED || errno == ECONNRESET {
+                close(fd)
+                return elapsedMs(since: started)
+            }
+            close(fd)
+        }
+        return -1
+    }
+
+    /// Android `DatagramSocket` QUIC VN probe.
+    private static func posixQuicOnce(host: String, port: UInt16) -> Int {
+        guard let info = resolveAddr(host: host, port: port, socktype: SOCK_DGRAM, proto: IPPROTO_UDP) else {
+            return -1
+        }
+        defer { freeaddrinfo(info) }
+        let fd = socket(info.pointee.ai_family, info.pointee.ai_socktype, info.pointee.ai_protocol)
+        guard fd >= 0 else { return -1 }
+        defer { close(fd) }
+        var tv = timeval(
+            tv_sec: time_t(probeTimeout),
+            tv_usec: suseconds_t((probeTimeout.truncatingRemainder(dividingBy: 1)) * 1_000_000)
+        )
+        _ = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
+        let packet = quicGreaseInitial()
+        let started = Date()
+        let sent = packet.withUnsafeBytes { raw -> Int in
+            guard let base = raw.bindMemory(to: UInt8.self).baseAddress else { return -1 }
+            return sendto(fd, base, packet.count, 0, info.pointee.ai_addr, info.pointee.ai_addrlen)
+        }
+        guard sent > 0 else { return -1 }
+        var buf = [UInt8](repeating: 0, count: 1500)
+        guard recvfrom(fd, &buf, buf.count, 0, nil, nil) > 0 else { return -1 }
+        return elapsedMs(since: started)
+    }
+
+    private static func resolveAddr(
+        host: String,
+        port: UInt16,
+        socktype: Int32,
+        proto: Int32
+    ) -> UnsafeMutablePointer<addrinfo>? {
+        var hints = addrinfo(
+            ai_flags: AI_ADDRCONFIG,
+            ai_family: AF_UNSPEC,
+            ai_socktype: socktype,
+            ai_protocol: proto,
+            ai_addrlen: 0,
+            ai_canonname: nil,
+            ai_addr: nil,
+            ai_next: nil
+        )
+        var result: UnsafeMutablePointer<addrinfo>?
+        guard getaddrinfo(host, String(port), &hints, &result) == 0 else { return nil }
+        return result
+    }
+
+    private static func elapsedMs(since started: Date) -> Int {
+        max(0, Int(Date().timeIntervalSince(started) * 1000))
     }
 
     /// Long-header Initial, GREASE version `0x0a0a0a0a`, padded to 1200 bytes.
@@ -378,21 +441,8 @@ enum PublicEgressDiagnostics {
     }
 
     private static func countryWithFlag(_ country: String, code: String) -> String {
-        let flag = flagEmoji(from: code)
+        let flag = ServerProfile.flagEmoji(forCountryCode: code)
         return flag.isEmpty ? country : "\(country) \(flag)"
-    }
-
-    private static func flagEmoji(from countryCode: String) -> String {
-        let upper = countryCode.uppercased()
-        guard upper.count == 2 else { return "" }
-        var scalars = String.UnicodeScalarView()
-        for scalar in upper.unicodeScalars {
-            guard scalar.value >= 65, scalar.value <= 90,
-                  let regional = UnicodeScalar(127397 + scalar.value)
-            else { return "" }
-            scalars.append(regional)
-        }
-        return String(scalars)
     }
 }
 

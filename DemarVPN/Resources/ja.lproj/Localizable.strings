@@ -77,6 +77,7 @@
 "Demar Proxy - %@ - %@" = "Demar Proxy - %1$@ - %2$@";
 "Demar Proxy — Hysteria2 / Sing-box client." = "Demar Proxy — Hysteria2 / Sing-box クライアント。";
 "DemarPacketTunnel did not start. 1) Enable Demar Proxy in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar Proxy” profile in System Settings → VPN. 3) Relaunch the app and connect again." = "DemarPacketTunnel が起動しませんでした。1）システム設定 → VPN（または拡張機能/VPN）で Demar Proxy を有効にしてください。2）システム設定 → VPN の古い「Demar Proxy」構成を削除してください。3）アプリを再起動して再度接続してください。";
+"Direct" = "直接";
 "Discount promo for this purchase" = "この購入向け割引プロモ";
 "Document is empty or corrupted" = "書類が空か破損しています";
 "Documents" = "書類";
@@ -97,6 +98,8 @@
 "Feedback" = "フィードバック";
 "File must not exceed 25 MB" = "ファイルは 25 MB 以下である必要があります";
 "Fix email" = "メールを修正";
+"Load" = "負荷";
+"Server filters" = "サーバーフィルター";
 "for 3 months" = "3か月分";
 "For everyday use" = "日常使いに";
 "Free version expires in" = "無料版の残り";
@@ -226,8 +229,6 @@
 "Tunnel stopped (core). Open the journal — [mac] and [core] lines." = "トンネルが停止しました（core）。ジャーナルを開いてください — [mac] と [core] 行。";
 "Update" = "アップデート";
 "Update the app." = "アプリをアップデートしてください。";
-"Updating" = "更新中";
-"Updating servers" = "サーバーを更新中";
 "Version" = "バージョン";
 "VPN configuration error. Check the profile and permission in System Settings → VPN." = "VPN 構成エラー。システム設定 → VPN で構成と許可を確認してください。";
 "VPN connection timed out. Open the journal ([mac]/[core]) or remove the profile in System Settings → VPN." = "VPN 接続がタイムアウトしました。ジャーナルを開くか（[mac]/[core]）、システム設定 → VPN で構成を削除してください。";

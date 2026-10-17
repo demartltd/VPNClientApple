@@ -20,6 +20,7 @@ DemarVPN/                              # SwiftUI target
 │   ├── Models/
 │   │   ├── VpnConnectionState.swift   # enum статуса VPN
 │   │   ├── ServerProfile.swift        # профиль сервера + UI metadata/filters
+│   │   ├── ServerReachability.swift   # TCP/TLS/QUIC ping state + UplinkProbe
 │   │   └── TestServers.swift          # тестовые профили
 │   ├── Network/
 │   │   ├── DemarHttp.swift            # URLSession, UA, vpnPost/Get, retry/reset, DemarAPIError
@@ -47,7 +48,8 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── AppState+AuthSession.swift # auth, session refresh, sign-out, version
 │   │   ├── AppState+AccountPay.swift  # AccountFlowSheet host (checkout/pay/traffic/alerts)
 │   │   ├── AuthSessionStore.swift     # UserDefaults session + auth orchestration
-│   │   ├── SessionCacheStore.swift    # servers/account/traffic/tun disk cache
+│   │   ├── SessionCacheStore.swift    # servers/account/traffic/tun/reachability disk cache
+│   │   ├── ServersPreferencesStore.swift # favorites + tier/protocol filters
 │   │   ├── TunSettingsStore.swift     # site-group prefs + in-memory catalog
 │   │   ├── SupportStore.swift         # ticket cache + unread badge
 │   │   ├── SubscriptionAlertStore.swift # Expiry / FreeTraffic cooldown + windows
@@ -77,7 +79,6 @@ DemarVPN/                              # SwiftUI target
 │   ├── DemarBottomSheet.swift         # единый bottom sheet (iOS sheet / macOS overlay)
 │   ├── SettingsLinksStrip.swift       # соцссылки
 │   ├── DemarSnackBar.swift            # тосты
-│   ├── ServersRefreshBanner.swift     # top banner при pull-refresh серверов
 │   ├── DynamicIslandBadge.swift       # marketing badge на DI (iOS only)
 │   └── DiagnosticsJournalTextView.swift # текстовый лог
 │
@@ -103,8 +104,12 @@ DemarVPN/                              # SwiftUI target
 │       └── MaterialSymbolsOutlined.ttf  # резерв
 │
 └── Features/
-    ├── Home/HomeView.swift            # toggle, скорость
-    ├── Servers/ServersView.swift      # выбор сервера (API)
+    ├── Home/HomeView.swift            # toggle, скорость, details sheet
+    ├── Servers/
+    │   ├── ServersView.swift          # список + toolbar refresh/filters
+    │   ├── ServerBadges.swift         # tier/protocol badges
+    │   ├── ServerFiltersSheet.swift   # multi-select tier + protocol
+    │   └── ServerDetailsSheet.swift   # load / ping / traffic / favorites
     ├── Account/
     │   ├── AccountView.swift          # сессия / подписка / notify / трафик / checkout
     │   ├── SubscriptionCheckoutSheet.swift # Plus/VIP × period × currency + pay
@@ -130,7 +135,7 @@ DemarVPN/                              # SwiftUI target
             ├── SupportAttach.swift    # gallery photo ingest / WebP compress
             └── SupportHelpers.swift   # errors, time, linkify
 
-DemarVPNTests/                         # unit tests (Sing-box, connect hot-path, TUN sites, servers/account/pay parse, interface, legal docs)
+DemarVPNTests/                         # unit tests (Sing-box, connect hot-path, TUN sites, servers filter/reachability, account/pay parse, interface, legal docs)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка

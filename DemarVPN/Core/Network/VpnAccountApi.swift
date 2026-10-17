@@ -24,6 +24,10 @@ struct VpnTraffic: Equatable, Sendable {
     let servers: [VpnTrafficServer]
     let total: Int64
     let limitBytes: Int64
+
+    func bytesForServer(_ displayName: String) -> Int64? {
+        servers.first(where: { $0.name == displayName })?.bytes
+    }
 }
 
 enum VpnAccountApi {

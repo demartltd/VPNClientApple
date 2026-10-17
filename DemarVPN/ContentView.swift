@@ -123,20 +123,12 @@ struct ContentView: View {
             }
         }
         .tint(Color.demarPrimary)
-        .overlay(alignment: .top) {
-            if appState.isRefreshingServers {
-                ServersRefreshBanner()
-                    .safeAreaPadding(.top, 8)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-        }
-        .animation(.smooth(duration: 0.28), value: appState.isRefreshingServers)
     }
 
     private func iosTab(_ item: DemarSection) -> some View {
         let active = section == item
         return Group {
-            if item == .settings || item == .account {
+            if item == .settings || item == .account || item == .servers {
                 NavigationStack { screen(item, active: active) }
             } else {
                 screen(item, active: active)

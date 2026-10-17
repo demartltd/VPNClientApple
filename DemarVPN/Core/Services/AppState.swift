@@ -23,6 +23,13 @@ final class AppState {
     var isRefreshingServers = false
     var serversLoading = false
     var serversError: String?
+    var serverReachability: [String: ServerReachState] = [:]
+    var favoriteServerIds: Set<String> = []
+    var filterTiers: Set<ServerTier> = Set(ServerTier.allCases)
+    var filterProtocols: Set<ServerProtocol> = Set(ServerProtocol.allCases)
+    var reachabilityTask: Task<Void, Never>?
+    var serversTabActive = false
+    var initialReachabilityDone = false
     var account: VpnAccount?
     var traffic: VpnTraffic?
     var trafficExceeded = false
@@ -77,9 +84,13 @@ final class AppState {
     init(vpn: VpnControlling? = nil) {
         let session = AuthSessionStore.session
         authSession = session
+        favoriteServerIds = ServersPreferencesStore.favorites
+        filterTiers = ServersPreferencesStore.tiers
+        filterProtocols = ServersPreferencesStore.protocols
         if let session, let cached = SessionCacheStore.load(userId: session.userId) {
             servers = cached.servers
             selectedServer = Self.restoreSelectedServer(from: cached.servers)
+            serverReachability = cached.reachability
             account = cached.account
             traffic = cached.traffic
             TunSettingsStore.hydrateFromCache(cached.tunRaw)
@@ -115,14 +126,31 @@ final class AppState {
     }
 
     static func restoreSelectedServer(from servers: [ServerProfile]) -> ServerProfile? {
-        guard !servers.isEmpty else { return nil }
-        guard let savedId = UserDefaults.standard.string(forKey: StorageKey.selectedServerId) else {
-            return servers.first
-        }
-        return servers.first(where: { $0.id == savedId }) ?? servers.first
+        let lastId = UserDefaults.standard.string(forKey: StorageKey.selectedServerId)
+        return servers.pickSelected(currentId: lastId, lastId: lastId)
     }
 
     static func persistSelectedServerId(_ id: String) {
         UserDefaults.standard.set(id, forKey: StorageKey.selectedServerId)
+    }
+
+    var filtersActive: Bool {
+        ServersPreferencesStore.filtersActive(tiers: filterTiers, protocols: filterProtocols)
+    }
+
+    func toggleFavoriteServer(_ id: String) {
+        favoriteServerIds = ServersPreferencesStore.toggleFavorite(id)
+    }
+
+    func setFilterTiers(_ next: Set<ServerTier>) {
+        guard servers.matchesFilters(tiers: next, protocols: filterProtocols) else { return }
+        filterTiers = next.isEmpty ? Set(ServerTier.allCases) : next
+        ServersPreferencesStore.tiers = filterTiers
+    }
+
+    func setFilterProtocols(_ next: Set<ServerProtocol>) {
+        guard servers.matchesFilters(tiers: filterTiers, protocols: next) else { return }
+        filterProtocols = next.isEmpty ? Set(ServerProtocol.allCases) : next
+        ServersPreferencesStore.protocols = filterProtocols
     }
 }

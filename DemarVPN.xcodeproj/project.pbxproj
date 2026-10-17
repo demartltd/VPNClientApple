@@ -13,7 +13,13 @@
 		B10000010000000000000004 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000004 /* AppTheme.swift */; };
 		B10000010000000000000005 /* VpnConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000005 /* VpnConnectionState.swift */; };
 		B10000010000000000000006 /* ServerProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000006 /* ServerProfile.swift */; };
+		B1000001000000000000SR1 /* ServerReachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000SR1 /* ServerReachability.swift */; };
+		B1000001000000000000SP1 /* ServersPreferencesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000SP1 /* ServersPreferencesStore.swift */; };
+		B1000001000000000000SB1 /* ServerBadges.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000SB1 /* ServerBadges.swift */; };
+		B1000001000000000000SF1 /* ServerFiltersSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000SF1 /* ServerFiltersSheet.swift */; };
+		B1000001000000000000SD1 /* ServerDetailsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000SD1 /* ServerDetailsSheet.swift */; };
 		B10000010000000000000007 /* TestServers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000007 /* TestServers.swift */; };
+		T40000111CF9000F007C117E /* ServerFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000111CF9000F007C117E /* ServerFilterTests.swift */; };
 		B10000010000000000000008 /* AppLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000008 /* AppLog.swift */; };
 		B1000001000000000000000A /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000A /* AppState.swift */; };
 		A11000010000000000000032 /* AppState+AuthSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000101CF9000F007C117D /* AppState+AuthSession.swift */; };
@@ -25,7 +31,6 @@
 		B1000001000000000000000E /* SettingsActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000E /* SettingsActionButton.swift */; };
 		B1000001000000000000000F /* SettingsLinksStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000000F /* SettingsLinksStrip.swift */; };
 		B10000010000000000000010 /* DemarSnackBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000010 /* DemarSnackBar.swift */; };
-		B10000010000000000000047 /* ServersRefreshBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000047 /* ServersRefreshBanner.swift */; platformFilter = ios; };
 		B10000010000000000000048 /* DynamicIslandBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000048 /* DynamicIslandBadge.swift */; platformFilter = ios; };
 		B10000010000000000000049 /* DemarBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000049 /* DemarBottomSheet.swift */; };
 		B10000010000000000000011 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000011 /* HomeView.swift */; };
@@ -272,6 +277,12 @@
 		F10000010000000000000004 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		F10000010000000000000005 /* VpnConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnConnectionState.swift; sourceTree = "<group>"; };
 		F10000010000000000000006 /* ServerProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerProfile.swift; sourceTree = "<group>"; };
+		F1000001000000000000SR1 /* ServerReachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerReachability.swift; sourceTree = "<group>"; };
+		F1000001000000000000SP1 /* ServersPreferencesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersPreferencesStore.swift; sourceTree = "<group>"; };
+		F1000001000000000000SB1 /* ServerBadges.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerBadges.swift; sourceTree = "<group>"; };
+		F1000001000000000000SF1 /* ServerFiltersSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerFiltersSheet.swift; sourceTree = "<group>"; };
+		F1000001000000000000SD1 /* ServerDetailsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerDetailsSheet.swift; sourceTree = "<group>"; };
+		F40000111CF9000F007C117E /* ServerFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerFilterTests.swift; sourceTree = "<group>"; };
 		F10000010000000000000007 /* TestServers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestServers.swift; sourceTree = "<group>"; };
 		F10000010000000000000008 /* AppLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLog.swift; sourceTree = "<group>"; };
 		F1000001000000000000000A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -284,7 +295,6 @@
 		F1000001000000000000000E /* SettingsActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsActionButton.swift; sourceTree = "<group>"; };
 		F1000001000000000000000F /* SettingsLinksStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsLinksStrip.swift; sourceTree = "<group>"; };
 		F10000010000000000000010 /* DemarSnackBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarSnackBar.swift; sourceTree = "<group>"; };
-		F10000010000000000000047 /* ServersRefreshBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersRefreshBanner.swift; sourceTree = "<group>"; };
 		F10000010000000000000048 /* DynamicIslandBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicIslandBadge.swift; sourceTree = "<group>"; };
 		F10000010000000000000049 /* DemarBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemarBottomSheet.swift; sourceTree = "<group>"; };
 		F10000010000000000000011 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -511,7 +521,6 @@
 				F1000001000000000000000E /* SettingsActionButton.swift */,
 				F1000001000000000000000F /* SettingsLinksStrip.swift */,
 				F10000010000000000000010 /* DemarSnackBar.swift */,
-				F10000010000000000000047 /* ServersRefreshBanner.swift */,
 				F10000010000000000000048 /* DynamicIslandBadge.swift */,
 				F10000010000000000000049 /* DemarBottomSheet.swift */,
 			);
@@ -544,6 +553,7 @@
 			children = (
 				F10000010000000000000005 /* VpnConnectionState.swift */,
 				F10000010000000000000006 /* ServerProfile.swift */,
+				F1000001000000000000SR1 /* ServerReachability.swift */,
 				F10000010000000000000007 /* TestServers.swift */,
 			);
 			path = Models;
@@ -560,6 +570,7 @@
 				A10000121CF9000F007C117D /* AppState+Vpn.swift */,
 				F10000010000000000000053 /* AuthSessionStore.swift */,
 				F1000001000000000000005A /* SessionCacheStore.swift */,
+				F1000001000000000000SP1 /* ServersPreferencesStore.swift */,
 				F1000001000000000000TS1 /* TunSettingsStore.swift */,
 				F10000010000000000000061 /* SessionRefreshPolicy.swift */,
 				F10000010000000000000057 /* SupportStore.swift */,
@@ -600,6 +611,9 @@
 			isa = PBXGroup;
 			children = (
 				F10000010000000000000012 /* ServersView.swift */,
+				F1000001000000000000SB1 /* ServerBadges.swift */,
+				F1000001000000000000SF1 /* ServerFiltersSheet.swift */,
+				F1000001000000000000SD1 /* ServerDetailsSheet.swift */,
 			);
 			path = Servers;
 			sourceTree = "<group>";
@@ -814,6 +828,7 @@
 				F40000051CF9000F007C117E /* VpnStabilityTests.swift */,
 				F40000061CF9000F007C117E /* LegalDocumentsTests.swift */,
 				F40000071CF9000F007C117E /* ServersApiParseTests.swift */,
+				F40000111CF9000F007C117E /* ServerFilterTests.swift */,
 				F400000E1CF9000F007C117E /* TunGroupsParseTests.swift */,
 				F400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift */,
 				F400000C1CF9000F007C117E /* PayApiParseTests.swift */,
@@ -1051,6 +1066,7 @@
 				B10000010000000000000004 /* AppTheme.swift in Sources */,
 				B10000010000000000000005 /* VpnConnectionState.swift in Sources */,
 				B10000010000000000000006 /* ServerProfile.swift in Sources */,
+				B1000001000000000000SR1 /* ServerReachability.swift in Sources */,
 				B10000010000000000000007 /* TestServers.swift in Sources */,
 				B10000010000000000000008 /* AppLog.swift in Sources */,
 				B1000001000000000000000A /* AppState.swift in Sources */,
@@ -1068,11 +1084,14 @@
 				B1000001000000000000000E /* SettingsActionButton.swift in Sources */,
 				B1000001000000000000000F /* SettingsLinksStrip.swift in Sources */,
 				B10000010000000000000010 /* DemarSnackBar.swift in Sources */,
-				B10000010000000000000047 /* ServersRefreshBanner.swift in Sources */,
 				B10000010000000000000048 /* DynamicIslandBadge.swift in Sources */,
 				B10000010000000000000049 /* DemarBottomSheet.swift in Sources */,
 				B10000010000000000000011 /* HomeView.swift in Sources */,
 				B10000010000000000000012 /* ServersView.swift in Sources */,
+				B1000001000000000000SB1 /* ServerBadges.swift in Sources */,
+				B1000001000000000000SF1 /* ServerFiltersSheet.swift in Sources */,
+				B1000001000000000000SD1 /* ServerDetailsSheet.swift in Sources */,
+				B1000001000000000000SP1 /* ServersPreferencesStore.swift in Sources */,
 				B10000010000000000000013 /* SettingsView.swift in Sources */,
 				B10000010000000000000014 /* AppSettingsView.swift in Sources */,
 				B1000001000000000000TUN /* TunSettingsView.swift in Sources */,
@@ -1220,6 +1239,7 @@
 				T40000061CF9000F007C117E /* VpnStabilityTests.swift in Sources */,
 				T40000071CF9000F007C117E /* LegalDocumentsTests.swift in Sources */,
 				T40000081CF9000F007C117E /* ServersApiParseTests.swift in Sources */,
+				T40000111CF9000F007C117E /* ServerFilterTests.swift in Sources */,
 				T400000E1CF9000F007C117E /* TunGroupsParseTests.swift in Sources */,
 				T400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift in Sources */,
 				T400000C1CF9000F007C117E /* PayApiParseTests.swift in Sources */,
@@ -1367,7 +1387,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 91;
+				CURRENT_PROJECT_VERSION = 92;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1405,7 +1425,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 91;
+				CURRENT_PROJECT_VERSION = 92;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1439,7 +1459,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 91;
+				CURRENT_PROJECT_VERSION = 92;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1486,7 +1506,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 91;
+				CURRENT_PROJECT_VERSION = 92;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1533,7 +1553,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 91;
+				CURRENT_PROJECT_VERSION = 92;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1560,7 +1580,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 91;
+				CURRENT_PROJECT_VERSION = 92;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1586,7 +1606,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 91;
+				CURRENT_PROJECT_VERSION = 92;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1624,7 +1644,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 91;
+				CURRENT_PROJECT_VERSION = 92;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;

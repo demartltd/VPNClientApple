@@ -77,6 +77,7 @@
 "Demar Proxy - %@ - %@" = "Demar Proxy - %1$@ - %2$@";
 "Demar Proxy — Hysteria2 / Sing-box client." = "Demar Proxy — Hysteria2 / Sing-box client.";
 "DemarPacketTunnel did not start. 1) Enable Demar Proxy in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar Proxy” profile in System Settings → VPN. 3) Relaunch the app and connect again." = "DemarPacketTunnel did not start. 1) Enable Demar Proxy in System Settings → VPN (or Extensions/VPN). 2) Remove the old “Demar Proxy” profile in System Settings → VPN. 3) Relaunch the app and connect again.";
+"Direct" = "Direct";
 "Discount promo for this purchase" = "Discount promo for this purchase";
 "Document is empty or corrupted" = "Document is empty or corrupted";
 "Documents" = "Documents";
@@ -97,6 +98,8 @@
 "Feedback" = "Feedback";
 "File must not exceed 25 MB" = "File must not exceed 25 MB";
 "Fix email" = "Fix email";
+"Load" = "Load";
+"Server filters" = "Server filters";
 "for 3 months" = "for 3 months";
 "For everyday use" = "For everyday use";
 "Free version expires in" = "Free version expires in";
@@ -226,8 +229,6 @@
 "Tunnel stopped (core). Open the journal — [mac] and [core] lines." = "Tunnel stopped (core). Open the journal — [mac] and [core] lines.";
 "Update" = "Update";
 "Update the app." = "Update the app.";
-"Updating" = "Updating";
-"Updating servers" = "Updating servers";
 "Version" = "Version";
 "VPN configuration error. Check the profile and permission in System Settings → VPN." = "VPN configuration error. Check the profile and permission in System Settings → VPN.";
 "VPN connection timed out. Open the journal ([mac]/[core]) or remove the profile in System Settings → VPN." = "VPN connection timed out. Open the journal ([mac]/[core]) or remove the profile in System Settings → VPN.";
