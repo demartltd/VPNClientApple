@@ -141,16 +141,13 @@ struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
 }
 
 extension Array where Element == ServerProfile {
+    /// §9: only badges present in the list.
     func visibleTiers() -> [ServerTier] {
-        ServerTier.allCases.filter { tier in
-            (tier != .dev && tier != .tester) || contains { $0.tier == tier }
-        }
+        ServerTier.allCases.filter { tier in contains { $0.tier == tier } }
     }
 
     func visibleProtocols() -> [ServerProtocol] {
-        ServerProtocol.allCases.filter { proto in
-            contains { $0.serverProtocol == proto }
-        }
+        ServerProtocol.allCases.filter { proto in contains { $0.serverProtocol == proto } }
     }
 
     func matchesFilters(tiers: Set<ServerTier>, protocols: Set<ServerProtocol>) -> Bool {

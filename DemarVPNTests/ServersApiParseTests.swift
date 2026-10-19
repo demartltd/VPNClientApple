@@ -335,8 +335,9 @@ final class ServersApiParseTests: XCTestCase {
             id: "f1"
         )
         let tiers = [tester, free].visibleTiers()
-        XCTAssertTrue(tiers.contains(.tester))
-        XCTAssertTrue(tiers.contains(.free))
+        XCTAssertEqual(tiers, [.free, .tester])
+        XCTAssertFalse(tiers.contains(.plus))
+        XCTAssertFalse(tiers.contains(.vip))
         XCTAssertFalse(tiers.contains(.dev))
     }
 

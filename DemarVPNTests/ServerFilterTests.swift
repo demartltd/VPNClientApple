@@ -71,12 +71,25 @@ final class ServerFilterTests: XCTestCase {
         )
         let list = [onlyHy2]
         XCTAssertFalse(list.matchesFilters(tiers: [.vip], protocols: [.trojan]))
-        // Visible chips all on → toolbar inactive even if unused DEV/TESTER stay in prefs.
-        let visibleTiers = Set(list.visibleTiers())
-        let visibleProtocols = Set(list.visibleProtocols())
-        XCTAssertTrue(visibleTiers.isSubset(of: Set(ServerTier.allCases)))
-        XCTAssertTrue(visibleProtocols.isSubset(of: Set(ServerProtocol.allCases)))
-        XCTAssertFalse(visibleTiers.isSubset(of: [.plus, .vip]))
+        // §9: only badges present in the list.
+        XCTAssertEqual(list.visibleTiers(), [.free])
+        XCTAssertEqual(list.visibleProtocols(), [.hysteria2])
+    }
+
+    /// Spec §9: absent FREE/PLUS/VIP must not appear as filter chips.
+    func testVisibleTiersOnlyPresent() {
+        let plus = ServerProfile(
+            profile: .trojan(TrojanProfile(
+                displayName: "DE-PLUS-1",
+                server: "a.example.com",
+                port: 1,
+                password: "p",
+                tlsServerName: "a.example.com"
+            )),
+            id: "p1"
+        )
+        XCTAssertEqual([plus].visibleTiers(), [.plus])
+        XCTAssertEqual([plus].visibleProtocols(), [.trojan])
     }
 
     func testPickSelectedSkipsLocked() {
