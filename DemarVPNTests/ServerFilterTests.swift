@@ -57,6 +57,28 @@ final class ServerFilterTests: XCTestCase {
         XCTAssertFalse([onlyHy2].matchesFilters(tiers: [.free], protocols: [.trojan]))
     }
 
+    /// Spec §3 gate: stale prefs that match nobody must trigger a full reset.
+    func testStaleFiltersRequireReset() {
+        let onlyHy2 = ServerProfile(
+            profile: .hysteria2(Hysteria2Profile(
+                displayName: "FI-FREE-1",
+                server: "a.example.com",
+                port: 1,
+                password: "p",
+                tlsServerName: "a.example.com"
+            )),
+            id: "h1"
+        )
+        let list = [onlyHy2]
+        XCTAssertFalse(list.matchesFilters(tiers: [.vip], protocols: [.trojan]))
+        // Visible chips all on → toolbar inactive even if unused DEV/TESTER stay in prefs.
+        let visibleTiers = Set(list.visibleTiers())
+        let visibleProtocols = Set(list.visibleProtocols())
+        XCTAssertTrue(visibleTiers.isSubset(of: Set(ServerTier.allCases)))
+        XCTAssertTrue(visibleProtocols.isSubset(of: Set(ServerProtocol.allCases)))
+        XCTAssertFalse(visibleTiers.isSubset(of: [.plus, .vip]))
+    }
+
     func testPickSelectedSkipsLocked() {
         let locked = ServerProfile(
             profile: .trojan(TrojanProfile(

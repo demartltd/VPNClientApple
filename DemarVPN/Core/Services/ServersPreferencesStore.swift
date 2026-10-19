@@ -27,13 +27,6 @@ enum ServersPreferencesStore {
         set { writeEnums(Key.protocols, newValue.isEmpty ? allProtocols : newValue) { $0.rawValue } }
     }
 
-    static func filtersActive(
-        tiers: Set<ServerTier> = Self.tiers,
-        protocols: Set<ServerProtocol> = Self.protocols
-    ) -> Bool {
-        tiers != allTiers || protocols != allProtocols
-    }
-
     @discardableResult
     static func toggleFavorite(_ id: String) -> Set<String> {
         var next = favorites

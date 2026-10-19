@@ -123,6 +123,7 @@ final class AppState {
         self.vpn = vpn ?? NativeVpnService()
         #endif
         applyTunDefaultsIfFree()
+        sanitizeFiltersAgainstServers()
     }
 
     static func restoreSelectedServer(from servers: [ServerProfile]) -> ServerProfile? {
@@ -134,8 +135,11 @@ final class AppState {
         UserDefaults.standard.set(id, forKey: StorageKey.selectedServerId)
     }
 
+    /// Active when any visible badge chip is off (not when unused DEV/TESTER differ).
     var filtersActive: Bool {
-        ServersPreferencesStore.filtersActive(tiers: filterTiers, protocols: filterProtocols)
+        let tiers = Set(servers.visibleTiers())
+        let protocols = Set(servers.visibleProtocols())
+        return !tiers.isSubset(of: filterTiers) || !protocols.isSubset(of: filterProtocols)
     }
 
     func toggleFavoriteServer(_ id: String) {
@@ -151,6 +155,17 @@ final class AppState {
     func setFilterProtocols(_ next: Set<ServerProtocol>) {
         guard servers.matchesFilters(tiers: filterTiers, protocols: next) else { return }
         filterProtocols = next.isEmpty ? Set(ServerProtocol.allCases) : next
+        ServersPreferencesStore.protocols = filterProtocols
+    }
+
+    /// Spec §3: stale filters that match nobody after a refresh → full reset.
+    func sanitizeFiltersAgainstServers() {
+        guard !servers.isEmpty,
+              !servers.matchesFilters(tiers: filterTiers, protocols: filterProtocols)
+        else { return }
+        filterTiers = Set(ServerTier.allCases)
+        filterProtocols = Set(ServerProtocol.allCases)
+        ServersPreferencesStore.tiers = filterTiers
         ServersPreferencesStore.protocols = filterProtocols
     }
 }

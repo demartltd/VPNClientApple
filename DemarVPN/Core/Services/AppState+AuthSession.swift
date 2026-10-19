@@ -361,6 +361,7 @@ extension AppState {
 
     func applyServerList(_ list: [ServerProfile]) {
         servers = list
+        sanitizeFiltersAgainstServers()
         selectedServer = list.pickSelected(
             currentId: selectedServer?.id,
             lastId: UserDefaults.standard.string(forKey: StorageKey.selectedServerId)
