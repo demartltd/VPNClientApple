@@ -86,15 +86,19 @@ struct ServerReachState: Equatable, Sendable {
 }
 
 enum UplinkProbe {
-    /// TCP + TLS; HY2 uses QUIC VN for the handshake slot (parity Android).
+    /// TCP + TLS; HY2 uses QUIC VN (salamander-wrapped when obfs is set). TCP RTT fallback for HY2.
     static func probe(_ profile: ServerProfile) async -> ServerReachState {
         let host = profile.connectPlan.uplinkHost.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !host.isEmpty else { return .offline }
         let port = profile.uplinkPort
         let hy2 = profile.serverProtocol == .hysteria2
+        let salamander: String? = {
+            guard case .hysteria2(let p) = profile.profile else { return nil }
+            return p.obfsPassword?.nilIfBlank
+        }()
         async let tcp = PublicEgressDiagnostics.probeTcpMs(host, port: port)
         async let hs = hy2
-            ? PublicEgressDiagnostics.probeQuicMs(host, port: port)
+            ? PublicEgressDiagnostics.probeQuicMs(host, port: port, salamanderPassword: salamander)
             : PublicEgressDiagnostics.probeTlsMs(host, port: port)
         // Sub-ms success floors to 1 — UI must never show ~0ms for a real probe.
         let tcpMs = clampRtt(await tcp)

@@ -3,6 +3,26 @@ import XCTest
 
 /// Device/USB network checks for HY2 uplink RTT (must not surface 0ms).
 final class UplinkProbeRttTests: XCTestCase {
+    func testBlake2b256EmptyAndSalamanderKey() {
+        let empty = SalamanderObfs.blake2b256([])
+        XCTAssertEqual(
+            empty.map { String(format: "%02x", $0) }.joined(),
+            "0e5751c026e543b2e8ab2eb06099daa1d1e5df47778f7787faab45cdf12fe3a8"
+        )
+        let key = SalamanderObfs.blake2b256(Array("obfs-pass".utf8) + [1, 2, 3, 4, 5, 6, 7, 8])
+        XCTAssertEqual(
+            key.map { String(format: "%02x", $0) }.joined(),
+            "df660a36d9734cd21f02e6db3ce7d3a24f2b18597d12dfe116cb8e5d70807b0a"
+        )
+    }
+
+    func testSalamanderWrapAddsSaltPrefix() {
+        let payload = Data(repeating: 0xAB, count: 1200)
+        let wrapped = SalamanderObfs.wrap(payload, password: "obfs-pass")
+        XCTAssertEqual(wrapped.count, 1200 + SalamanderObfs.saltLen)
+        XCTAssertNotEqual(wrapped.dropFirst(SalamanderObfs.saltLen), payload)
+    }
+
     func testSuccessfulProbeRttAtLeastOneMs() async {
         // Known HY2 host from production list (UDP 8443).
         let host = "de-f-1.xyzdeer.space"

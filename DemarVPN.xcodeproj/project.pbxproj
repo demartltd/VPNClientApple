@@ -91,6 +91,7 @@
 		B10000010000000000000032 /* DiagnosticsJournalTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000032 /* DiagnosticsJournalTextView.swift */; };
 		B10000010000000000000034 /* NativeVpnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000034 /* NativeVpnService.swift */; };
 		B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000035 /* PublicEgressDiagnostics.swift */; };
+		B1000001000000000000SO1 /* SalamanderObfs.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000SO1 /* SalamanderObfs.swift */; };
 		B10000010000000000000037 /* ios/Shared/VpnControlIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */; platformFilter = ios; };
 		B10000010000000000000038 /* ios/Shared/VpnStatusSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001071CF9000F007C117D /* ios/Shared/VpnStatusSignal.swift */; };
 		B10000010000000000000039 /* CustomEgressProbes.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000039 /* CustomEgressProbes.swift */; };
@@ -332,6 +333,7 @@
 		F10000010000000000000032 /* DiagnosticsJournalTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsJournalTextView.swift; sourceTree = "<group>"; };
 		F10000010000000000000034 /* NativeVpnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVpnService.swift; sourceTree = "<group>"; };
 		F10000010000000000000035 /* PublicEgressDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicEgressDiagnostics.swift; sourceTree = "<group>"; };
+		F1000001000000000000SO1 /* SalamanderObfs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SalamanderObfs.swift; sourceTree = "<group>"; };
 		F10000010000000000000039 /* CustomEgressProbes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomEgressProbes.swift; sourceTree = "<group>"; };
 		F1000001000000000000003D /* SingBoxConnectPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingBoxConnectPlan.swift; sourceTree = "<group>"; };
 		F1000001000000000000003E /* Hysteria2Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hysteria2Profile.swift; sourceTree = "<group>"; };
@@ -724,6 +726,7 @@
 				F100000100000000000000AB /* PayApi.swift */,
 				F10000010000000000000056 /* SupportApi.swift */,
 				F10000010000000000000035 /* PublicEgressDiagnostics.swift */,
+				F1000001000000000000SO1 /* SalamanderObfs.swift */,
 				F10000010000000000000043 /* LegalDocuments.swift */,
 			);
 			path = Network;
@@ -1142,6 +1145,7 @@
 				B1000001000000000000002E /* BundledCoreVersion.swift in Sources */,
 				B1000001000000000000ARU /* AppRuntimeUpgrade.swift in Sources */,
 				B10000010000000000000035 /* PublicEgressDiagnostics.swift in Sources */,
+				B1000001000000000000SO1 /* SalamanderObfs.swift in Sources */,
 				B10000010000000000000043 /* LegalDocuments.swift in Sources */,
 				B10000010000000000000050 /* DemarHttp.swift in Sources */,
 				B10000010000000000000051 /* AuthApi.swift in Sources */,

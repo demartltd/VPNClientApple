@@ -151,16 +151,23 @@ enum PublicEgressDiagnostics {
     }
 
     /// QUIC Version Negotiation RTT (RFC 9000 §6). For HY2 uplink; Service Menu does not call this.
+    /// When `salamanderPassword` is set, the grease Initial is salamander-wrapped (raw VN is ignored).
     static func probeQuicMs(
         _ host: String,
         port: UInt16 = 443,
         timeout: TimeInterval = probeTimeout,
-        attempts attemptCount: Int = attempts
+        attempts attemptCount: Int = attempts,
+        salamanderPassword: String? = nil
     ) async -> Int {
         await bestOf(attemptCount) {
             // DatagramSocket parity (Android InternetProbe); NWConnection UDP misses some HY2 hosts.
             await Task.detached(priority: .utility) {
-                Self.posixQuicOnce(host: host, port: port, timeout: timeout)
+                Self.posixQuicOnce(
+                    host: host,
+                    port: port,
+                    timeout: timeout,
+                    salamanderPassword: salamanderPassword
+                )
             }.value
         }
     }
@@ -254,7 +261,12 @@ enum PublicEgressDiagnostics {
     }
 
     /// Android `DatagramSocket` QUIC VN probe (DNS inside timer).
-    private static func posixQuicOnce(host: String, port: UInt16, timeout: TimeInterval) -> Int {
+    private static func posixQuicOnce(
+        host: String,
+        port: UInt16,
+        timeout: TimeInterval,
+        salamanderPassword: String? = nil
+    ) -> Int {
         let started = Date()
         guard let info = resolveAddr(host: host, port: port, socktype: SOCK_DGRAM, proto: IPPROTO_UDP) else {
             return -1
@@ -268,7 +280,10 @@ enum PublicEgressDiagnostics {
             tv_usec: suseconds_t((timeout.truncatingRemainder(dividingBy: 1)) * 1_000_000)
         )
         _ = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
-        let packet = quicGreaseInitial()
+        var packet = quicGreaseInitial()
+        if let password = salamanderPassword, !password.isEmpty {
+            packet = SalamanderObfs.wrap(packet, password: password)
+        }
         let sent = packet.withUnsafeBytes { raw -> Int in
             guard let base = raw.bindMemory(to: UInt8.self).baseAddress else { return -1 }
             return sendto(fd, base, packet.count, 0, info.pointee.ai_addr, info.pointee.ai_addrlen)

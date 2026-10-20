@@ -32,6 +32,7 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── PromoApi.swift             # POST /vpn/promo/activate|apply
 │   │   ├── SupportApi.swift           # csauth.example.invalid tickets / themes / media
 │   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS/TLS (+ QUIC API)
+│   │   ├── SalamanderObfs.swift       # HY2 salamander wrap (blake2b) for QUIC ping
 │   │   └── LegalDocuments.swift       # ToS/PP via DemarHttp Markdown fetch
 │   ├── Vpn/
 │   │   ├── ProxyProfile.swift         # enum HY2 / Trojan / VLESS Reality → connectPlan

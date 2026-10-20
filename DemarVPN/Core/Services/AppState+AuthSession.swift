@@ -277,13 +277,13 @@ extension AppState {
         }
     }
 
-    /// User pull/toolbar refresh: network fetch + reachability (min visible duration).
+    /// User pull/toolbar refresh: API only (min visible duration). Ping continues in background.
     func pullRefreshServers(minimumVisibleDuration: Duration = .seconds(1)) async -> Bool {
         guard beginServersRefresh() else { return false }
         defer { isRefreshingServers = false }
         async let sleep: Void = { try? await Task.sleep(for: minimumVisibleDuration) }()
         await refreshSessionData(force: true)
-        await scheduleProbeAllServers()?.value
+        // `refreshServers` already schedules probe when the tab is active — do not await it.
         await sleep
         return !Task.isCancelled && serversError == nil
     }
@@ -314,7 +314,6 @@ extension AppState {
         let profiles = servers.filter { !$0.isLocked }
         guard !profiles.isEmpty else { return }
         markServersChecking()
-        var collected: [String: ServerReachState] = [:]
         await withTaskGroup(of: (String, ServerReachState).self) { group in
             for profile in profiles {
                 group.addTask {
@@ -324,12 +323,10 @@ extension AppState {
             }
             for await (id, state) in group {
                 guard !Task.isCancelled else { break }
-                collected[id] = state
+                serverReachability[id] = state
             }
         }
-        guard !Task.isCancelled else { return }
-        serverReachability.merge(collected) { _, new in new }
-        persistReachability()
+        if !Task.isCancelled { persistReachability() }
     }
 
     private func markServersChecking() {
