@@ -22,7 +22,7 @@ enum PublicEgressDiagnostics {
     static let probeHosts = [
         "github.com", "bing.com", "ya.ru", "vk.ru", "x.com", "bbc.com", "www.gov.cn",
     ]
-    static let probeTimeout: TimeInterval = 2.5
+    static let probeTimeout: TimeInterval = 2.0
     private static let attempts = 3
 
     static let fallback = PublicEgressInfo(ip: "localhost", country: "None 🏳️")
@@ -37,7 +37,7 @@ enum PublicEgressDiagnostics {
 
     static func egressHostProbeLabel(_ probe: EgressHostProbe) -> String {
         func ms(_ v: Int) -> String { v > 0 ? "\(v)" : "0" }
-        return "TCP \(ms(probe.tcpMs)) · HTTPS \(ms(probe.httpsMs)) · TLS \(ms(probe.tlsMs))"
+        return "TCP \(ms(probe.tcpMs)) · TLS \(ms(probe.tlsMs)) · HTTPS \(ms(probe.httpsMs))"
     }
 
     /// `example.com`, `https://host/path`, `203.0.113.1` → hostname for probes.
@@ -168,12 +168,11 @@ enum PublicEgressDiagnostics {
     // MARK: - Probe helpers
 
     private static func bestOf(_ count: Int, _ attempt: () async -> Int) async -> Int {
-        var best = -1
         for _ in 0..<max(1, count) {
             let ms = await attempt()
-            if ms >= 0, best < 0 || ms < best { best = ms }
+            if ms >= 0 { return ms }
         }
-        return best
+        return -1
     }
 
     private static func tlsTrustAllParams() -> NWParameters {
