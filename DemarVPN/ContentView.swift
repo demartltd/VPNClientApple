@@ -116,13 +116,23 @@ struct ContentView: View {
     #if os(iOS)
     private var iosRoot: some View {
         TabView(selection: $section) {
-            ForEach(DemarSection.main + [.account]) { item in
+            ForEach(DemarSection.main) { item in
                 Tab(item.title, systemImage: item.tabIcon(selected: section == item), value: item) {
                     iosTab(item)
                 }
             }
+            Tab(value: DemarSection.account, role: accountTabRole) {
+                iosTab(.account)
+            } label: {
+                DemarSection.account.accountTabLabel(selected: section == .account)
+            }
         }
         .tint(Color.demarPrimary)
+    }
+
+    /// iOS 27+: `.prominent` detaches trailing tab. iOS 18…26: `.search` did that.
+    private var accountTabRole: TabRole {
+        if #available(iOS 27.0, *) { .prominent } else { .search }
     }
 
     private func iosTab(_ item: DemarSection) -> some View {

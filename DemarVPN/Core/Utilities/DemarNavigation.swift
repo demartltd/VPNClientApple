@@ -165,6 +165,18 @@ enum DemarSection: CaseIterable, Hashable, Identifiable {
         }
     }
 
+    #if os(iOS)
+    /// iOS 26+: icon-only (Liquid Glass / prominent). iOS 18: Label with title.
+    @ViewBuilder
+    func accountTabLabel(selected: Bool) -> some View {
+        if #available(iOS 26.0, *) {
+            Image(systemName: tabIcon(selected: selected))
+                .accessibilityLabel(title)
+        } else {
+            Label(title, systemImage: tabIcon(selected: selected))
+        }
+    }
+    #endif
 }
 
 extension View {
