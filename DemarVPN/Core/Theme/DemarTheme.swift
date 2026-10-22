@@ -7,8 +7,6 @@ enum Demar {
         static let onAccent = rgb(0, 0.192, 0.357)
         static let accentMuted = rgb(0, 0.282, 0.506)
         static let onAccentMuted = rgb(0.827, 0.894, 1)
-        /// Switch track ON — richer seed-family blue (not M3 light primary).
-        static let toggle = rgb(0.310, 0.529, 0.753) // #4F87C0
 
         static let background = rgb(0.063, 0.078, 0.094)
         static let card = rgb(0.204, 0.224, 0.255)
@@ -46,7 +44,6 @@ extension SwiftUI.Color {
     static let demarOnPrimary = Demar.Color.onAccent
     static let demarPrimaryContainer = Demar.Color.accentMuted
     static let demarOnPrimaryContainer = Demar.Color.onAccentMuted
-    static let demarToggle = Demar.Color.toggle
     static let demarSecondary = Demar.Color.success
     static let demarOnSecondary = Demar.Color.onSuccess
     static let demarTertiary = Demar.Color.warning

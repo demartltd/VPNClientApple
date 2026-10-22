@@ -351,7 +351,7 @@ struct AccountView: View {
             Toggle("", isOn: Binding(get: { checked }, set: onChange))
                 .labelsHidden()
                 .toggleStyle(.switch)
-                .tint(Color.demarToggle)
+                .tint(Color.demarPrimary)
                 .accessibilityLabel(title)
         }
         .padding(16)

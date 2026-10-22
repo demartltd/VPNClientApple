@@ -102,11 +102,15 @@ struct LoginSheet: View {
             } label: {
                 Text("Continue")
                     .font(.demarTitleMediumBold)
+                    .foregroundStyle(Color.demarOnPrimary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.demarPrimary)
+                    )
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Color.demarToggle)
+            .buttonStyle(.plain)
             .disabled(busy)
         }
     }
