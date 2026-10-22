@@ -150,6 +150,7 @@ private struct SelectedServerLabel: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .fixedSize(horizontal: true, vertical: false)
+            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
     }
