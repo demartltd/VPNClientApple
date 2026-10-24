@@ -32,6 +32,20 @@ extension VpnTunnelController {
           finish(.failure(VpnTunnelError.missingPayload))
           return
         }
+        if VpnSharedStore.loadOpenFluxSidecar() != nil {
+          guard let ensure = VpnHostHooks.ensureOpenFluxForReconnect else {
+            self.diag("reconnect OpenFlux blocked: host SOCKS hook missing")
+            finish(.failure(VpnTunnelError.openFluxHostRequired))
+            return
+          }
+          do {
+            try ensure()
+          } catch {
+            self.diag("reconnect OpenFlux start failed: \(error.localizedDescription)")
+            finish(.failure(error))
+            return
+          }
+        }
         if let host = payload.uplinkHost, !host.isEmpty {
           self.diag("reconnect payload loaded with uplinkHost=\(host)")
         } else {

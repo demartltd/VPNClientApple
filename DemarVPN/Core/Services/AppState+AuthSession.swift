@@ -423,12 +423,21 @@ extension AppState {
 
     func setAppActive(_ active: Bool) {
         if active {
+            #if os(iOS) || os(macOS)
+            ensureOpenFluxHostIfNeeded()
+            #endif
             Task {
                 await DemarHttp.resetTransport()
                 startBackgroundRefreshIfNeeded()
             }
         } else {
             stopBackgroundRefresh()
+            #if os(iOS) || os(macOS)
+            // Brief grace so iOS does not freeze liboflux the instant we leave foreground.
+            if VpnSharedStore.loadOpenFluxSidecar() != nil, OpenFluxHostProcess.isRunning {
+                OpenFluxHostProcess.beginBackgroundKeepAlive()
+            }
+            #endif
         }
     }
 

@@ -8,6 +8,7 @@ enum VpnTunnelError: LocalizedError {
   case connectInProgress
   case noProviderSession
   case appexBundleMismatch
+  case openFluxHostRequired
 
   var errorDescription: String? {
     switch self {
@@ -25,6 +26,8 @@ enum VpnTunnelError: LocalizedError {
       return String(localized: "Couldn’t open a VPN session (NETunnelProviderSession). Reinstall the VPN profile in system settings.")
     case .appexBundleMismatch:
       return String(localized: "The embedded DemarPacketTunnel extension is damaged or missing. Reinstall the app.")
+    case .openFluxHostRequired:
+      return String(localized: "Open Demar Proxy to connect White List VPN.")
     }
   }
 }

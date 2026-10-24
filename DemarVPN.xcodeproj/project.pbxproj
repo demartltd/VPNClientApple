@@ -66,6 +66,9 @@
 		A1000001000000000000002A /* ios/Shared/VpnTunnelError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift */; };
 		A200000A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift */; };
 		A300001A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift */; };
+		A1000001000000000000HK1 /* ios/Shared/VpnHostHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010HK1CF9000F007C117D /* ios/Shared/VpnHostHooks.swift */; };
+		A200000HK1CF9000F007C117D /* ios/Shared/VpnHostHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010HK1CF9000F007C117D /* ios/Shared/VpnHostHooks.swift */; };
+		A300001HK1CF9000F007C117D /* ios/Shared/VpnHostHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010HK1CF9000F007C117D /* ios/Shared/VpnHostHooks.swift */; };
 		A1000001000000000000002B /* ios/Shared/UplinkIPv4Resolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift */; };
 		A200000B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift */; };
 		A300001B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift */; };
@@ -269,6 +272,7 @@
 		A200010A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnTunnelError.swift; sourceTree = SOURCE_ROOT; };
 		A200010B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/UplinkIPv4Resolver.swift; sourceTree = SOURCE_ROOT; };
 		A200010C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ios/Shared/VpnTunnelController+Connect.swift"; sourceTree = SOURCE_ROOT; };
+		A200010HK1CF9000F007C117D /* ios/Shared/VpnHostHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/VpnHostHooks.swift; sourceTree = SOURCE_ROOT; };
 		A200010D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ios/Shared/VpnTunnelController+Readiness.swift"; sourceTree = SOURCE_ROOT; };
 		A200010E1CF9000F007C117D /* ios/Shared/VpnTunnelController+MacDiag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ios/Shared/VpnTunnelController+MacDiag.swift"; sourceTree = SOURCE_ROOT; };
 		A200010F1CF9000F007C117D /* ios/Shared/VpnTunnelController+Lifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ios/Shared/VpnTunnelController+Lifecycle.swift"; sourceTree = SOURCE_ROOT; };
@@ -814,6 +818,7 @@
 				A200010A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift */,
 				A200010B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift */,
 				A200010C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift */,
+				A200010HK1CF9000F007C117D /* ios/Shared/VpnHostHooks.swift */,
 				A200010D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift */,
 				A200010E1CF9000F007C117D /* ios/Shared/VpnTunnelController+MacDiag.swift */,
 				A200010F1CF9000F007C117D /* ios/Shared/VpnTunnelController+Lifecycle.swift */,
@@ -1160,6 +1165,7 @@
 				B100000100000000000000DF /* ios/Shared/DemarLogTime.swift in Sources */,
 				B10000010000000000000025 /* ios/Shared/VpnTunnelController.swift in Sources */,
 				A1000001000000000000002A /* ios/Shared/VpnTunnelError.swift in Sources */,
+				A1000001000000000000HK1 /* ios/Shared/VpnHostHooks.swift in Sources */,
 				A1000001000000000000002B /* ios/Shared/UplinkIPv4Resolver.swift in Sources */,
 				A1000001000000000000002C /* ios/Shared/VpnTunnelController+Connect.swift in Sources */,
 				A1000001000000000000002D /* ios/Shared/VpnTunnelController+Readiness.swift in Sources */,
@@ -1247,6 +1253,7 @@
 				E20000DF1CF9000F007C117D /* ios/Shared/DemarLogTime.swift in Sources */,
 				E20000071CF9000F007C117D /* ios/Shared/VpnTunnelController.swift in Sources */,
 				A200000A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift in Sources */,
+				A200000HK1CF9000F007C117D /* ios/Shared/VpnHostHooks.swift in Sources */,
 				A200000B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift in Sources */,
 				A200000C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift in Sources */,
 				A200000D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift in Sources */,
@@ -1269,6 +1276,7 @@
 				E30000181CF9000F007C117D /* ios/Shared/DemarLogTime.swift in Sources */,
 				E30000141CF9000F007C117D /* ios/Shared/VpnTunnelController.swift in Sources */,
 				A300001A1CF9000F007C117D /* ios/Shared/VpnTunnelError.swift in Sources */,
+				A300001HK1CF9000F007C117D /* ios/Shared/VpnHostHooks.swift in Sources */,
 				A300001B1CF9000F007C117D /* ios/Shared/UplinkIPv4Resolver.swift in Sources */,
 				A300001C1CF9000F007C117D /* ios/Shared/VpnTunnelController+Connect.swift in Sources */,
 				A300001D1CF9000F007C117D /* ios/Shared/VpnTunnelController+Readiness.swift in Sources */,
@@ -1441,7 +1449,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 97;
+				CURRENT_PROJECT_VERSION = 99;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1516,7 +1524,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 97;
+				CURRENT_PROJECT_VERSION = 99;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1587,7 +1595,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 97;
+				CURRENT_PROJECT_VERSION = 99;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1634,7 +1642,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 97;
+				CURRENT_PROJECT_VERSION = 99;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1681,7 +1689,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 97;
+				CURRENT_PROJECT_VERSION = 99;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1708,7 +1716,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 97;
+				CURRENT_PROJECT_VERSION = 99;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1734,7 +1742,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 97;
+				CURRENT_PROJECT_VERSION = 99;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1772,7 +1780,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 97;
+				CURRENT_PROJECT_VERSION = 99;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;

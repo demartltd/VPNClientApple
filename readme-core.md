@@ -51,7 +51,7 @@ Pipeline: `ServerProfile` → [`ProxyProfile`](DemarVPN/Core/Vpn/ProxyProfile.sw
 
 ### OpenFlux (White List)
 
-Локальный SOCKS5: **host app** поднимает OpenFlux **in-process** через `liboflux` (`OpenFluxHostProcess` → `OpenFluxNative`, порт `11080`) → Packet Tunnel / Libbox `socks` outbound. На iOS нельзя `posix_spawn` (ни в app, ни в NE); `liboflux` рядом с Libbox в одном процессе даёт второй Go runtime и abort — поэтому lib только в host (iOS device + macOS), в туннеле ждём SOCKS. Anti-loop: `boards.yandex.ru` / `yandex.ru` / `yandex.net` в `bypassHosts`. Сборка: `scripts/openflux-build-apple.sh` → `iphoneos/` + `macosx/` `liboflux.a`.
+Локальный SOCKS5: **host app** поднимает OpenFlux **in-process** через `liboflux` (`OpenFluxHostProcess` → `OpenFluxNative`, порт `11080`) → Packet Tunnel / Libbox `socks` outbound. На iOS нельзя `posix_spawn` (ни в app, ни в NE); `liboflux` рядом с Libbox в одном процессе даёт второй Go runtime и abort — поэтому lib только в host (iOS device + macOS), в туннеле ждём SOCKS. Reconnect / CC: host hook `VpnHostHooks.ensureOpenFluxForReconnect` поднимает SOCKS из sidecar до `startTunnel`. Anti-loop: `boards.yandex.ru` / `yandex.ru` / `yandex.net` в `bypassHosts`. Сборка: `scripts/openflux-build-apple.sh` → `iphoneos/` (`GOOS=ios -tags ios`) + `macosx/` (**pure `GOOS=darwin` без `-tags ios`** — иначе SIGABRT `runtime.raise_trampoline`, golang/go#52299).
 
 | Протокол | App model | Outbound type | Ключевые поля |
 |----------|-----------|---------------|---------------|

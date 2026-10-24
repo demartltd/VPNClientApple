@@ -1,9 +1,26 @@
 import Foundation
+#if os(iOS)
+import UIKit
+#endif
 
 /// OpenFlux SOCKS5 in the **host app** via in-process `liboflux` (same idea as Libbox).
 /// iOS forbids `posix_spawn` in both the app and Packet Tunnel (EPERM).
 enum OpenFluxHostProcess {
   static var isRunning: Bool { OpenFluxNative.isRunning() }
+
+  #if os(iOS)
+  private static var backgroundTaskId: UIBackgroundTaskIdentifier = .invalid
+  #endif
+
+  /// Start SOCKS from App Group sidecar if present (Control Center / reconnect).
+  static func ensureSidecarRunning() throws {
+    guard let cfg = VpnSharedStore.loadOpenFluxSidecar() else { return }
+    if isRunning {
+      beginBackgroundKeepAlive()
+      return
+    }
+    try start(link: cfg.link, socksHost: cfg.socksHost, socksPort: cfg.socksPort)
+  }
 
   static func start(link: String, socksHost: String, socksPort: Int) throws {
     let decoded = try OpenFluxLink.decode(link)
@@ -38,10 +55,36 @@ enum OpenFluxHostProcess {
         userInfo: [NSLocalizedDescriptionKey: "OpenFlux SOCKS not ready on \(socks)"]
       )
     }
+    beginBackgroundKeepAlive()
   }
 
   static func stop() {
     OpenFluxNative.stop()
+    endBackgroundKeepAlive()
+  }
+
+  /// Delay host suspend so in-process SOCKS stays up briefly after leaving foreground.
+  static func beginBackgroundKeepAlive() {
+    #if os(iOS)
+    let apply = {
+      guard backgroundTaskId == .invalid else { return }
+      backgroundTaskId = UIApplication.shared.beginBackgroundTask(withName: "demar.openflux.socks") {
+        endBackgroundKeepAlive()
+      }
+    }
+    if Thread.isMainThread { apply() } else { DispatchQueue.main.async(execute: apply) }
+    #endif
+  }
+
+  static func endBackgroundKeepAlive() {
+    #if os(iOS)
+    let apply = {
+      guard backgroundTaskId != .invalid else { return }
+      UIApplication.shared.endBackgroundTask(backgroundTaskId)
+      backgroundTaskId = .invalid
+    }
+    if Thread.isMainThread { apply() } else { DispatchQueue.main.async(execute: apply) }
+    #endif
   }
 
   private static func workDir() throws -> URL {

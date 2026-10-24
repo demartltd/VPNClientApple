@@ -10,6 +10,9 @@ struct DemarVPNApp: App {
         _ = AppLanguage.shared
         FontAwesomeBrands.register()
         AppTheme.configureAppearance()
+        VpnHostHooks.ensureOpenFluxForReconnect = {
+            try OpenFluxHostProcess.ensureSidecarRunning()
+        }
     }
 
     var body: some Scene {

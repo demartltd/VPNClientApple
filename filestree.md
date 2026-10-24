@@ -170,6 +170,7 @@ ios/
 │   ├── OpenFluxSocksProfile.swift     # OpenFlux / White List (local SOCKS)
 │   ├── OpenFluxLink.swift             # decode openflux://v1 → secret + boards URL
 │   ├── OpenFluxHostProcess.swift      # host in-process liboflux SOCKS (not spawn)
+│   ├── VpnHostHooks.swift             # host-only OpenFlux reconnect hook
 │   ├── LoopbackPortWait.swift         # shared TCP poll for host/NE SOCKS ready
 │   ├── TunBypassCidrs.swift           # geoip CIDR sidecars → NEIPv4Route (cached)
 │   ├── ClashTraffic.swift             # parse Clash /traffic NDJSON sample

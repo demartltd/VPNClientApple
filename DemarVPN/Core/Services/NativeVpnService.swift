@@ -131,10 +131,24 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
     }
 
     func disconnect() async throws {
-        defer { OpenFluxHostProcess.stop() }
-        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
-            controller.disconnect(triggerSource: "swiftApp") { c.resume(with: $0) }
+        // stopVPNTunnel returns before the extension fully tears down; SOCKS must stay
+        // up until NE is idle or the tunnel floods core.log with 127.0.0.1:11080 refused.
+        do {
+            try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+                controller.disconnect(triggerSource: "swiftApp") { c.resume(with: $0) }
+            }
+        } catch {
+            await Self.waitUntilDisconnectedThenStopOpenFlux(controller: controller)
+            throw error
         }
+        await Self.waitUntilDisconnectedThenStopOpenFlux(controller: controller)
+    }
+
+    private static func waitUntilDisconnectedThenStopOpenFlux(controller: VpnTunnelController) async {
+        await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
+            controller.waitUntilDisconnected(timeout: 8) { _ in c.resume() }
+        }
+        OpenFluxHostProcess.stop()
     }
 
     private static func shouldRefreshAssets() -> Bool {

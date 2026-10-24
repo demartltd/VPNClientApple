@@ -224,11 +224,23 @@ extension AppState {
 
     #if os(iOS) || os(macOS)
     func syncVpnStatusFromSystem() {
+        ensureOpenFluxHostIfNeeded()
         statusMonitor?.importForegroundDiagnostics()
         statusMonitor?.refreshStatus(reason: "sync", force: true, reloadPreferences: false)
         #if os(iOS)
         ControlCenter.shared.reloadControls(ofKind: VpnControlConstants.kind)
         #endif
+    }
+
+    /// OpenFlux SOCKS lives in the host process; after suspend/crash NE can stay
+    /// "connected" with a dead :11080 — restore before traffic is expected again.
+    func ensureOpenFluxHostIfNeeded() {
+        guard VpnSharedStore.loadOpenFluxSidecar() != nil else { return }
+        do {
+            try OpenFluxHostProcess.ensureSidecarRunning()
+        } catch {
+            AppLog.shared.append("[vpn] openflux ensure failed: \(error.localizedDescription)")
+        }
     }
 
     func applyRemoteVpnState(_ state: VpnConnectionState) {

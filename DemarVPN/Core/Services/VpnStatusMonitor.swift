@@ -421,6 +421,7 @@ final class VpnStatusMonitor {
                 }
                 if let connection = self.trackedConnection {
                     self.publishResolvedStatus(neStatus: connection.status, reason: "poll")
+                    Self.ensureOpenFluxWhileConnected(neStatus: connection.status)
                 } else if stillBusy {
                     self.refreshStatus(reason: "poll", reloadPreferences: false)
                 }
@@ -546,6 +547,24 @@ final class VpnStatusMonitor {
             return true
         default:
             return false
+        }
+    }
+
+    /// Host SOCKS can die (suspend/crash) while NE stays connected — revive quietly.
+    private static func ensureOpenFluxWhileConnected(neStatus: NEVPNStatus) {
+        switch neStatus {
+        case .connected, .connecting, .reasserting:
+            break
+        default:
+            return
+        }
+        guard VpnSharedStore.loadOpenFluxSidecar() != nil else { return }
+        guard !OpenFluxHostProcess.isRunning else { return }
+        do {
+            try OpenFluxHostProcess.ensureSidecarRunning()
+            AppLog.shared.append("[vpn] openflux socks revived while NE \(Self.neStatusLabel(neStatus))")
+        } catch {
+            AppLog.shared.append("[vpn] openflux revive failed: \(error.localizedDescription)")
         }
     }
 
