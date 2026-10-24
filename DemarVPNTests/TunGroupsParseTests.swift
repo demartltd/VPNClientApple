@@ -19,6 +19,12 @@ final class TunGroupsParseTests: XCTestCase {
           "name": "Optional",
           "enabledByDefault": false,
           "sites": [{"host":"example.com","name":"Example"}]
+        },
+        {
+          "name": "WL Sites",
+          "enabledByDefault": true,
+          "isWhiteList": true,
+          "sites": [{"host":"vk.com","name":"VK"}]
         }
       ]
     }
@@ -26,16 +32,44 @@ final class TunGroupsParseTests: XCTestCase {
 
     func testParseIgnoresWindowsKeepsSites() {
         let catalog = TunGroupsApi.parse(sampleJSON)
-        XCTAssertEqual(catalog.siteGroups.count, 2)
+        XCTAssertEqual(catalog.siteGroups.count, 3)
         XCTAssertEqual(catalog.siteGroups[0].id, "social")
+        XCTAssertFalse(catalog.siteGroups[0].isWhiteList)
         XCTAssertEqual(catalog.siteGroups[0].sites.map(\.host), ["instagram.com", "tiktok.com"])
         XCTAssertEqual(catalog.siteGroups[1].enabledByDefault, false)
+        XCTAssertTrue(catalog.siteGroups[2].isWhiteList)
+        XCTAssertEqual(catalog.siteGroups[2].sites.map(\.host), ["vk.com"])
+    }
+
+    func testWhiteListVpnModeOmitsWhiteListHostsFromBypass() {
+        let catalog = TunGroupsApi.parse(sampleJSON)
+        let settings = TunSettings(siteGroupOverrides: [:], rulesEnabled: true)
+        let normal = TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: false)
+        let wl = TunEffective.bypassHosts(
+            settings: settings,
+            catalog: catalog,
+            isFree: false,
+            whiteListVpnMode: true
+        )
+        XCTAssertTrue(normal.contains("vk.com"))
+        XCTAssertTrue(normal.contains("instagram.com"))
+        XCTAssertFalse(wl.contains("vk.com"))
+        XCTAssertTrue(wl.contains("instagram.com"))
+        let fpN = TunEffective.fingerprint(settings: settings, catalog: catalog, isFree: false)
+        let fpW = TunEffective.fingerprint(
+            settings: settings,
+            catalog: catalog,
+            isFree: false,
+            whiteListVpnMode: true
+        )
+        XCTAssertNotEqual(fpN, fpW)
+        XCTAssertTrue(fpW.contains("wl=true"))
     }
 
     func testUntouchedGroupsFollowApiDefaults() {
         let catalog = TunGroupsApi.parse(sampleJSON)
         let settings = TunSettings(siteGroupOverrides: [:], rulesEnabled: true)
-        let expected = ["instagram.com", "tiktok.com"]
+        let expected = ["instagram.com", "tiktok.com", "vk.com"]
         XCTAssertEqual(TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: false), expected)
         XCTAssertEqual(TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: true), expected)
     }
@@ -43,15 +77,22 @@ final class TunGroupsParseTests: XCTestCase {
     func testFreeRespectsOverridesLikePaid() {
         let catalog = TunGroupsApi.parse(sampleJSON)
         let settings = TunSettings(siteGroupOverrides: ["social": false], rulesEnabled: true)
-        XCTAssertTrue(TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: true).isEmpty)
-        XCTAssertTrue(TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: false).isEmpty)
+        // social off → only WL Sites (vk.com) remain from defaults
+        XCTAssertEqual(
+            TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: true),
+            ["vk.com"]
+        )
+        XCTAssertEqual(
+            TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: false),
+            ["vk.com"]
+        )
     }
 
     func testPaidRespectsOverridesAndDefaults() {
         let catalog = TunGroupsApi.parse(sampleJSON)
         let settings = TunSettings(siteGroupOverrides: ["optional": true], rulesEnabled: true)
         let hosts = TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: false)
-        XCTAssertEqual(hosts, ["example.com", "instagram.com", "tiktok.com"])
+        XCTAssertEqual(hosts, ["example.com", "instagram.com", "tiktok.com", "vk.com"])
     }
 
     func testRulesDisabledClearsHosts() {
@@ -136,7 +177,7 @@ final class TunGroupsParseTests: XCTestCase {
         XCTAssertNotNil(snap)
         XCTAssertEqual(snap?.tunRaw, sampleJSON.trimmingCharacters(in: .whitespacesAndNewlines))
         TunSettingsStore.hydrateFromCache(snap?.tunRaw)
-        XCTAssertEqual(TunSettingsStore.currentCatalog.siteGroups.count, 2)
+        XCTAssertEqual(TunSettingsStore.currentCatalog.siteGroups.count, 3)
 
         SessionCacheStore.clear()
         TunSettingsStore.clearCatalog()

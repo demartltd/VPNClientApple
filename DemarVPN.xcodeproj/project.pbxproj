@@ -182,12 +182,21 @@
 		T40000061CF9000F007C117E /* VpnStabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000051CF9000F007C117E /* VpnStabilityTests.swift */; };
 		T40000071CF9000F007C117E /* LegalDocumentsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000061CF9000F007C117E /* LegalDocumentsTests.swift */; };
 		T40000081CF9000F007C117E /* ServersApiParseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000071CF9000F007C117E /* ServersApiParseTests.swift */; };
+		T40000OF1CF9000F007C117E /* OpenFluxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000OF1CF9000F007C117E /* OpenFluxTests.swift */; };
 		T400000E1CF9000F007C117E /* TunGroupsParseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000E1CF9000F007C117E /* TunGroupsParseTests.swift */; };
 		B100000100000000000000L1 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000L1 /* Localizable.strings */; };
 		B100000100000000000000L2 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000L2 /* InfoPlist.xcstrings */; };
 		B100000100000000000000L3 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000L3 /* AppLanguage.swift */; };
 		E300001B1CF9000F007C117D /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000L1 /* Localizable.strings */; };
 
+		B1000001000000000000OF1 /* ios/Shared/OpenFluxSocksProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000OF1 /* ios/Shared/OpenFluxSocksProfile.swift */; };
+		B1000001000000000000OF2 /* ios/Shared/OpenFluxLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000OF2 /* ios/Shared/OpenFluxLink.swift */; };
+		B1000001000000000000OFH /* ios/Shared/OpenFluxHostProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000OFH2 /* ios/Shared/OpenFluxHostProcess.swift */; };
+		B1000001000000000000OFW /* ios/Shared/LoopbackPortWait.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000OFW /* ios/Shared/LoopbackPortWait.swift */; };
+		B1000001000000000000OFN /* OpenFluxNative.m in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000OFN /* OpenFluxNative.m */; };
+		E20000OF1CF9000F007C117D /* ios/Shared/OpenFluxSocksProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000OF1 /* ios/Shared/OpenFluxSocksProfile.swift */; };
+		E20000OF3CF9000F007C117D /* ios/DemarPacketTunnel/OpenFluxSidecar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000OF3 /* ios/DemarPacketTunnel/OpenFluxSidecar.swift */; };
+		E20000OFWCF9000F007C117D /* ios/Shared/LoopbackPortWait.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000OFW /* ios/Shared/LoopbackPortWait.swift */; };
 		B100000100000000000000B1 /* ApiBypassRuleSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000B1 /* ApiBypassRuleSet.swift */; };
 		E20000B11CF9000F007C117D /* ApiBypassRuleSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000B1 /* ApiBypassRuleSet.swift */; };
 		B1000001000000000000TB1 /* ios/Shared/TunBypassCidrs.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001TB1CF9000F007C117D /* ios/Shared/TunBypassCidrs.swift */; };
@@ -380,6 +389,7 @@
 		F40000051CF9000F007C117E /* VpnStabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnStabilityTests.swift; sourceTree = "<group>"; };
 		F40000061CF9000F007C117E /* LegalDocumentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentsTests.swift; sourceTree = "<group>"; };
 		F40000071CF9000F007C117E /* ServersApiParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersApiParseTests.swift; sourceTree = "<group>"; };
+		F40000OF1CF9000F007C117E /* OpenFluxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenFluxTests.swift; sourceTree = "<group>"; };
 		F400000E1CF9000F007C117E /* TunGroupsParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunGroupsParseTests.swift; sourceTree = "<group>"; };
 		F400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnAccountApiParseTests.swift; sourceTree = "<group>"; };
 		F100000100000000000000L1 /* Localizable.strings */ = {isa = PBXVariantGroup; children = (
@@ -413,6 +423,13 @@
 		F100000100000000000000L2 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		F100000100000000000000L3 /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
 
+		F1000001000000000000OF1 /* ios/Shared/OpenFluxSocksProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/OpenFluxSocksProfile.swift; sourceTree = SOURCE_ROOT; };
+		F1000001000000000000OF2 /* ios/Shared/OpenFluxLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/OpenFluxLink.swift; sourceTree = SOURCE_ROOT; };
+		F1000001000000000000OFH2 /* ios/Shared/OpenFluxHostProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/OpenFluxHostProcess.swift; sourceTree = SOURCE_ROOT; };
+		F1000001000000000000OFW /* ios/Shared/LoopbackPortWait.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/LoopbackPortWait.swift; sourceTree = SOURCE_ROOT; };
+		F1000001000000000000OF3 /* ios/DemarPacketTunnel/OpenFluxSidecar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/DemarPacketTunnel/OpenFluxSidecar.swift; sourceTree = SOURCE_ROOT; };
+		F1000001000000000000OFN /* OpenFluxNative.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OpenFluxNative.m; sourceTree = "<group>"; };
+		F1000001000000000000OFNH /* OpenFluxNative.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OpenFluxNative.h; sourceTree = "<group>"; };
 		F100000100000000000000B1 /* ApiBypassRuleSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiBypassRuleSet.swift; sourceTree = "<group>"; };
 		E20001TB1CF9000F007C117D /* ios/Shared/TunBypassCidrs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/TunBypassCidrs.swift; sourceTree = SOURCE_ROOT; };
 		F1000001000000000000BRU /* geoip-ru.cidrs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "geoip-ru.cidrs.json"; sourceTree = "<group>"; };
@@ -694,6 +711,8 @@
 				F1000001000000000000003E /* Hysteria2Profile.swift */,
 				F1000001000000000000TP1 /* TrojanProfile.swift */,
 				F1000001000000000000VP1 /* VlessRealityProfile.swift */,
+				F1000001000000000000OFNH /* OpenFluxNative.h */,
+				F1000001000000000000OFN /* OpenFluxNative.m */,
 				F100000100000000000000B1 /* ApiBypassRuleSet.swift */,
 				F1000001000000000000TM1 /* TunModels.swift */,
 				F1000001000000000000003D /* SingBoxConnectPlan.swift */,
@@ -772,6 +791,10 @@
 				E20001041CF9000F007C117D /* ios/Shared/VpnControlConstants.swift */,
 				E20001061CF9000F007C117D /* ios/Shared/VpnControlIntent.swift */,
 				E20001021CF9000F007C117D /* ios/Shared/VpnSharedStore.swift */,
+				F1000001000000000000OF1 /* ios/Shared/OpenFluxSocksProfile.swift */,
+				F1000001000000000000OF2 /* ios/Shared/OpenFluxLink.swift */,
+				F1000001000000000000OFH2 /* ios/Shared/OpenFluxHostProcess.swift */,
+				F1000001000000000000OFW /* ios/Shared/LoopbackPortWait.swift */,
 				A20001101CF9000F007C117D /* ios/Shared/VpnSharedStore+Heartbeat.swift */,
 				A20001111CF9000F007C117D /* ios/Shared/VpnSharedStore+Journal.swift */,
 				E20000A41CF9000F007C117D /* ios/Shared/ClashTraffic.swift */,
@@ -796,6 +819,7 @@
 				E200000B1CF9000F007C117D /* ios/DemarPacketTunnel/DemarPacketTunnel.entitlements */,
 				E200000C1CF9000F007C117D /* ios/DemarPacketTunnel/Info.plist */,
 				E20000041CF9000F007C117D /* ios/DemarPacketTunnel/PacketTunnelProvider.swift */,
+				F1000001000000000000OF3 /* ios/DemarPacketTunnel/OpenFluxSidecar.swift */,
 				E20000191CF9000F007C117D /* ios/DemarPacketTunnel/IOSLibboxCore.swift */,
 				E200001B1CF9000F007C117D /* ios/DemarPacketTunnel/DemarLibboxPlatform.swift */,
 				E200001D1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift */,
@@ -835,6 +859,7 @@
 				F40000071CF9000F007C117E /* ServersApiParseTests.swift */,
 				F40000111CF9000F007C117E /* ServerFilterTests.swift */,
 				F40000121CF9000F007C117E /* UplinkProbeRttTests.swift */,
+				F40000OF1CF9000F007C117E /* OpenFluxTests.swift */,
 				F400000E1CF9000F007C117E /* TunGroupsParseTests.swift */,
 				F400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift */,
 				F400000C1CF9000F007C117E /* PayApiParseTests.swift */,
@@ -1135,6 +1160,11 @@
 				B1000001000000000000003E /* Hysteria2Profile.swift in Sources */,
 				B1000001000000000000TP1 /* TrojanProfile.swift in Sources */,
 				B1000001000000000000VP1 /* VlessRealityProfile.swift in Sources */,
+				B1000001000000000000OF1 /* ios/Shared/OpenFluxSocksProfile.swift in Sources */,
+				B1000001000000000000OF2 /* ios/Shared/OpenFluxLink.swift in Sources */,
+				B1000001000000000000OFH /* ios/Shared/OpenFluxHostProcess.swift in Sources */,
+				B1000001000000000000OFW /* ios/Shared/LoopbackPortWait.swift in Sources */,
+				B1000001000000000000OFN /* OpenFluxNative.m in Sources */,
 				B100000100000000000000B1 /* ApiBypassRuleSet.swift in Sources */,
 				B1000001000000000000TM1 /* TunModels.swift in Sources */,
 				B1000001000000000000003C /* SingBoxConnectPlan.swift in Sources */,
@@ -1186,6 +1216,9 @@
 				E200001A1CF9000F007C117D /* ios/DemarPacketTunnel/DemarLibboxPlatform.swift in Sources */,
 				E200001C1CF9000F007C117D /* ios/DemarPacketTunnel/LibboxRunBlocking.swift in Sources */,
 				E20000A11CF9000F007C117D /* ios/DemarPacketTunnel/ClashTrafficMonitor.swift in Sources */,
+				E20000OF3CF9000F007C117D /* ios/DemarPacketTunnel/OpenFluxSidecar.swift in Sources */,
+				E20000OF1CF9000F007C117D /* ios/Shared/OpenFluxSocksProfile.swift in Sources */,
+				E20000OFWCF9000F007C117D /* ios/Shared/LoopbackPortWait.swift in Sources */,
 				E20000251CF9000F007C117D /* Hysteria2Profile.swift in Sources */,
 				E20000TP1CF9000F007C117D /* TrojanProfile.swift in Sources */,
 				E20000VP1CF9000F007C117D /* VlessRealityProfile.swift in Sources */,
@@ -1248,6 +1281,7 @@
 				T40000081CF9000F007C117E /* ServersApiParseTests.swift in Sources */,
 				T40000111CF9000F007C117E /* ServerFilterTests.swift in Sources */,
 				T40000121CF9000F007C117E /* UplinkProbeRttTests.swift in Sources */,
+				T40000OF1CF9000F007C117E /* OpenFluxTests.swift in Sources */,
 				T400000E1CF9000F007C117E /* TunGroupsParseTests.swift in Sources */,
 				T400000A1CF9000F007C117E /* VpnAccountApiParseTests.swift in Sources */,
 				T400000C1CF9000F007C117E /* PayApiParseTests.swift in Sources */,
@@ -1395,13 +1429,23 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 95;
+				CURRENT_PROJECT_VERSION = 97;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
 				ENABLE_TESTABILITY = YES;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=iphoneos*]" = NO;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=iphonesimulator*]" = NO;
 				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 				GENERATE_INFOPLIST_FILE = NO;
+				"HEADER_SEARCH_PATHS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ios/Frameworks/OpenFlux",
+				);
+				"HEADER_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ios/Frameworks/OpenFlux",
+				);
 				INFOPLIST_FILE = DemarVPN/Info.plist;
 				"INFOPLIST_FILE[sdk=macosx*]" = "DemarVPN/Info-macOS.plist";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
@@ -1410,8 +1454,34 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ios/Frameworks/OpenFlux/iphoneos",
+				);
+				"LIBRARY_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ios/Frameworks/OpenFlux/macosx",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0.6;
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"-loflux",
+					"-lresolv",
+					"-framework",
+					CoreFoundation,
+					"-framework",
+					Security,
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"$(inherited)",
+					"-loflux",
+					"-lresolv",
+					"-framework",
+					CoreFoundation,
+					"-framework",
+					Security,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.demar.adblock;
 				PRODUCT_NAME = "Demar Proxy";
 				REGISTER_APP_GROUPS = YES;
@@ -1420,6 +1490,7 @@
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "DemarVPN/DemarVPN-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -1433,12 +1504,22 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 95;
+				CURRENT_PROJECT_VERSION = 97;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=iphoneos*]" = NO;
+				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=iphonesimulator*]" = NO;
 				"ENABLE_USER_SCRIPT_SANDBOXING[sdk=macosx*]" = NO;
 				GENERATE_INFOPLIST_FILE = NO;
+				"HEADER_SEARCH_PATHS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ios/Frameworks/OpenFlux",
+				);
+				"HEADER_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ios/Frameworks/OpenFlux",
+				);
 				INFOPLIST_FILE = DemarVPN/Info.plist;
 				"INFOPLIST_FILE[sdk=macosx*]" = "DemarVPN/Info-macOS.plist";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
@@ -1447,8 +1528,34 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ios/Frameworks/OpenFlux/iphoneos",
+				);
+				"LIBRARY_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ios/Frameworks/OpenFlux/macosx",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0.6;
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"-loflux",
+					"-lresolv",
+					"-framework",
+					CoreFoundation,
+					"-framework",
+					Security,
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"$(inherited)",
+					"-loflux",
+					"-lresolv",
+					"-framework",
+					CoreFoundation,
+					"-framework",
+					Security,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.demar.adblock;
 				PRODUCT_NAME = "Demar Proxy";
 				REGISTER_APP_GROUPS = YES;
@@ -1457,6 +1564,7 @@
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "DemarVPN/DemarVPN-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -1467,7 +1575,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 95;
+				CURRENT_PROJECT_VERSION = 97;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1514,7 +1622,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 95;
+				CURRENT_PROJECT_VERSION = 97;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1561,7 +1669,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 95;
+				CURRENT_PROJECT_VERSION = 97;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1588,7 +1696,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 95;
+				CURRENT_PROJECT_VERSION = 97;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1614,7 +1722,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 95;
+				CURRENT_PROJECT_VERSION = 97;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1652,7 +1760,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 95;
+				CURRENT_PROJECT_VERSION = 97;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;

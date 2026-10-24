@@ -19,21 +19,25 @@ enum ServerProtocol: String, CaseIterable, Equatable, Hashable, Sendable {
     case hysteria2 = "HY2"
     case trojan = "Trojan"
     case vlessReality = "VLESS"
+    /// OpenFlux SOCKS sidecar — UI «White» / «White List».
+    case openflux = "White"
 
     var apiKey: String {
         switch self {
         case .hysteria2: "hysteria2"
         case .trojan: "trojan"
         case .vlessReality: "vless_reality"
+        case .openflux: "openflux"
         }
     }
 
-    /// Short list badge: HY2 / TRJ / VLESS.
+    /// Short list badge: HY2 / TRJ / VLESS / White.
     var label: String {
         switch self {
         case .hysteria2: "HY2"
         case .trojan: "TRJ"
         case .vlessReality: "VLESS"
+        case .openflux: "White"
         }
     }
 
@@ -42,13 +46,29 @@ enum ServerProtocol: String, CaseIterable, Equatable, Hashable, Sendable {
         case .hysteria2: "Hysteria2"
         case .trojan: "Trojan"
         case .vlessReality: "VLESS Reality"
+        case .openflux: "White List"
         }
     }
+
+    /// False for OpenFlux — local SOCKS has no meaningful uplink RTT.
+    var showsUplinkPing: Bool { self != .openflux }
+
+    /// TUN site groups with `isWhiteList` go through VPN instead of bypass.
+    var usesWhiteListVpnMode: Bool { self == .openflux }
+
+    static let socksBadge = "SCK"
+    static let socksBadgeFull = "SOCKS"
 
     static func fromApi(_ raw: String) -> ServerProtocol? {
         let key = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return allCases.first { $0.apiKey == key }
     }
+}
+
+/// List/home/details protocol chips. OpenFlux → White List (white) + SOCKS (neutral).
+struct ProtocolBadgeSpec: Equatable, Sendable {
+    let label: String
+    var whiteList: Bool = false
 }
 
 struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
@@ -67,15 +87,18 @@ struct ServerProfile: Identifiable, Equatable, Hashable, Sendable {
     var protocolFullLabel: String { serverProtocol.fullLabel }
     var tier: ServerTier { .fromTag(displayName) }
 
-    var uplinkPort: UInt16 {
-        let port: Int = {
-            switch profile {
-            case .hysteria2(let p): p.port
-            case .trojan(let p): p.port
-            case .vlessReality(let p): p.port
-            }
-        }()
-        return UInt16(clamping: port)
+    var uplinkPort: UInt16 { UInt16(clamping: profile.dialPort) }
+
+    func protocolBadges(full: Bool = false) -> [ProtocolBadgeSpec] {
+        switch serverProtocol {
+        case .openflux:
+            return [
+                ProtocolBadgeSpec(label: full ? protocolFullLabel : protocolLabel, whiteList: true),
+                ProtocolBadgeSpec(label: full ? ServerProtocol.socksBadgeFull : ServerProtocol.socksBadge),
+            ]
+        default:
+            return [ProtocolBadgeSpec(label: full ? protocolFullLabel : protocolLabel)]
+        }
     }
 
     var effectiveLoadPercent: Int { (loadPercent ?? 10).clamped(to: 0...100) }

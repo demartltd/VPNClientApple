@@ -118,6 +118,35 @@ struct SingBoxConnectPlan {
         return of(uplink: profile.server, outbound: outbound, domains: domains, bypass: bypassRuleSets)
     }
 
+    /// Local OpenFlux SOCKS sidecar; carrier domains stay outside TUN (anti-loop via bypassHosts).
+    static func openfluxSocks(
+        _ profile: OpenFluxSocksProfile,
+        bypassRuleSets: [ApiBypassRuleSet] = []
+    ) -> SingBoxConnectPlan {
+        let outbound: [String: Any] = [
+            "type": "socks",
+            "tag": SingBoxConfigConstants.proxyTag,
+            "server": profile.server,
+            "server_port": profile.port,
+            "version": "5",
+        ]
+        return SingBoxConnectPlan(
+            uplinkHost: profile.server,
+            proxyOutbound: outbound,
+            directIPs: [],
+            tun: SingBoxTunOptions(
+                dnsFinal: SingBoxConfigConstants.dnsRemoteTag,
+                uplinkDomains: []
+            ),
+            bypassRuleSets: bypassRuleSets.uniquedByTag()
+        )
+    }
+
+    /// Carrier roots kept outside TUN (domain_suffix → dns-direct + NE exclude).
+    static let openfluxAntiLoopDomains: [String] = [
+        "boards.yandex.ru", "yandex.ru", "yandex.net",
+    ]
+
     private static func of(
         uplink: String,
         outbound: [String: Any],

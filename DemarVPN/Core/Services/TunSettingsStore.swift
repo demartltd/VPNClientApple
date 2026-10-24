@@ -107,22 +107,32 @@ enum TunSettingsStore {
         persistPrefsLocked()
     }
 
-    static func effectiveBypassHosts(isFree: Bool) -> [String] {
+    static func effectiveBypassHosts(isFree: Bool, whiteListVpnMode: Bool = false) -> [String] {
         loadIfNeeded()
         lock.lock()
         defer { lock.unlock() }
-        return TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: isFree)
+        return TunEffective.bypassHosts(
+            settings: settings,
+            catalog: catalog,
+            isFree: isFree,
+            whiteListVpnMode: whiteListVpnMode
+        )
     }
 
     static func effectiveAdBlockEnabled(isFree: Bool) -> Bool {
         TunEffective.isAdBlockEnabled(currentSettings, isFree: isFree)
     }
 
-    static func fingerprint(isFree: Bool) -> String {
+    static func fingerprint(isFree: Bool, whiteListVpnMode: Bool = false) -> String {
         loadIfNeeded()
         lock.lock()
         defer { lock.unlock() }
-        return TunEffective.fingerprint(settings: settings, catalog: catalog, isFree: isFree)
+        return TunEffective.fingerprint(
+            settings: settings,
+            catalog: catalog,
+            isFree: isFree,
+            whiteListVpnMode: whiteListVpnMode
+        )
     }
 
     private static func setFlag(_ keyPath: WritableKeyPath<TunSettings, Bool>, _ enabled: Bool) {

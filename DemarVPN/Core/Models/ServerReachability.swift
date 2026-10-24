@@ -8,9 +8,9 @@ enum ServerReachStatus: String, Sendable {
 
 struct ServerReachState: Equatable, Sendable {
     var status: ServerReachStatus
-    /// TCP RTT ms.
+    /// TCP connect RTT ms.
     var latencyMs: Int?
-    /// TLS / QUIC handshake RTT ms (list metric).
+    /// Handshake RTT: TLS (TCP protocols) or QUIC (HY2). Cache key `tlsMs` kept for compat.
     var tlsMs: Int?
 
     static let checking = ServerReachState(status: .checking)
@@ -20,14 +20,24 @@ struct ServerReachState: Equatable, Sendable {
         ms.map { "~\($0)ms" } ?? "n/a"
     }
 
-    static func fromProbes(tcpMs: Int, tlsMs: Int) -> ServerReachState {
+    /// List ping label; empty when protocol has no meaningful uplink RTT.
+    static func formatListLabel(_ state: ServerReachState, protocol proto: ServerProtocol) -> String {
+        guard proto.showsUplinkPing else { return "" }
+        return formatMs(state.tlsMs ?? state.latencyMs)
+    }
+
+    static func handshakeLabel(_ proto: ServerProtocol) -> String {
+        proto == .hysteria2 ? "QUIC" : "TLS"
+    }
+
+    static func fromProbes(tcpMs: Int, handshakeMs: Int) -> ServerReachState {
         let tcpOk = tcpMs >= 0
-        let tlsOk = tlsMs >= 0
-        if !tcpOk && !tlsOk { return .offline }
+        let hsOk = handshakeMs >= 0
+        if !tcpOk && !hsOk { return .offline }
         return ServerReachState(
             status: .online,
             latencyMs: tcpOk ? tcpMs : nil,
-            tlsMs: tlsOk ? tlsMs : nil
+            tlsMs: hsOk ? handshakeMs : nil
         )
     }
 
@@ -86,11 +96,18 @@ struct ServerReachState: Equatable, Sendable {
 }
 
 enum UplinkProbe {
-    /// TCP + TLS; HY2 uses QUIC VN (salamander-wrapped when obfs is set). TCP RTT fallback for HY2.
+    /// List-ping uplink RTT. OpenFlux: Online without ms (local SOCKS).
     static func probe(_ profile: ServerProfile) async -> ServerReachState {
-        let host = profile.connectPlan.uplinkHost.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !host.isEmpty else { return .offline }
-        let port = profile.uplinkPort
+        if !profile.serverProtocol.showsUplinkPing {
+            await MainActor.run { AppLog.shared.append("SessionProbe \(profile.id)=—") }
+            return ServerReachState(status: .online)
+        }
+        let host = profile.profile.dialHost.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !host.isEmpty else {
+            await MainActor.run { AppLog.shared.append("SessionProbe \(profile.id)=fail") }
+            return .offline
+        }
+        let port = UInt16(clamping: profile.profile.dialPort)
         let hy2 = profile.serverProtocol == .hysteria2
         let salamander: String? = {
             guard case .hysteria2(let p) = profile.profile else { return nil }
@@ -100,20 +117,15 @@ enum UplinkProbe {
         async let hs = hy2
             ? PublicEgressDiagnostics.probeQuicMs(host, port: port, salamanderPassword: salamander)
             : PublicEgressDiagnostics.probeTlsMs(host, port: port)
-        // Sub-ms success floors to 1 — UI must never show ~0ms for a real probe.
         let tcpMs = clampRtt(await tcp)
         let hsMs = clampRtt(await hs)
         let pingMs = hsMs >= 0 ? hsMs : (hy2 && tcpMs >= 0 ? tcpMs : hsMs)
-        let tcpText = tcpMs >= 0 ? "\(tcpMs)ms" : "fail"
-        let hsText = hsMs >= 0 ? "\(hsMs)ms" : "fail"
-        let pingText = pingMs >= 0 ? "\(pingMs)ms" : "fail"
-        let hsLabel = hy2 ? "quic" : "tls"
+        let state = ServerReachState.fromProbes(tcpMs: tcpMs, handshakeMs: pingMs)
+        let ms = state.tlsMs ?? state.latencyMs
         await MainActor.run {
-            AppLog.shared.append(
-                "InternetProbe \(host):\(port) tcp=\(tcpText) \(hsLabel)=\(hsText) ping=\(pingText)"
-            )
+            AppLog.shared.append("SessionProbe \(profile.id)=\(ms.map(String.init) ?? "fail")")
         }
-        return .fromProbes(tcpMs: tcpMs, tlsMs: pingMs)
+        return state
     }
 
     private static func clampRtt(_ ms: Int) -> Int {

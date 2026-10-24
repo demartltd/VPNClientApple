@@ -10,6 +10,7 @@ struct VpnConnectPayload: Codable {
 enum VpnSharedStore {
   static let payloadFile = "last_connect_payload.json"
   static let bypassGeoipTagsFile = "bypass_geoip_tags.json"
+  static let openFluxSidecarFile = "openflux_sidecar.json"
   static let stateFile = "control_state.json"
   static let pendingUiDiagFile = "pending_ui_diag.log"
   static let journalFile = "vpn_journal.log"
@@ -85,6 +86,41 @@ enum VpnSharedStore {
     try data.write(to: try payloadURL(), options: [.atomic])
   }
 
+  struct OpenFluxSidecarConfig: Codable, Equatable {
+    let link: String
+    let socksHost: String
+    let socksPort: Int
+  }
+
+  static func saveOpenFluxSidecar(link: String, socksHost: String, socksPort: Int) throws {
+    let cfg = OpenFluxSidecarConfig(
+      link: link.trimmingCharacters(in: .whitespacesAndNewlines),
+      socksHost: socksHost.trimmingCharacters(in: .whitespacesAndNewlines),
+      socksPort: socksPort
+    )
+    let data = try JSONEncoder().encode(cfg)
+    try data.write(
+      to: try vpnDirectoryURL().appendingPathComponent(openFluxSidecarFile, isDirectory: false),
+      options: [.atomic]
+    )
+  }
+
+  static func loadOpenFluxSidecar() -> OpenFluxSidecarConfig? {
+    do {
+      let url = try vpnDirectoryURL().appendingPathComponent(openFluxSidecarFile, isDirectory: false)
+      guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+      return try JSONDecoder().decode(OpenFluxSidecarConfig.self, from: Data(contentsOf: url))
+    } catch {
+      return nil
+    }
+  }
+
+  static func clearOpenFluxSidecar() {
+    guard let url = try? vpnDirectoryURL().appendingPathComponent(openFluxSidecarFile, isDirectory: false)
+    else { return }
+    try? FileManager.default.removeItem(at: url)
+  }
+
   static func saveBypassGeoipTags(_ tags: [String]) throws {
     var seen = Set<String>()
     let unique = tags.compactMap { raw -> String? in
@@ -123,6 +159,7 @@ enum VpnSharedStore {
     for url in [try? payloadURL(), try? VpnAppGroup.configURL()].compactMap({ $0 }) {
       try? fm.removeItem(at: url)
     }
+    clearOpenFluxSidecar()
     clearActiveSession()
     clearThroughput()
     clearExtensionHeartbeat()

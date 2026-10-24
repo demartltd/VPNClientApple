@@ -146,5 +146,25 @@ final class ServerFilterTests: XCTestCase {
         XCTAssertEqual(ServerProtocol.hysteria2.label, "HY2")
         XCTAssertEqual(ServerProtocol.trojan.label, "TRJ")
         XCTAssertEqual(ServerProtocol.vlessReality.fullLabel, "VLESS Reality")
+        XCTAssertEqual(ServerProtocol.openflux.label, "White")
+        XCTAssertEqual(ServerProtocol.openflux.fullLabel, "White List")
+        XCTAssertFalse(ServerProtocol.openflux.showsUplinkPing)
+        XCTAssertTrue(ServerProtocol.openflux.usesWhiteListVpnMode)
+    }
+
+    /// Off-list prefs: only tapped-off badges stay off; new ones default ON (§10).
+    func testOffPrefsNewProtocolStaysOn() {
+        let key = "demar_servers_off_protocols"
+        let defaults = UserDefaults.standard
+        let previous = defaults.object(forKey: key)
+        defer {
+            if let previous { defaults.set(previous, forKey: key) }
+            else { defaults.removeObject(forKey: key) }
+        }
+        defaults.set([ServerProtocol.hysteria2.rawValue], forKey: key)
+        let enabled = ServersPreferencesStore.protocols
+        XCTAssertFalse(enabled.contains(.hysteria2))
+        XCTAssertTrue(enabled.contains(.openflux))
+        XCTAssertTrue(enabled.contains(.trojan))
     }
 }

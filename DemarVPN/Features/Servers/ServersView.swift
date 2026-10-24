@@ -265,7 +265,7 @@ private struct ServerRow: View {
                             .foregroundStyle(highlight ? Color.demarOnPrimaryContainer : Color.demarOnSurface)
                             .lineLimit(1)
                         ServerBadge(label: profile.tier.label, tier: profile.tier)
-                        ServerBadge(label: profile.protocolLabel)
+                        ProtocolServerBadges(profile: profile)
                     }
                     Text(subtitle.isEmpty ? " " : subtitle)
                         .font(.demarBodySmall)
@@ -292,10 +292,13 @@ private struct ServerRow: View {
                     .onTapGesture(perform: onNeedUpgrade)
             } else {
                 HStack(spacing: 4) {
-                    Text(ServerReachState.formatMs(reachState.tlsMs))
-                        .font(.system(size: 10, weight: .medium).monospacedDigit())
-                        .foregroundStyle(muted)
-                        .lineLimit(1)
+                    let ping = ServerReachState.formatListLabel(reachState, protocol: profile.serverProtocol)
+                    if !ping.isEmpty {
+                        Text(ping)
+                            .font(.system(size: 10, weight: .medium).monospacedDigit())
+                            .foregroundStyle(muted)
+                            .lineLimit(1)
+                    }
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(muted)

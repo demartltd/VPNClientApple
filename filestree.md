@@ -35,10 +35,11 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── SalamanderObfs.swift       # HY2 salamander wrap (blake2b) for QUIC ping
 │   │   └── LegalDocuments.swift       # ToS/PP via DemarHttp Markdown fetch
 │   ├── Vpn/
-│   │   ├── ProxyProfile.swift         # enum HY2 / Trojan / VLESS Reality → connectPlan
+│   │   ├── ProxyProfile.swift         # enum HY2 / Trojan / VLESS / OpenFlux → connectPlan
 │   │   ├── Hysteria2Profile.swift     # Hysteria2 профиль (+ alpn/obfs)
 │   │   ├── TrojanProfile.swift        # Trojan (password + TLS)
 │   │   ├── VlessRealityProfile.swift  # VLESS Reality (uuid + utls + reality)
+│   │   ├── OpenFluxNative.h/.m        # ObjC bridge → liboflux (host only)
 │   │   ├── ApiBypassRuleSet.swift     # API route.rule_set (geoip/geosite)
 │   │   ├── TunModels.swift            # site groups / TunSettings / effective bypass hosts
 │   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun; DemarControlPlane hosts
@@ -146,6 +147,7 @@ singbox-version.txt                    # единая закреплённая �
 scripts/
 ├── journal.sh                         # pull vpn_journal.log (macos/sim/ios)
 ├── singbox-download-auto.py           # latest sing-box + geo db
+├── openflux-build-apple.sh            # OpenFlux liboflux.a → ios/Frameworks/OpenFlux
 ├── gen-tun-bypass-cidrs.py            # geoip-*.cidrs.json (coarsen ≤/20 + aggregate)
 ├── sync_ads_ruleset.ps1               # DustinWin ads.srs → Resources/RuleSets
 ├── libbox-build.py                    # Libbox.xcframework (latest)
@@ -162,9 +164,13 @@ ios/
 ├── Shared/
 │   ├── VpnAppGroup.swift              # App Group paths
 │   ├── DemarLogTime.swift             # journal stamp yyyy-MM-dd-HH-mm-ss (UTC)
-│   ├── VpnSharedStore.swift           # payload, control state, session/stop
+│   ├── VpnSharedStore.swift           # payload, control state, session/stop, OFX link
 │   ├── VpnSharedStore+Journal.swift   # journal append / import / mirror
 │   ├── VpnSharedStore+Heartbeat.swift # heartbeat, throughput, start failure
+│   ├── OpenFluxSocksProfile.swift     # OpenFlux / White List (local SOCKS)
+│   ├── OpenFluxLink.swift             # decode openflux://v1 → secret + boards URL
+│   ├── OpenFluxHostProcess.swift      # host in-process liboflux SOCKS (not spawn)
+│   ├── LoopbackPortWait.swift         # shared TCP poll for host/NE SOCKS ready
 │   ├── TunBypassCidrs.swift           # geoip CIDR sidecars → NEIPv4Route (cached)
 │   ├── ClashTraffic.swift             # parse Clash /traffic NDJSON sample
 │   ├── DefaultInterfaceReporter.swift # sticky default iface + debounce для libbox
@@ -185,7 +191,8 @@ ios/
 │   ├── Info.plist
 │   └── DemarControls.entitlements
 ├── DemarPacketTunnel/
-│   ├── PacketTunnelProvider.swift     # tunnel + Libbox
+│   ├── PacketTunnelProvider.swift     # tunnel + Libbox + OpenFlux wait
+│   ├── OpenFluxSidecar.swift          # wait for host SOCKS (no liboflux in NE)
 │   ├── TunnelLifecycle.swift          # path monitor (iOS + macOS)
 │   ├── IOSLibboxCore.swift            # Libbox in-process (iOS + macOS)
 │   ├── DemarLibboxPlatform.swift      # NE platform interface
@@ -195,5 +202,6 @@ ios/
 │   └── DemarPacketTunnel.entitlements # + network.server (Clash/diag listen)
 └── Frameworks/
     ├── README.md                      # Libbox build инструкции
-    └── Libbox.xcframework/            # sing-box gomobile (gitignore; libbox-build.py)
+    ├── Libbox.xcframework/            # sing-box gomobile (gitignore; libbox-build.py)
+    └── OpenFlux/                      # liboflux.h + iphoneos/ + macosx/ (host only)
 ```

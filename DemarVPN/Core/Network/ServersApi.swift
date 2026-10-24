@@ -56,11 +56,13 @@ enum ServersApi {
            let configData = configRaw.data(using: .utf8),
            let config = try? JSONSerialization.jsonObject(with: configData) as? [String: Any]
         {
-            switch protocolKind {
-            case .hysteria2: return parseHysteria2(id: id, name: name, city: city, config: config)
-            case .trojan: return parseTrojan(id: id, name: name, city: city, config: config)
-            case .vlessReality: return parseVlessReality(id: id, name: name, city: city, config: config)
+            let parsed: ServerProfile? = switch protocolKind {
+            case .hysteria2: parseHysteria2(id: id, name: name, city: city, config: config)
+            case .trojan: parseTrojan(id: id, name: name, city: city, config: config)
+            case .vlessReality: parseVlessReality(id: id, name: name, city: city, config: config)
+            case .openflux: parseOpenFlux(id: id, name: name, city: city, config: config)
             }
+            if let parsed { return parsed }
         }
 
         return preview(protocolKind, id: id, name: name, city: city)
@@ -101,8 +103,35 @@ enum ServersApi {
                 shortId: "",
                 flow: nil
             ))
+        case .openflux:
+            .openflux(OpenFluxSocksProfile(displayName: name, openfluxLink: ""))
         }
         return ServerProfile(profile: empty, id: id, city: city)
+    }
+
+    private static func parseOpenFlux(
+        id: String,
+        name: String,
+        city: String?,
+        config: [String: Any]
+    ) -> ServerProfile? {
+        let engine = (config["engine"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard engine == OpenFluxSocksProfile.engine else { return nil }
+        guard let link = (config["openfluxLink"] as? String)?.nilIfBlank else { return nil }
+        let socks = config["socks"] as? [String: Any]
+        let host = (socks?["host"] as? String)?.nilIfBlank ?? OpenFluxSocksProfile.defaultSocksHost
+        let port = positivePort(socks?["port"]) ?? OpenFluxSocksProfile.defaultSocksPort
+        return ServerProfile(
+            profile: .openflux(OpenFluxSocksProfile(
+                displayName: name,
+                openfluxLink: link,
+                socksHost: host,
+                socksPort: port
+            )),
+            id: id,
+            city: city,
+            bypassRuleSets: parseBypassRuleSets(config)
+        )
     }
 
     private static func parseHysteria2(
@@ -215,24 +244,24 @@ enum ServersApi {
     }
 
     private static func dialFields(_ outbound: [String: Any]) -> (String, Int)? {
-        guard let server = (outbound["server"] as? String)?.nilIfBlank else { return nil }
-        let port: Int = {
-            if let i = outbound["server_port"] as? Int { return i }
-            if let n = outbound["server_port"] as? NSNumber { return n.intValue }
-            return 0
-        }()
-        guard port > 0 else { return nil }
+        guard let server = (outbound["server"] as? String)?.nilIfBlank,
+              let port = positivePort(outbound["server_port"])
+        else { return nil }
         return (server, port)
     }
 
-    /// Positive Mbps for Hysteria CC; 0 / negative / garbage → nil (BBR).
-    private static func positiveMbps(_ raw: Any?) -> Int? {
+    private static func positivePort(_ raw: Any?) -> Int? {
         let value: Int?
         if let i = raw as? Int { value = i }
         else if let n = raw as? NSNumber { value = n.intValue }
         else { value = nil }
         guard let value, value > 0 else { return nil }
         return value
+    }
+
+    /// Positive Mbps for Hysteria CC; 0 / negative / garbage → nil (BBR).
+    private static func positiveMbps(_ raw: Any?) -> Int? {
+        positivePort(raw)
     }
 
     /// Remote rule-sets from API; ignores TUN `route_exclude_address_set` (no-op under Apple NE platformInterface).

@@ -31,7 +31,7 @@ struct ServerDetailsSheet: View {
 
             HStack(spacing: 6) {
                 ServerBadge(label: profile.tier.label, tier: profile.tier, large: true)
-                ServerBadge(label: profile.protocolFullLabel, large: true)
+                ProtocolServerBadges(profile: profile, full: true, large: true)
             }
             .padding(.bottom, 16)
 
@@ -44,12 +44,23 @@ struct ServerDetailsSheet: View {
                 }
                 .padding(16)
 
-                metricRow("TCP", ServerReachState.formatMs(reachState.latencyMs), first: true)
-                metricRow("TLS", ServerReachState.formatMs(reachState.tlsMs))
-                metricRow(
-                    String(localized: "Traffic"),
-                    trafficBytes.map(VpnAccountApi.formatBytes) ?? "—"
-                )
+                if profile.serverProtocol.showsUplinkPing {
+                    metricRow("TCP", ServerReachState.formatMs(reachState.latencyMs), first: true)
+                    metricRow(
+                        ServerReachState.handshakeLabel(profile.serverProtocol),
+                        ServerReachState.formatMs(reachState.tlsMs)
+                    )
+                    metricRow(
+                        String(localized: "Traffic"),
+                        trafficBytes.map(VpnAccountApi.formatBytes) ?? "—"
+                    )
+                } else {
+                    metricRow(
+                        String(localized: "Traffic"),
+                        trafficBytes.map(VpnAccountApi.formatBytes) ?? "—",
+                        first: true
+                    )
+                }
                 if !directCodes.isEmpty {
                     Divider().overlay(Color.demarOutlineVariant.opacity(0.45)).padding(.horizontal, 12)
                     HStack {

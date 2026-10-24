@@ -17,20 +17,38 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
                 )
             }
         }
-        let bypassHosts = TunSettingsStore.effectiveBypassHosts(isFree: isFree)
+        let wlMode = server.serverProtocol.usesWhiteListVpnMode
+        let ofx = server.profile.openflux
+        let bypassHosts: [String] = {
+            var hosts = TunSettingsStore.effectiveBypassHosts(isFree: isFree, whiteListVpnMode: wlMode)
+            guard ofx != nil else { return hosts }
+            var seen = Set(hosts)
+            for d in SingBoxConnectPlan.openfluxAntiLoopDomains where seen.insert(d).inserted {
+                hosts.append(d)
+            }
+            hosts.sort()
+            return hosts
+        }()
         let adBlock = TunSettingsStore.effectiveAdBlockEnabled(isFree: isFree)
-        let tunFp = TunSettingsStore.fingerprint(isFree: isFree)
+        let tunFp = TunSettingsStore.fingerprint(isFree: isFree, whiteListVpnMode: wlMode)
         let refreshAssets = Self.shouldRefreshAssets()
         let (plan, endpointAddresses, bypassExcludeIPs, configJson, adsPath) = try await Task.detached(priority: .userInitiated) {
             let base = server.connectPlan
-            let ips = try UplinkIPv4Resolver.resolve(base.uplinkHost)
-            guard !ips.isEmpty else {
-                throw NSError(domain: "DemarVpn", code: 10, userInfo: [
-                    NSLocalizedDescriptionKey: "VPN endpoint has no IPv4 address.",
-                ])
+            let ips: [String]
+            let plan: SingBoxConnectPlan
+            if ofx != nil {
+                ips = []
+                plan = base
+            } else {
+                ips = try UplinkIPv4Resolver.resolve(base.uplinkHost)
+                guard !ips.isEmpty else {
+                    throw NSError(domain: "DemarVpn", code: 10, userInfo: [
+                        NSLocalizedDescriptionKey: "VPN endpoint has no IPv4 address.",
+                    ])
+                }
+                plan = base.pinEndpoint(to: ips)
             }
             let exclude = BypassExcludeIPCache.load(fingerprint: tunFp) ?? []
-            let plan = base.pinEndpoint(to: ips)
             var adsPath: String?
             if adBlock {
                 let assetDir = try VpnAppGroup.assetDirectoryURL()
@@ -47,6 +65,23 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
             return (plan, ips, exclude, json, adsPath)
         }.value
         try VpnSharedStore.saveBypassGeoipTags(plan.geoipBypassTags)
+        if let ofx {
+            try VpnSharedStore.saveOpenFluxSidecar(
+                link: ofx.openfluxLink,
+                socksHost: ofx.server,
+                socksPort: ofx.port
+            )
+            // Host in-process liboflux (same idea as Libbox). Not Packet Tunnel:
+            // spawn is EPERM; liboflux+Libbox in one process = dual Go abort.
+            try OpenFluxHostProcess.start(
+                link: ofx.openfluxLink,
+                socksHost: ofx.server,
+                socksPort: ofx.port
+            )
+        } else {
+            VpnSharedStore.clearOpenFluxSidecar()
+            OpenFluxHostProcess.stop()
+        }
         let sessionId = Self.newSessionId()
         await MainActor.run {
             if adBlock, adsPath == nil {
@@ -55,27 +90,36 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
             if case .vlessReality(let v) = server.profile {
                 AppLog.shared.append("[vpn] vless sni=\(v.tlsServerName) flow=\(v.flow ?? "-")")
             }
+            if let ofx {
+                AppLog.shared.append("[vpn] openflux socks=\(ofx.server):\(ofx.port)")
+            }
             AppLog.shared.append(
                 "[vpn] connect tun=\(tunFp) hosts=\(bypassHosts.count) "
                     + "excludeIPs=\(bypassExcludeIPs.count) rs=\(plan.bypassRuleSets.count) "
                     + "adblock=\(adsPath != nil) assetsRefresh=\(refreshAssets)"
             )
         }
-        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
-            controller.connect(
-                configJson: configJson,
-                uplinkHost: plan.uplinkHost,
-                uplinkIPv4s: endpointAddresses,
-                vpnSessionId: sessionId,
-                connectTriggerSource: "swiftApp",
-                refreshAssetsFromBundle: refreshAssets,
-                savePayload: true
-            ) { c.resume(with: $0) }
+        do {
+            try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+                controller.connect(
+                    configJson: configJson,
+                    uplinkHost: plan.uplinkHost,
+                    uplinkIPv4s: endpointAddresses,
+                    vpnSessionId: sessionId,
+                    connectTriggerSource: "swiftApp",
+                    refreshAssetsFromBundle: refreshAssets,
+                    savePayload: true
+                ) { c.resume(with: $0) }
+            }
+        } catch {
+            if ofx != nil { OpenFluxHostProcess.stop() }
+            throw error
         }
         Self.refreshBypassExcludes(hosts: bypassHosts, fingerprint: tunFp, uplinkIPs: endpointAddresses)
     }
 
     func disconnect() async throws {
+        defer { OpenFluxHostProcess.stop() }
         try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
             controller.disconnect(triggerSource: "swiftApp") { c.resume(with: $0) }
         }

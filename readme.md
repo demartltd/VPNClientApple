@@ -1,4 +1,4 @@
-**Demar Proxy (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **latest sing-box** (Hysteria2 / Trojan / VLESS Reality через Libbox).
+**Demar Proxy (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **latest sing-box** / Libbox (Hysteria2 / Trojan / VLESS Reality / **OpenFlux** host `liboflux` → local SOCKS + Libbox outbound).
 
 Поддерживаются **iOS 18+** и **macOS 15+** (нативное приложение, один target).
 
@@ -22,6 +22,7 @@
 python3 scripts/singbox-download-auto.py   # pinned by singbox-version.txt
 python3 scripts/libbox-build.py           # same pinned core → Libbox.xcframework
 pwsh scripts/sync_ads_ruleset.ps1         # offline ads rule-set (also via upload-testflight.ps1)
+./scripts/openflux-build-apple.sh         # OpenFlux liboflux → iphoneos/ + macosx/ (нужен go)
 ```
 
 Xcode копирует geo assets в host app и в `DemarPacketTunnel.appex` (iOS: `singbox/`, macOS: `singbox_macos/`). Dev binary `sing-box` в runtime bundle не включается.

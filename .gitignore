@@ -20,6 +20,11 @@ scripts/logo_clear.png
 # Libbox (scripts/libbox-build.py)
 ios/Frameworks/Libbox.xcframework/
 
+# OpenFlux libs (scripts/openflux-build-apple.sh)
+ios/Frameworks/OpenFlux/liboflux.*
+ios/Frameworks/OpenFlux/iphoneos/
+ios/Frameworks/OpenFlux/macosx/
+
 # Ads rule-set — fetched by scripts/sync_ads_ruleset.ps1 (also from upload-testflight.ps1)
 DemarVPN/Resources/RuleSets/*.srs
 

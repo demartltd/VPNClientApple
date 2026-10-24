@@ -10,7 +10,6 @@ struct PlanCompareSheet: View {
             (String(localized: "Family invites*"), .bool(false), .text("2"), .text("4")),
             (String(localized: "Ad block"), .bool(false), .bool(true), .bool(true)),
             (String(localized: "TUN settings"), .bool(false), .bool(true), .bool(true)),
-            (String(localized: "Dedicated IP*"), .bool(false), .bool(false), .bool(true)),
         ]
     }
 

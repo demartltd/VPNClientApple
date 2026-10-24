@@ -1,7 +1,7 @@
 import XCTest
 @testable import Demar_Proxy
 
-/// Device/USB network checks for HY2 uplink RTT (must not surface 0ms).
+/// Crypto unit checks + live HY2 uplink RTT (network probes — iOS only).
 final class UplinkProbeRttTests: XCTestCase {
     func testBlake2b256EmptyAndSalamanderKey() {
         let empty = SalamanderObfs.blake2b256([])
@@ -23,6 +23,7 @@ final class UplinkProbeRttTests: XCTestCase {
         XCTAssertNotEqual(wrapped.dropFirst(SalamanderObfs.saltLen), payload)
     }
 
+#if os(iOS)
     func testSuccessfulProbeRttAtLeastOneMs() async {
         // Known HY2 host from production list (UDP 8443).
         let host = "de-f-1.xyzdeer.space"
@@ -50,4 +51,5 @@ final class UplinkProbeRttTests: XCTestCase {
         // Log pair for journal-style diagnosis in CI output.
         print("InternetProbe \(host):\(port) tcp=\(tcp) quic=\(quic)")
     }
+#endif
 }

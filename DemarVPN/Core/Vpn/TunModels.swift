@@ -10,6 +10,22 @@ struct TunSiteGroup: Sendable, Identifiable, Hashable {
     let name: String
     let sites: [TunSiteRef]
     let enabledByDefault: Bool
+    /// Normal: outside TUN. OpenFlux (WL): through VPN — omit from bypass.
+    let isWhiteList: Bool
+
+    init(
+        id: String,
+        name: String,
+        sites: [TunSiteRef],
+        enabledByDefault: Bool = true,
+        isWhiteList: Bool = false
+    ) {
+        self.id = id
+        self.name = name
+        self.sites = sites
+        self.enabledByDefault = enabledByDefault
+        self.isWhiteList = isWhiteList
+    }
 
     static func idFor(_ name: String) -> String {
         name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -47,12 +63,14 @@ enum TunEffective {
     static func bypassHosts(
         settings: TunSettings,
         catalog: TunCatalog,
-        isFree: Bool
+        isFree: Bool,
+        whiteListVpnMode: Bool = false
     ) -> [String] {
         guard isRulesEnabled(settings, isFree: isFree) else { return [] }
         var seen = Set<String>()
         var out: [String] = []
         for group in catalog.siteGroups where isSiteGroupEnabled(settings, group: group) {
+            if whiteListVpnMode, group.isWhiteList { continue }
             for site in group.sites {
                 guard let host = normalizeHost(site.host), seen.insert(host).inserted else { continue }
                 out.append(host)
@@ -87,13 +105,23 @@ enum TunEffective {
         return out
     }
 
-    static func fingerprint(settings: TunSettings, catalog: TunCatalog, isFree: Bool) -> String {
-        let hosts = bypassHosts(settings: settings, catalog: catalog, isFree: isFree)
+    static func fingerprint(
+        settings: TunSettings,
+        catalog: TunCatalog,
+        isFree: Bool,
+        whiteListVpnMode: Bool = false
+    ) -> String {
+        let hosts = bypassHosts(
+            settings: settings,
+            catalog: catalog,
+            isFree: isFree,
+            whiteListVpnMode: whiteListVpnMode
+        )
         let groups = catalog.siteGroups
             .filter { isSiteGroupEnabled(settings, group: $0) }
             .map(\.id)
             .sorted()
         let on = isRulesEnabled(settings, isFree: isFree)
-        return "h=\(hosts.joined(separator: ","));sg=\(groups.joined(separator: ","));r=\(on)"
+        return "h=\(hosts.joined(separator: ","));sg=\(groups.joined(separator: ","));r=\(on);wl=\(whiteListVpnMode)"
     }
 }

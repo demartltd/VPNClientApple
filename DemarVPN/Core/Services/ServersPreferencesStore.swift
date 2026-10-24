@@ -1,16 +1,16 @@
 import Foundation
 
-/// Favorites + list filters (parity Android `ServersStore`).
+/// Favorites + server list filters.
+/// Stores only **off** badges; missing / unknown → ON (§10).
 enum ServersPreferencesStore {
     private enum Key {
         static let favorites = "demar_servers_favorites"
-        static let tiers = "demar_servers_tiers"
-        static let protocols = "demar_servers_protocols"
+        /// Fresh keys — old enabled/disabled/schema prefs ignored.
+        static let offTiers = "demar_servers_off_tiers"
+        static let offProtocols = "demar_servers_off_protocols"
     }
 
     private static let defaults = UserDefaults.standard
-    private static let allTiers = Set(ServerTier.allCases)
-    private static let allProtocols = Set(ServerProtocol.allCases)
 
     static var favorites: Set<String> {
         get { Set(defaults.stringArray(forKey: Key.favorites) ?? []) }
@@ -18,13 +18,13 @@ enum ServersPreferencesStore {
     }
 
     static var tiers: Set<ServerTier> {
-        get { readEnums(Key.tiers, fallback: allTiers) { ServerTier(rawValue: $0) } }
-        set { writeEnums(Key.tiers, newValue.isEmpty ? allTiers : newValue) { $0.rawValue } }
+        get { on(offKey: Key.offTiers, parse: ServerTier.init(rawValue:)) }
+        set { setOff(newValue, offKey: Key.offTiers, name: \.rawValue) }
     }
 
     static var protocols: Set<ServerProtocol> {
-        get { readEnums(Key.protocols, fallback: allProtocols) { ServerProtocol(rawValue: $0) } }
-        set { writeEnums(Key.protocols, newValue.isEmpty ? allProtocols : newValue) { $0.rawValue } }
+        get { on(offKey: Key.offProtocols, parse: ServerProtocol.init(rawValue:)) }
+        set { setOff(newValue, offKey: Key.offProtocols, name: \.rawValue) }
     }
 
     @discardableResult
@@ -35,17 +35,20 @@ enum ServersPreferencesStore {
         return next
     }
 
-    private static func readEnums<T>(
-        _ key: String,
-        fallback: Set<T>,
+    private static func on<T: CaseIterable & Hashable>(
+        offKey: String,
         parse: (String) -> T?
-    ) -> Set<T> {
-        guard let raw = defaults.stringArray(forKey: key) else { return fallback }
-        let parsed = Set(raw.compactMap(parse))
-        return parsed.isEmpty ? fallback : parsed
+    ) -> Set<T> where T.AllCases: Sequence, T.AllCases.Element == T {
+        Set(T.allCases).subtracting((defaults.stringArray(forKey: offKey) ?? []).compactMap(parse))
     }
 
-    private static func writeEnums<T>(_ key: String, _ value: Set<T>, name: (T) -> String) {
-        defaults.set(value.map(name).sorted(), forKey: key)
+    private static func setOff<T: CaseIterable & Hashable>(
+        _ enabled: Set<T>,
+        offKey: String,
+        name: (T) -> String
+    ) where T.AllCases: Sequence, T.AllCases.Element == T {
+        let all = Set(T.allCases)
+        let on = enabled.isEmpty ? all : enabled
+        defaults.set(all.subtracting(on).map(name).sorted(), forKey: offKey)
     }
 }

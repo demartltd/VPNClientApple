@@ -263,6 +263,9 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
       }
       VpnSharedStore.saveExtensionHeartbeat(phase: "core-starting")
       do {
+        if let ofx = VpnSharedStore.loadOpenFluxSidecar() {
+          try OpenFluxSidecar.start(config: ofx)
+        }
         try IOSLibboxCore.start(
           provider: self,
           configJSON: configJSON,

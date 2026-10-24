@@ -147,15 +147,11 @@ final class AppState {
     }
 
     func setFilterTiers(_ next: Set<ServerTier>) {
-        guard servers.matchesFilters(tiers: next, protocols: filterProtocols) else { return }
-        filterTiers = next.isEmpty ? Set(ServerTier.allCases) : next
-        ServersPreferencesStore.tiers = filterTiers
+        applyFilters(tiers: next, protocols: filterProtocols)
     }
 
     func setFilterProtocols(_ next: Set<ServerProtocol>) {
-        guard servers.matchesFilters(tiers: filterTiers, protocols: next) else { return }
-        filterProtocols = next.isEmpty ? Set(ServerProtocol.allCases) : next
-        ServersPreferencesStore.protocols = filterProtocols
+        applyFilters(tiers: filterTiers, protocols: next)
     }
 
     /// Spec §3: stale filters that match nobody after a refresh → full reset.
@@ -163,9 +159,16 @@ final class AppState {
         guard !servers.isEmpty,
               !servers.matchesFilters(tiers: filterTiers, protocols: filterProtocols)
         else { return }
-        filterTiers = Set(ServerTier.allCases)
-        filterProtocols = Set(ServerProtocol.allCases)
-        ServersPreferencesStore.tiers = filterTiers
-        ServersPreferencesStore.protocols = filterProtocols
+        applyFilters(tiers: Set(ServerTier.allCases), protocols: Set(ServerProtocol.allCases))
+    }
+
+    private func applyFilters(tiers: Set<ServerTier>, protocols: Set<ServerProtocol>) {
+        let nextTiers = tiers.isEmpty ? Set(ServerTier.allCases) : tiers
+        let nextProtocols = protocols.isEmpty ? Set(ServerProtocol.allCases) : protocols
+        guard servers.matchesFilters(tiers: nextTiers, protocols: nextProtocols) else { return }
+        filterTiers = nextTiers
+        filterProtocols = nextProtocols
+        ServersPreferencesStore.tiers = nextTiers
+        ServersPreferencesStore.protocols = nextProtocols
     }
 }

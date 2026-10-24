@@ -4,13 +4,14 @@
 
 Целевая версия core: **sing-box 1.14.1**, зафиксированная в [`singbox-version.txt`](singbox-version.txt). Оба build-скрипта и `bundled_version.txt` обязаны использовать эту версию.
 
-Поддерживаемые протоколы (API `protocol` → outbound): **Hysteria2** (`hysteria2`), **Trojan** (`trojan`), **VLESS Reality** (`vless_reality` → type `vless`).
+Поддерживаемые протоколы (API `protocol` → outbound): **Hysteria2** (`hysteria2`), **Trojan** (`trojan`), **VLESS Reality** (`vless_reality` → type `vless`), **OpenFlux / White List** (`openflux` → local SOCKS sidecar + `socks` outbound).
 
 Документация Sing-box:
 
 - [Hysteria2 outbound](https://sing-box.sagernet.org/configuration/outbound/hysteria2/)
 - [Trojan outbound](https://sing-box.sagernet.org/configuration/outbound/trojan/)
 - [VLESS outbound](https://sing-box.sagernet.org/configuration/outbound/vless/)
+- [SOCKS outbound](https://sing-box.sagernet.org/configuration/outbound/socks/)
 - [TUN inbound](https://sing-box.sagernet.org/configuration/inbound/tun/)
 - [TLS outbound](https://sing-box.sagernet.org/configuration/shared/tls/) (uTLS / Reality)
 - [Multiplex](https://sing-box.sagernet.org/configuration/shared/multiplex/)
@@ -46,7 +47,11 @@ Pipeline: `ServerProfile` → [`ProxyProfile`](DemarVPN/Core/Vpn/ProxyProfile.sw
 
 ### App model — `ProxyProfile`
 
-[`ProxyProfile`](DemarVPN/Core/Vpn/ProxyProfile.swift) — enum `hysteria2` / `trojan` / `vlessReality`. API key в [`ServerProtocol`](DemarVPN/Core/Models/ServerProfile.swift): `hysteria2` / `trojan` / `vless_reality`. Parse: [`ServersApi`](DemarVPN/Core/Network/ServersApi.swift). Тестовые HY2: [`TestServers.swift`](DemarVPN/Core/Models/TestServers.swift).
+[`ProxyProfile`](DemarVPN/Core/Vpn/ProxyProfile.swift) — enum `hysteria2` / `trojan` / `vlessReality` / `openflux`. API key в [`ServerProtocol`](DemarVPN/Core/Models/ServerProfile.swift): `hysteria2` / `trojan` / `vless_reality` / `openflux` (UI `White` / `White List` + `SCK`/`SOCKS`). Parse: [`ServersApi`](DemarVPN/Core/Network/ServersApi.swift). Тестовые HY2: [`TestServers.swift`](DemarVPN/Core/Models/TestServers.swift).
+
+### OpenFlux (White List)
+
+Локальный SOCKS5: **host app** поднимает OpenFlux **in-process** через `liboflux` (`OpenFluxHostProcess` → `OpenFluxNative`, порт `11080`) → Packet Tunnel / Libbox `socks` outbound. На iOS нельзя `posix_spawn` (ни в app, ни в NE); `liboflux` рядом с Libbox в одном процессе даёт второй Go runtime и abort — поэтому lib только в host (iOS device + macOS), в туннеле ждём SOCKS. Anti-loop: `boards.yandex.ru` / `yandex.ru` / `yandex.net` в `bypassHosts`. Сборка: `scripts/openflux-build-apple.sh` → `iphoneos/` + `macosx/` `liboflux.a`.
 
 | Протокол | App model | Outbound type | Ключевые поля |
 |----------|-----------|---------------|---------------|
@@ -85,6 +90,8 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 ### Site-группы TUN (`GET /tun`)
 
 Каталог `sites[]` с API (массив `windows[]` на Apple игнорируется). Disk cache в `SessionCacheStore` рядом с servers (hydrate при старте, UI disk-first). Включённая группа → `domain_suffix` в DNS → `dns-direct`; A-записи резолвятся на Connect (apex + `www.`) и кладутся в TUN `route_exclude_address` → NE `excludedRoutes` (как geoip). **Не** эмитим `route` → `outbound:direct` для site-hosts — внутри full tunnel на Apple NE это даёт `ENETUNREACH` на en0. Новые CDN IP вне exclude-списка идут в `proxy` и всё равно грузятся. `dns.reverse_mapping=true` оставлен. `route.final` = `proxy`. Free: все группы принудительно on; Plus/VIP — overrides + мастер-тоггл. Применение на следующем Connect.
+
+Группы с `isWhiteList=true`: в обычном режиме — в bypass (мимо TUN); на OpenFlux (`whiteListVpnMode`) — **не** в bypass (через VPN). Классический bypass (`isWhiteList=false`) всегда мимо TUN. Fingerprint включает `wl=`.
 
 **Нельзя:** из‑за site-hosts переключать `dns-direct` на UDP `1.1.1.1` или добавлять `route_exclude` `1.1.1.1/32` — это **только** для geosite. Site-hosts идут в уже существующий `dns-direct` (`local` без geosite).
 

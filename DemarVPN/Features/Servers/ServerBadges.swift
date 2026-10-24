@@ -3,6 +3,7 @@ import SwiftUI
 struct ServerBadge: View {
     let label: String
     var tier: ServerTier? = nil
+    var whiteList: Bool = false
     var large: Bool = false
 
     var body: some View {
@@ -17,6 +18,10 @@ struct ServerBadge: View {
     }
 
     private var colors: (Color, Color) {
+        if whiteList {
+            return (Color(red: 0x6E / 255, green: 0x6E / 255, blue: 0x6E / 255),
+                    Color(red: 0xF2 / 255, green: 0xF2 / 255, blue: 0xF2 / 255))
+        }
         switch tier {
         case .plus:
             return (Color.green.opacity(0.28), Color.green.opacity(0.95))
@@ -38,23 +43,40 @@ struct FavoriteServerBadge: View {
     }
 }
 
+/// Protocol chips; OpenFlux keeps White List + SOCKS in one row.
+struct ProtocolServerBadges: View {
+    let profile: ServerProfile
+    var full: Bool = false
+    var large: Bool = false
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(Array(profile.protocolBadges(full: full).enumerated()), id: \.offset) { _, spec in
+                ServerBadge(label: spec.label, whiteList: spec.whiteList, large: large)
+            }
+        }
+    }
+}
+
 /// Home SelectedServerLabel badges — Android FlowRow: `<3` → 1/row, `>=3` → 2/row.
 struct ServerHomeBadgeGrid: View {
     let profile: ServerProfile
     let favorite: Bool
 
     var body: some View {
-        // badgeCount = 2 + (favorite ? 1 : 0); badgesPerRow = badgeCount >= 3 ? 2 : 1
+        let proto = profile.protocolBadges(full: false)
+        let total = 1 + proto.count + (favorite ? 1 : 0)
+        let twoCol = total >= 3
         VStack(alignment: .leading, spacing: 4) {
-            if favorite {
+            if twoCol {
                 HStack(spacing: 4) {
-                    FavoriteServerBadge()
+                    if favorite { FavoriteServerBadge() }
                     ServerBadge(label: profile.tier.label, tier: profile.tier, large: true)
                 }
-                ServerBadge(label: profile.protocolLabel, large: true)
+                ProtocolServerBadges(profile: profile, large: true)
             } else {
                 ServerBadge(label: profile.tier.label, tier: profile.tier, large: true)
-                ServerBadge(label: profile.protocolLabel, large: true)
+                ProtocolServerBadges(profile: profile, large: true)
             }
         }
     }

@@ -45,7 +45,8 @@ enum TunGroupsApi {
                 id: TunSiteGroup.idFor(name),
                 name: name,
                 sites: parseSites(item["sites"]),
-                enabledByDefault: item["enabledByDefault"] as? Bool ?? true
+                enabledByDefault: item["enabledByDefault"] as? Bool ?? true,
+                isWhiteList: item["isWhiteList"] as? Bool ?? false
             ))
         }
         return list
