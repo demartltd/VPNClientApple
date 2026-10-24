@@ -264,7 +264,8 @@ enum ServersApi {
         positivePort(raw)
     }
 
-    /// Remote rule-sets from API; ignores TUN `route_exclude_address_set` (no-op under Apple NE platformInterface).
+    /// Rule-set tags from API (`type: remote` binary). Apple uses tag only; URL ignored at runtime.
+    /// Ignores TUN `route_exclude_address_set` (no-op under Apple NE platformInterface).
     static func parseBypassRuleSets(_ config: [String: Any]) -> [ApiBypassRuleSet] {
         guard let route = config["route"] as? [String: Any],
               let arr = route["rule_set"] as? [[String: Any]]
@@ -280,7 +281,7 @@ enum ServersApi {
             guard type == "remote", format == "binary" else { continue }
             if out[tag] == nil {
                 order.append(tag)
-                out[tag] = ApiBypassRuleSet(tag: tag, url: url)
+                out[tag] = ApiBypassRuleSet(tag: tag)
             }
         }
         return order.compactMap { out[$0] }

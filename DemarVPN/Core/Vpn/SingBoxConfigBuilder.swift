@@ -105,7 +105,7 @@ enum SingBoxConfigBuilder {
         let hosts = cleanedDomains(bypassHosts)
         let uplink = plan.tun.uplinkDomains
         let ads = adsPath.flatMap { cleanedDomain($0) }
-        var config: [String: Any] = [
+        return [
             "log": ["level": logLevel, "timestamp": true],
             "dns": SingBoxDnsBuilder.makeDns(
                 final: plan.tun.dnsFinal,
@@ -144,15 +144,6 @@ enum SingBoxConfigBuilder {
                 ],
             ],
         ]
-        // 1.14: remote rule-set download via http_clients (download_detour deprecated).
-        // Ads are local — only geosite remote needs rs-dl.
-        if !geosite.isEmpty {
-            config["http_clients"] = [[
-                "tag": SingBoxConfigConstants.httpRuleSetDownloadTag,
-                "detour": SingBoxConfigConstants.proxyTag,
-            ]]
-        }
-        return config
     }
 }
 
@@ -162,7 +153,6 @@ enum SingBoxConfigConstants {
     static let directTag = "direct"
     static let dnsDirectTag = "dns-direct"
     static let dnsRemoteTag = "dns-remote"
-    static let httpRuleSetDownloadTag = "rs-dl"
     /// Must match `CoreBundleAssets.adsFile` basename without `.srs`.
     static let adsRuleSetTag = CoreBundleAssets.adsRuleSetTag
     static let diagnosticInboundTag = "diag-in"
@@ -320,26 +310,23 @@ enum SingBoxRouteBuilder {
             "final": SingBoxConfigConstants.proxyTag,
             "rules": rules,
         ]
-        var ruleSets = geositeRuleSets.map { remoteRuleSet(tag: $0.tag, url: $0.url) }
+        var ruleSets = geositeRuleSets.map { localRuleSet(tag: $0.tag) }
         if adsPath != nil {
-            ruleSets.append([
-                "tag": SingBoxConfigConstants.adsRuleSetTag,
-                "type": "local",
-                "format": "binary",
-                "path": CoreBundleAssets.adsFile,
-            ])
+            ruleSets.append(localRuleSet(tag: SingBoxConfigConstants.adsRuleSetTag))
         }
         if !ruleSets.isEmpty {
-            if !geositeRuleSets.isEmpty {
-                route["default_http_client"] = SingBoxConfigConstants.httpRuleSetDownloadTag
-            }
             route["rule_set"] = ruleSets
         }
         return route
     }
 
-    private static func remoteRuleSet(tag: String, url: String) -> [String: Any] {
-        ["tag": tag, "type": "remote", "format": "binary", "url": url]
+    private static func localRuleSet(tag: String) -> [String: Any] {
+        [
+            "tag": tag,
+            "type": "local",
+            "format": "binary",
+            "path": CoreBundleAssets.ruleSetFile(forTag: tag),
+        ]
     }
 }
 

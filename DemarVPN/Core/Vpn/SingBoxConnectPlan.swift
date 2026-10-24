@@ -33,6 +33,16 @@ struct SingBoxConnectPlan {
         )
     }
 
+    func withBypassRuleSets(_ sets: [ApiBypassRuleSet]) -> SingBoxConnectPlan {
+        SingBoxConnectPlan(
+            uplinkHost: uplinkHost,
+            proxyOutbound: proxyOutbound,
+            directIPs: directIPs,
+            tun: tun,
+            bypassRuleSets: sets.uniquedByTag()
+        )
+    }
+
     static func hysteria2(
         _ profile: Hysteria2Profile,
         bypassRuleSets: [ApiBypassRuleSet] = []

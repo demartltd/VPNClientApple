@@ -279,9 +279,11 @@ extension VpnTunnelController {
     if refreshAssetsFromBundle {
       try CoreBundleAssets.copyGeoIfPresent(to: assetDir)
     }
+    var ruleTags = CoreBundleAssets.geositeBypassTags.filter { merged.contains($0) }
     if merged.contains(CoreBundleAssets.adsRuleSetTag) {
-      _ = CoreBundleAssets.ensureAds(in: assetDir)
+      ruleTags.append(CoreBundleAssets.adsRuleSetTag)
     }
+    _ = CoreBundleAssets.ensureRuleSets(tags: ruleTags, in: assetDir)
     if !CoreBundleAssets.hasGeo(in: assetDir) {
       throw VpnTunnelError.missingAssets
     }

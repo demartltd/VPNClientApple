@@ -135,9 +135,9 @@ final class ServerFilterTests: XCTestCase {
 
     func testDirectCountryCodesFromBypass() {
         let sets = [
-            ApiBypassRuleSet(tag: "geoip-ru", url: "https://example.com/ru.srs"),
-            ApiBypassRuleSet(tag: "geoip-cn", url: "https://example.com/cn.srs"),
-            ApiBypassRuleSet(tag: "geosite-ads", url: "https://example.com/ads.srs"),
+            ApiBypassRuleSet(tag: "geoip-ru"),
+            ApiBypassRuleSet(tag: "geoip-cn"),
+            ApiBypassRuleSet(tag: "geosite-ads"),
         ]
         XCTAssertEqual(sets.directCountryCodes(), ["CN", "RU"])
     }

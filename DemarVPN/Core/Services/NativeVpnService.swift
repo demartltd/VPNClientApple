@@ -32,10 +32,11 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
         let adBlock = TunSettingsStore.effectiveAdBlockEnabled(isFree: isFree)
         let tunFp = TunSettingsStore.fingerprint(isFree: isFree, whiteListVpnMode: wlMode)
         let refreshAssets = Self.shouldRefreshAssets()
-        let (plan, endpointAddresses, bypassExcludeIPs, configJson, adsPath) = try await Task.detached(priority: .userInitiated) {
+        let (plan, endpointAddresses, bypassExcludeIPs, configJson, adsPath, missingGeosite) =
+            try await Task.detached(priority: .userInitiated) {
             let base = server.connectPlan
             let ips: [String]
-            let plan: SingBoxConnectPlan
+            var plan: SingBoxConnectPlan
             if ofx != nil {
                 ips = []
                 plan = base
@@ -49,11 +50,19 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
                 plan = base.pinEndpoint(to: ips)
             }
             let exclude = BypassExcludeIPCache.load(fingerprint: tunFp) ?? []
+            let assetDir = try VpnAppGroup.assetDirectoryURL()
+            try FileManager.default.createDirectory(at: assetDir, withIntermediateDirectories: true)
+            let geositeTags = plan.bypassRuleSets.filter(\.isGeosite).map(\.tag)
+            let readyGeosite = Set(CoreBundleAssets.ensureRuleSets(tags: geositeTags, in: assetDir))
+            let missing = geositeTags.filter { !readyGeosite.contains($0) }
+            if !missing.isEmpty {
+                plan = plan.withBypassRuleSets(
+                    plan.bypassRuleSets.filter { !$0.isGeosite || readyGeosite.contains($0.tag) }
+                )
+            }
             var adsPath: String?
             if adBlock {
-                let assetDir = try VpnAppGroup.assetDirectoryURL()
-                try FileManager.default.createDirectory(at: assetDir, withIntermediateDirectories: true)
-                adsPath = CoreBundleAssets.ensureAds(in: assetDir)
+                adsPath = CoreBundleAssets.ensureRuleSet(file: CoreBundleAssets.adsFile, in: assetDir)
             }
             let json = try SingBoxConfigBuilder.buildTunConfigJson(
                 plan: plan,
@@ -62,7 +71,7 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
                 bypassExcludeIPs: exclude,
                 adsPath: adsPath
             )
-            return (plan, ips, exclude, json, adsPath)
+            return (plan, ips, exclude, json, adsPath, missing)
         }.value
         try VpnSharedStore.saveBypassGeoipTags(plan.geoipBypassTags)
         if let ofx {
@@ -86,6 +95,9 @@ final class NativeVpnService: VpnControlling, @unchecked Sendable {
         await MainActor.run {
             if adBlock, adsPath == nil {
                 AppLog.shared.append("[app] ads rule-set asset missing")
+            }
+            if !missingGeosite.isEmpty {
+                AppLog.shared.append("[app] geosite rule-set missing: \(missingGeosite.joined(separator: ","))")
             }
             if case .vlessReality(let v) = server.profile {
                 AppLog.shared.append("[vpn] vless sni=\(v.tlsServerName) flow=\(v.flow ?? "-")")

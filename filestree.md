@@ -100,7 +100,7 @@ DemarVPN/                              # SwiftUI target
 │   ├── hi.lproj/Localizable.strings   # Hindi
 │   ├── InfoPlist.xcstrings            # privacy / NE usage (all locales)
 │   ├── TunBypass/                     # geoip-*.cidrs.json (aggregated ≤/20) → NE excludedRoutes
-│   ├── RuleSets/                      # geosite-category-ads.srs (gitignore; sync_ads_ruleset.ps1)
+│   ├── RuleSets/                      # ads + geosite-*.srs (gitignore; sync_rulesets.ps1)
 │   └── Fonts/
 │       ├── fa-brands-400.ttf
 │       └── MaterialSymbolsOutlined.ttf  # резерв
@@ -149,7 +149,7 @@ scripts/
 ├── singbox-download-auto.py           # latest sing-box + geo db
 ├── openflux-build-apple.sh            # OpenFlux liboflux.a → ios/Frameworks/OpenFlux
 ├── gen-tun-bypass-cidrs.py            # geoip-*.cidrs.json (coarsen ≤/20 + aggregate)
-├── sync_ads_ruleset.ps1               # DustinWin ads.srs → Resources/RuleSets
+├── sync_rulesets.ps1                  # ads + geosite-ru/ir/cn → Resources/RuleSets
 ├── libbox-build.py                    # Libbox.xcframework (latest)
 ├── upload-testflight.ps1              # App Store archive/upload (syncs ads first)
 ├── sign-singbox-in-appex.sh           # iOS appex binary signing

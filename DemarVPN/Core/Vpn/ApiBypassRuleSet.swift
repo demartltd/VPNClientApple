@@ -1,9 +1,9 @@
 import Foundation
 
-/// Remote binary rule-set from API `clientConfigJson.route.rule_set`.
+/// Bypass rule-set tag from API `clientConfigJson.route.rule_set`.
+/// Apple: geosite → bundled local `.srs`; geoip → TunBypass cidrs. API `url` is ignored.
 struct ApiBypassRuleSet: Equatable, Hashable, Sendable {
     let tag: String
-    let url: String
 
     var isGeosite: Bool { tag.hasPrefix("geosite") }
     var isGeoip: Bool { tag.hasPrefix("geoip") }

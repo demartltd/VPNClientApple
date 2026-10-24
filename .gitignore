@@ -25,6 +25,6 @@ ios/Frameworks/OpenFlux/liboflux.*
 ios/Frameworks/OpenFlux/iphoneos/
 ios/Frameworks/OpenFlux/macosx/
 
-# Ads rule-set — fetched by scripts/sync_ads_ruleset.ps1 (also from upload-testflight.ps1)
+# Rule-sets — fetched by scripts/sync_rulesets.ps1 (also from upload-testflight.ps1)
 DemarVPN/Resources/RuleSets/*.srs
 

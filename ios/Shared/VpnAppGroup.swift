@@ -39,6 +39,8 @@ enum CoreBundleAssets {
   /// Basename == rule-set tag + `.srs` (sync script / libbox `workingPath`).
   static let adsFile = "geosite-category-ads.srs"
   static let adsRuleSetTag = "geosite-category-ads"
+  /// Bundled geosite bypass tags (`sync_rulesets.ps1` → RuleSets/).
+  static let geositeBypassTags = ["geosite-category-ru", "geosite-ir", "geosite-cn"]
   static let runtimeFiles = geoFiles + ["bundled_version.txt"]
 
   static func bundledURL(for filename: String) -> URL? {
@@ -81,12 +83,14 @@ enum CoreBundleAssets {
     }
   }
 
-  /// Copy bundled ads `.srs` into App Group `core_assets`.
-  /// Returns relative basename for sing-box (`workingPath` = `core_assets`).
-  static func ensureAds(in destinationDir: URL) -> String? {
+  /// Basename for rule-set tag (`workingPath` = `core_assets`).
+  static func ruleSetFile(forTag tag: String) -> String { "\(tag).srs" }
+
+  /// Copy bundled `.srs` into App Group `core_assets`. Returns relative basename or nil.
+  static func ensureRuleSet(file: String, in destinationDir: URL) -> String? {
     let fm = FileManager.default
-    let dst = destinationDir.appendingPathComponent(adsFile)
-    if let src = bundledURL(for: adsFile) {
+    let dst = destinationDir.appendingPathComponent(file)
+    if let src = bundledURL(for: file) {
       do {
         try fm.createDirectory(at: destinationDir, withIntermediateDirectories: true)
         let sourceSize = (try? fm.attributesOfItem(atPath: src.path)[.size] as? NSNumber)?.int64Value ?? 0
@@ -100,7 +104,14 @@ enum CoreBundleAssets {
         return nil
       }
     }
-    return fileSize(adsFile, in: destinationDir) > 0 ? adsFile : nil
+    return fileSize(file, in: destinationDir) > 0 ? file : nil
+  }
+
+  /// Ensure bundled rule-sets by tag; returns tags whose files are present in `destinationDir`.
+  static func ensureRuleSets(tags: [String], in destinationDir: URL) -> [String] {
+    tags.compactMap { tag in
+      ensureRuleSet(file: ruleSetFile(forTag: tag), in: destinationDir) != nil ? tag : nil
+    }
   }
 
   static func hasGeo(in directory: URL) -> Bool {

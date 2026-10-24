@@ -410,9 +410,7 @@ final class ServersApiParseTests: XCTestCase {
         ]
         let profile = try XCTUnwrap(ServersApi.parseServerItem(item))
         XCTAssertEqual(profile.bypassRuleSets.count, 6)
-        XCTAssertTrue(profile.bypassRuleSets.contains {
-            $0.tag == "geosite-ir" && $0.url.contains("Chocolate4U")
-        })
+        XCTAssertTrue(profile.bypassRuleSets.contains { $0.tag == "geosite-ir" })
         XCTAssertEqual(profile.connectPlan.geoipBypassTags, ["geoip-ru", "geoip-ir", "geoip-cn"])
         let built = try SingBoxConfigBuilder.buildTunConfigJson(plan: profile.connectPlan)
         XCTAssertFalse(built.contains("route_exclude_address_set"))

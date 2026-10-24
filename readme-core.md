@@ -74,14 +74,14 @@ Pin endpoint / `mergeDirectIPs` целят **`proxy`**.
 
 ### API geo-bypass (из `clientConfigJson`)
 
-Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJson`. Клиент парсит tags/URLs в `ApiBypassRuleSet`.
+Servermaster кладёт `route.rule_set` (RU/IR/CN) в `clientConfigJson`. Клиент парсит tags в `ApiBypassRuleSet` (URL на Apple не качается — geosite из бандла).
 
 **Apple dataplane** (не копия Android JSON — нет `VpnService.protect`):
 
 | Источник | Применение |
 |----------|------------|
 | `geoip-*` | bundled `geoip-*.cidrs.json` → NE `excludedRoutes` (`TunBypassCidrs` в `openTun`) |
-| `geosite-*` | remote `route.rule_set` + DNS → `dns-direct` (UDP `1.1.1.1`) |
+| `geosite-*` | bundled `Resources/RuleSets/<tag>.srs` → local `route.rule_set` + DNS → `dns-direct` (UDP `1.1.1.1`); API `url` ignored |
 | API `route_exclude_address_set` | **игнор** (no-op под Libbox `platformInterface`) |
 | geo*/geosite → `outbound:direct` | **не эмитим** (`ENETUNREACH` внутри TUN) |
 
@@ -97,7 +97,7 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 
 ### Ad block (DNS + route)
 
-Отдельный тоггл в TUN settings. Free: всегда off. Plus/VIP: default **on**, иначе сохранённый выбор пользователя. При on: bundled ads rule-set (`type: local`, tag `geosite-category-ads`, relative `path` к App Group `core_assets`) + DNS и route `action: reject`. Sync качает полный [DustinWin `ads.srs`](https://github.com/DustinWin/ruleset_geodata/releases/download/sing-box-ruleset/ads.srs) → `DemarVPN/Resources/RuleSets/geosite-category-ads.srs` (`scripts/sync_ads_ruleset.ps1`, также из `upload-testflight.ps1`). Runtime — `CoreBundleAssets.ensureAds` (bundle → App Group). DNS: ads `reject` **раньше** site-bypass `domain_suffix` (иначе bypass `yandex.ru` пропускает `an.yandex.ru` / metrica). Path-реклама на first-party URL (напр. `yandex.ru/ads/...`) DNS не режет. **Не** флипает `dns-direct`. Ads **не** в `plan.bypassRuleSets`. Применение на следующем Connect.
+Отдельный тоггл в TUN settings. Free: всегда off. Plus/VIP: default **on**, иначе сохранённый выбор пользователя. При on: bundled ads rule-set (`type: local`, tag `geosite-category-ads`, relative `path` к App Group `core_assets`) + DNS и route `action: reject`. Упаковка: `scripts/sync_rulesets.ps1` (ads + geosite-ru/ir/cn → `DemarVPN/Resources/RuleSets/`, также из `upload-testflight.ps1`). Runtime — `CoreBundleAssets.ensureRuleSet` / `ensureRuleSets` (bundle → App Group). Новые rule-set — только с релизом приложения (без runtime HTTP). DNS: ads `reject` **раньше** site-bypass `domain_suffix` (иначе bypass `yandex.ru` пропускает `an.yandex.ru` / metrica). Path-реклама на first-party URL (напр. `yandex.ru/ads/...`) DNS не режет. **Не** флипает `dns-direct`. Ads **не** в `plan.bypassRuleSets`. Применение на следующем Connect.
 
 ### TUN / DNS / route
 
@@ -107,7 +107,7 @@ Servermaster кладёт remote `route.rule_set` (RU/IR/CN) в `clientConfigJso
 | `dns-remote` | `https` DoH, `detour: proxy` | DNS через proxy |
 | `dns-direct` | `local` / UDP `1.1.1.1` | без bypass — Darwin; с geosite — вне TUN |
 | PTR | `action: reject` (`drop`) | отсев локальных reverse/DNS-SD floods в NE |
-| `experimental.cache_file` | `enabled` + `store_dns` | rule-set + persist DNS (1.14) |
+| `experimental.cache_file` | `enabled` + `store_dns` | persist DNS (1.14); local rule-sets from bundle |
 | DNS bootstrap | HY2/Trojan: `[tlsServerName, server]`; VLESS: uplink host only | Reality SNI не в bootstrap |
 | `strict_route` | `false` (NE) | не конфликтует с excludedRoutes на iOS 26 |
 | `stack` | `gvisor` | как первый Hysteria2 (`9f0c3cc`) |

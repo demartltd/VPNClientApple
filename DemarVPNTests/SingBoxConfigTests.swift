@@ -166,30 +166,23 @@ final class SingBoxConfigTests: XCTestCase {
 
     func testApiBypassGeositeInjectsDnsAndRuleSet() throws {
         let bypass = [
-            ApiBypassRuleSet(
-                tag: "geoip-ru",
-                url: "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-ru.srs"
-            ),
-            ApiBypassRuleSet(
-                tag: "geosite-category-ru",
-                url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ru.srs"
-            ),
+            ApiBypassRuleSet(tag: "geoip-ru"),
+            ApiBypassRuleSet(tag: "geosite-category-ru"),
         ]
         let plan = SingBoxConnectPlan.hysteria2(TestServers.hysteria2[0], bypassRuleSets: bypass)
         let json = try SingBoxConfigBuilder.buildTunConfigJson(plan: plan)
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(json.data(using: .utf8))) as? [String: Any])
 
         XCTAssertFalse(json.contains("route_exclude_address_set"))
+        XCTAssertNil(root["http_clients"])
         let route = try XCTUnwrap(root["route"] as? [String: Any])
+        XCTAssertNil(route["default_http_client"])
         let ruleSets = try XCTUnwrap(route["rule_set"] as? [[String: Any]])
         XCTAssertEqual(ruleSets.count, 1)
         XCTAssertEqual(ruleSets[0]["tag"] as? String, "geosite-category-ru")
-        XCTAssertNil(ruleSets[0]["download_detour"])
-        XCTAssertEqual(route["default_http_client"] as? String, "rs-dl")
-        let httpClients = try XCTUnwrap(root["http_clients"] as? [[String: Any]])
-        XCTAssertEqual(httpClients.count, 1)
-        XCTAssertEqual(httpClients[0]["tag"] as? String, "rs-dl")
-        XCTAssertEqual(httpClients[0]["detour"] as? String, "proxy")
+        XCTAssertEqual(ruleSets[0]["type"] as? String, "local")
+        XCTAssertEqual(ruleSets[0]["path"] as? String, "geosite-category-ru.srs")
+        XCTAssertNil(ruleSets[0]["url"])
         let rules = try XCTUnwrap(route["rules"] as? [[String: Any]])
         XCTAssertFalse(rules.contains { ($0["rule_set"] as? [String])?.contains("geoip-ru") == true })
         XCTAssertFalse(rules.contains { ($0["rule_set"] as? [String])?.contains("geosite-category-ru") == true })
@@ -282,22 +275,19 @@ final class SingBoxConfigTests: XCTestCase {
         XCTAssertFalse((onTun["route_exclude_address"] as? [String])?.contains("1.1.1.1/32") == true)
         try assertSingBoxCheckPasses(json: onJson, workingDirectory: adsDir)
 
-        let bypass = [
-            ApiBypassRuleSet(
-                tag: "geosite-category-ru",
-                url: "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ru.srs"
-            ),
-        ]
+        let bypass = [ApiBypassRuleSet(tag: "geosite-category-ru")]
         let bothJson = try SingBoxConfigBuilder.buildTunConfigJson(
             plan: .hysteria2(TestServers.hysteria2[0], bypassRuleSets: bypass),
             adsPath: CoreBundleAssets.adsFile
         )
         let both = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(bothJson.data(using: .utf8))) as? [String: Any])
-        XCTAssertEqual((both["http_clients"] as? [[String: Any]])?.first?["tag"] as? String, "rs-dl")
+        XCTAssertNil(both["http_clients"])
         let bothRoute = try XCTUnwrap(both["route"] as? [String: Any])
-        XCTAssertEqual(bothRoute["default_http_client"] as? String, "rs-dl")
-        let tags = (bothRoute["rule_set"] as? [[String: Any]])?.compactMap { $0["tag"] as? String } ?? []
+        XCTAssertNil(bothRoute["default_http_client"])
+        let bothSets = try XCTUnwrap(bothRoute["rule_set"] as? [[String: Any]])
+        let tags = bothSets.compactMap { $0["tag"] as? String }
         XCTAssertEqual(Set(tags), Set(["geosite-category-ru", SingBoxConfigConstants.adsRuleSetTag]))
+        XCTAssertTrue(bothSets.allSatisfy { ($0["type"] as? String) == "local" && $0["url"] == nil })
         let bothDns = try XCTUnwrap(both["dns"] as? [String: Any])
         let bothRules = try XCTUnwrap(bothDns["rules"] as? [[String: Any]])
         XCTAssertTrue(Self.rulesMatch(bothRules, tag: SingBoxConfigConstants.adsRuleSetTag, action: "reject") { $0["server"] == nil })
@@ -343,7 +333,7 @@ final class SingBoxConfigTests: XCTestCase {
         let dir = repoRoot.appendingPathComponent("DemarVPN/Resources/RuleSets")
         let path = dir.appendingPathComponent(CoreBundleAssets.adsFile).path
         guard FileManager.default.fileExists(atPath: path) else {
-            throw XCTSkip("ads rule-set missing; run pwsh scripts/sync_ads_ruleset.ps1")
+            throw XCTSkip("ads rule-set missing; run pwsh scripts/sync_rulesets.ps1")
         }
         return dir
     }

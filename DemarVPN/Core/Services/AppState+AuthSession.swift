@@ -1,8 +1,5 @@
 import Foundation
 import Observation
-#if os(iOS) || os(macOS)
-import NetworkExtension
-#endif
 #if os(iOS)
 import WidgetKit
 #endif
@@ -12,11 +9,10 @@ extension AppState {
     func bootstrapAuth() async {
         let upgraded = AppRuntimeUpgrade.consumeIfUpgraded()
         if upgraded {
-            AppLog.shared.append("[vpn] runtime upgrade — cleared connect artifacts + NE profile")
+            AppLog.shared.append("[vpn] runtime upgrade — cleared connect artifacts")
             #if os(iOS) || os(macOS)
             try? await vpn.disconnect()
             _ = await waitUntilSystemDisconnected(timeoutSeconds: 8)
-            await removeAllDemarVPNProfiles()
             vpnState = .disconnected
             resetThroughput()
             #endif

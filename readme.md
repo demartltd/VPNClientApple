@@ -21,7 +21,7 @@
 ```bash
 python3 scripts/singbox-download-auto.py   # pinned by singbox-version.txt
 python3 scripts/libbox-build.py           # same pinned core → Libbox.xcframework
-pwsh scripts/sync_ads_ruleset.ps1         # offline ads rule-set (also via upload-testflight.ps1)
+pwsh scripts/sync_rulesets.ps1            # offline ads + geosite rule-sets (also via upload-testflight.ps1)
 ./scripts/openflux-build-apple.sh         # OpenFlux liboflux → iphoneos/ + macosx/ (нужен go)
 ```
 
