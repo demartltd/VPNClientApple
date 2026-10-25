@@ -99,6 +99,7 @@ DemarVPN/                              # SwiftUI target
 │   ├── fr.lproj/Localizable.strings   # French
 │   ├── hi.lproj/Localizable.strings   # Hindi
 │   ├── InfoPlist.xcstrings            # privacy / NE usage (all locales)
+│   ├── silent.wav                     # iOS OpenFlux/WL host keep-alive (loop)
 │   ├── TunBypass/                     # geoip-*.cidrs.json (aggregated ≤/20) → NE excludedRoutes
 │   ├── RuleSets/                      # ads + geosite-*.srs (gitignore; sync_rulesets.ps1)
 │   └── Fonts/
@@ -169,7 +170,7 @@ ios/
 │   ├── VpnSharedStore+Heartbeat.swift # heartbeat, throughput, start failure
 │   ├── OpenFluxSocksProfile.swift     # OpenFlux / White List (local SOCKS)
 │   ├── OpenFluxLink.swift             # decode openflux://v1 → secret + boards URL
-│   ├── OpenFluxHostProcess.swift      # host in-process liboflux SOCKS (not spawn)
+│   ├── OpenFluxHostProcess.swift      # host liboflux SOCKS + iOS silent-audio keep-alive
 │   ├── VpnHostHooks.swift             # host-only OpenFlux reconnect hook
 │   ├── LoopbackPortWait.swift         # shared TCP poll for host/NE SOCKS ready
 │   ├── TunBypassCidrs.swift           # geoip CIDR sidecars → NEIPv4Route (cached)

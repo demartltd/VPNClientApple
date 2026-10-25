@@ -1,6 +1,6 @@
 import Foundation
 #if os(iOS)
-import UIKit
+import AVFoundation
 #endif
 
 /// OpenFlux SOCKS5 in the **host app** via in-process `liboflux` (same idea as Libbox).
@@ -9,7 +9,8 @@ enum OpenFluxHostProcess {
   static var isRunning: Bool { OpenFluxNative.isRunning() }
 
   #if os(iOS)
-  private static var backgroundTaskId: UIBackgroundTaskIdentifier = .invalid
+  private static var player: AVAudioPlayer?
+  private static var interruptionObserver: NSObjectProtocol?
   #endif
 
   /// Start SOCKS from App Group sidecar if present (Control Center / reconnect).
@@ -63,14 +64,38 @@ enum OpenFluxHostProcess {
     endBackgroundKeepAlive()
   }
 
-  /// Delay host suspend so in-process SOCKS stays up briefly after leaving foreground.
+  /// iOS: silent audio keeps host (liboflux SOCKS) from suspending while WL runs.
   static func beginBackgroundKeepAlive() {
     #if os(iOS)
     let apply = {
-      guard backgroundTaskId == .invalid else { return }
-      backgroundTaskId = UIApplication.shared.beginBackgroundTask(withName: "demar.openflux.socks") {
-        endBackgroundKeepAlive()
+      if let p = player {
+        if !p.isPlaying { p.play() }
+        return
       }
+      do {
+        let session = AVAudioSession.sharedInstance()
+        try session.setCategory(.playback, options: [.mixWithOthers])
+        try session.setActive(true)
+        guard let url = Bundle.main.url(forResource: "silent", withExtension: "wav") else { return }
+        let p = try AVAudioPlayer(contentsOf: url)
+        p.numberOfLoops = -1
+        guard p.play() else { return }
+        player = p
+        if interruptionObserver == nil {
+          interruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: session,
+            queue: .main
+          ) { note in
+            guard
+              let typeVal = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+              AVAudioSession.InterruptionType(rawValue: typeVal) == .ended,
+              player != nil
+            else { return }
+            _ = player?.play()
+          }
+        }
+      } catch {}
     }
     if Thread.isMainThread { apply() } else { DispatchQueue.main.async(execute: apply) }
     #endif
@@ -79,9 +104,13 @@ enum OpenFluxHostProcess {
   static func endBackgroundKeepAlive() {
     #if os(iOS)
     let apply = {
-      guard backgroundTaskId != .invalid else { return }
-      UIApplication.shared.endBackgroundTask(backgroundTaskId)
-      backgroundTaskId = .invalid
+      player?.stop()
+      player = nil
+      if let obs = interruptionObserver {
+        NotificationCenter.default.removeObserver(obs)
+        interruptionObserver = nil
+      }
+      try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
     if Thread.isMainThread { apply() } else { DispatchQueue.main.async(execute: apply) }
     #endif

@@ -204,6 +204,7 @@
 		E20000B11CF9000F007C117D /* ApiBypassRuleSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000100000000000000B1 /* ApiBypassRuleSet.swift */; };
 		B1000001000000000000TB1 /* ios/Shared/TunBypassCidrs.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001TB1CF9000F007C117D /* ios/Shared/TunBypassCidrs.swift */; };
 		E20000TB1CF9000F007C117D /* ios/Shared/TunBypassCidrs.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20001TB1CF9000F007C117D /* ios/Shared/TunBypassCidrs.swift */; };
+		B1000001000000000000SIL /* silent.wav in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000SIL /* silent.wav */; };
 		B1000001000000000000BRU /* geoip-ru.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BRU /* geoip-ru.cidrs.json */; };
 		B1000001000000000000BIR /* geoip-ir.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BIR /* geoip-ir.cidrs.json */; };
 		B1000001000000000000BCN /* geoip-cn.cidrs.json in Resources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000BCN /* geoip-cn.cidrs.json */; };
@@ -439,6 +440,7 @@
 		F1000001000000000000OFNH /* OpenFluxNative.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OpenFluxNative.h; sourceTree = "<group>"; };
 		F100000100000000000000B1 /* ApiBypassRuleSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiBypassRuleSet.swift; sourceTree = "<group>"; };
 		E20001TB1CF9000F007C117D /* ios/Shared/TunBypassCidrs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios/Shared/TunBypassCidrs.swift; sourceTree = SOURCE_ROOT; };
+		F1000001000000000000SIL /* silent.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = silent.wav; sourceTree = "<group>"; };
 		F1000001000000000000BRU /* geoip-ru.cidrs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "geoip-ru.cidrs.json"; sourceTree = "<group>"; };
 		F1000001000000000000BIR /* geoip-ir.cidrs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "geoip-ir.cidrs.json"; sourceTree = "<group>"; };
 		F1000001000000000000BCN /* geoip-cn.cidrs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "geoip-cn.cidrs.json"; sourceTree = "<group>"; };
@@ -691,6 +693,7 @@
 			children = (
 				F100000100000000000000L1 /* Localizable.strings */,
 				F100000100000000000000L2 /* InfoPlist.xcstrings */,
+				F1000001000000000000SIL /* silent.wav */,
 				G1000001000000000000TBY /* TunBypass */,
 				G1000001000000000000ADS /* RuleSets */,
 				G10000010000000000000010 /* Fonts */,
@@ -1048,6 +1051,7 @@
 				B10000010000000000000042 /* geosite.db in Resources */,
 				B100000100000000000000L1 /* Localizable.strings in Resources */,
 				B100000100000000000000L2 /* InfoPlist.xcstrings in Resources */,
+				B1000001000000000000SIL /* silent.wav in Resources */,
 				B1000001000000000000BRU /* geoip-ru.cidrs.json in Resources */,
 				B1000001000000000000BIR /* geoip-ir.cidrs.json in Resources */,
 				B1000001000000000000BCN /* geoip-cn.cidrs.json in Resources */,
@@ -1449,7 +1453,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 99;
+				CURRENT_PROJECT_VERSION = 100;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1524,7 +1528,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = DemarVPN/DemarVPN.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = DemarVPN/DemarVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 99;
+				CURRENT_PROJECT_VERSION = 100;
 				DEAD_CODE_STRIPPING = YES;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
@@ -1595,7 +1599,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 99;
+				CURRENT_PROJECT_VERSION = 100;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1642,7 +1646,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarPacketTunnel/DemarPacketTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 99;
+				CURRENT_PROJECT_VERSION = 100;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				"ENABLE_DEBUG_DYLIB[sdk=macosx*]" = NO;
@@ -1689,7 +1693,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 99;
+				CURRENT_PROJECT_VERSION = 100;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1716,7 +1720,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ios/DemarControls/DemarControls.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 99;
+				CURRENT_PROJECT_VERSION = 100;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				INFOPLIST_FILE = ios/DemarControls/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1742,7 +1746,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 99;
+				CURRENT_PROJECT_VERSION = 100;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1780,7 +1784,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 99;
+				CURRENT_PROJECT_VERSION = 100;
 				DEVELOPMENT_TEAM = 3268G7233C;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
