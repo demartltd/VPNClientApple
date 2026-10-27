@@ -13,7 +13,6 @@
 "Account not found" = "계정을 찾을 수 없음";
 "Activate" = "활성화";
 "Activate a subscription promo code" = "구독 프로모 코드 활성화";
-"Ad block" = "광고 차단";
 "Add loved ones to family" = "가족을 패밀리에 추가";
 "After" = "이후";
 "All" = "All";
@@ -68,7 +67,6 @@
 "Current app language and supported languages." = "현재 앱 언어와 지원 언어입니다.";
 "Custom checks" = "사용자 지정 검사";
 "Debug" = "디버그";
-"Dedicated IP*" = "전용 IP*";
 "Dedicated servers" = "전용 서버";
 "Delete" = "삭제";
 "Delete selected" = "선택 항목 삭제";
@@ -221,8 +219,6 @@
 "Traffic remaining: %@" = "남은 트래픽: %@";
 "Traffic this month" = "이번 달 트래픽";
 "Traffic unavailable" = "트래픽을 사용할 수 없음";
-"TUN rules" = "TUN 규칙";
-"TUN settings" = "TUN 설정";
 "Tunnel did not connect (heartbeat=%@): %@" = "터널이 연결되지 않음(heartbeat=%@): %@";
 "Tunnel did not start (heartbeat=%@). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core])." = "터널이 시작되지 않음(heartbeat=%@). 시스템 설정에서 Network Extensions/VPN을 확인하고 저널을 여세요([mac]/[core]).";
 "Tunnel stopped (core). Open the journal — [ios] and [core] lines." = "터널이 중지됨(core). 저널을 여세요 — [ios] 및 [core] 줄.";

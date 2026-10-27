@@ -13,7 +13,6 @@
 "Account not found" = "Hesap bulunamadı";
 "Activate" = "Etkinleştir";
 "Activate a subscription promo code" = "Bir abonelik promosyon kodunu etkinleştirin";
-"Ad block" = "Reklam engelleme";
 "Add loved ones to family" = "Sevdiklerinizi aileye ekleyin";
 "After" = "Sonra";
 "All" = "All";
@@ -68,7 +67,6 @@
 "Current app language and supported languages." = "Geçerli uygulama dili ve desteklenen diller.";
 "Custom checks" = "Özel kontroller";
 "Debug" = "Hata ayıklama";
-"Dedicated IP*" = "Özel IP*";
 "Dedicated servers" = "Özel sunucular";
 "Delete" = "Sil";
 "Delete selected" = "Seçilenleri sil";
@@ -221,8 +219,6 @@
 "Traffic remaining: %@" = "Kalan trafik: %@";
 "Traffic this month" = "Bu ayki trafik";
 "Traffic unavailable" = "Trafik kullanılamıyor";
-"TUN rules" = "TUN kuralları";
-"TUN settings" = "TUN ayarları";
 "Tunnel did not connect (heartbeat=%@): %@" = "Tünel bağlanmadı (heartbeat=%@): %@";
 "Tunnel did not start (heartbeat=%@). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core])." = "Tünel başlamadı (heartbeat=%@). Sistem Ayarları’nda Network Extensions/VPN’i kontrol edin ve günlüğü açın ([mac]/[core]).";
 "Tunnel stopped (core). Open the journal — [ios] and [core] lines." = "Tünel durdu (core). Günlüğü açın — [ios] ve [core] satırları.";

@@ -13,7 +13,6 @@
 "Account not found" = "Cuenta no encontrada";
 "Activate" = "Activar";
 "Activate a subscription promo code" = "Activa un código promocional de suscripción";
-"Ad block" = "Bloqueo de anuncios";
 "Add loved ones to family" = "Añade a tus seres queridos a la familia";
 "After" = "Después";
 "All" = "All";
@@ -68,7 +67,6 @@
 "Current app language and supported languages." = "Idioma actual de la app e idiomas admitidos.";
 "Custom checks" = "Comprobaciones personalizadas";
 "Debug" = "Depuración";
-"Dedicated IP*" = "IP dedicada*";
 "Dedicated servers" = "Servidores dedicados";
 "Delete" = "Eliminar";
 "Delete selected" = "Eliminar seleccionados";
@@ -221,8 +219,6 @@
 "Traffic remaining: %@" = "Tráfico restante: %@";
 "Traffic this month" = "Tráfico de este mes";
 "Traffic unavailable" = "Tráfico no disponible";
-"TUN rules" = "Reglas TUN";
-"TUN settings" = "Ajustes TUN";
 "Tunnel did not connect (heartbeat=%@): %@" = "El túnel no se conectó (heartbeat=%@): %@";
 "Tunnel did not start (heartbeat=%@). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core])." = "El túnel no se inició (heartbeat=%@). Comprueba Extensiones de red/VPN en Ajustes del Sistema y abre el diario ([mac]/[core]).";
 "Tunnel stopped (core). Open the journal — [ios] and [core] lines." = "Túnel detenido (core). Abre el diario — líneas [ios] y [core].";

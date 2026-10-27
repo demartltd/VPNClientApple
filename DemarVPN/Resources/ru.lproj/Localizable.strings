@@ -13,7 +13,6 @@
 "Account not found" = "Аккаунт не найден";
 "Activate" = "Активировать";
 "Activate a subscription promo code" = "Активируйте промокод на подписку";
-"Ad block" = "Ad block";
 "Add loved ones to family" = "Добавьте близких в семейную подписку";
 "After" = "После";
 "All" = "All";
@@ -68,7 +67,6 @@
 "Current app language and supported languages." = "Текущий язык приложения и список поддерживаемых языков.";
 "Custom checks" = "Свои проверки";
 "Debug" = "Отладка";
-"Dedicated IP*" = "Выделенный IP*";
 "Dedicated servers" = "Выделенные сервера";
 "Delete" = "Удалить";
 "Delete selected" = "Удалить выбранные";
@@ -221,8 +219,6 @@
 "Traffic remaining: %@" = "Осталось трафика: %@";
 "Traffic this month" = "Трафик за месяц";
 "Traffic unavailable" = "Трафик недоступен";
-"TUN rules" = "Правила TUN";
-"TUN settings" = "Настройки TUN";
 "Tunnel did not connect (heartbeat=%@): %@" = "Туннель не подключился (heartbeat=%@): %@";
 "Tunnel did not start (heartbeat=%@). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core])." = "Туннель не запустился (heartbeat=%@). Проверьте Network Extensions/VPN в System Settings и откройте журнал ([mac]/[core]).";
 "Tunnel stopped (core). Open the journal — [ios] and [core] lines." = "Туннель остановлен (core). Откройте журнал — строки [ios] и [core].";

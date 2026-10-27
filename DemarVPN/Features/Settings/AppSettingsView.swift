@@ -52,7 +52,7 @@ struct AppSettingsView: View {
 
             SettingsActionButton(
                 systemImage: "lock.shield",
-                title: String(localized: "TUN settings"),
+                title: "Routing",
                 subtitle: String(localized: "Exclude site groups from the tunnel"),
                 showsChevron: true,
                 action: { showTunSettings = true }

@@ -13,7 +13,6 @@
 "Account not found" = "找不到帳戶";
 "Activate" = "啟用";
 "Activate a subscription promo code" = "啟用訂閱優惠碼";
-"Ad block" = "廣告封鎖";
 "Add loved ones to family" = "將親友加入家庭訂閱";
 "After" = "到期後";
 "All" = "All";
@@ -68,7 +67,6 @@
 "Current app language and supported languages." = "目前 App 語言與支援的語言。";
 "Custom checks" = "自訂檢查";
 "Debug" = "除錯";
-"Dedicated IP*" = "專用 IP*";
 "Dedicated servers" = "專用伺服器";
 "Delete" = "刪除";
 "Delete selected" = "刪除所選";
@@ -221,8 +219,6 @@
 "Traffic remaining: %@" = "剩餘流量：%@";
 "Traffic this month" = "本月流量";
 "Traffic unavailable" = "流量無法使用";
-"TUN rules" = "TUN 規則";
-"TUN settings" = "TUN 設定";
 "Tunnel did not connect (heartbeat=%@): %@" = "通道未連線（heartbeat=%@）：%@";
 "Tunnel did not start (heartbeat=%@). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core])." = "通道未啟動（heartbeat=%@）。請在系統設定中檢查 Network Extensions/VPN，並打開日誌（[mac]/[core]）。";
 "Tunnel stopped (core). Open the journal — [ios] and [core] lines." = "通道已停止（core）。請打開日誌 — [ios] 與 [core] 行。";

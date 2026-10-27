@@ -13,7 +13,6 @@
 "Account not found" = "未找到账户";
 "Activate" = "激活";
 "Activate a subscription promo code" = "激活订阅优惠码";
-"Ad block" = "广告拦截";
 "Add loved ones to family" = "将家人加入家庭订阅";
 "After" = "到期后";
 "All" = "All";
@@ -68,7 +67,6 @@
 "Current app language and supported languages." = "当前应用语言及支持的语言。";
 "Custom checks" = "自定义检测";
 "Debug" = "调试";
-"Dedicated IP*" = "专属 IP*";
 "Dedicated servers" = "专属服务器";
 "Delete" = "删除";
 "Delete selected" = "删除所选";
@@ -221,8 +219,6 @@
 "Traffic remaining: %@" = "剩余流量：%@";
 "Traffic this month" = "本月流量";
 "Traffic unavailable" = "流量不可用";
-"TUN rules" = "TUN 规则";
-"TUN settings" = "TUN 设置";
 "Tunnel did not connect (heartbeat=%@): %@" = "隧道未连接（heartbeat=%@）：%@";
 "Tunnel did not start (heartbeat=%@). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core])." = "隧道未启动（heartbeat=%@）。请在系统设置中检查 Network Extensions/VPN，并打开日志（[mac]/[core]）。";
 "Tunnel stopped (core). Open the journal — [ios] and [core] lines." = "隧道已停止（core）。请打开日志 — [ios] 与 [core] 行。";

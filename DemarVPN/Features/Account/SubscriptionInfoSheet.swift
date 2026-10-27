@@ -32,8 +32,8 @@ struct SubscriptionInfoSheet: View {
     private var features: [String] {
         [
             String(localized: "Secure internet"),
-            String(localized: "Ad block"),
-            String(localized: "TUN settings"),
+            "Ad block",
+            "Routing",
         ]
     }
 

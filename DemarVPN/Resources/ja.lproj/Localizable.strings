@@ -13,7 +13,6 @@
 "Account not found" = "アカウントが見つかりません";
 "Activate" = "有効化";
 "Activate a subscription promo code" = "サブスクリプションのプロモコードを有効化";
-"Ad block" = "広告ブロック";
 "Add loved ones to family" = "家族をファミリーに追加";
 "After" = "期限後";
 "All" = "All";
@@ -68,7 +67,6 @@
 "Current app language and supported languages." = "現在のアプリ言語と対応言語です。";
 "Custom checks" = "カスタムチェック";
 "Debug" = "デバッグ";
-"Dedicated IP*" = "専用 IP*";
 "Dedicated servers" = "専用サーバー";
 "Delete" = "削除";
 "Delete selected" = "選択を削除";
@@ -221,8 +219,6 @@
 "Traffic remaining: %@" = "残りトラフィック: %@";
 "Traffic this month" = "今月のトラフィック";
 "Traffic unavailable" = "トラフィックを利用できません";
-"TUN rules" = "TUN ルール";
-"TUN settings" = "TUN 設定";
 "Tunnel did not connect (heartbeat=%@): %@" = "トンネルが接続しませんでした（heartbeat=%@）: %@";
 "Tunnel did not start (heartbeat=%@). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core])." = "トンネルが起動しませんでした（heartbeat=%@）。システム設定で Network Extensions/VPN を確認し、ジャーナルを開いてください（[mac]/[core]）。";
 "Tunnel stopped (core). Open the journal — [ios] and [core] lines." = "トンネルが停止しました（core）。ジャーナルを開いてください — [ios] と [core] 行。";

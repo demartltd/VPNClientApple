@@ -13,7 +13,6 @@
 "Account not found" = "Hisob topilmadi";
 "Activate" = "Faollashtirish";
 "Activate a subscription promo code" = "Obuna promokodini faollashtiring";
-"Ad block" = "Reklama blok";
 "Add loved ones to family" = "Yaqinlaringizni oilaviy obunaga qo‘shing";
 "After" = "Keyin";
 "All" = "All";
@@ -68,7 +67,6 @@
 "Current app language and supported languages." = "Joriy ilova tili va qo‘llab-quvvatlanadigan tillar.";
 "Custom checks" = "Maxsus tekshiruvlar";
 "Debug" = "Debug";
-"Dedicated IP*" = "Maxsus IP*";
 "Dedicated servers" = "Maxsus serverlar";
 "Delete" = "O‘chirish";
 "Delete selected" = "Tanlanganlarni o‘chirish";
@@ -221,8 +219,6 @@
 "Traffic remaining: %@" = "Qolgan trafik: %@";
 "Traffic this month" = "Bu oydagi trafik";
 "Traffic unavailable" = "Trafik mavjud emas";
-"TUN rules" = "TUN qoidalari";
-"TUN settings" = "TUN sozlamalari";
 "Tunnel did not connect (heartbeat=%@): %@" = "Tunnel ulanmadi (heartbeat=%@): %@";
 "Tunnel did not start (heartbeat=%@). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core])." = "Tunnel ishga tushmadi (heartbeat=%@). System Settings da Network Extensions/VPN ni tekshiring va jurnalni oching ([mac]/[core]).";
 "Tunnel stopped (core). Open the journal — [ios] and [core] lines." = "Tunnel to‘xtatildi (core). Jurnalni oching — [ios] va [core] qatorlari.";

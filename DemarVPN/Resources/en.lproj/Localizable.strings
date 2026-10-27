@@ -13,7 +13,6 @@
 "Account not found" = "Account not found";
 "Activate" = "Activate";
 "Activate a subscription promo code" = "Activate a subscription promo code";
-"Ad block" = "Ad block";
 "Add loved ones to family" = "Add loved ones to family";
 "After" = "After";
 "All" = "All";
@@ -68,7 +67,6 @@
 "Current app language and supported languages." = "Current app language and supported languages.";
 "Custom checks" = "Custom checks";
 "Debug" = "Debug";
-"Dedicated IP*" = "Dedicated IP*";
 "Dedicated servers" = "Dedicated servers";
 "Delete" = "Delete";
 "Delete selected" = "Delete selected";
@@ -221,8 +219,6 @@
 "Traffic remaining: %@" = "Traffic remaining: %@";
 "Traffic this month" = "Traffic this month";
 "Traffic unavailable" = "Traffic unavailable";
-"TUN rules" = "TUN rules";
-"TUN settings" = "TUN settings";
 "Tunnel did not connect (heartbeat=%@): %@" = "Tunnel did not connect (heartbeat=%@): %@";
 "Tunnel did not start (heartbeat=%@). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core])." = "Tunnel did not start (heartbeat=%@). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core]).";
 "Tunnel stopped (core). Open the journal — [ios] and [core] lines." = "Tunnel stopped (core). Open the journal — [ios] and [core] lines.";

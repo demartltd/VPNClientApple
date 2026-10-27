@@ -13,7 +13,6 @@
 "Account not found" = "खाता नहीं मिला";
 "Activate" = "सक्रिय करें";
 "Activate a subscription promo code" = "सब्सक्रिप्शन प्रोमो कोड सक्रिय करें";
-"Ad block" = "विज्ञापन ब्लॉक";
 "Add loved ones to family" = "प्रियजनों को फ़ैमिली में जोड़ें";
 "After" = "बाद में";
 "All" = "All";
@@ -68,7 +67,6 @@
 "Current app language and supported languages." = "वर्तमान ऐप भाषा और समर्थित भाषाएँ।";
 "Custom checks" = "कस्टम जाँच";
 "Debug" = "डिबग";
-"Dedicated IP*" = "समर्पित IP*";
 "Dedicated servers" = "समर्पित सर्वर";
 "Delete" = "हटाएँ";
 "Delete selected" = "चयनित हटाएँ";
@@ -221,8 +219,6 @@
 "Traffic remaining: %@" = "शेष ट्रैफ़िक: %@";
 "Traffic this month" = "इस महीने का ट्रैफ़िक";
 "Traffic unavailable" = "ट्रैफ़िक उपलब्ध नहीं";
-"TUN rules" = "TUN नियम";
-"TUN settings" = "TUN सेटिंग्स";
 "Tunnel did not connect (heartbeat=%@): %@" = "टनल कनेक्ट नहीं हुआ (heartbeat=%@): %@";
 "Tunnel did not start (heartbeat=%@). Check Network Extensions/VPN in System Settings and open the journal ([mac]/[core])." = "टनल शुरू नहीं हुआ (heartbeat=%@)। System Settings में Network Extensions/VPN जाँचें और जर्नल खोलें ([mac]/[core])।";
 "Tunnel stopped (core). Open the journal — [ios] and [core] lines." = "टनल रुका (core)। जर्नल खोलें — [ios] और [core] पंक्तियाँ।";

@@ -17,7 +17,7 @@ struct TunSettingsView: View {
             VStack(alignment: .leading, spacing: 0) {
                 SettingsActionButton(
                     systemImage: "hand.raised",
-                    title: String(localized: "Ad block"),
+                    title: "Ad block",
                     subtitle: String(localized: "Block ads via DNS"),
                     action: nil,
                     trailing: {
@@ -34,7 +34,7 @@ struct TunSettingsView: View {
 
                 SettingsActionButton(
                     systemImage: "lock.shield",
-                    title: String(localized: "TUN rules"),
+                    title: "Routing",
                     subtitle: String(localized: "Exclude selected site groups from the VPN tunnel"),
                     action: nil,
                     trailing: { paidSwitch(paidBinding($rulesEnabled, free: true, TunSettingsStore.setRulesEnabled)) }
@@ -85,9 +85,9 @@ struct TunSettingsView: View {
         }
         .demarScrollScreen()
         #if os(iOS)
-        .demarDetailNavigationTitle(String(localized: "TUN settings"))
+        .demarDetailNavigationTitle("Routing")
         #else
-        .navigationTitle(String(localized: "TUN settings"))
+        .navigationTitle("Routing")
         #endif
         .task { await reload() }
         .onChange(of: isFree) { _, free in
