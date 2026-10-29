@@ -24,6 +24,7 @@
 "Ask a question or get help with the app" = "Soru sorun veya uygulama hakkında yardım alın";
 "Attachment" = "Ek";
 "Authenticator code" = "Kimlik doğrulayıcı kodu";
+"Available with a paid subscription" = "Ücretli abonelikte kullanılabilir";
 "Block ads via DNS" = "DNS ile reklam engelleme";
 "Bundle" = "Paket";
 "Buy a subscription" = "Abonelik satın alın";
@@ -66,6 +67,7 @@
 "Create ticket" = "Bilet oluştur";
 "Current app language and supported languages." = "Geçerli uygulama dili ve desteklenen diller.";
 "Custom checks" = "Özel kontroller";
+"Custom sites" = "Özel siteler";
 "Debug" = "Hata ayıklama";
 "Dedicated servers" = "Özel sunucular";
 "Delete" = "Sil";
@@ -92,6 +94,7 @@
 "Excluded from the VPN tunnel" = "VPN tüneli dışında";
 "Expires" = "Bitiş";
 "Expires: %@" = "Bitiş: %@";
+"example.com" = "example.com";
 "Family invites*" = "Aile davetleri*";
 "Feedback" = "Geri bildirim";
 "File must not exceed 25 MB" = "Dosya 25 MB’ı aşmamalı";
@@ -154,6 +157,7 @@
 "Open ticket" = "Açık bilet";
 "Other" = "Diğer";
 "Pay" = "Öde";
+"Paste links separated by commas" = "Bağlantıları virgülle ayırarak yapıştırın";
 "Payment failed" = "Ödeme başarısız";
 "Payment successful. Refresh the server list." = "Ödeme başarılı. Sunucu listesini yenileyin.";
 "per month" = "aylık";

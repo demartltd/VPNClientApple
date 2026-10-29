@@ -24,6 +24,7 @@
 "Ask a question or get help with the app" = "Поставте запитання або отримайте допомогу з застосунком";
 "Attachment" = "Вкладення";
 "Authenticator code" = "Код з автентифікатора";
+"Available with a paid subscription" = "Доступно з платною підпискою";
 "Block ads via DNS" = "Блокування реклами через DNS";
 "Bundle" = "Пакет";
 "Buy a subscription" = "Купіть підписку";
@@ -66,6 +67,7 @@
 "Create ticket" = "Створити тікет";
 "Current app language and supported languages." = "Поточна мова застосунку та список підтримуваних мов.";
 "Custom checks" = "Власні перевірки";
+"Custom sites" = "Власні сайти";
 "Debug" = "Налагодження";
 "Dedicated servers" = "Виділені сервери";
 "Delete" = "Видалити";
@@ -92,6 +94,7 @@
 "Excluded from the VPN tunnel" = "Поза VPN-тунелем";
 "Expires" = "Закінчується";
 "Expires: %@" = "Закінчується: %@";
+"example.com" = "example.com";
 "Family invites*" = "Сімейна підписка*";
 "Feedback" = "Зворотний зв’язок";
 "File must not exceed 25 MB" = "Файл не повинен перевищувати 25 МБ";
@@ -154,6 +157,7 @@
 "Open ticket" = "Відкритий тікет";
 "Other" = "Інше";
 "Pay" = "Оплатити";
+"Paste links separated by commas" = "Вставляйте посилання через кому";
 "Payment failed" = "Оплату не виконано";
 "Payment successful. Refresh the server list." = "Оплату успішно виконано. Оновіть список серверів.";
 "per month" = "на місяць";

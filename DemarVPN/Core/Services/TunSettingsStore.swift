@@ -5,6 +5,7 @@ enum TunSettingsStore {
         static let rulesEnabled = "tun_rules_enabled"
         static let adBlockEnabled = "tun_ad_block_enabled"
         static let siteOverrides = "tun_site_group_overrides"
+        static let bypassHosts = "tun_bypass_hosts"
         /// Legacy key — migrated once into SessionCacheStore / memory.
         static let legacyGroupsJson = "tun_groups_json"
     }
@@ -19,10 +20,13 @@ enum TunSettingsStore {
         lock.lock()
         defer { lock.unlock() }
         guard !ready else { return }
+        let hosts = (defaults.stringArray(forKey: Key.bypassHosts) ?? [])
+            .compactMap(TunEffective.parseBypassHost)
         settings = TunSettings(
             siteGroupOverrides: (defaults.dictionary(forKey: Key.siteOverrides) as? [String: Bool]) ?? [:],
             rulesEnabled: defaults.object(forKey: Key.rulesEnabled) as? Bool ?? true,
-            adBlockEnabled: defaults.object(forKey: Key.adBlockEnabled) as? Bool
+            adBlockEnabled: defaults.object(forKey: Key.adBlockEnabled) as? Bool,
+            bypassHosts: Array(Set(hosts)).sorted()
         )
         if let legacy = defaults.string(forKey: Key.legacyGroupsJson)?.nilIfBlank {
             catalog = TunGroupsApi.parse(legacy)
@@ -97,6 +101,36 @@ enum TunSettingsStore {
         lock.unlock()
     }
 
+    @discardableResult
+    static func addBypassHosts(_ raw: String) -> [String] {
+        let parsed = TunEffective.parseBypassHosts(raw)
+        guard !parsed.isEmpty else { return [] }
+        loadIfNeeded()
+        lock.lock()
+        defer { lock.unlock() }
+        var seen = Set(settings.bypassHosts)
+        var added: [String] = []
+        for host in parsed where seen.insert(host).inserted {
+            added.append(host)
+        }
+        guard !added.isEmpty else { return [] }
+        settings.bypassHosts = (settings.bypassHosts + added).sorted()
+        persistPrefsLocked()
+        return added
+    }
+
+    static func removeBypassHost(_ host: String) {
+        let h = TunEffective.parseBypassHost(host) ?? host.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !h.isEmpty else { return }
+        loadIfNeeded()
+        lock.lock()
+        defer { lock.unlock() }
+        let next = settings.bypassHosts.filter { $0 != h }
+        guard next.count != settings.bypassHosts.count else { return }
+        settings.bypassHosts = next
+        persistPrefsLocked()
+    }
+
     /// Free plan always uses defaults; wipe paid-era overrides so they don't return after renew.
     static func resetToDefaults() {
         loadIfNeeded()
@@ -152,6 +186,7 @@ enum TunSettingsStore {
             defaults.removeObject(forKey: Key.adBlockEnabled)
         }
         defaults.set(settings.siteGroupOverrides, forKey: Key.siteOverrides)
+        defaults.set(settings.bypassHosts, forKey: Key.bypassHosts)
     }
 }
 

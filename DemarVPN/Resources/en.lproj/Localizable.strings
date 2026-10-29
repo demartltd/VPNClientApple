@@ -24,6 +24,7 @@
 "Ask a question or get help with the app" = "Ask a question or get help with the app";
 "Attachment" = "Attachment";
 "Authenticator code" = "Authenticator code";
+"Available with a paid subscription" = "Available with a paid subscription";
 "Block ads via DNS" = "Block ads via DNS";
 "Bundle" = "Bundle";
 "Buy a subscription" = "Buy a subscription";
@@ -66,6 +67,7 @@
 "Create ticket" = "Create ticket";
 "Current app language and supported languages." = "Current app language and supported languages.";
 "Custom checks" = "Custom checks";
+"Custom sites" = "Custom sites";
 "Debug" = "Debug";
 "Dedicated servers" = "Dedicated servers";
 "Delete" = "Delete";
@@ -92,6 +94,7 @@
 "Excluded from the VPN tunnel" = "Excluded from the VPN tunnel";
 "Expires" = "Expires";
 "Expires: %@" = "Expires: %@";
+"example.com" = "example.com";
 "Family invites*" = "Family invites*";
 "Feedback" = "Feedback";
 "File must not exceed 25 MB" = "File must not exceed 25 MB";
@@ -154,6 +157,7 @@
 "Open ticket" = "Open ticket";
 "Other" = "Other";
 "Pay" = "Pay";
+"Paste links separated by commas" = "Paste links separated by commas";
 "Payment failed" = "Payment failed";
 "Payment successful. Refresh the server list." = "Payment successful. Refresh the server list.";
 "per month" = "per month";

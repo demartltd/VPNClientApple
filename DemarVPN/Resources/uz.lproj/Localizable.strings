@@ -24,6 +24,7 @@
 "Ask a question or get help with the app" = "Savol bering yoki ilova bo‘yicha yordam oling";
 "Attachment" = "Ilova";
 "Authenticator code" = "Autentifikator kodi";
+"Available with a paid subscription" = "Pullik obunada mavjud";
 "Block ads via DNS" = "DNS orqali reklamani bloklash";
 "Bundle" = "Paket";
 "Buy a subscription" = "Obuna sotib oling";
@@ -66,6 +67,7 @@
 "Create ticket" = "Ticket yaratish";
 "Current app language and supported languages." = "Joriy ilova tili va qo‘llab-quvvatlanadigan tillar.";
 "Custom checks" = "Maxsus tekshiruvlar";
+"Custom sites" = "Shaxsiy saytlar";
 "Debug" = "Debug";
 "Dedicated servers" = "Maxsus serverlar";
 "Delete" = "O‘chirish";
@@ -92,6 +94,7 @@
 "Excluded from the VPN tunnel" = "VPN tunnelidan tashqarida";
 "Expires" = "Tugaydi";
 "Expires: %@" = "Tugaydi: %@";
+"example.com" = "example.com";
 "Family invites*" = "Oilaviy takliflar*";
 "Feedback" = "Fikr-mulohaza";
 "File must not exceed 25 MB" = "Fayl 25 MB dan oshmasligi kerak";
@@ -154,6 +157,7 @@
 "Open ticket" = "Ochiq ticket";
 "Other" = "Boshqa";
 "Pay" = "To‘lash";
+"Paste links separated by commas" = "Havolalarni vergul bilan ajratib joylashtiring";
 "Payment failed" = "To‘lov amalga oshmadi";
 "Payment successful. Refresh the server list." = "To‘lov muvaffaqiyatli. Serverlar ro‘yxatini yangilang.";
 "per month" = "oyiga";

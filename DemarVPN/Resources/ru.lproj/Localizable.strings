@@ -24,6 +24,7 @@
 "Ask a question or get help with the app" = "Ответим на вопросы и поможем с приложением";
 "Attachment" = "Вложение";
 "Authenticator code" = "Код из аутентификатора";
+"Available with a paid subscription" = "Доступно на платной подписке";
 "Block ads via DNS" = "Блокировка рекламы через DNS";
 "Bundle" = "Пакет";
 "Buy a subscription" = "Купите подписку";
@@ -66,6 +67,7 @@
 "Create ticket" = "Создать тикет";
 "Current app language and supported languages." = "Текущий язык приложения и список поддерживаемых языков.";
 "Custom checks" = "Свои проверки";
+"Custom sites" = "Свои сайты";
 "Debug" = "Отладка";
 "Dedicated servers" = "Выделенные сервера";
 "Delete" = "Удалить";
@@ -92,6 +94,7 @@
 "Excluded from the VPN tunnel" = "Вне VPN-туннеля";
 "Expires" = "Истекает";
 "Expires: %@" = "Истекает: %@";
+"example.com" = "example.com";
 "Family invites*" = "Семейная подписка*";
 "Feedback" = "Обратная связь";
 "File must not exceed 25 MB" = "Файл не должен превышать 25 МБ";
@@ -154,6 +157,7 @@
 "Open ticket" = "Открытый тикет";
 "Other" = "Другое";
 "Pay" = "Оплатить";
+"Paste links separated by commas" = "Вставляйте ссылки через запятую";
 "Payment failed" = "Оплата не прошла";
 "Payment successful. Refresh the server list." = "Оплата прошла успешно. Обновите список серверов.";
 "per month" = "в месяц";

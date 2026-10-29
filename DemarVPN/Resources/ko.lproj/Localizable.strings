@@ -24,6 +24,7 @@
 "Ask a question or get help with the app" = "질문하거나 앱 도움 받기";
 "Attachment" = "첨부파일";
 "Authenticator code" = "인증기 코드";
+"Available with a paid subscription" = "유료 구독에서 사용 가능";
 "Block ads via DNS" = "DNS로 광고 차단";
 "Bundle" = "번들";
 "Buy a subscription" = "구독을 구매하세요";
@@ -66,6 +67,7 @@
 "Create ticket" = "티켓 만들기";
 "Current app language and supported languages." = "현재 앱 언어와 지원 언어입니다.";
 "Custom checks" = "사용자 지정 검사";
+"Custom sites" = "사용자 지정 사이트";
 "Debug" = "디버그";
 "Dedicated servers" = "전용 서버";
 "Delete" = "삭제";
@@ -92,6 +94,7 @@
 "Excluded from the VPN tunnel" = "VPN 터널에서 제외됨";
 "Expires" = "만료";
 "Expires: %@" = "만료: %@";
+"example.com" = "example.com";
 "Family invites*" = "패밀리 초대*";
 "Feedback" = "피드백";
 "File must not exceed 25 MB" = "파일은 25 MB를 초과할 수 없습니다";
@@ -154,6 +157,7 @@
 "Open ticket" = "열린 티켓";
 "Other" = "기타";
 "Pay" = "결제";
+"Paste links separated by commas" = "쉼표로 구분해 링크를 붙여넣으세요";
 "Payment failed" = "결제 실패";
 "Payment successful. Refresh the server list." = "결제가 완료되었습니다. 서버 목록을 새로고침하세요.";
 "per month" = "월당";

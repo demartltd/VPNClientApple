@@ -8,7 +8,11 @@ struct TunSettingsView: View {
     @State private var adBlockOverride = TunSettingsStore.currentSettings.adBlockEnabled
     @State private var catalog = TunSettingsStore.currentCatalog
     @State private var overrides = TunSettingsStore.currentSettings.siteGroupOverrides
+    @State private var customHosts = TunSettingsStore.currentSettings.bypassHosts
     @State private var expanded = Set<String>()
+    @State private var customSitesExpanded = false
+    @State private var siteDraft = ""
+    @FocusState private var siteFieldFocused: Bool
 
     private var rulesOn: Bool { isFree || rulesEnabled }
 
@@ -59,6 +63,10 @@ struct TunSettingsView: View {
                     .padding(.top, 16)
                 }
 
+                customSitesSection
+                    .padding(.top, 16)
+                    .opacity(rulesOn ? 1 : 0.4)
+
                 if catalog.siteGroups.isEmpty {
                     Text(String(localized: "No site groups yet. Pull to refresh servers while signed in."))
                         .font(.demarBodyMedium)
@@ -77,6 +85,7 @@ struct TunSettingsView: View {
                         }
                     }
                     .padding(.top, 12)
+                    .opacity(rulesOn ? 1 : 0.4)
                 }
             }
             .padding(.horizontal, 16)
@@ -89,13 +98,107 @@ struct TunSettingsView: View {
         #else
         .navigationTitle("Routing")
         #endif
+        .scrollDismissesKeyboard(.interactively)
         .task { await reload() }
         .onChange(of: isFree) { _, free in
             guard free else { return }
             rulesEnabled = true
             adBlockOverride = nil
             overrides = [:]
+            customHosts = []
+            siteDraft = ""
+            siteFieldFocused = false
         }
+    }
+
+    private var customSitesTitle: String {
+        let base = String(localized: "Custom sites")
+        return customHosts.isEmpty ? base : "\(base) (\(customHosts.count))"
+    }
+
+    @ViewBuilder
+    private var customSitesSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            SettingsActionButton(
+                systemImage: "globe",
+                title: customSitesTitle,
+                subtitle: String(localized: isFree
+                    ? "Available with a paid subscription"
+                    : "Paste links separated by commas"),
+                action: rulesOn ? { toggleCustomSites() } : nil,
+                trailing: {
+                    Image(systemName: customSitesExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color.demarOnSurfaceVariant)
+                }
+            )
+
+            if customSitesExpanded, rulesOn {
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField(String(localized: "example.com"), text: $siteDraft)
+                        .textFieldStyle(.plain)
+                        .font(.demarBodyMedium)
+                        #if os(iOS)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .keyboardType(.URL)
+                        #endif
+                        .submitLabel(.done)
+                        .focused($siteFieldFocused)
+                        .disabled(isFree)
+                        .opacity(isFree ? 0.4 : 1)
+                        .padding(.horizontal, 12)
+                        .frame(height: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.demarSurface)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .strokeBorder(Color.demarOutline.opacity(0.20), lineWidth: 1)
+                                )
+                        )
+                        .onSubmit(commitSiteDraft)
+
+                    ForEach(customHosts, id: \.self) { host in
+                        customHostRow(host)
+                    }
+                }
+                .padding(.top, 4)
+            }
+        }
+    }
+
+    private func customHostRow(_ host: String) -> some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(Color.demarPrimary.opacity(0.12))
+                .frame(width: 36, height: 36)
+                .overlay {
+                    Image(systemName: "link")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.demarPrimary)
+                }
+
+            Text(host)
+                .font(.demarBodyMedium)
+                .foregroundStyle(Color.demarOnSurface)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                TunSettingsStore.removeBypassHost(host)
+                customHosts = TunSettingsStore.currentSettings.bypassHosts
+                PlatformServices.lightImpact()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.demarOnSurfaceVariant)
+                    .frame(width: 28, height: 28)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     private func paidBinding(
@@ -197,11 +300,29 @@ struct TunSettingsView: View {
         .padding(.vertical, 8)
     }
 
+    private func toggleCustomSites() {
+        withAnimation(.snappy(duration: 0.22)) {
+            customSitesExpanded.toggle()
+        }
+        if !customSitesExpanded {
+            siteFieldFocused = false
+        }
+        PlatformServices.lightImpact()
+    }
+
     private func toggleExpanded(_ id: String) {
         withAnimation(.snappy(duration: 0.22)) {
             if expanded.contains(id) { expanded.remove(id) } else { expanded.insert(id) }
         }
         PlatformServices.lightImpact()
+    }
+
+    private func commitSiteDraft() {
+        guard !isFree else { return }
+        _ = TunSettingsStore.addBypassHosts(siteDraft)
+        customHosts = TunSettingsStore.currentSettings.bypassHosts
+        siteDraft = ""
+        siteFieldFocused = false
     }
 
     @MainActor
@@ -211,6 +332,7 @@ struct TunSettingsView: View {
         rulesEnabled = settings.rulesEnabled
         adBlockOverride = settings.adBlockEnabled
         overrides = settings.siteGroupOverrides
+        customHosts = settings.bypassHosts
         catalog = TunSettingsStore.currentCatalog
 
         if let payload = await TunGroupsApi.fetch() {

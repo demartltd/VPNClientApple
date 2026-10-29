@@ -41,7 +41,7 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── VlessRealityProfile.swift  # VLESS Reality (uuid + utls + reality)
 │   │   ├── OpenFluxNative.h/.m        # ObjC bridge → liboflux (host only)
 │   │   ├── ApiBypassRuleSet.swift     # API route.rule_set (geoip/geosite)
-│   │   ├── TunModels.swift            # site groups / TunSettings / effective bypass hosts
+│   │   ├── TunModels.swift            # site groups / TunSettings / bypassHosts parse + effective merge
 │   │   ├── SingBoxConnectPlan.swift   # profile → outbound + tun; DemarControlPlane hosts
 │   │   └── SingBoxConfigBuilder.swift # Sing-box JSON TUN
 │   ├── Services/
@@ -52,7 +52,7 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── AuthSessionStore.swift     # UserDefaults session + auth orchestration
 │   │   ├── SessionCacheStore.swift    # servers/account/traffic/tun/reachability disk cache
 │   │   ├── ServersPreferencesStore.swift # favorites + tier/protocol filters
-│   │   ├── TunSettingsStore.swift     # site-group prefs + in-memory catalog
+│   │   ├── TunSettingsStore.swift     # site-group prefs + bypassHosts + catalog
 │   │   ├── SupportStore.swift         # ticket cache + unread badge
 │   │   ├── SubscriptionAlertStore.swift # Expiry / FreeTraffic cooldown + windows
 │   │   ├── AppLanguage.swift          # open system per-app language settings
@@ -124,7 +124,7 @@ DemarVPN/                              # SwiftUI target
     └── Settings/
         ├── SettingsView.swift         # настройки, 3 тапа → service
         ├── AppSettingsView.swift      # language + TUN + журнал
-        ├── TunSettingsView.swift      # site-group bypass (из App settings)
+        ├── TunSettingsView.swift      # Ad block / Routing / custom sites / site groups
         ├── ServiceMenuView.swift      # служебное меню
         ├── DocumentsMenuSheet.swift   # ToS/PP через demarBottomSheet
         ├── LanguageMenuSheet.swift    # macOS: выбор языка флагами

@@ -24,6 +24,7 @@
 "Ask a question or get help with the app" = "提問或取得 App 協助";
 "Attachment" = "附件";
 "Authenticator code" = "驗證器代碼";
+"Available with a paid subscription" = "付費訂閱可用";
 "Block ads via DNS" = "透過 DNS 封鎖廣告";
 "Bundle" = "套件";
 "Buy a subscription" = "請購買訂閱";
@@ -66,6 +67,7 @@
 "Create ticket" = "建立工單";
 "Current app language and supported languages." = "目前 App 語言與支援的語言。";
 "Custom checks" = "自訂檢查";
+"Custom sites" = "自訂網站";
 "Debug" = "除錯";
 "Dedicated servers" = "專用伺服器";
 "Delete" = "刪除";
@@ -92,6 +94,7 @@
 "Excluded from the VPN tunnel" = "已排除於 VPN 通道外";
 "Expires" = "到期";
 "Expires: %@" = "到期：%@";
+"example.com" = "example.com";
 "Family invites*" = "家庭邀請*";
 "Feedback" = "意見回饋";
 "File must not exceed 25 MB" = "檔案不得超過 25 MB";
@@ -154,6 +157,7 @@
 "Open ticket" = "進行中的工單";
 "Other" = "其他";
 "Pay" = "付款";
+"Paste links separated by commas" = "以逗號分隔貼上連結";
 "Payment failed" = "付款失敗";
 "Payment successful. Refresh the server list." = "付款成功。請重新整理伺服器列表。";
 "per month" = "每月";

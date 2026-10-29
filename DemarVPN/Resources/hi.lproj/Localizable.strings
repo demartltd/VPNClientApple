@@ -24,6 +24,7 @@
 "Ask a question or get help with the app" = "प्रश्न पूछें या ऐप में मदद लें";
 "Attachment" = "अटैचमेंट";
 "Authenticator code" = "ऑथेंटिकेटर कोड";
+"Available with a paid subscription" = "सशुल्क सदस्यता में उपलब्ध";
 "Block ads via DNS" = "DNS से विज्ञापन ब्लॉक करें";
 "Bundle" = "बंडल";
 "Buy a subscription" = "सदस्यता खरीदें";
@@ -66,6 +67,7 @@
 "Create ticket" = "टिकट बनाएँ";
 "Current app language and supported languages." = "वर्तमान ऐप भाषा और समर्थित भाषाएँ।";
 "Custom checks" = "कस्टम जाँच";
+"Custom sites" = "कस्टम साइटें";
 "Debug" = "डिबग";
 "Dedicated servers" = "समर्पित सर्वर";
 "Delete" = "हटाएँ";
@@ -92,6 +94,7 @@
 "Excluded from the VPN tunnel" = "VPN टनल से बाहर";
 "Expires" = "समाप्ति";
 "Expires: %@" = "समाप्ति: %@";
+"example.com" = "example.com";
 "Family invites*" = "फ़ैमिली आमंत्रण*";
 "Feedback" = "फ़ीडबैक";
 "File must not exceed 25 MB" = "फ़ाइल 25 MB से अधिक नहीं होनी चाहिए";
@@ -154,6 +157,7 @@
 "Open ticket" = "खुला टिकट";
 "Other" = "अन्य";
 "Pay" = "भुगतान";
+"Paste links separated by commas" = "लिंक अल्पविराम से अलग करके पेस्ट करें";
 "Payment failed" = "भुगतान विफल";
 "Payment successful. Refresh the server list." = "भुगतान सफल। सर्वर सूची रीफ़्रेश करें।";
 "per month" = "प्रति माह";

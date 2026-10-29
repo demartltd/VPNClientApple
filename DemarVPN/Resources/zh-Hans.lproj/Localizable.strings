@@ -24,6 +24,7 @@
 "Ask a question or get help with the app" = "提问或获取应用帮助";
 "Attachment" = "附件";
 "Authenticator code" = "验证器代码";
+"Available with a paid subscription" = "付费订阅可用";
 "Block ads via DNS" = "通过 DNS 拦截广告";
 "Bundle" = "套件";
 "Buy a subscription" = "请购买订阅";
@@ -66,6 +67,7 @@
 "Create ticket" = "创建工单";
 "Current app language and supported languages." = "当前应用语言及支持的语言。";
 "Custom checks" = "自定义检测";
+"Custom sites" = "自定义网站";
 "Debug" = "调试";
 "Dedicated servers" = "专属服务器";
 "Delete" = "删除";
@@ -92,6 +94,7 @@
 "Excluded from the VPN tunnel" = "已排除在 VPN 隧道外";
 "Expires" = "到期";
 "Expires: %@" = "到期：%@";
+"example.com" = "example.com";
 "Family invites*" = "家庭邀请*";
 "Feedback" = "反馈";
 "File must not exceed 25 MB" = "文件不得超过 25 MB";
@@ -154,6 +157,7 @@
 "Open ticket" = "进行中的工单";
 "Other" = "其他";
 "Pay" = "支付";
+"Paste links separated by commas" = "用逗号分隔粘贴链接";
 "Payment failed" = "支付失败";
 "Payment successful. Refresh the server list." = "支付成功。请刷新服务器列表。";
 "per month" = "每月";

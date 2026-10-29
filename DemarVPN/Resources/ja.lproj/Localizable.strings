@@ -24,6 +24,7 @@
 "Ask a question or get help with the app" = "質問する、またはアプリのヘルプを受ける";
 "Attachment" = "添付ファイル";
 "Authenticator code" = "認証アプリのコード";
+"Available with a paid subscription" = "有料サブスクリプションで利用可能";
 "Block ads via DNS" = "DNS で広告をブロック";
 "Bundle" = "バンドル";
 "Buy a subscription" = "サブスクリプションを購入してください";
@@ -66,6 +67,7 @@
 "Create ticket" = "チケットを作成";
 "Current app language and supported languages." = "現在のアプリ言語と対応言語です。";
 "Custom checks" = "カスタムチェック";
+"Custom sites" = "カスタムサイト";
 "Debug" = "デバッグ";
 "Dedicated servers" = "専用サーバー";
 "Delete" = "削除";
@@ -92,6 +94,7 @@
 "Excluded from the VPN tunnel" = "VPN トンネル外";
 "Expires" = "有効期限";
 "Expires: %@" = "有効期限: %@";
+"example.com" = "example.com";
 "Family invites*" = "ファミリー招待*";
 "Feedback" = "フィードバック";
 "File must not exceed 25 MB" = "ファイルは 25 MB 以下である必要があります";
@@ -154,6 +157,7 @@
 "Open ticket" = "オープンなチケット";
 "Other" = "その他";
 "Pay" = "支払う";
+"Paste links separated by commas" = "カンマ区切りでリンクを貼り付け";
 "Payment failed" = "支払いに失敗しました";
 "Payment successful. Refresh the server list." = "支払いが完了しました。サーバー一覧を更新してください。";
 "per month" = "月あたり";

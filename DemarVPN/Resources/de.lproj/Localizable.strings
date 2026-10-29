@@ -24,6 +24,7 @@
 "Ask a question or get help with the app" = "Frage stellen oder Hilfe zur App erhalten";
 "Attachment" = "Anhang";
 "Authenticator code" = "Authenticator-Code";
+"Available with a paid subscription" = "Mit kostenpflichtigem Abo verfügbar";
 "Block ads via DNS" = "Werbung per DNS blockieren";
 "Bundle" = "Bundle";
 "Buy a subscription" = "Kaufen Sie ein Abo";
@@ -66,6 +67,7 @@
 "Create ticket" = "Ticket erstellen";
 "Current app language and supported languages." = "Aktuelle App-Sprache und unterstützte Sprachen.";
 "Custom checks" = "Eigene Prüfungen";
+"Custom sites" = "Eigene Websites";
 "Debug" = "Debug";
 "Dedicated servers" = "Dedizierte Server";
 "Delete" = "Löschen";
@@ -92,6 +94,7 @@
 "Excluded from the VPN tunnel" = "Vom VPN-Tunnel ausgeschlossen";
 "Expires" = "Läuft ab";
 "Expires: %@" = "Läuft ab: %@";
+"example.com" = "example.com";
 "Family invites*" = "Familieneinladungen*";
 "Feedback" = "Feedback";
 "File must not exceed 25 MB" = "Datei darf 25 MB nicht überschreiten";
@@ -154,6 +157,7 @@
 "Open ticket" = "Offenes Ticket";
 "Other" = "Sonstiges";
 "Pay" = "Bezahlen";
+"Paste links separated by commas" = "Links durch Kommas getrennt einfügen";
 "Payment failed" = "Zahlung fehlgeschlagen";
 "Payment successful. Refresh the server list." = "Zahlung erfolgreich. Serverliste aktualisieren.";
 "per month" = "pro Monat";

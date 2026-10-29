@@ -110,6 +110,71 @@ final class TunGroupsParseTests: XCTestCase {
         XCTAssertNil(TunEffective.normalizeHost("   "))
     }
 
+    func testParseBypassHostNormalizesUrlAndWww() {
+        XCTAssertEqual(TunEffective.parseBypassHost("https://www.youtube.com/watch?"), "youtube.com")
+        XCTAssertEqual(TunEffective.parseBypassHost("www.youtube.com"), "youtube.com")
+        XCTAssertEqual(TunEffective.parseBypassHost("youtube.com"), "youtube.com")
+        XCTAssertEqual(TunEffective.parseBypassHost("  https://Example.com/path?q=1  "), "example.com")
+        XCTAssertNil(TunEffective.parseBypassHost(""))
+        XCTAssertNil(TunEffective.parseBypassHost("   "))
+        XCTAssertNil(TunEffective.parseBypassHost("not a host"))
+        XCTAssertNil(TunEffective.parseBypassHost("hello"))
+        XCTAssertNil(TunEffective.parseBypassHost("localhost"))
+        XCTAssertNil(TunEffective.parseBypassHost("1.2.3.4"))
+        XCTAssertNil(TunEffective.parseBypassHost("-bad.com"))
+        XCTAssertEqual(
+            TunEffective.parseBypassHosts("hello, example.com, localhost, 1.2.3.4"),
+            ["example.com"]
+        )
+    }
+
+    func testParseBypassHostsSplitsCommaAndWhitespace() {
+        XCTAssertEqual(
+            TunEffective.parseBypassHosts("https://www.youtube.com/watch?, example.com  reddit.com"),
+            ["example.com", "reddit.com", "youtube.com"]
+        )
+        XCTAssertEqual(TunEffective.parseBypassHosts("youtube.com"), ["youtube.com"])
+        XCTAssertEqual(TunEffective.parseBypassHosts("  ,  "), [])
+    }
+
+    func testCustomBypassHostsMergeWithGroups() {
+        let catalog = TunGroupsApi.parse(sampleJSON)
+        let settings = TunSettings(
+            siteGroupOverrides: [:],
+            rulesEnabled: true,
+            bypassHosts: ["reddit.com", "youtube.com"]
+        )
+        XCTAssertEqual(
+            TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: false),
+            ["instagram.com", "reddit.com", "tiktok.com", "vk.com", "youtube.com"]
+        )
+        let off = TunSettings(
+            siteGroupOverrides: [:],
+            rulesEnabled: false,
+            bypassHosts: ["reddit.com"]
+        )
+        XCTAssertTrue(TunEffective.bypassHosts(settings: off, catalog: catalog, isFree: false).isEmpty)
+    }
+
+    func testCustomBypassHostsRemainInWhiteListVpnMode() {
+        let catalog = TunGroupsApi.parse(sampleJSON)
+        let settings = TunSettings(
+            siteGroupOverrides: [:],
+            rulesEnabled: true,
+            bypassHosts: ["twitch.tv", "youtube.com"]
+        )
+        let wl = TunEffective.bypassHosts(
+            settings: settings,
+            catalog: catalog,
+            isFree: false,
+            whiteListVpnMode: true
+        )
+        XCTAssertTrue(wl.contains("twitch.tv"))
+        XCTAssertTrue(wl.contains("youtube.com"))
+        XCTAssertTrue(wl.contains("instagram.com"))
+        XCTAssertFalse(wl.contains("vk.com"))
+    }
+
     func testExcludeResolveHostsAddsWww() {
         XCTAssertEqual(
             TunEffective.excludeResolveHosts(["twitch.tv"]),
