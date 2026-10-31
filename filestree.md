@@ -30,7 +30,7 @@ DemarVPN/                              # SwiftUI target
 │   │   ├── VpnAccountApi.swift        # POST /vpn/account|notify|traffic
 │   │   ├── PayApi.swift               # GET /vpn/pay/plans, POST create|status
 │   │   ├── PromoApi.swift             # POST /vpn/promo/activate|apply
-│   │   ├── SupportApi.swift           # csauth API tickets / themes / media
+│   │   ├── SupportApi.swift           # support API tickets / themes / media
 │   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS/TLS (+ QUIC API)
 │   │   ├── SalamanderObfs.swift       # HY2 salamander wrap (blake2b) for QUIC ping
 │   │   └── LegalDocuments.swift       # ToS/PP via DemarHttp Markdown fetch
