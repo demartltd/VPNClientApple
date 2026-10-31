@@ -1,24 +1,24 @@
-**Demar Proxy (Apple)** — нативный VPN-клиент на SwiftUI: управление профилями подключения, установка защищённого туннеля и контроль состояния соединения. Ядро — **latest sing-box** / Libbox (Hysteria2 / Trojan / VLESS Reality / **OpenFlux** host `liboflux` → local SOCKS + Libbox outbound).
+**Demar Proxy (Apple)** — native VPN client in SwiftUI: connection profiles, secure tunnel setup, and connection state. Core: **latest sing-box** / Libbox (Hysteria2 / Trojan / VLESS Reality / **OpenFlux** host `liboflux` → local SOCKS + Libbox outbound).
 
-Поддерживаются **iOS 18+** и **macOS 15+** (нативное приложение, один target).
+Supports **iOS 18+** and **macOS 15+** (native app, single target).
 
-Все доступные сервера и их конфиги получаются удалённо после входа (`POST /vpn/servers`). Вкладка **Servers**: единый список с бейджами tier/protocol, toolbar Refresh/Filters, favorites, ping (TCP/TLS/QUIC), details sheet, locked → Premium. Без сессии вкладки **Сервера** и **Аккаунт** открывают login bottom sheet.
+Server list and configs load remotely after sign-in (`POST /vpn/servers`). **Servers** tab: unified list with tier/protocol badges, toolbar Refresh/Filters, favorites, ping (TCP/TLS/QUIC), details sheet, locked → Premium. Without a session, **Servers** and **Account** open the login bottom sheet.
 
-## Сборка
+## Build
 
 - **Xcode 15+**
-- Deployment: **iOS 18+**, **macOS 15+** (VPN на Mac — **Apple Silicon arm64**)
+- Deployment: **iOS 18+**, **macOS 15+** (VPN on Mac — **Apple Silicon arm64**)
 - Display name: **Demar Proxy**
 - Bundle ID: `com.demar.adblock` · SKU: `demar-adblock`
 - Extensions: `com.demar.adblock.packet-tunnel`, `com.demar.adblock.controls`
 - App Group: `group.com.demar.adblock`
 - **iOS:** SwiftUI + Network Extension (`DemarPacketTunnel`) + App Group + sing-box **1.14.1**
-- **macOS:** Network Extension + Libbox in-process (как iOS)
-- См. [`readme-core.md`](readme-core.md)
+- **macOS:** Network Extension + Libbox in-process (same as iOS)
+- See [`readme-core.md`](readme-core.md)
 
-Перед сборкой локально нужны geo assets (`geoip.db` / `geosite.db`), `Libbox.xcframework`, OpenFlux `liboflux` и rule-sets — они не в git (см. [`readme-core.md`](readme-core.md)).
+Before building, prepare locally (not in git): geo assets (`geoip.db` / `geosite.db`), `Libbox.xcframework`, OpenFlux `liboflux`, and rule-sets — see [`readme-core.md`](readme-core.md).
 
-Xcode копирует geo assets в host app и в `DemarPacketTunnel.appex` (iOS: `singbox/`, macOS: `singbox_macos/`). Dev binary `sing-box` в runtime bundle не включается. Entitlements: `DemarVPN.entitlements`, `ios/DemarPacketTunnel/…`, `ios/DemarControls/…` (App Group + Packet Tunnel).
+Xcode copies geo assets into the host app and `DemarPacketTunnel.appex` (iOS: `singbox/`, macOS: `singbox_macos/`). The dev `sing-box` binary is not shipped in the runtime bundle. Entitlements: `DemarVPN.entitlements`, `ios/DemarPacketTunnel/…`, `ios/DemarControls/…` (App Group + Packet Tunnel).
 
 ```bash
 # macOS Debug
@@ -28,37 +28,36 @@ xcodebuild -scheme DemarVPN -destination 'platform=macOS' build
 xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17' build
 ```
 
-В Xcode: destination **My Mac** или симулятор iPhone. На Mac после установки включите расширение в `System Settings → Login Items & Extensions → Network Extensions`.
+In Xcode: destination **My Mac** or an iPhone simulator. On Mac after install, enable the extension under `System Settings → Login Items & Extensions → Network Extensions`.
 
-Документация Sing-box: https://sing-box.sagernet.org/
+Sing-box docs: https://sing-box.sagernet.org/
 
-Структура кода: [`filestree.md`](filestree.md).
+Code layout: [`filestree.md`](filestree.md).
 
-### Журнал
+### Journal
 
-UI («Настройки → Настройки приложения») — журнал до 512 строк.  
+UI (**Settings → App settings**) — up to 512 lines.  
 **macOS / Simulator:** App Group `demar_vpn/vpn_journal.log`.  
-**Physical iOS:** host зеркалит в `Documents/demar/demar_app.log` (CoreDevice не отдаёт App Group `demar_vpn/`); pull через `devicectl` `appDataContainer`.
+**Physical iOS:** host mirrors to `Documents/demar/demar_app.log` (CoreDevice does not expose App Group `demar_vpn/`); pull via `devicectl` `appDataContainer`.
 
-Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На device открой app (чтобы зеркало обновилось) или connect VPN. Fallback: Share в UI.
+Runtime `core.log`: `log.level=info`, timestamp, ring ~20k lines. On device, open the app (to refresh the mirror) or connect VPN. Fallback: Share in the UI.
 
-## Навигация
+## Navigation
 
-Четыре раздела: **Подключение**, **Сервера**, **Настройки**, **Аккаунт**. **iOS** — `TabView`: три основные вкладки + **Аккаунт** отдельно справа (`TabRole.prominent` на iOS 27+, `.search` на 18…26; icon-only с iOS 26). **macOS** — боковая панель слева (`NavigationSplitView`), аккаунт внизу sidebar.
+Four sections: **Home**, **Servers**, **Settings**, **Account**. **iOS** — `TabView`: three main tabs + **Account** on the right (`TabRole.prominent` on iOS 27+, `.search` on 18…26; icon-only from iOS 26). **macOS** — left sidebar (`NavigationSplitView`), account at the bottom.
 
-### Подключение
+### Home
 
-Вкл/выкл VPN, статус, имя сервера, скорость RX/TX при подключении (Clash API `GET /traffic` в extension → App Group; Home читает ↓/↑ KB/s). **iOS:** control «Demar Proxy» в Control Center; UI синхронизируется с `NEVPNConnection` при любом переключении Demar (приложение, control, Настройки → VPN, системная кнопка VPN в CC).
+VPN on/off, status, server name, RX/TX while connected (Clash API `GET /traffic` in the extension → App Group; Home reads ↓/↑ KB/s). **iOS:** Control Center control «Demar Proxy»; UI stays in sync with `NEVPNConnection` for any Demar toggle (app, control, Settings → VPN, system VPN button in CC).
 
-### Сервера
+### Servers
 
-Список профилей с API по подписке (после входа). SegmentBar: протоколы из ответа API (HY2 / Trojan / VLESS) + All/Free/Plus/Vip (+ Dev/Tester если есть). Pull-to-refresh обновляет список. Гость — CTA «Войти».
+Subscription server profiles after sign-in. SegmentBar: protocols from the API (HY2 / Trojan / VLESS) + All/Free/Plus/Vip (+ Dev/Tester when present). Pull-to-refresh reloads the list. Guest — sign-in CTA.
 
-### Настройки
+### Settings
 
-Ссылки, действия, переход в настройки приложения (Change language + журнал). **Языки:** `en` (default) / `ru` / `uk` / `tr` / `uz` / `zh-Hans` / `zh-Hant` / `ko` / `ja` / `es` / `de` / `fr` / `hi` (`Localizable.strings` + `InfoPlist.xcstrings`); смена — системный per-app language или **Настройки приложения → Change language**. **Feedback / Support** — тикеты support API (list / chat / draft, альбом до 10 фото WebP, polling 8с, unread badge); гость → login sheet; channel `ios`/`macos`, `sourceId=2`; silent diagnostics (device + journal) при создании тикета. **Документы** — меню ToS/PP: **iOS** system bottom sheet, **macOS** overlay (dismiss по клику вне); тексты всегда загружаются с raw GitHub Markdown (`demartltd/tos-pp`) и показываются через MarkdownUI. **iOS push-detail:** title после скролла, bar без blur, лёгкий top-градиент. **macOS** — обычный `navigationTitle`. **Служебное меню** — тройной тап по версии внизу экрана: сводка приложения и идентификаторы устройства (IDFV/IDFA или macOS UUID); секция **Info sheets** (как Android): Expiry / FreeTraffic / Traffic / PayResult ok|fail — только UI, без API. Traffic sheet глобальный (без смены вкладки). **Авто-alerts:** при `scenePhase == .active` (как update alert); paid — Expiry в окнах 72–24h и ≤18h (cooldown 3h); free — FreeTraffic при ≥200 MiB (cooldown 6h). **iOS IDFA:** системный запрос ATT при первом запуске (когда статус ещё не определён); в служебном меню кнопка **«Включить IDFA»** — повторный ATT или переход в настройки приложения, если отслеживание уже запрещено.
+Links, actions, app settings (Change language + journal). **Languages:** `en` (default) / `ru` / `uk` / `tr` / `uz` / `zh-Hans` / `zh-Hant` / `ko` / `ja` / `es` / `de` / `fr` / `hi` (`Localizable.strings` + `InfoPlist.xcstrings`); change via system per-app language or **App settings → Change language**. **Feedback / Support** — support API tickets (list / chat / draft, up to 10 WebP photos, 8s polling, unread badge); guest → login sheet; channel `ios`/`macos`, `sourceId=2`; silent diagnostics (device + journal) on ticket create. **Documents** — ToS/PP menu: **iOS** system bottom sheet, **macOS** overlay (dismiss on outside tap); Markdown from GitHub (`demartltd/tos-pp`) via MarkdownUI. **iOS push-detail:** title after scroll, bar without blur, light top gradient. **macOS** — standard `navigationTitle`. **Service menu** — triple-tap version at the bottom: app summary and device IDs (IDFV/IDFA or macOS UUID); **Info sheets** (like Android): Expiry / FreeTraffic / Traffic / PayResult ok|fail — UI only, no API. Traffic sheet is global (no tab switch). **Auto-alerts:** on `scenePhase == .active` (same as update alert); paid — Expiry in 72–24h and ≤18h windows (3h cooldown); free — FreeTraffic at ≥200 MiB (6h cooldown). **iOS IDFA:** system ATT prompt on first launch (when status is undetermined); service menu **Enable IDFA** — re-prompt ATT or open app settings if tracking was denied.
 
-### Аккаунт
+### Account
 
-Email OTP (+ optional TOTP) и Telegram OAuth → auth API (только вход/сессия). Сессия: `userId`+`loginAt` в UserDefaults; при старте — `session/check`. План, срок, уведомления и трафик за месяц — VPN API (`POST /vpn/account`, `/vpn/notify`, `/vpn/traffic`). **Гость:** вход через bottom sheet. **Вошёл (как Android):** avatar + username + tap ID (clipboard); карточка подписки (Plan/Expires + Buy/Renew → единый checkout bottom sheet через `/vpn/pay/*`); ряд трафика с preview `used/limit · %` и progress → **Traffic sheet** (pie); лимит на connect → FreeTraffic alert (free) или Traffic (paid); **Increase limits** → тот же checkout; family stub → «Скоро»; Notifications → **Notify sheet** (2 toggle); Expiry / FreeTraffic upsell sheets (`SubscriptionAlertStore`); Sign out → confirm → logout API + stop VPN + clear servers. **Checkout:** Plus/VIP × week/month/quarter/year × RUB/EUR, промокод скидки через alert (`/vpn/promo/apply`), оплата RollyPay в Safari, возврат `demarvpn://pay/ok|fail` → PayResultSheet (иконка + Хорошо) + `refreshSessionData()` на ok (без polling `/vpn/pay/status`). Deeplink: `demarvpn://account/buy|plans|traffic` (+ legacy `settings/traffic`); pay `demarvpn://pay/ok|fail`. **Compare plans** — отдельный bottom sheet с таблицей тарифов. **Revoked / logout:** stop tunnel, wipe App Group `config.json` + connect payload, `removeFromPreferences` — Control Center / Settings VPN не подключат без авторизации. Callback: `demarvpn://auth/callback`. **App Review:** email `test@test.com` — локальный вход без OTP; `POST /vpn/servers` как обычно (free без паролей); connect блокируется snackbar.
-
+Email OTP (+ optional TOTP) and Telegram OAuth → auth API (sign-in/session only). Session: `userId`+`loginAt` in UserDefaults; on launch — `session/check`. Plan, expiry, notify prefs, and monthly traffic — VPN API (`POST /vpn/account`, `/vpn/notify`, `/vpn/traffic`). **Guest:** login bottom sheet. **Signed in:** avatar + username + tap ID (clipboard); subscription card (Plan/Expires + Buy/Renew → checkout bottom sheet via `/vpn/pay/*`); traffic row with `used/limit · %` preview → **Traffic sheet** (pie); connect limit → FreeTraffic alert (free) or Traffic (paid); **Increase limits** → same checkout; family stub → Coming soon; Notifications → **Notify sheet** (2 toggles); Expiry / FreeTraffic upsell sheets (`SubscriptionAlertStore`); Sign out → confirm → logout API + stop VPN + clear servers. **Checkout:** Plus/VIP × week/month/quarter/year × RUB/EUR, promo discount alert (`/vpn/promo/apply`), RollyPay in Safari, return `demarvpn://pay/ok|fail` → PayResultSheet + `refreshSessionData()` on ok (no `/vpn/pay/status` polling). Deeplinks: `demarvpn://account/buy|plans|traffic` (+ legacy `settings/traffic`); pay `demarvpn://pay/ok|fail`. **Compare plans** — separate bottom sheet. **Revoked / logout:** stop tunnel, wipe App Group `config.json` + connect payload, `removeFromPreferences` — Control Center / Settings VPN cannot connect without auth. Callback: `demarvpn://auth/callback`. **App Review:** email `test@test.com` — local sign-in without OTP; `POST /vpn/servers` as usual (free without passwords); connect blocked with snackbar.
