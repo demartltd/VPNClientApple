@@ -5,17 +5,12 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 
+# Local tooling (not in git)
+scripts/
+
 # Core assets/binaries (scripts/singbox-download-auto.py)
 **/singbox/
 **/singbox_macos/
-
-# Local tooling scripts (tracked: sing-box downloader + iOS appex signing + libbox builder + TestFlight upload)
-
-scripts/.env
-scripts/AuthKey_*.p8
-scripts/rendered/*
-scripts/demar_vpn_client_apple.p12
-scripts/logo_clear.png
 
 # Libbox (scripts/libbox-build.py)
 ios/Frameworks/Libbox.xcframework/
@@ -27,4 +22,3 @@ ios/Frameworks/OpenFlux/macosx/
 
 # Rule-sets — fetched by scripts/sync_rulesets.ps1 (also from upload-testflight.ps1)
 DemarVPN/Resources/RuleSets/*.srs
-

@@ -144,18 +144,7 @@ readme.md                              # сборка
 readme-core.md                         # ядро VPN/Sing-box
 singbox-version.txt                    # единая закреплённая версия core
 
-scripts/
-├── journal.sh                         # pull vpn_journal.log (macos/sim/ios)
-├── singbox-download-auto.py           # latest sing-box + geo db
-├── openflux-build-apple.sh            # OpenFlux liboflux.a → ios/Frameworks/OpenFlux
-├── gen-tun-bypass-cidrs.py            # geoip-*.cidrs.json (coarsen ≤/20 + aggregate)
-├── sync_rulesets.ps1                  # ads + geosite-ru/ir/cn → Resources/RuleSets
-├── libbox-build.py                    # Libbox.xcframework (latest)
-├── upload-testflight.ps1              # App Store archive/upload (syncs ads first)
-├── sign-singbox-in-appex.sh           # iOS appex binary signing
-├── increment_version_common.ps1
-├── ios-export-options.plist
-└── macos-export-options.plist
+scripts/                               # local only (gitignored) — build / TestFlight / libbox / journal
 
 macos/
 └── singbox_macos/                      # geo db + dev sing-box CLI (gitignore)
