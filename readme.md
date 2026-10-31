@@ -1,5 +1,7 @@
 **Demar Proxy (Apple)** — native VPN client in SwiftUI: connection profiles, secure tunnel setup, and connection state. Core: **latest sing-box** / Libbox (Hysteria2 / Trojan / VLESS Reality / **OpenFlux** host `liboflux` → local SOCKS + Libbox outbound).
 
+License: [GNU GPL v3](LICENSE) (copyleft / open source). Names **Demar VPN** / **Demar Proxy** and Demar bundle IDs are reserved — see LICENSE additional terms.
+
 Supports **iOS 18+** and **macOS 15+** (native app, single target).
 
 Server list and configs load remotely after sign-in (`POST /vpn/servers`). **Servers** tab: unified list with tier/protocol badges, toolbar Refresh/Filters, favorites, ping (TCP/TLS/QUIC), details sheet, locked → Premium. Without a session, **Servers** and **Account** open the login bottom sheet.
