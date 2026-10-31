@@ -12,8 +12,8 @@ struct SessionExchange: Sendable {
 }
 
 enum AuthApi {
-    static let baseURL = URL(string: "https://auth.example.invalid")!
-    static let accountBaseURL = URL(string: "https://account.example.invalid")!
+    static var baseURL: URL { DemarEnv.authAPIBase }
+    static var accountBaseURL: URL { DemarEnv.accountAPIBase }
     static let appOAuthReturn = accountBaseURL.appendingPathComponent("auth/app/complete")
 
     static var telegramOAuthStartURL: URL {

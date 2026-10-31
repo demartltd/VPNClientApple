@@ -5,6 +5,10 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 
+# API endpoints (see .env.example)
+.env
+DemarVPN/Resources/demar.env
+
 # Local tooling (not in git)
 scripts/
 

@@ -16,7 +16,7 @@ Server list and configs load remotely after sign-in (`POST /vpn/servers`). **Ser
 - **macOS:** Network Extension + Libbox in-process (same as iOS)
 - See [`readme-core.md`](readme-core.md)
 
-Before building, prepare locally (not in git): geo assets (`geoip.db` / `geosite.db`), `Libbox.xcframework`, OpenFlux `liboflux`, and rule-sets — see [`readme-core.md`](readme-core.md).
+Before building, prepare locally (not in git): copy `.env.example` → `.env` (and `DemarVPN/Resources/demar.env`), geo assets (`geoip.db` / `geosite.db`), `Libbox.xcframework`, OpenFlux `liboflux`, and rule-sets — see [`readme-core.md`](readme-core.md).
 
 Xcode copies geo assets into the host app and `DemarPacketTunnel.appex` (iOS: `singbox/`, macOS: `singbox_macos/`). The dev `sing-box` binary is not shipped in the runtime bundle. Entitlements: `DemarVPN.entitlements`, `ios/DemarPacketTunnel/…`, `ios/DemarControls/…` (App Group + Packet Tunnel).
 

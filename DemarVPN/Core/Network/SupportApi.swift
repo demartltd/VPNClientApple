@@ -84,7 +84,7 @@ struct SupportUploadMedia: Equatable, Sendable {
 }
 
 enum SupportApi {
-    static let baseURL = URL(string: "https://csauth.example.invalid")!
+    static var baseURL: URL { DemarEnv.supportAPIBase }
     static let vpnSourceId = "2"
     static let maxMediaBytes = 25 * 1024 * 1024
     static let maxMediaFiles = 10

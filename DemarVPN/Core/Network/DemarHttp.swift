@@ -21,7 +21,7 @@ struct DemarAPIError: Error, LocalizedError {
 
 enum DemarHttp {
     static let clientID = "demar-vpn"
-    static let vpnBase = URL(string: "https://vpn.example.invalid")!
+    static var vpnBase: URL { DemarEnv.vpnAPIBase }
 
     /// Fail fast when offline — do not wait for path restoration (`waitsForConnectivity`).
     private static let session: URLSession = makeSession(request: 8, resource: 12)

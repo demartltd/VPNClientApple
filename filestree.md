@@ -23,13 +23,14 @@ DemarVPN/                              # SwiftUI target
 │   │   └── ServerReachability.swift   # TCP/TLS/QUIC ping state + UplinkProbe
 │   ├── Network/
 │   │   ├── DemarHttp.swift            # URLSession, UA, vpnPost/Get, retry/reset, DemarAPIError
-│   │   ├── AuthApi.swift              # auth.example.invalid / account.example.invalid auth
-│   │   ├── ServersApi.swift           # POST vpn.example.invalid/vpn/servers → profiles
-│   │   ├── TunGroupsApi.swift         # GET vpn.example.invalid/tun → site groups
+│   │   ├── DemarEnv.swift             # API bases from demar.env / .env
+│   │   ├── AuthApi.swift              # auth / account API
+│   │   ├── ServersApi.swift           # POST /vpn/servers → profiles
+│   │   ├── TunGroupsApi.swift         # GET /tun → site groups
 │   │   ├── VpnAccountApi.swift        # POST /vpn/account|notify|traffic
 │   │   ├── PayApi.swift               # GET /vpn/pay/plans, POST create|status
 │   │   ├── PromoApi.swift             # POST /vpn/promo/activate|apply
-│   │   ├── SupportApi.swift           # csauth.example.invalid tickets / themes / media
+│   │   ├── SupportApi.swift           # csauth API tickets / themes / media
 │   │   ├── PublicEgressDiagnostics.swift # IP, зонды TCP/HTTPS/TLS (+ QUIC API)
 │   │   ├── SalamanderObfs.swift       # HY2 salamander wrap (blake2b) for QUIC ping
 │   │   └── LegalDocuments.swift       # ToS/PP via DemarHttp Markdown fetch
