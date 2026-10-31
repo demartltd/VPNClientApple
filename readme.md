@@ -16,14 +16,7 @@
 - **macOS:** Network Extension + Libbox in-process (как iOS)
 - См. [`readme-core.md`](readme-core.md)
 
-Один раз перед сборкой (скрипт только для разработчиков, в runtime не вызывается):
-
-```bash
-python3 scripts/singbox-download-auto.py   # pinned by singbox-version.txt
-python3 scripts/libbox-build.py           # same pinned core → Libbox.xcframework
-pwsh scripts/sync_rulesets.ps1            # offline ads + geosite rule-sets (also via upload-testflight.ps1)
-./scripts/openflux-build-apple.sh         # OpenFlux liboflux → iphoneos/ + macosx/ (нужен go)
-```
+Перед сборкой локально нужны geo assets (`geoip.db` / `geosite.db`), `Libbox.xcframework`, OpenFlux `liboflux` и rule-sets — они не в git (см. [`readme-core.md`](readme-core.md)).
 
 Xcode копирует geo assets в host app и в `DemarPacketTunnel.appex` (iOS: `singbox/`, macOS: `singbox_macos/`). Dev binary `sing-box` в runtime bundle не включается.
 
@@ -52,14 +45,7 @@ xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17'
 
 В Xcode: выберите destination **My Mac** или симулятор iPhone.
 
-Для App Store / TestFlight используйте:
-
-```powershell
-pwsh ./scripts/upload-testflight.ps1 -Platform Both   # или iOS / macOS
-pwsh ./scripts/upload-testflight.ps1 -AscConfigureOnly  # только ASC (группы / линк билдов)
-```
-
-Нужны: Apple ID в **Xcode → Settings → Accounts**, **Apple Distribution** в Keychain, плюс `scripts/.env` + `AuthKey_*.p8` только для `altool` upload.
+Для App Store / TestFlight: archive/export в Xcode или локальный upload-инструмент разработчика. Нужны Apple ID в **Xcode → Settings → Accounts**, **Apple Distribution** в Keychain; для `altool` — ASC API key (локально, не в git).
 
 `xcodebuild` не использует ASC API key: с ключом без Cloud Managed Distribution Xcode чинит профили через cloud cert → `403` / «profile doesn't include Apple Distribution». Profiles обновляет Apple ID из Accounts + локальный Distribution.
 
@@ -69,15 +55,9 @@ pwsh ./scripts/upload-testflight.ps1 -AscConfigureOnly  # только ASC (гр
 
 **В проекте:** `SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO`. Display name в bundle: **Demar Proxy**.
 
-**После upload** `upload-testflight.ps1` вызывает ASC API: линкует latest VALID iOS+macOS в external-группы и пытается выключить `iosBuildsAvailableForAppleSiliconMac`. Нужен API key с ролью **App Manager** или **Admin** (ключ только для `altool` upload даст `403` — тогда шаги ниже вручную).
+**После upload** линкуйте latest VALID iOS+macOS в external TestFlight-группы и выключите `iosBuildsAvailableForAppleSiliconMac` (ASC API с ролью **App Manager**/**Admin**, либо вручную ниже).
 
-Без полной сборки:
-
-```powershell
-pwsh ./scripts/upload-testflight.ps1 -AscConfigureOnly
-```
-
-**В ASC (если API 403 / разово):**
+**В ASC (разово / при 403):**
 
 1. TestFlight → группа (public link) → Settings → *Test iPhone and iPad apps on Apple silicon Macs* → **Disable**
 2. В ту же группу добавить билд платформы **macOS** (не только iOS)
@@ -94,20 +74,9 @@ pwsh ./scripts/upload-testflight.ps1 -AscConfigureOnly
 
 ### Журнал
 
-UI («Настройки → Настройки приложения») и CLI — один журнал (до 512 строк).  
+UI («Настройки → Настройки приложения») — журнал до 512 строк.  
 **macOS / Simulator:** App Group `demar_vpn/vpn_journal.log`.  
-**Physical iOS:** host зеркалит в `Documents/demar/demar_app.log` (CoreDevice не отдаёт App Group `demar_vpn/`); скрипт тянет через `devicectl` `appDataContainer`.
-
-```bash
-./scripts/journal.sh                 # auto: macos → sim → device
-./scripts/journal.sh -o journal.txt  # сохранить в файл
-./scripts/journal.sh --core          # core.log (info: каждое dial destination→outbound)
-./scripts/journal.sh --core --tg     # только Telegram DC / домены
-./scripts/journal.sh -p ios             # физическое устройство
-./scripts/journal.sh -p ios --core --tg # Telegram DC / domains in core.log
-./scripts/journal.sh -d "iPhone Rem"    # имя / UDID для devicectl
-# geo-bypass: [tun] bypassCidrs=…; RU/IR/CN dials не в outbound/hysteria2
-```
+**Physical iOS:** host зеркалит в `Documents/demar/demar_app.log` (CoreDevice не отдаёт App Group `demar_vpn/`); pull через `devicectl` `appDataContainer`.
 
 Runtime `core.log`: `log.level=info`, timestamp, ring ~20k строк. На device открой app (чтобы зеркало обновилось) или connect VPN. Fallback: Share в UI.
 

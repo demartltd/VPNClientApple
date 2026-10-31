@@ -51,7 +51,7 @@ Pipeline: `ServerProfile` → [`ProxyProfile`](DemarVPN/Core/Vpn/ProxyProfile.sw
 
 ### OpenFlux (White List)
 
-Локальный SOCKS5: **host app** поднимает OpenFlux **in-process** через `liboflux` (`OpenFluxHostProcess` → `OpenFluxNative`, порт `11080`) → Packet Tunnel / Libbox `socks` outbound. На iOS нельзя `posix_spawn` (ни в app, ни в NE); `liboflux` рядом с Libbox в одном процессе даёт второй Go runtime и abort — поэтому lib только в host (iOS device + macOS), в туннеле ждём SOCKS. **iOS keep-alive:** пока WL/OpenFlux запущен, host крутит silent `silent.wav` (`UIBackgroundModes=audio`), иначе процесс усыпляется ~30 с и SOCKS мёртв при живом NE. Reconnect / CC: host hook `VpnHostHooks.ensureOpenFluxForReconnect` поднимает SOCKS из sidecar до `startTunnel`. Anti-loop: `boards.yandex.ru` / `yandex.ru` / `yandex.net` в `bypassHosts`. Сборка: `scripts/openflux-build-apple.sh` → `iphoneos/` (`GOOS=ios -tags ios`) + `macosx/` (**pure `GOOS=darwin` без `-tags ios`** — иначе SIGABRT `runtime.raise_trampoline`, golang/go#52299).
+Локальный SOCKS5: **host app** поднимает OpenFlux **in-process** через `liboflux` (`OpenFluxHostProcess` → `OpenFluxNative`, порт `11080`) → Packet Tunnel / Libbox `socks` outbound. На iOS нельзя `posix_spawn` (ни в app, ни в NE); `liboflux` рядом с Libbox в одном процессе даёт второй Go runtime и abort — поэтому lib только в host (iOS device + macOS), в туннеле ждём SOCKS. **iOS keep-alive:** пока WL/OpenFlux запущен, host крутит silent `silent.wav` (`UIBackgroundModes=audio`), иначе процесс усыпляется ~30 с и SOCKS мёртв при живом NE. Reconnect / CC: host hook `VpnHostHooks.ensureOpenFluxForReconnect` поднимает SOCKS из sidecar до `startTunnel`. Anti-loop: `boards.yandex.ru` / `yandex.ru` / `yandex.net` в `bypassHosts`. Сборка liboflux: `iphoneos/` (`GOOS=ios -tags ios`) + `macosx/` (**pure `GOOS=darwin` без `-tags ios`** — иначе SIGABRT `runtime.raise_trampoline`, golang/go#52299).
 
 | Протокол | App model | Outbound type | Ключевые поля |
 |----------|-----------|---------------|---------------|
@@ -85,7 +85,7 @@ Servermaster кладёт `route.rule_set` (RU/IR/CN) в `clientConfigJson`. К�
 | API `route_exclude_address_set` | **игнор** (no-op под Libbox `platformInterface`) |
 | geo*/geosite → `outbound:direct` | **не эмитим** (`ENETUNREACH` внутри TUN) |
 
-`dns-direct` остаётся `type: local`, пока нет geosite bypass; при geosite — UDP `1.1.1.1` + `route_exclude_address` `1.1.1.1/32`. Sidecars: `scripts/gen-tun-bypass-cidrs.py` — **не** raw dump: coarsen ≤`/20` + lossless aggregate (~9.8k combined vs ~16k raw). Floor `/20` (не `/16`): слепой `/16` invent’ил покрытие дырявых блоков и уводил чужие платформы (в т.ч. Telegram DC) в NE `excludedRoutes` мимо TUN.
+`dns-direct` остаётся `type: local`, пока нет geosite bypass; при geosite — UDP `1.1.1.1` + `route_exclude_address` `1.1.1.1/32`. CIDR sidecars — **не** raw dump: coarsen ≤`/20` + lossless aggregate (~9.8k combined vs ~16k raw). Floor `/20` (не `/16`): слепой `/16` invent’ил покрытие дырявых блоков и уводил чужие платформы (в т.ч. Telegram DC) в NE `excludedRoutes` мимо TUN.
 
 ### Site-группы TUN (`GET /tun`)
 
@@ -97,7 +97,7 @@ Servermaster кладёт `route.rule_set` (RU/IR/CN) в `clientConfigJson`. К�
 
 ### Ad block (DNS + route)
 
-Отдельный тоггл в TUN settings. Free: всегда off. Plus/VIP: default **on**, иначе сохранённый выбор пользователя. При on: bundled ads rule-set (`type: local`, tag `geosite-category-ads`, relative `path` к App Group `core_assets`) + DNS и route `action: reject`. Упаковка: `scripts/sync_rulesets.ps1` (ads + geosite-ru/ir/cn → `DemarVPN/Resources/RuleSets/`, также из `upload-testflight.ps1`). Runtime — `CoreBundleAssets.ensureRuleSet` / `ensureRuleSets` (bundle → App Group). Новые rule-set — только с релизом приложения (без runtime HTTP). DNS: ads `reject` **раньше** site-bypass `domain_suffix` (иначе bypass `yandex.ru` пропускает `an.yandex.ru` / metrica). Path-реклама на first-party URL (напр. `yandex.ru/ads/...`) DNS не режет. **Не** флипает `dns-direct`. Ads **не** в `plan.bypassRuleSets`. Применение на следующем Connect.
+Отдельный тоггл в TUN settings. Free: всегда off. Plus/VIP: default **on**, иначе сохранённый выбор пользователя. При on: bundled ads rule-set (`type: local`, tag `geosite-category-ads`, relative `path` к App Group `core_assets`) + DNS и route `action: reject`. Упаковка: ads + geosite-ru/ir/cn → `DemarVPN/Resources/RuleSets/` (локально перед релизом). Runtime — `CoreBundleAssets.ensureRuleSet` / `ensureRuleSets` (bundle → App Group). Новые rule-set — только с релизом приложения (без runtime HTTP). DNS: ads `reject` **раньше** site-bypass `domain_suffix` (иначе bypass `yandex.ru` пропускает `an.yandex.ru` / metrica). Path-реклама на first-party URL (напр. `yandex.ru/ads/...`) DNS не режет. **Не** флипает `dns-direct`. Ads **не** в `plan.bypassRuleSets`. Применение на следующем Connect.
 
 ### TUN / DNS / route
 
@@ -142,9 +142,9 @@ Libbox закрывает **все** соединения при пустом de
 - `excludeAPNs` / `excludeCellularServices` / `excludeLocalNetworks` **no-op** без `includeAllNetworks` ([Apple NE](https://developer.apple.com/documentation/networkextension/nevpnprotocol/excludeapns)) — не выставляем; bypass только через NE `excludedRoutes`.
 - Endpoint резолвится до старта NE (`getaddrinfo` ∥ UDP A `1.1.1.1`, затем `8.8.8.8`) и пинится в dial-outbound; site exclude IPs — cache-first + async reapply (не блокируют startTunnel); TLS SNI остаётся доменным; `udp_fragment: true` на Hysteria2.
 - `dns-direct: local` — Darwin `getaddrinfo` (ipv4_only). PTR → drop; IPv6 / UDP/443 → reject `method: default` (ICMP/RST → App Store TCP fallback).
-- Core log: `log.level=info` + timestamp; `./scripts/journal.sh -p ios --core --tg`.
+- Core log: `log.level=info` + timestamp (UI Share / App Group `core.log`).
 
-Проверка (только iOS): `./scripts/journal.sh -p ios | rg 'ipv6=off'`; App Store без `outbound packet …:443` на apple CDN (только TCP); Telegram ок.
+Проверка (только iOS): в журнале/core.log ищите `ipv6=off`; App Store без `outbound packet …:443` на apple CDN (только TCP); Telegram ок.
 
 ### Postmortem: Telegram iOS infinite refresh (2026-07-21)
 
@@ -190,9 +190,9 @@ Clash API `127.0.0.1:19090` (`experimental.clash_api`) — Home throughput via e
 
 **App Group:** `group.com.demar.adblock`  
 **Bundle tunnel:** `com.demar.adblock.packet-tunnel`  
-**Журнал (dev):** `./scripts/journal.sh` — см. [`readme.md`](readme.md) § Журнал.
+**Журнал (dev):** см. [`readme.md`](readme.md) § Журнал.
 
-Assets: `python3 scripts/singbox-download-auto.py` → `sing-box` из release + `geoip.db`/`geosite.db` из [sing-geoip](https://github.com/SagerNet/sing-geoip) и [sing-geosite](https://github.com/SagerNet/sing-geosite).
+Assets: `sing-box` из release + `geoip.db`/`geosite.db` из [sing-geoip](https://github.com/SagerNet/sing-geoip) и [sing-geosite](https://github.com/SagerNet/sing-geosite) (локальная подготовка, не в git).
 
 ### macOS
 
@@ -202,7 +202,7 @@ Assets: `python3 scripts/singbox-download-auto.py` → `sing-box` из release +
 | Platform interface | `ios/DemarPacketTunnel/DemarLibboxPlatform.swift` |
 | Запуск core | `ios/DemarPacketTunnel/IOSLibboxCore.swift` |
 
-Libbox: stock Apple `build_libbox` tags минус `with_naive_outbound` (см. `scripts/libbox-build.py`).
+Libbox: stock Apple `build_libbox` tags минус `with_naive_outbound`.
 
 Connect: `NativeVpnService` → `VpnTunnelController` → extension → Libbox (тот же путь, что iOS).
 
