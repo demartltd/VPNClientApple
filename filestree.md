@@ -20,8 +20,7 @@ DemarVPN/                              # SwiftUI target
 │   ├── Models/
 │   │   ├── VpnConnectionState.swift   # enum статуса VPN
 │   │   ├── ServerProfile.swift        # профиль сервера + UI metadata/filters
-│   │   ├── ServerReachability.swift   # TCP/TLS/QUIC ping state + UplinkProbe
-│   │   └── TestServers.swift          # тестовые профили
+│   │   └── ServerReachability.swift   # TCP/TLS/QUIC ping state + UplinkProbe
 │   ├── Network/
 │   │   ├── DemarHttp.swift            # URLSession, UA, vpnPost/Get, retry/reset, DemarAPIError
 │   │   ├── AuthApi.swift              # auth.example.invalid / account.example.invalid auth
@@ -138,7 +137,7 @@ DemarVPN/                              # SwiftUI target
             ├── SupportAttach.swift    # gallery photo ingest / WebP compress
             └── SupportHelpers.swift   # errors, time, linkify
 
-DemarVPNTests/                         # unit tests (Sing-box, connect hot-path, TUN sites, servers filter/reachability, account/pay parse, interface, legal docs)
+DemarVPNTests/                         # unit tests + TestServers.swift (fake fixtures only)
 DemarVPN.xcodeproj/                    # app + tunnel + controls
 
 readme.md                              # сборка

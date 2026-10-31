@@ -18,7 +18,7 @@
 		B1000001000000000000SB1 /* ServerBadges.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000SB1 /* ServerBadges.swift */; };
 		B1000001000000000000SF1 /* ServerFiltersSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000SF1 /* ServerFiltersSheet.swift */; };
 		B1000001000000000000SD1 /* ServerDetailsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000001000000000000SD1 /* ServerDetailsSheet.swift */; };
-		B10000010000000000000007 /* TestServers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000007 /* TestServers.swift */; };
+		T40000TS1CF9000F007C117E /* TestServers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000007 /* TestServers.swift */; };
 		T40000111CF9000F007C117E /* ServerFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000111CF9000F007C117E /* ServerFilterTests.swift */; };
 		T40000121CF9000F007C117E /* UplinkProbeRttTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000121CF9000F007C117E /* UplinkProbeRttTests.swift */; };
 		B10000010000000000000008 /* AppLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000010000000000000008 /* AppLog.swift */; };
@@ -587,7 +587,6 @@
 				F10000010000000000000005 /* VpnConnectionState.swift */,
 				F10000010000000000000006 /* ServerProfile.swift */,
 				F1000001000000000000SR1 /* ServerReachability.swift */,
-				F10000010000000000000007 /* TestServers.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -868,6 +867,7 @@
 		G40000011CF9000F007C117D /* DemarVPNTests */ = {
 			isa = PBXGroup;
 			children = (
+				F10000010000000000000007 /* TestServers.swift */,
 				F40000021CF9000F007C117E /* SingBoxConfigTests.swift */,
 				F40000031CF9000F007C117E /* DefaultInterfaceReporterTests.swift */,
 				F40000041CF9000F007C117E /* AppLogPerformanceTests.swift */,
@@ -1119,7 +1119,6 @@
 				B10000010000000000000005 /* VpnConnectionState.swift in Sources */,
 				B10000010000000000000006 /* ServerProfile.swift in Sources */,
 				B1000001000000000000SR1 /* ServerReachability.swift in Sources */,
-				B10000010000000000000007 /* TestServers.swift in Sources */,
 				B10000010000000000000008 /* AppLog.swift in Sources */,
 				B1000001000000000000000A /* AppState.swift in Sources */,
 				A11000010000000000000032 /* AppState+AuthSession.swift in Sources */,
@@ -1297,6 +1296,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				T40000TS1CF9000F007C117E /* TestServers.swift in Sources */,
 				T40000031CF9000F007C117E /* SingBoxConfigTests.swift in Sources */,
 				T40000041CF9000F007C117E /* DefaultInterfaceReporterTests.swift in Sources */,
 				T40000051CF9000F007C117E /* AppLogPerformanceTests.swift in Sources */,
