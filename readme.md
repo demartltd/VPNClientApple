@@ -18,59 +18,21 @@
 
 Перед сборкой локально нужны geo assets (`geoip.db` / `geosite.db`), `Libbox.xcframework`, OpenFlux `liboflux` и rule-sets — они не в git (см. [`readme-core.md`](readme-core.md)).
 
-Xcode копирует geo assets в host app и в `DemarPacketTunnel.appex` (iOS: `singbox/`, macOS: `singbox_macos/`). Dev binary `sing-box` в runtime bundle не включается.
-
-В [Apple Developer](https://developer.apple.com/account) для App ID `com.demar.adblock`, `com.demar.adblock.packet-tunnel` и **`com.demar.adblock.controls`** (Control Center) включите: **App Groups** (`group.com.demar.adblock`), **Network Extensions** → Packet Tunnel. Entitlements уже в `DemarVPN.entitlements`, `ios/DemarPacketTunnel/DemarPacketTunnel.entitlements` и `ios/DemarControls/DemarControls.entitlements`.
-
-### Definition of Done: capabilities/provisioning
-
-Перед запуском VPN на macOS проверьте, что выполнены все пункты:
-
-- Для `com.demar.adblock` включены `App Groups` и `Network Extensions (Packet Tunnel Provider)`.
-- Для `com.demar.adblock.packet-tunnel` включены `App Groups` и `Network Extensions (Packet Tunnel Provider)`.
-- В обоих App ID присутствует одинаковая группа `group.com.demar.adblock`.
-- После изменения capabilities пересозданы provisioning profiles и подтянуты в Xcode.
-- Хост и `DemarPacketTunnel.appex` подписаны одной Team (`codesign: app=... appex=... match=yes`).
-- Локально установлен один активный bundle (не смешивать старые копии из `DerivedData` и `/Applications`).
-
-Для macOS/App Store не используем root/helper-эскалацию привилегий: для Packet Tunnel корректный путь только через Network Extension entitlement + системное разрешение пользователя.
+Xcode копирует geo assets в host app и в `DemarPacketTunnel.appex` (iOS: `singbox/`, macOS: `singbox_macos/`). Dev binary `sing-box` в runtime bundle не включается. Entitlements: `DemarVPN.entitlements`, `ios/DemarPacketTunnel/…`, `ios/DemarControls/…` (App Group + Packet Tunnel).
 
 ```bash
-# macOS Debug (Xcode, только для отладки)
+# macOS Debug
 xcodebuild -scheme DemarVPN -destination 'platform=macOS' build
 
 # iOS Simulator
 xcodebuild -scheme DemarVPN -destination 'platform=iOS Simulator,name=iPhone 17' build
 ```
 
-В Xcode: выберите destination **My Mac** или симулятор iPhone.
-
-Для App Store / TestFlight: archive/export в Xcode или локальный upload-инструмент разработчика. Нужны Apple ID в **Xcode → Settings → Accounts**, **Apple Distribution** в Keychain; для `altool` — ASC API key (локально, не в git).
-
-`xcodebuild` не использует ASC API key: с ключом без Cloud Managed Distribution Xcode чинит профили через cloud cert → `403` / «profile doesn't include Apple Distribution». Profiles обновляет Apple ID из Accounts + локальный Distribution.
-
-### TestFlight: macOS видит только iOS-билд
-
-Один App Record (`com.demar.adblock`) хранит **два** бинарника: iOS IPA и native macOS PKG. External public link на Mac иначе ставит **iOS App on Mac**, а internal (developer) видит native macOS — у internal есть доступ ко всем билдам.
-
-**В проекте:** `SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO`. Display name в bundle: **Demar Proxy**.
-
-**После upload** линкуйте latest VALID iOS+macOS в external TestFlight-группы и выключите `iosBuildsAvailableForAppleSiliconMac` (ASC API с ролью **App Manager**/**Admin**, либо вручную ниже).
-
-**В ASC (разово / при 403):**
-
-1. TestFlight → группа (public link) → Settings → *Test iPhone and iPad apps on Apple silicon Macs* → **Disable**
-2. В ту же группу добавить билд платформы **macOS** (не только iOS)
-3. Pricing and Availability → *iPhone and iPad Apps on Apple Silicon Macs* → **Don't Make Available**
-4. Имя в листинге ASC (сейчас может быть «Demar Proxy + AdBlock») → App Information → **Demar Proxy** (API `apps.name` не принимает UPDATE)
-
-На Mac-тестере: удалить старый iOS-on-Mac → установить снова → платформа **macOS**, имя **Demar Proxy**.
-
-Для проверки Packet Tunnel на macOS запускайте приложение через Xcode (**My Mac**) или установленную App Store/TestFlight сборку, затем включите `Demar Proxy` в `System Settings → Login Items & Extensions → Network Extensions`.
+В Xcode: destination **My Mac** или симулятор iPhone. На Mac после установки включите расширение в `System Settings → Login Items & Extensions → Network Extensions`.
 
 Документация Sing-box: https://sing-box.sagernet.org/
 
-Структура кода: [`filestree.md`](filestree.md) — обновляй при изменениях в проекте.
+Структура кода: [`filestree.md`](filestree.md).
 
 ### Журнал
 
