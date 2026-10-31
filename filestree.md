@@ -144,8 +144,6 @@ readme.md                              # сборка
 readme-core.md                         # ядро VPN/Sing-box
 singbox-version.txt                    # единая закреплённая версия core
 
-scripts/                               # local only (gitignored) — build / TestFlight / libbox / journal
-
 macos/
 └── singbox_macos/                      # geo db + dev sing-box CLI (gitignore)
 
