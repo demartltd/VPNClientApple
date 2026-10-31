@@ -148,6 +148,11 @@ final class TunGroupsParseTests: XCTestCase {
             TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: false),
             ["instagram.com", "reddit.com", "tiktok.com", "vk.com", "youtube.com"]
         )
+        // Free: custom hosts stored/shown, not applied.
+        XCTAssertEqual(
+            TunEffective.bypassHosts(settings: settings, catalog: catalog, isFree: true),
+            ["instagram.com", "tiktok.com", "vk.com"]
+        )
         let off = TunSettings(
             siteGroupOverrides: [:],
             rulesEnabled: false,

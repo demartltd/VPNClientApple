@@ -131,13 +131,20 @@ enum TunSettingsStore {
         persistPrefsLocked()
     }
 
-    /// Free plan always uses defaults; wipe paid-era overrides so they don't return after renew.
-    static func resetToDefaults() {
+    /// Free / defaults: wipe overrides + ad block; keep custom hosts (shown but not applied on Free).
+    /// Pass `clearBypassHosts: true` on sign-out.
+    static func resetToDefaults(clearBypassHosts: Bool = false) {
         loadIfNeeded()
         lock.lock()
         defer { lock.unlock() }
-        guard settings != .empty else { return }
-        settings = .empty
+        let hosts = clearBypassHosts ? [] : settings.bypassHosts
+        let next = TunSettings(
+            siteGroupOverrides: [:],
+            rulesEnabled: true,
+            bypassHosts: hosts
+        )
+        guard settings != next else { return }
+        settings = next
         persistPrefsLocked()
     }
 

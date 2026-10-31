@@ -71,9 +71,12 @@ enum TunEffective {
         guard isRulesEnabled(settings, isFree: isFree) else { return [] }
         var seen = Set<String>()
         var out: [String] = []
-        for host in settings.bypassHosts {
-            guard seen.insert(host).inserted else { continue }
-            out.append(host)
+        // Free: keep stored custom hosts in UI, but do not apply them.
+        if !isFree {
+            for host in settings.bypassHosts {
+                guard seen.insert(host).inserted else { continue }
+                out.append(host)
+            }
         }
         for group in catalog.siteGroups where isSiteGroupEnabled(settings, group: group) {
             if whiteListVpnMode, group.isWhiteList { continue }

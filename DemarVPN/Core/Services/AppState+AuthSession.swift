@@ -86,7 +86,7 @@ extension AppState {
         dismissAccountSheet()
         SessionCacheStore.clear()
         TunSettingsStore.clearCatalog()
-        TunSettingsStore.resetToDefaults()
+        TunSettingsStore.resetToDefaults(clearBypassHosts: true)
         SupportStore.clearOnSignOut()
         clearServers()
         clearAccount()

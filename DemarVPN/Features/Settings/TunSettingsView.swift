@@ -105,7 +105,7 @@ struct TunSettingsView: View {
             rulesEnabled = true
             adBlockOverride = nil
             overrides = [:]
-            customHosts = []
+            customHosts = TunSettingsStore.currentSettings.bypassHosts
             siteDraft = ""
             siteFieldFocused = false
         }
